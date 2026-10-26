@@ -74,7 +74,7 @@ Hal yang butuh membaca beberapa bagian PRD untuk dipahami:
 Pengguna sudah menolak atau menghapus hal-hal ini saat brainstorming. Jangan diusulkan lagi:
 - OSD volume dan brightness, ikon volume dan baterai di bar, indikator virtual desktop.
 - Gaya modul kanan selain "dua baris" (label kapital kecil di atas nilai): ikon+angka, ring mini, sparkline, dan kapsul berkelompok sudah ditolak.
-- Navigasi pulau selain menu tab (9 tab ikon; nama hanya di tab aktif dan saat hover) yang mengisi lebar pulau di kanan lingkaran Gili.
+- Navigasi pulau selain menu tab (10 tab ikon; nama hanya di tab aktif dan saat hover) yang mengisi lebar pulau di kanan lingkaran Gili.
 - Titik kamera/mic dengan lingkaran hitam: titik 8 px tanpa latar.
 - Kolom input todo di halaman Todo: todo hanya dibuat dari Calendar (Add task).
 - Panel dropdown untuk Wi‑Fi/Bluetooth/volume/brightness dan menu power: semuanya ada di halaman Controls di pulau, tanpa tab di menu (dibuka dari tombol Controls, modul Wi‑Fi, dan Power).
