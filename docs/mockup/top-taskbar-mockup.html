@@ -257,15 +257,12 @@ button.qi:hover{background:var(--ctl)}
   transition:opacity 400ms ease,--g1 600ms ease,--g2 600ms ease}
 .st-expanded .glow{opacity:1}
 body.noglow .glow{display:none}
-/* Slow motion: two soft blobs drift on their own elliptical paths and breathe. Paused unless the island is open. */
+/* Slow motion: two soft blobs wander on their own and breathe. Each drifts to a random point and on to the next
+   (see glowLeg()); they never follow the pointer. Paused unless the island is open. */
 .glow i{position:absolute;width:75%;height:190%;border-radius:50%;filter:blur(28px);will-change:transform;
-  transform:translate(var(--gx,0px),var(--gy,0px));transition:transform 900ms cubic-bezier(.16,1,.3,1)}
-/* The second blob follows the pointer less, for a little depth. */
-.glow .b2{transform:translate(calc(var(--gx,0px) * .55),calc(var(--gy,0px) * .55))}
-.glow .b1{left:-18%;top:-30%;background:radial-gradient(closest-side,var(--g1),transparent);animation:gd1 22s ease-in-out infinite,gbr 9s ease-in-out infinite alternate}
-.glow .b2{right:-20%;bottom:-70%;background:radial-gradient(closest-side,var(--g2),transparent);animation:gd2 31s ease-in-out infinite,gbr 9s ease-in-out -4.5s infinite alternate}
-@keyframes gd1{0%,100%{translate:0 0}25%{translate:12% 10%}50%{translate:6% 22%}75%{translate:-4% 8%}}
-@keyframes gd2{0%,100%{translate:0 0}25%{translate:-10% -14%}50%{translate:-14% -4%}75%{translate:-4% -16%}}
+  transform:translate(var(--gx,0px),var(--gy,0px));transition:transform var(--gt,0s) cubic-bezier(.37,0,.63,1)}
+.glow .b1{left:-18%;top:-30%;background:radial-gradient(closest-side,var(--g1),transparent);animation:gbr 9s ease-in-out infinite alternate}
+.glow .b2{right:-20%;bottom:-70%;background:radial-gradient(closest-side,var(--g2),transparent);animation:gbr 9s ease-in-out -4.5s infinite alternate}
 @keyframes gbr{from{scale:.92}to{scale:1.08}}
 .iw:not(.st-expanded) .glow i,body.nomotion .glow i,body.reduce .glow i,.glow.paused i{animation-play-state:paused}
 /* Gili, the mascot: two white eyes. In the idle island they travel the whole island toward the pointer (centre at rest); with an activity Gili drips out into a
@@ -1219,19 +1216,28 @@ function gStep(t){
 }
 // After 8 s without pointer movement the eyes drift back to centre.
 setInterval(()=>{if(G.still&&Date.now()-G.still>8000&&(G.tx||G.ty)&&!gHeld()){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}},1000);
-// While the island is open the ambient glow leans toward the pointer: up to 25% of the island's width and 30% of its
-// height, eased over 900 ms. Updated at most once a frame, only while the island is open and Ambient motion is on.
-let glowRaf=0,glowPt=null;
-addEventListener('pointermove',e=>{
-  glowPt=e;
-  if(glowRaf||S.state!=='expanded'||!S.glow||!S.motion||S.reduce)return;
-  glowRaf=requestAnimationFrame(()=>{
-    glowRaf=0;const r=iw.getBoundingClientRect(),g=$('#glow');
-    const fx=Math.max(-1,Math.min(1,(glowPt.clientX-(r.left+r.width/2))/(r.width/2))),fy=Math.max(-1,Math.min(1,(glowPt.clientY-(r.top+r.height/2))/(r.height/2)));
-    g.style.setProperty('--gx',(fx*r.width*.25).toFixed(1)+'px');g.style.setProperty('--gy',(fy*r.height*.3).toFixed(1)+'px');
+// Ambient motion wanders at random and ignores the pointer: each blob drifts to a random point up to 25% of the island's
+// width and 30% of its height from where it rests, over 10–16 s with a gentle ease in and out, then picks the next point.
+// The two blobs pick their own points and timings. Nothing runs unless the island is open and Ambient motion is on.
+const glowB=$$('#glow i'),glowT=[0,0];
+const glowLive=()=>S.state==='expanded'&&S.glow&&S.motion&&!S.reduce&&!$('#glow').classList.contains('paused');
+function glowLeg(k){
+  clearTimeout(glowT[k]);glowT[k]=0;if(!glowLive())return;
+  const b=glowB[k],W=parseFloat(iw.style.width)||560,H=parseFloat(iw.style.height)||256,d=10+Math.random()*6;
+  b.style.setProperty('--gt',d.toFixed(1)+'s');
+  b.style.setProperty('--gx',((Math.random()*2-1)*W*.25).toFixed(1)+'px');b.style.setProperty('--gy',((Math.random()*2-1)*H*.3).toFixed(1)+'px');
+  glowT[k]=setTimeout(()=>glowLeg(k),d*1000);
+}
+// Start wandering when it may, or stop where the blobs are (paused music on Media, motion turned off).
+function glowSync(){
+  if(glowLive()){glowB.forEach((_,k)=>{if(!glowT[k])glowLeg(k)});return}
+  glowB.forEach((b,k)=>{
+    clearTimeout(glowT[k]);glowT[k]=0;const m=new DOMMatrix(getComputedStyle(b).transform);
+    b.style.setProperty('--gt','0s');b.style.setProperty('--gx',m.m41.toFixed(1)+'px');b.style.setProperty('--gy',m.m42.toFixed(1)+'px');
   });
-},{passive:true});
-function glowCentre(){const g=$('#glow');g.style.setProperty('--gx','0px');g.style.setProperty('--gy','0px')}
+}
+// The island closed: back to the rest position, ready for the next opening.
+function glowCentre(){glowB.forEach((b,k)=>{clearTimeout(glowT[k]);glowT[k]=0;b.style.setProperty('--gt','0s');b.style.setProperty('--gx','0px');b.style.setProperty('--gy','0px')})}
 // A soft blink every 3–6 s; one in five is a double blink.
 function gBlink(){
   const two=Math.random()<.2;
@@ -1479,6 +1485,7 @@ function setState(next,instant){
   if(next!=='wide'){clearTimeout(S.wideT);S.wideKey=null}
   if(next!=='expanded'){clearTimeout(S.leaveT);glowCentre()}
   layout();
+  if(next==='expanded')glowSync();
 }
 function showWide(key,html,ms,update){
   if(FLOAT.includes(S.state)||S.fs)return;
@@ -1770,6 +1777,7 @@ function renderGlow(){
   else if(S.page===PAGE.timer){const m=S.timer.mode;c1=c2=m==='sw'?'#64d2ff':m==='pomo'?(S.pomo.phase==='focus'?'#ff453a':'#30d158'):'#ff9f0a'}
   else c1=c2=GLOW[S.page];
   g.style.setProperty('--g1',tint(c1,.55*k));g.style.setProperty('--g2',tint(c2,(c1===c2?.32:.45)*k));
+  glowSync();
 }
 let wheelAcc=0,wheelLock=0;
 $('#xp').addEventListener('wheel',e=>{
@@ -2540,7 +2548,7 @@ function applySettings(){
   document.body.classList.toggle('nosecs',!S.secs);
   document.body.classList.toggle('noglow',!S.glow);document.body.classList.toggle('nomotion',!S.motion);setPressed('glow',!!S.glow);
   $('#desk').classList.toggle('notb',!!S.hideTb);document.body.classList.toggle('bottom',S.pos==='bottom');
-  slotSig='';renderTabs();renderClock(true);renderSlot();renderClPage();if(!S.reduce)setMotion(SP_WIDE);layout();
+  slotSig='';renderTabs();renderClock(true);renderSlot();renderClPage();if(!S.reduce)setMotion(SP_WIDE);layout();glowSync();
 }
 function renderSettings(){
   $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
@@ -2925,7 +2933,7 @@ const ACT={
   extra:()=>{const on=!S.mods.gpu;S.mods.gpu=S.mods.temp=S.mods.disk=on?1:0;setPressed('extra',on);layout()},
   fs:()=>{closeExpanded();if(S.state==='wide')setState('compact');S.fs=!S.fs;$('#desk').classList.toggle('fs',S.fs);setPressed('fs',S.fs);
     hint(S.fs?'Fullscreen: the bar hides; only alarms and timers still appear':'Bar is back')},
-  reduce:()=>{S.reduce=!S.reduce;document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce)},
+  reduce:()=>{S.reduce=!S.reduce;document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce);glowSync()},
   demo:toggleDemo,
 };
 const DEMO=[
