@@ -175,7 +175,27 @@ button.qi:hover{background:var(--ctl)}
 .qfoot span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qfoot button{padding:4px 8px;border-radius:6px;background:var(--ctl);color:var(--text);white-space:nowrap}
 .qfoot button:hover{background:var(--ctl-h)}
-.pg-ctl{gap:20px}
+/* Control islands (PRD 6.4): one control per island, no page menu, sized to the control. */
+.iw.ctlm .xtabs{display:none}
+.iw.ctlm .xp{top:0}
+.pg-ctl{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:16px;gap:0}
+.cv{display:none;flex-direction:column;gap:12px}
+.cv.on{display:flex;animation:fadeUp 180ms var(--out)}
+.cvh{display:flex;align-items:center;gap:10px;font-size:14px}
+.cvh b{flex:1;font-weight:600}
+.cvh .num{font-size:13px;color:var(--text2)}
+.cvr{font-size:13px}.cvr b{font-weight:500}
+.cv input[type=range]{width:100%;margin:0;accent-color:var(--text)}
+.cvdev{display:flex;align-items:center;gap:10px;padding:6px 8px;margin:-4px -8px;border-radius:8px;font-size:12px;color:var(--text2);text-align:left}
+.cvdev:hover{background:var(--ctl)}
+.cvdev span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cvdev .ic{width:14px;height:14px}
+.cvdev .chev{transition:transform 200ms var(--out)}
+.cvdev[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.cv .qlist{max-height:228px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.cvoff{padding:10px 8px;font-size:12px;color:var(--text2)}
+#mBt{position:relative}
+.bdot{position:absolute;top:3px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb))}
 .cleft{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
 .cright{flex:1;min-width:0;display:flex;flex-direction:column}
 .pwbox{display:flex;flex-direction:column;gap:12px}
@@ -642,6 +662,8 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></symbol>
   <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+  <symbol id="i-vol0" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/></symbol>
+  <symbol id="i-vol2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
   <symbol id="i-bat" viewBox="0 0 24 24"><rect x="1.5" y="7" width="19" height="10" rx="2.5"/><path d="M23 11v2"/><rect x="3.5" y="9" width="9" height="6" rx="1" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-caps" viewBox="0 0 24 24"><path d="M12 3l-8 8h4.5v5h7v-5H20z"/><path d="M8.5 20h7"/></symbol>
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"/></symbol>
@@ -728,11 +750,13 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       <button class="mod" data-m="disk" data-sys title="Free space on C:"><span class="tw"><small>C: free</small><b class="num">120 GB</b></span></button>
       <button class="mod" id="mMore" aria-label="More modules" hidden><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
       <button class="mod" data-m="wifi" id="mWifi" title="Strong signal · Home_5G"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><span class="tw"><small>Strong</small><b>Home_5G</b></span></button>
+      <button class="mod" data-m="bt" id="mBt" aria-label="Bluetooth" title="Bluetooth · Galaxy Buds2 Pro"><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg><i class="bdot" id="btDot"></i></button>
+      <button class="mod" data-m="vol" id="mVol" aria-label="Volume" title="Volume 46%"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg></button>
+      <button class="mod" data-m="bri" id="mBri" aria-label="Brightness" title="Brightness 70%"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
       <span class="pwr" data-m="tray">
         <button class="mod" id="mTray" aria-label="Show hidden icons" aria-haspopup="menu" aria-expanded="false" title="Show hidden icons"><svg class="ic" aria-hidden="true"><use href="#i-chevd"/></svg></button>
         <span class="pop tp" id="tp" role="menu" aria-label="Background apps" hidden></span>
       </span>
-      <button class="mod" data-m="ctl" id="mCtl" aria-label="Controls" title="Controls"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button>
       <button class="mod" data-m="clock" id="mClock" title=""><span class="tw"><small id="clkD"></small><b class="num" id="clkT"></b></span></button>
       <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
       <span class="pwr">
@@ -848,22 +872,29 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 <div class="tile"><div class="tl">Disk C:<span class="tv num">120 GB free</span></div><div class="dbar"><i></i></div></div>
               </div>
             </section>
-            <!-- Controls: no tab in the menu; opened from the Controls, Wi-Fi and Power buttons on the bar. -->
+            <!-- Control islands (PRD 6.4): the Wi-Fi, Bluetooth, Volume, Brightness and Power buttons each open their own control here, alone, without the page menu. -->
             <section class="page pg-ctl" aria-label="Controls">
-              <div class="cleft">
-                <div class="qsg">
-                  <div class="qt" data-q="wifi" aria-pressed="true"><button class="qtb" aria-pressed="true" aria-label="Wi‑Fi"></button><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg>Wi‑Fi<small id="qWifiS">Home_5G</small><button class="qx" data-x="wifi" aria-label="Show Wi‑Fi networks" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-chevr"/></svg></button></div>
-                  <div class="qt" data-q="bt" aria-pressed="true"><button class="qtb" aria-pressed="true" aria-label="Bluetooth"></button><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg>Bluetooth<small id="qBtS">Galaxy Buds2 Pro</small><button class="qx" data-x="bt" aria-label="Show Bluetooth devices" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-chevr"/></svg></button></div>
-                  <div class="qt" data-q="air" aria-pressed="false"><button class="qtb" aria-pressed="false" aria-label="Airplane mode"></button><svg class="ic" aria-hidden="true"><use href="#i-plane"/></svg>Airplane<small id="qAirS">Off</small></div>
-                </div>
-                <div class="qsl"><button class="qi" id="qMute" aria-label="Mute"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg></button><input type="range" id="qVol" min="0" max="100" value="46" aria-label="Volume"><span class="num" id="qVolV">46%</span></div>
-                <div class="qdev">Speakers (Realtek(R) Audio)</div>
-                <div class="qsl"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><input type="range" id="qBri" min="0" max="100" value="70" aria-label="Brightness"><span class="num" id="qBriV">70%</span></div>
+              <div class="cv" data-cv="vol" aria-label="Volume">
+                <div class="cvh"><button class="qi" id="qMute" aria-label="Mute"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg></button><b>Volume</b><span class="num" id="qVolV">46%</span></div>
+                <input type="range" id="qVol" min="0" max="100" value="46" aria-label="Volume">
+                <button class="cvdev" id="qDev" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg><span id="qDevN">Speakers (Realtek(R) Audio)</span><svg class="ic chev" aria-hidden="true"><use href="#i-chevr"/></svg></button>
+                <div class="qlist" id="qDevL" hidden></div>
               </div>
-              <div class="cright">
-                <div class="qlist" id="qList" hidden></div>
-                <div class="pwbox" id="pwBox">
-                  <div class="pwl" id="pwList" role="group" aria-label="Power">
+              <div class="cv" data-cv="bri" aria-label="Brightness">
+                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><b>Brightness</b><span class="num" id="qBriV">70%</span></div>
+                <input type="range" id="qBri" min="0" max="100" value="70" aria-label="Brightness">
+              </div>
+              <div class="cv" data-cv="wifi" aria-label="Wi‑Fi">
+                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg></span><b>Wi‑Fi</b><button class="sw" role="switch" data-q="wifi" aria-checked="true" aria-label="Wi‑Fi"></button></div>
+                <div class="cvh cvr"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-plane"/></svg></span><b>Airplane mode</b><button class="sw" role="switch" data-q="air" aria-checked="false" aria-label="Airplane mode"></button></div>
+                <div class="qlist" id="qWifiL"></div>
+              </div>
+              <div class="cv" data-cv="bt" aria-label="Bluetooth">
+                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg></span><b>Bluetooth</b><button class="sw" role="switch" data-q="bt" aria-checked="true" aria-label="Bluetooth"></button></div>
+                <div class="qlist" id="qBtL"></div>
+              </div>
+              <div class="cv" data-cv="power" aria-label="Power">
+                <div class="pwl" id="pwList" role="group" aria-label="Power">
                     <button class="pill" data-pw="sleep"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
                     <button class="pill upd" data-pw="upd-shutdown" hidden><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Update and shut down<i class="udot"></i></button>
                     <button class="pill" data-pw="shutdown"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Shut down</button>
@@ -871,7 +902,6 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                     <button class="pill" data-pw="restart"><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
                   </div>
                   <div class="qfoot"><span class="num" id="qBat">64% · 2 h 10 min</span><button data-qf="win">Windows Quick Settings</button><button data-qf="all">All settings</button></div>
-                </div>
               </div>
             </section>
           </div>
@@ -1000,7 +1030,7 @@ const S={
   charging:false,battery:64,caps:false,barH:32,islH:24,
   cpu:12,gpu:4,ram:54,temp:62,down:2100,up:300,
   hist:{cpu:[],ram:[],gpu:[],down:[],temp:[]},
-  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1,tray:1,ctl:1,clock:1},
+  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1},
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,notes:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
@@ -1027,7 +1057,7 @@ const S={
   clEnd:null,fgName:'Chrome',
   apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
 };
-// Controls (9) has no tab: the Controls, Wi-Fi and Power buttons on the bar open it.
+// Controls (9) has no tab: the Wi-Fi, Bluetooth, Volume, Brightness and Power buttons open it, one control at a time.
 const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,notes:5,shelf:6,claude:7,system:8,controls:9};
 const LAST=9,GAP=24;
 const HIDE_ORDER=['weather','net','disk','temp','gpu','ram','cpu'];
@@ -1133,7 +1163,12 @@ function layout(){
   else if(s==='expanded'){
     const nt=S.page===PAGE.notes,min=nt?500:256,max=innerHeight-16;
     W=Math.min(nt?960:680,innerWidth-24);H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
-    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';
+    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width='';
+    if(S.page===PAGE.controls){
+      // Control islands: one control, no page menu, sized to it (PRD 6.4 "Pulau kontrol").
+      W=Math.min(S.ctl==='wifi'||S.ctl==='bt'?400:360,innerWidth-24);H=Math.min(max,$('.cv.on').offsetHeight+32);R='28px';
+      $('#xp').style.height=H+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
+    }
   }
   else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;R='28px'}
   else{W=Math.min(420,innerWidth-24);H=140;R='30px'}
@@ -1142,6 +1177,7 @@ function layout(){
   iw.style.width=W+'px';iw.style.height=H+'px';iw.style.top=T+'px';isl.style.borderRadius=R;
   slot.style.setProperty('--slotw',slot.dataset.k&&s==='compact'?(W-28)+'px':'auto');
   iw.classList.toggle('tall',s==='expanded'&&S.page===PAGE.notes);
+  iw.classList.toggle('ctlm',s==='expanded'&&S.page===PAGE.controls);
   if(s==='expanded'&&S.page===PAGE.notes)layoutNotes(true);
   iw.classList.toggle('float',FLOAT.includes(s));
   const bOn=s==='compact'&&activities().length>1,cOn=s==='compact'&&cbubOn();
@@ -1442,6 +1478,7 @@ function renderTabs(){
 }
 // Arrow keys and swipes walk the visible tabs only.
 function stepPage(d){
+  if(S.page===PAGE.controls)return; // control islands have no page menu to walk
   const vis=TABS.map((_,i)=>i).filter(i=>S.tabs[i]);if(!vis.length)return;
   const at=vis.indexOf(S.page);
   // From a page without a tab (hidden, or Controls), go to the nearest visible one in that direction.
@@ -1499,7 +1536,7 @@ iw.addEventListener('pointerleave',()=>{
 });
 document.addEventListener('pointerdown',e=>{
   // Bar icons that open island pages handle the click themselves (switch page or close).
-  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mCtl,#mPower,#mWifi,#setw'))closeExpanded();
+  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mBt,#mVol,#mBri,#mPower,#mWifi,#setw'))closeExpanded();
 });
 
 /* media */
@@ -1892,7 +1929,6 @@ function renderRight(){
 }
 $$('[data-sys]').forEach(b=>b.onclick=()=>openFromBar(PAGE.system));
 $('#mMore').onclick=()=>{const names={weather:'weather',net:'network',disk:'disk',temp:'CPU temp',gpu:'GPU',ram:'RAM',cpu:'CPU'};hint('Hidden to keep space around the island: '+S.overflow.map(k=>names[k]).join(', '))};
-$('#mWifi').onclick=()=>hint('Opening the Windows network list');
 
 /* power: Sleep, Shut down and Restart sit on the island's Controls page; the update variants only appear when Windows has updates waiting */
 function renderUpdates(){
@@ -1926,50 +1962,85 @@ $('#tp').onkeydown=e=>{
 };
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pwr'))closePops()});
 
-/* Controls page: Wi-Fi, Bluetooth, airplane mode, volume, brightness and power, in the open island without a tab */
+/* Control islands (PRD 6.4): Wi-Fi, Bluetooth, volume, brightness and power each open alone in the island, without the page menu */
 const WIFI=[['Home_5G',1],['Home_2.4G',1],['Kopi Kenangan',1],['Rumah Rani',0]];
-const BTD=[['Galaxy Buds2 Pro','headphones',1],['MX Master 3S','bt',0],['Xbox Wireless Controller','bt',0]];
-S.wifiNet='Home_5G';
-function showQList(k){
-  const L=$('#qList');
-  $$('.qx').forEach(x=>x.setAttribute('aria-expanded',x.dataset.x===k));
-  if(k){
-    L.innerHTML=`<div class="qlh"><button data-back aria-label="Back">${icon('chevl')}</button>${k==='wifi'?'Wi‑Fi networks':'Bluetooth devices'}</div>`+(k==='wifi'
-      ?WIFI.map(([n,saved],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
-      :BTD.map(([n,ic,on],i)=>`<button class="qn ${on?'on':''}" data-b="${i}">${icon(ic)}<b>${n}</b><span>${on?'Connected':'Paired'}</span></button>`).join('')+`<button class="qn" data-qf="addbt">${icon('plus')}<b>Add device</b></button>`);
-  }
-  L.hidden=!k;$('#pwBox').hidden=!!k;if(S.state==='expanded')layout();
+const BTD=[['Galaxy Buds2 Pro','headphones',1,80],['MX Master 3S','bt',0],['Xbox Wireless Controller','bt',0]];
+const AUDIO=[['Speakers (Realtek(R) Audio)','vol'],['Galaxy Buds2 Pro','headphones'],['LG HDR 4K (NVIDIA High Definition Audio)','vol']];
+Object.assign(S,{wifiNet:'Home_5G',ctl:'power',wifiOn:true,btOn:true,air:false,vol:46,bri:70,qMuted:false,dev:0});
+// The same icon opens and closes its control; another control's icon swaps the content and the island resizes.
+function openCtl(k){
+  if(S.state==='expanded'&&S.page===PAGE.controls&&S.ctl===k){closeExpanded();return}
+  S.ctl=k;$('#qDevL').hidden=true;$('#qDev').setAttribute('aria-expanded',false);renderCtl();
+  if(S.state==='expanded')goPage(PAGE.controls,true);else openExpanded(PAGE.controls);
 }
-function setQ(k,on){
-  const t=$(`.qt[data-q="${k}"]`),sm=t.querySelector('small');
-  t.setAttribute('aria-pressed',on);t.querySelector('.qtb').setAttribute('aria-pressed',on);
-  if(k==='wifi')sm.textContent=on?S.wifiNet:'Off';
-  if(k==='bt')sm.textContent=on?(BTD.find(d=>d[2])||['On'])[0]:'Off';
-  if(k==='air'){sm.textContent=on?'On':'Off';if(on){setQ('wifi',false);setQ('bt',false)}}
+function renderCtl(){
+  $$('.cv').forEach(v=>v.classList.toggle('on',v.dataset.cv===S.ctl));
+  renderWifi();renderBt();renderVol();renderBri();
+  if(S.state==='expanded'&&S.page===PAGE.controls)layout();
 }
+function renderWifi(){
+  const on=S.wifiOn&&!S.air;
+  $('[data-q="wifi"]').setAttribute('aria-checked',on);$('[data-q="air"]').setAttribute('aria-checked',S.air);
+  $('#qWifiL').innerHTML=on
+    ?WIFI.map(([n,saved],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
+    :`<div class="cvoff">${S.air?'Airplane mode is on':'Wi‑Fi is off'}</div>`;
+  $('#mWifi small').textContent=on?'Strong':'Wi‑Fi';$('#mWifi b').textContent=on?S.wifiNet:'Off';
+  $('#mWifi').title=on?'Strong signal · '+S.wifiNet:'Wi‑Fi is off';
+}
+function renderBt(){
+  const on=S.btOn&&!S.air,dev=on&&BTD.find(d=>d[2]);
+  $('[data-q="bt"]').setAttribute('aria-checked',on);
+  $('#qBtL').innerHTML=on
+    ?BTD.map(([n,ic,c,bat],i)=>`<button class="qn ${c?'on':''}" data-b="${i}">${icon(ic)}<b>${n}</b><span>${c?'Connected'+(bat?' · '+bat+'%':''):'Paired'}</span></button>`).join('')+`<button class="qn" data-qf="addbt">${icon('plus')}<b>Add device</b></button>`
+    :`<div class="cvoff">Bluetooth is off</div>`;
+  $('#btDot').hidden=!dev;$('#mBt').title='Bluetooth · '+(dev?dev[0]:on?'On':'Off');
+}
+// The speaker on the bar and in the island follows the level: muted, quiet, medium, loud.
+const volIcon=()=>S.qMuted||!S.vol?'mute':S.vol<34?'vol0':S.vol<67?'vol':'vol2';
+function renderVol(){
+  const ic=volIcon();$('#qMute').innerHTML=icon(ic);$('#mVol').innerHTML=icon(ic);
+  $('#qMute').setAttribute('aria-label',S.qMuted?'Unmute':'Mute');
+  $('#qVolV').textContent=S.qMuted?'Muted':S.vol+'%';$('#qVol').value=S.vol;
+  $('#mVol').title=S.qMuted?'Muted':'Volume '+S.vol+'%';$('#qDevN').textContent=AUDIO[S.dev][0];
+}
+function renderBri(){$('#qBriV').textContent=S.bri+'%';$('#qBri').value=S.bri;$('#mBri').title='Brightness '+S.bri+'%'}
 $('.pg-ctl').addEventListener('click',e=>{
-  const q=e.target.closest('.qtb');if(q){setQ(q.parentElement.dataset.q,q.getAttribute('aria-pressed')!=='true');return}
-  const x=e.target.closest('.qx');if(x){showQList(x.getAttribute('aria-expanded')==='true'?null:x.dataset.x);return}
-  if(e.target.closest('[data-back]')){showQList(null);return}
+  const q=e.target.closest('.sw[data-q]');
+  if(q){
+    const k=q.dataset.q;
+    if(k==='air')S.air=!S.air;
+    else{const v=q.getAttribute('aria-checked')!=='true';S[k==='wifi'?'wifiOn':'btOn']=v;if(v)S.air=false}
+    renderCtl();return;
+  }
   const w=e.target.closest('[data-w]');
   if(w){
     const[n,saved]=WIFI[+w.dataset.w];
     if(n===S.wifiNet)return;
     if(!saved){hint('New network: the Windows network list opens to take the password');return}
     w.querySelector('span').textContent='Connecting…';
-    setTimeout(()=>{S.wifiNet=n;setQ('wifi',true);$('#mWifi b').textContent=n;showQList('wifi')},900);return;
+    setTimeout(()=>{S.wifiNet=n;renderWifi()},900);return;
   }
-  const b=e.target.closest('[data-b]');if(b){const d=BTD[+b.dataset.b];d[2]=d[2]?0:1;showQList('bt');setQ('bt',true);return}
-  const f=e.target.closest('[data-qf]');if(f){hint({win:'Opening Windows Quick Settings',all:'Opening Windows Settings',more:'Opening the Windows network list',addbt:'Opening Bluetooth & devices settings'}[f.dataset.qf]);return}
-  if(e.target.closest('#qMute')){S.qMuted=!S.qMuted;$('#qMute').innerHTML=icon(S.qMuted?'mute':'vol');$('#qMute').setAttribute('aria-label',S.qMuted?'Unmute':'Mute')}
+  const b=e.target.closest('[data-b]');if(b){const d=BTD[+b.dataset.b];d[2]=d[2]?0:1;renderBt();return}
+  const f=e.target.closest('[data-qf]');if(f){hint({win:'Opening Windows Quick Settings',all:'Opening Windows Settings',more:'Opening Wi‑Fi settings',addbt:'Opening Bluetooth & devices settings'}[f.dataset.qf]);return}
+  if(e.target.closest('#qMute')){S.qMuted=!S.qMuted;renderVol();return}
+  if(e.target.closest('#qDev')){
+    const L=$('#qDevL'),open=L.hidden;
+    L.innerHTML=AUDIO.map(([n,ic],i)=>`<button class="qn ${i===S.dev?'on':''}" data-d="${i}">${icon(ic)}<b>${n}</b><span>${i===S.dev?icon('check'):''}</span></button>`).join('');
+    L.hidden=!open;$('#qDev').setAttribute('aria-expanded',open);layout();return;
+  }
+  const d=e.target.closest('[data-d]');
+  if(d){S.dev=+d.dataset.d;$('#qDevL').hidden=true;$('#qDev').setAttribute('aria-expanded',false);renderVol();layout()}
 });
-$('#qVol').oninput=e=>$('#qVolV').textContent=e.target.value+'%';
-$('#qBri').oninput=e=>$('#qBriV').textContent=e.target.value+'%';
-// Scrolling over a slider nudges it 2 points instead of changing page.
+$('#qVol').oninput=e=>{S.vol=+e.target.value;if(S.vol)S.qMuted=false;renderVol()};
+$('#qBri').oninput=e=>{S.bri=+e.target.value;renderBri()};
+// Scrolling over a slider nudges it 2 points.
 for(const id of['qVol','qBri'])$('#'+id).addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();const r=e.target;r.value=+r.value+(e.deltaY<0?2:-2);r.dispatchEvent(new Event('input'))},{passive:false});
-$('#mCtl').onclick=()=>{showQList(null);openFromBar(PAGE.controls)};
-$('#mPower').onclick=()=>{showQList(null);openFromBar(PAGE.controls)};
-$('#mWifi').onclick=()=>{if(S.state!=='expanded'||S.page!==PAGE.controls)openExpanded(PAGE.controls);showQList('wifi')};
+$('#mWifi').onclick=()=>openCtl('wifi');
+$('#mBt').onclick=()=>openCtl('bt');
+$('#mVol').onclick=()=>openCtl('vol');
+$('#mBri').onclick=()=>openCtl('bri');
+$('#mPower').onclick=()=>openCtl('power');
+renderCtl();
 
 /* Claude 5-hour usage window */
 function limTip(){const r=new Date(S.lim.end);return `Claude 5-hour window · resets at ${pad(r.getHours())}:${pad(r.getMinutes())} · ${S.lim.hit?'limit reached':'Estimated'}`}
@@ -1992,7 +2063,7 @@ const SET={
   Appearance:[['opacity','Bar opacity','range'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
-  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['tray','Tray icons'],['ctl','Controls'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
+  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
   Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
 };
 let setSec='General';
