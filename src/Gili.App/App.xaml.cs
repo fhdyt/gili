@@ -33,6 +33,7 @@ public partial class App : Application
     private GiliService? _gili;
     private BarWindow? _bar;
     private AppsService? _apps;
+    private RightService? _right;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
     private bool _quitting;
@@ -80,7 +81,8 @@ public partial class App : Application
         _islandController = new IslandController(Dispatcher, _media);
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
-        _bar = new BarWindow(_settings, _transparency, _stats, _clock, _apps);
+        _right = new RightService(Dispatcher, _settings, _log);
+        _bar = new BarWindow(_settings, _transparency, _stats, _clock, _apps, _right);
         _bar.PageRequested += _islandController.Toggle;
         _bar.SettingsRequested += ShowSettings;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
@@ -100,6 +102,7 @@ public partial class App : Application
         _islandWindow.Show();
         _stats.Start();
         _apps.Start();
+        _right.Start();
         _ = _media.StartAsync();
     }
 
@@ -107,6 +110,7 @@ public partial class App : Application
     {
         _stats?.Dispose();
         _apps?.Dispose();
+        _right?.Dispose();
         _gili?.Dispose();
         _islandController?.Dispose();
         _media?.Dispose();

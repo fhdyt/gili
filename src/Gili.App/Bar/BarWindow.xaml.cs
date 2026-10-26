@@ -9,6 +9,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using Gili.Core.Apps;
 using Gili.Core.Island;
+using Gili.Core.Modules;
+using System.Windows.Controls.Primitives;
 using Gili.Core.Settings;
 using Gili.Platform.Interop;
 using Gili.Platform.Shell;
@@ -25,6 +27,7 @@ public partial class BarWindow : Window
     private readonly ClockService _clock;
     private readonly BarViewModel _vm = new();
     private readonly LeftSide _left;
+    private readonly RightService _right;
     private double _compactWidth = IslandLayout.MinCompactWidth;
     private bool _giliCircle;
     private AppBarService? _appBar;
@@ -35,8 +38,9 @@ public partial class BarWindow : Window
     private bool _floating;
     private bool _glassOff;
 
-    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock, AppsService apps)
+    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock, AppsService apps, RightService right)
     {
+        _right = right;
         _settings = settings;
         _transparency = transparency;
         _stats = stats;
@@ -47,6 +51,12 @@ public partial class BarWindow : Window
         _left.PageRequested += page => PageRequested?.Invoke(page);
         LeftSlot.Content = _left;
         SizeChanged += (_, _) => UpdateLeftLimit();
+        right.Changed += () =>
+        {
+            _vm.ApplyRight(_right, Glyph);
+            Dispatcher.InvokeAsync(FitRight, System.Windows.Threading.DispatcherPriority.Loaded);
+        };
+        _vm.ApplyRight(_right, Glyph);
         _settings.Changed += OnSettingsChanged;
         _transparency.Changed += _ => Dispatcher.InvokeAsync(ApplyAppearance);
         _stats.Updated += _vm.ApplyStats;
@@ -67,6 +77,9 @@ public partial class BarWindow : Window
 
     public event Action? ClockClicked;
 
+    /// <summary>The Power icon toggles the Power island (PRD 6.4).</summary>
+    public event Action? PowerRequested;
+
     /// <summary>A launcher, Shelf or Claude icon asks for its island page.</summary>
     public event Action<IslandPage>? PageRequested;
 
@@ -86,6 +99,77 @@ public partial class BarWindow : Window
         if (ActualWidth <= 0) return;
         var s = _settings.Current;
         _left.SetLimit(BarSpacing.LeftLimit(ActualWidth, _compactWidth, s.IslandHeight, _giliCircle, privacyDots: 0));
+        FitRight();
+    }
+
+    /// <summary>
+    /// Weather, network, RAM and CPU move into "…" (in that order) when the right side would come within 24 px of the
+    /// island (PRD 6.4, mockup <c>fitBar()</c>).
+    /// </summary>
+    private void FitRight()
+    {
+        if (ActualWidth <= 0) return;
+        var modules = new List<(string Id, double Width)>();
+        foreach (var element in RightModules.Children.OfType<FrameworkElement>())
+        {
+            if (element == MoreModule || element is Popup) continue;
+            if (element.Tag is string id)
+            {
+                if (id == "weather" && !_vm.HasWeather) continue;
+                element.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                modules.Add((id, element.DesiredSize.Width));
+            }
+            else if (element.Visibility == Visibility.Visible)
+            {
+                element.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                modules.Add(("fixed", element.DesiredSize.Width));
+            }
+        }
+        var hidden = RightOverflow.Hide(modules, BarSpacing.RightLimit(ActualWidth, _compactWidth, _settings.Current.IslandHeight, bubbles: 0));
+        foreach (var element in RightModules.Children.OfType<FrameworkElement>())
+        {
+            if (element.Tag is not string id) continue;
+            var show = !hidden.Contains(id) && (id != "weather" || _vm.HasWeather);
+            element.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        }
+        MoreModule.Visibility = hidden.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        _hiddenModules = hidden;
+    }
+
+    private IReadOnlyList<string> _hiddenModules = [];
+
+    /// <summary>"…" lists what moved there, with its current reading.</summary>
+    private void OnMoreModules(object sender, MouseButtonEventArgs e)
+    {
+        MoreModulesItems.Children.Clear();
+        foreach (var id in _hiddenModules)
+        {
+            var text = id switch
+            {
+                "weather" => $"Weather · {_vm.WeatherLabel} {_vm.WeatherValue}",
+                "net" => $"Network · {_vm.UpText}  {_vm.DownText}",
+                "cpu" => $"CPU · {_vm.CpuText}",
+                "ram" => $"RAM · {_vm.RamText}",
+                _ => id,
+            };
+            MoreModulesItems.Children.Add(new TextBlock { Text = text, Margin = new Thickness(0, 4, 0, 4) });
+        }
+        MoreModulesList.IsOpen = true;
+    }
+
+    private Geometry Glyph(string key) => (Geometry)FindResource(key);
+
+    private void OnQuickSettings(object sender, MouseButtonEventArgs e) => SystemActions.QuickSettings();
+
+    private void OnHiddenIcons(object sender, MouseButtonEventArgs e) => SystemActions.HiddenIcons();
+
+    private void OnPower(object sender, MouseButtonEventArgs e) => PowerRequested?.Invoke();
+
+    private void OnSystem(object sender, MouseButtonEventArgs e) => PageRequested?.Invoke(IslandPage.System);
+
+    private void OnBrightnessTooltip(object sender, ToolTipEventArgs e)
+    {
+        if (_right.ReadBrightness() is { } level) _vm.BrightnessTooltip = $"Brightness {level}%";
     }
 
     /// <summary>The system clock or time zone changed, or the laptop woke up.</summary>
@@ -228,19 +312,6 @@ public partial class BarWindow : Window
                 break;
         }
         return IntPtr.Zero;
-    }
-
-    /// <summary>Until the System page exists (Phase 3), CPU and RAM open Task Manager (PRD 6.3).</summary>
-    private void OnOpenTaskManager(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo("taskmgr.exe") { UseShellExecute = true });
-        }
-        catch (Win32Exception)
-        {
-            // The user declined the UAC prompt.
-        }
     }
 
     private void OnSettings(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
