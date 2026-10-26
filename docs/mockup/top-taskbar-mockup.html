@@ -1324,8 +1324,8 @@ function layout(){
   }
   else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;R='28px'}
   else{W=Math.min(420,innerWidth-24);H=140;R='30px'}
-  // Floating states hang 8 px off the bar's edge: below it at the top, above it at the bottom.
-  if(FLOAT.includes(s))T=bottom?innerHeight-8-H:8;
+  // Floating states keep the compact island's edge and grow away from the bar: the top stays put at the top, the bottom at the bottom.
+  if(FLOAT.includes(s))T=bottom?ct+ih-H:ct;
   iw.style.width=W+'px';iw.style.height=H+'px';iw.style.top=T+'px';isl.style.borderRadius=R;
   slot.style.setProperty('--slotw',slot.dataset.k&&s==='compact'?(W-28)+'px':'auto');
   iw.classList.toggle('tall',s==='expanded'&&S.page===PAGE.notes);

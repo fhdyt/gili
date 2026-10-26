@@ -74,7 +74,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 | Material bar | Default opacity 100% (tint pekat di atas kaca). Opacity dan kekuatan blur bisa diatur |
 | Maskot | Gili: dua mata putih di pulau saat tidak ada aktivitas, lingkaran kecil di kiri pulau saat ada aktivitas. Mata mengikuti kursor dan berkedip |
 | Material pulau | Hitam pekat di semua keadaan |
-| Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh, 8 px di bawah tepi atas. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
+| Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh; tepi atasnya tetap di tempat tepi atas pulau compact (tidak turun), lalu membesar ke bawah. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
 | Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; Gili lalu menyediakan tombol Start, ikon tray, dan pulau kontrol (Wi‑Fi, Bluetooth, volume, brightness, power). Taskbar Windows dipulihkan di semua jalur keluar |
 | Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan (termasuk Wi‑Fi, Bluetooth, Volume, Brightness), tray, dan jam bisa dinyalakan/dimatikan di Settings |
 | Monitor | Monitor utama saja |
@@ -106,7 +106,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 
 **Posisi bar** (Settings → General → **Bar position**: `Top` / `Bottom`, default Top)
 - Bottom memindahkan AppBar ke tepi bawah (`ABE_BOTTOM`). Pilihan ini nonaktif selama taskbar Windows masih tampil, dengan keterangan `Hide the Windows taskbar first`, karena dua bar di tepi bawah akan bertumpuk.
-- Di bawah, semua yang mengambang dicerminkan secara vertikal: pulau yang terbuka, kartu, dan drop zone melayang 8 px **di atas** tepi bawah dan membesar ke atas; panel tray terbuka ke atas. Isi pulau (menu tab di atas, halaman di bawahnya) tidak dibalik.
+- Di bawah, semua yang mengambang dicerminkan secara vertikal: pulau yang terbuka, kartu, dan drop zone menjaga tepi **bawah** pulau compact dan membesar ke atas; panel tray terbuka ke atas. Isi pulau (menu tab di atas, halaman di bawahnya) tidak dibalik.
 - Pindah posisi berlaku langsung: bar keluar dari tepi lama dan masuk dari tepi baru (pegas compact ↔ wide), lalu ruang AppBar didaftarkan ulang.
 - Kalau taskbar Windows dimunculkan lagi saat bar di bawah, bar otomatis pindah ke atas dan Settings menampilkan `Moved to the top because the Windows taskbar is back`.
 
@@ -145,10 +145,14 @@ Cuplikan clipboard (copy/cut teks, gambar, file) dan progres copy, move, dan del
 |---|---|---|---|
 | Compact | Di dalam bar, kapsul hitam setinggi pengaturan "Tinggi pulau" (default 24 px), di tengah tinggi bar | Mata Gili saat tidak ada aktivitas; saat ada aktivitas hanya aktivitas itu, dan Gili pindah ke lingkaran di kiri pulau. Lebar mengikuti isinya, minimal 200 px | Tampil |
 | Wide | Di dalam bar, kapsul lebih panjang | Kejadian singkat: Caps/Num Lock, charger, peringatan baterai | Tampil |
-| Expanded | Panel mengambang 8 px di bawah tepi atas, lebar 680 px (Notes 960 px); **tinggi mengikuti isi halaman** (lihat "Tinggi pulau terbuka"), minimal 256 px (Notes 500 px), radius sudut 32 px di semua halaman | Menu tab (ikon + nama) selebar pulau, lalu halaman | Latar transparan; elemen tertimpa memudar |
-| Kontrol | Panel mengambang 8 px di bawah tepi atas, lebar 360 px (Volume, Brightness, Power) atau 400 px (Wi‑Fi, Bluetooth), tinggi mengikuti isi, radius 28 px | Satu kontrol saja, tanpa menu tab (lihat "Pulau kontrol" di 6.4) | Latar transparan; elemen tertimpa memudar |
-| Kartu notifikasi | Panel mengambang sekitar 560 × 104 px, radius 28 px | Satu notifikasi dengan tombol aksi | Latar transparan; elemen tertimpa memudar |
-| Drop zone | Panel mengambang sekitar 420 × 140 px, radius 30 px | Target "Drop to keep on the Shelf" saat file diseret ke atas bar | Latar transparan; elemen tertimpa memudar |
+| Expanded | Panel mengambang dengan tepi atas sama dengan tepi atas pulau compact (lihat "Posisi saat mengambang"), lebar 680 px (Notes 960 px); **tinggi mengikuti isi halaman** (lihat "Tinggi pulau terbuka"), minimal 256 px (Notes 500 px), radius sudut 32 px di semua halaman | Menu tab (ikon + nama) selebar pulau, lalu halaman | Latar transparan; elemen tertimpa memudar |
+| Kontrol | Panel mengambang dengan tepi atas sama dengan pulau compact, lebar 360 px (Volume, Brightness, Power) atau 400 px (Wi‑Fi, Bluetooth), tinggi mengikuti isi, radius 28 px | Satu kontrol saja, tanpa menu tab (lihat "Pulau kontrol" di 6.4) | Latar transparan; elemen tertimpa memudar |
+| Kartu notifikasi | Panel mengambang sekitar 560 × 104 px, radius 28 px, tepi atas sama dengan pulau compact | Satu notifikasi dengan tombol aksi | Latar transparan; elemen tertimpa memudar |
+| Drop zone | Panel mengambang sekitar 420 × 140 px, radius 30 px, tepi atas sama dengan pulau compact | Target "Drop to keep on the Shelf" saat file diseret ke atas bar | Latar transparan; elemen tertimpa memudar |
+
+**Posisi saat mengambang**
+- Tepi atas pulau tidak bergerak saat pulau membuka. Expanded, pulau kontrol, kartu, dan drop zone memakai tepi atas yang sama dengan pulau compact, yaitu (tinggi bar − tinggi pulau) / 2 dari tepi atas layar (4 px pada bar 32 px dan pulau 24 px). Pulau hanya melebar ke samping dan memanjang ke bawah, jadi terlihat tumbuh dari pulau kecil, bukan turun.
+- Di posisi bar bawah, yang tetap adalah tepi bawahnya, dan pulau memanjang ke atas.
 
 **Bar saat pulau mengambang**
 - Latar bar (warna, blur kaca, garis bawah) memudar sampai transparan penuh, jadi wallpaper terlihat di area bar.
@@ -582,7 +586,7 @@ Urutan default dari kiri ke kanan:
 
 Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau sendiri**. Klik ikonnya di bar membuat pulau membesar **hanya berisi kontrol itu**, tanpa menu tab dan tanpa kontrol lain. Ukuran pulau mengikuti isi kontrolnya, jadi pulau Volume kecil dan pulau Wi‑Fi memanjang mengikuti daftar jaringannya.
 
-- **Gerak dan posisi** sama dengan pulau terbuka: mengambang 8 px dari tepi bar, pegas buka/tutup yang sama, latar bar transparan, elemen yang tertimpa memudar (6.3). Radius sudut 28 px, isi diberi jarak 16 px dari tepi (radius dalam 12 px).
+- **Gerak dan posisi** sama dengan pulau terbuka: tepi atasnya sama dengan pulau compact, pegas buka/tutup yang sama, latar bar transparan, elemen yang tertimpa memudar (6.3). Radius sudut 28 px, isi diberi jarak 16 px dari tepi (radius dalam 12 px).
 - **Buka/tutup**: klik ikon yang sama, Esc, klik di luar pulau, atau mouse di luar pulau selama 3 detik menutupnya (ditunda selama slider sedang digeser). Klik ikon kontrol lain saat pulau kontrol terbuka langsung mengganti isinya; pulau berubah ukuran dengan pegas, isi lama memudar 90 ms dan isi baru muncul 180 ms.
 - **Tidak ada menu tab**: panah kiri/kanan dan geser touchpad tidak berpindah halaman. Pulau kontrol bukan halaman, jadi tidak muncul di menu halaman dan tidak bisa disembunyikan lewat Settings → Island (ikonnya yang disembunyikan lewat Settings → Right side).
 - **Prioritas** sama dengan pulau yang dibuka pengguna: di atas kejadian wide dan aktivitas, di bawah kartu dan drop zone. Kartu alarm menggantikannya sementara, lalu pulau kontrol kembali setelah kartu ditanggapi.
