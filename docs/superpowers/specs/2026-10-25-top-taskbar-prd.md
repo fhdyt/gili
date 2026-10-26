@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Tanggal | 26 Oktober 2026 (revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi; nama aplikasi TopBar diganti Gili) |
+| Tanggal | 26 Oktober 2026 (revisi 5: editor note tumbuh dari kartunya, note mengambang di luar pulau; revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi; nama aplikasi TopBar diganti Gili) |
 | Status | Disetujui saat brainstorming, menunggu review dokumen |
 | Platform | Windows 11 (laptop), monitor utama |
 | Pengguna | Pribadi (satu pengguna) |
@@ -18,7 +18,7 @@ Gili adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel de
 
 Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor dan berkedip. Saat ada aktivitas, Gili berpindah ke kiri pulau sebagai lingkaran kecil, dan pulau menampilkan aktivitasnya.
 
-Saat dibuka, pulau lepas dari bar menjadi panel hitam mengambang sedikit di bawah tepi atas. Latar bar menjadi transparan, isi kiri dan kanan tetap tampil, dan hanya elemen yang tertimpa panel yang memudar. Pulau punya halaman untuk media, timer, alarm, kalender, todo, note, Shelf (tempat file sementara), sesi Claude, dan statistik sistem. Note ditulis langsung di pulau. Jendela Tools terpisah dipakai untuk pengelolaan: daftar alarm, edit todo, riwayat clipboard, dan Settings.
+Saat dibuka, pulau lepas dari bar menjadi panel hitam mengambang sedikit di bawah tepi atas. Latar bar menjadi transparan, isi kiri dan kanan tetap tampil, dan hanya elemen yang tertimpa panel yang memudar. Pulau punya halaman untuk media, timer, alarm, kalender, todo, note, Shelf (tempat file sementara), sesi Claude, dan statistik sistem. Note ditulis langsung di pulau, dan satu note bisa diseret keluar menjadi jendela kecil yang selalu di atas jendela lain. Jendela Tools terpisah dipakai untuk pengelolaan: daftar alarm, edit todo, riwayat clipboard, dan Settings.
 
 Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta isi Shelf tetap tersimpan setelah restart.
 
@@ -402,7 +402,7 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 | 3 | Alarms | Alarm berikutnya dalam huruf besar ("Tomorrow 05:30"), semua alarm dengan saklar (pulau memanjang mengikuti jumlahnya) | Nyala/mati alarm; "Manage alarms" membuka Tools |
 | 4 | Calendar | Nama bulan dan tahun di atas grid, bulan berjalan, hari ini ditandai, titik pada tanggal yang punya todo/alarm; memilih tanggal menampilkan semua itemnya di kanan (pulau memanjang bila perlu) | Bulan sebelum/berikutnya; **Add task** untuk tanggal terpilih, dengan jam opsional (satu-satunya tempat membuat todo) |
 | 5 | Todo | Angka besar `4/5` + "Tasks done today", semua tugas hari ini tanpa scroll (yang selesai dicoret dengan latar hijau gelap; jam tampil di kanan baris bila diatur) | Centang; **Add in Calendar** (membuka Calendar di hari ini dengan Add task terbuka); **Edit** dan **Delete** per baris (lihat "Mengubah dan menghapus todo") |
-| 6 | Notes | Pulau membesar ke lebar 960 px, tinggi minimal 500 px dan memanjang mengikuti kartu. Atas: kolom cari dan tombol New note. Kiri: **grid kartu ala Google Keep** (lihat "Halaman Notes" di bawah). Kanan: editor teks yang **hanya muncul saat menambah atau mengedit** note | Buat, klik kartu untuk edit, cari, **seret kartu untuk mengatur urutan** (Alt + panah dari keyboard), hapus (klik dua kali untuk konfirmasi), Done |
+| 6 | Notes | Pulau membesar ke lebar 960 px, tinggi minimal 500 px dan memanjang mengikuti kartu. Atas: kolom cari dan tombol New note. Di bawahnya **grid kartu ala Google Keep** selebar penuh (lihat "Halaman Notes" di bawah). Tidak ada kolom editor: note yang dibuka **tumbuh di tempat dari kartunya** menjadi editor | Buat, klik kartu untuk edit, cari, **seret kartu untuk mengatur urutan** (Alt + panah dari keyboard), **seret kartu keluar pulau untuk melepasnya** (lihat "Note mengambang"), hapus (klik dua kali untuk konfirmasi), Done |
 | 7 | Shelf | Grid tetap 4 × 2 (maksimal 8 item, **tanpa scroll**). Tile ringkas: ikon jenis file dan nama satu baris; bundel menampilkan ikon tumpukan dengan jumlah file. Ringkasan jumlah file dan total ukuran di kiri | Seret tile keluar ke folder/aplikasi, hapus satu, Clear all |
 | 8 | Claude | Baris ringkasan jendela pemakaian 5 jam (bila fiturnya nyala), lalu satu baris per sesi yang hidup, urut Needs input → Working → Done (belum dilihat) → Idle: ikon status, nama sesi, folder, dan waktu (berjalan, lama selesai, atau sejak kapan idle). Baris Needs input menampilkan cuplikan pertanyaan di baris kedua; sesi Idle redup; pulau memanjang mengikuti jumlah sesi. Tanpa sesi: `No Claude sessions`. Halaman hanya ada bila integrasi Claude menyala | Klik baris membawa jendela sesi ke depan dan menandai Done sebagai sudah dilihat |
 | 9 | System | Grafik mini 60 detik untuk CPU, RAM, GPU, unduhan; suhu CPU; sisa ruang C: | Klik membuka Task Manager |
@@ -410,10 +410,18 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 **Todo hari ini**: todo yang jatuh tempo hari ini, ditambah todo tanpa tanggal yang belum selesai, ditambah todo tanpa tanggal yang diselesaikan hari ini. Rasio dan ring = jumlah selesai / total daftar itu. Kalau daftar kosong tampil "Nothing due today" dan tombol Add in Calendar.
 
 **Halaman Notes**
-- **Ukuran**: pulau membesar ke lebar 960 px dan tinggi minimal 500 px yang memanjang mengikuti kartu (dibatasi lebar layar dikurangi 24 px), jauh lebih besar dari halaman lain, dengan pegas yang sama seperti membuka pulau. Muat 5 kolom kartu saat editor tertutup dan 3 kolom saat editor terbuka.
+- **Ukuran**: pulau membesar ke lebar 960 px dan tinggi minimal 500 px yang memanjang mengikuti kartu (dibatasi lebar layar dikurangi 24 px), jauh lebih besar dari halaman lain, dengan pegas yang sama seperti membuka pulau. Muat 5 kolom kartu, juga saat note sedang diedit (editor tidak mengambil kolom).
 - **Grid kartu ala Google Keep**: setiap note jadi kartu (judul tebal = baris pertama, isi maksimal 8 baris, waktu terakhir diedit). Lebar kolom minimal 140 px dan jarak antar-kartu 8 px. Tinggi kartu mengikuti isinya, dan kartu ditempatkan berurutan ke kolom yang paling pendek (masonry), jadi susunannya rapat seperti Keep. Pulau memanjang mengikuti kolom tertinggi (6.3 "Tinggi pulau terbuka"); grid baru bisa di-scroll setelah pulau setinggi layar.
-- **Editor hanya saat dibutuhkan**: saat tidak sedang menulis, grid memakai seluruh lebar. Klik kartu atau **New note** membuat editor (lebar 360 px) meluncur masuk dari kanan, grid menyempit, dan kartu-kartu bergeser ke posisi barunya dengan animasi. Kartu yang sedang diedit diberi garis hijau.
-- **Menutup editor**: tombol **Done**, atau Esc di editor (Esc berikutnya menutup pulau). Grid kembali selebar penuh. Note baru yang ditutup dalam keadaan kosong dibuang otomatis, seperti di Keep.
+- **Kartu menjadi editor**: klik kartu (atau Enter pada kartu yang fokus) membuat **kartu itu sendiri tumbuh di tempat** menjadi editor 440 × 360 px, dibatasi area grid yang terlihat. Grid tetap selebar penuh dan tidak menata ulang; kartu lain meredup ke opacity 30% supaya perhatian ada di note yang dibuka. Slot kartu itu kosong selama editor terbuka, karena editornya adalah kartu itu.
+- **Arah tumbuh mengikuti posisi kartu**:
+  - Mendatar: kartu di sepertiga kiri grid tumbuh ke kanan (tepi kirinya tetap), di sepertiga kanan tumbuh ke kiri (tepi kanannya tetap), di sepertiga tengah melebar ke dua sisi sama banyak.
+  - Tegak: tumbuh ke bawah (tepi atas tetap); kalau ruang di bawahnya kurang, tumbuh ke atas (tepi bawah tetap).
+  - Editor selalu berada di dalam area grid yang terlihat; kalau tidak muat, digeser masuk.
+  - Isi editor (teks, bulatan warna, tombol) sudah ditata di ukuran akhir dan menempel di sudut asal tumbuh, jadi teks tidak berpindah baris selama animasi. Isi muncul 140 ms setelah kartu mulai tumbuh.
+- **Note baru** (**New note** atau `Ctrl+Alt+N`): kartu kosong lahir di kanan atas grid, tepat di bawah tombol New note, lalu tumbuh ke bawah dan ke kiri menjadi editor. Note baru menempati slot pertama (kiri atas), jadi kartu lain bergeser satu slot bersamaan; grid di-scroll ke atas dulu bila perlu.
+- **Isi editor**: area teks (baris pertama = judul), baris bulatan warna, lalu baris bawah: status `Saved`, tombol ikon **Float on top** (lihat "Note mengambang"), **Delete**, **Done**. Latar editor = warna note.
+- **Menutup editor**: tombol **Done**, Esc di editor (Esc berikutnya menutup pulau), atau klik di grid yang redup. Editor menyusut kembali ke slot kartunya (note baru: ke slot pertama), lalu diganti kartunya di frame yang sama tanpa kedip, dan kartu lain kembali terang. Note baru yang ditutup dalam keadaan kosong menyusut kembali ke tempat lahirnya sambil memudar dan dibuang, seperti di Keep. **Delete** menyusutkan editor ke slotnya sambil memudar, lalu kartu lain merapat.
+- **Bisa disela**: mengeklik kartu lagi saat editor masih menyusut membuat editor tumbuh lagi dari ukuran yang sedang tampil.
 - **Mengatur urutan**: seret kartu. Kartu terangkat (bayangan dan skala 3%) dan mengikuti pointer 1:1 dari titik pegang; saat melewati kartu lain, urutannya bertukar dan kartu lain bergeser dengan animasi; saat dilepas, kartu mendarat ke slotnya dengan pegas. Dari keyboard: fokus kartu lalu Alt + panah (kiri/atas = lebih awal, kanan/bawah = lebih akhir). Mengurutkan tidak bisa selama pencarian aktif.
 - **Cari**: menyaring kartu sesuai teks; editor yang terbuka ditutup dulu.
 - **Warna note**: 8 pilihan, dipilih dari baris bulatan warna di bawah area teks saat note diedit. Warna dipakai untuk latar kartu dan latar area teks; note baru memakai Default. Semua warna sengaja gelap supaya teks putih tetap kontras minimal 4,5:1 (teks isi putih 88%, waktu putih 72%).
@@ -428,6 +436,26 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 | Teal | `#0F4C4B` |
 | Blue | `#1C3C61` |
 | Purple | `#42265A` |
+
+**Note mengambang**
+
+Satu note bisa dikeluarkan dari pulau menjadi jendela kecil yang selalu di atas jendela lain dan langsung bisa diedit, seperti sticky note di layar.
+
+- **Melepas dengan menyeret**: seret kartu seperti saat mengatur urutan, lalu bawa pointer melewati tepi pulau. Saat itu kartu "robek" menjadi jendela note yang mengikuti pointer 1:1. Jendela mulai dari ukuran kartu dan tumbuh ke 260 × 220 px, dengan titik yang dipegang tetap di bawah pointer. Kalau pointer kembali ke dalam pulau sebelum dilepas, jendelanya hilang dan seretan kembali menjadi pengurutan biasa. Selama diseret, kartu di grid tetap di slotnya dengan opacity 40%.
+- **Dilepas di luar pulau**: jendela tinggal di posisi itu dan kursor teks langsung berada di akhir note, jadi pengguna bisa langsung mengetik. Pulau tetap terbuka lalu menutup dengan aturan biasa (pointer 3 detik di luar pulau).
+- **Melepas tanpa menyeret**: tombol ikon **Float on top** di editor (tooltip `Float on top`). Note muncul di kanan atas area kerja (24 px dari tepi kanan dan dari bar; setiap note mengambang berikutnya bergeser 24 px ke kiri bawah), editor di pulau menutup, dan kursor teks pindah ke jendela note.
+- **Jendela note**:
+  - Latar warna note, sudut 8 px dari Windows 11 (bukan jendela transparan), bayangan jendela biasa. Tidak tampil di taskbar Windows dan tidak ada di Alt+Tab.
+  - Bagian atas setinggi 28 px untuk menyeret jendela (ikon grip), dengan tombol **Close** (×, tooltip `Close`) di kanan yang muncul saat hover atau saat jendela fokus.
+  - Sisanya area teks yang langsung bisa diedit, 13 px. Baris pertama tetap menjadi judul kartu. Tersimpan 0,5 detik setelah berhenti mengetik, sama dengan editor pulau; kartu di pulau ikut berubah. Esc melepas fokus dari jendela.
+  - Ukuran bisa diubah dari tepi dan sudut, 200 × 140 sampai 520 × 640 px.
+  - Hanya bisa dipindah di dalam area kerja (tidak menutupi bar Gili maupun taskbar Windows). Kalau dilepas sebagian di luar, jendela memantul masuk dengan pegas.
+- **Kartunya di pulau** tetap di slotnya dengan tanda ikon + `Floating` di baris waktu. Klik kartu itu membawa jendelanya ke depan (berdenyut sekali) dan memfokuskan teksnya, bukan membuka editor kedua, jadi satu note tidak pernah diedit di dua tempat. Kartu tetap bisa diseret untuk mengatur urutan dan tetap muncul di hasil cari.
+- **Close**: jendela menutup dan note kembali hanya ada di pulau; tidak terhapus. Note yang kosong saat ditutup dibuang. Menghapus note dilakukan di pulau setelah jendelanya ditutup.
+- **Urutan tumpuk**: note mengambang berada di atas jendela biasa. Pulau yang dibuka selalu di atas note mengambang (`IslandWindow` memasang ulang posisi topmost-nya setiap kali membuka). Di antara note mengambang, yang terakhir diklik berada paling depan.
+- **Fullscreen**: semua note mengambang disembunyikan saat aplikasi fullscreen aktif, sama seperti bar, lalu muncul lagi setelahnya.
+- **Batas**: maksimal 6 note mengambang. Note ketujuh tidak bisa dilepas dan pulau menampilkan `Up to 6 floating notes`.
+- **Tahan restart**: posisi dan ukuran tiap note mengambang tersimpan. Setelah Gili restart atau login, jendelanya muncul lagi di tempat yang sama; kalau resolusi, DPI, atau posisi bar berubah, jendela digeser masuk ke area kerja.
 
 **Menambah todo (hanya lewat Calendar)**
 - Todo **hanya dibuat dari halaman Calendar**: pilih tanggal, lalu **Add task** di bawah daftar tanggal itu. Kolom input muncul di tempat: judul tugas, lalu kolom **jam** kecil di kanannya (placeholder `Time`, format 24 jam `15:00`, opsional). Enter menyimpan, Esc membatalkan, Tab berpindah dari judul ke jam.
@@ -455,7 +483,7 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 
 **Pindah halaman**: scroll horizontal touchpad, roda mouse di area halaman (kecuali di atas daftar yang bisa di-scroll dan di seluruh halaman Notes, tempat roda mouse vertikal hanya men-scroll kartu), klik tab di menu halaman, atau tombol ← →.
 
-**Menutup pulau**: klik di luar, Esc, `Ctrl+Alt+Space`, atau mouse berada di luar pulau selama 3 detik. Penutupan otomatis ditunda selama kolom teks atau editor note fokus. Note yang sedang ditulis disimpan sebelum pulau menutup.
+**Menutup pulau**: klik di luar, Esc, `Ctrl+Alt+Space`, atau mouse berada di luar pulau selama 3 detik. Penutupan otomatis ditunda selama kolom teks atau editor note fokus. Note yang sedang ditulis disimpan sebelum pulau menutup. Note mengambang tetap tampil saat pulau menutup.
 
 #### Kartu notifikasi
 
@@ -706,10 +734,11 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | F-TOOL-05 | Alarm | Jam, label, hari berulang atau sekali, nyala/mati, snooze 5 menit; alarm saat sleep membangunkan laptop bila wake timer diizinkan; alarm terlewat berbunyi saat bangun dengan label "Missed" | 2 |
 | F-TOOL-06 | Todo | Judul, tanggal jatuh tempo opsional, jam pengingat opsional, selesai, urutan manual (seret), filter Today / All / Done | 2 |
 | F-TOOL-07 | Pengingat todo | Saat jam pengingat tiba, kartu + toast muncul; "Snooze 10m" menggeser pengingat | 2 |
-| F-TOOL-08 | Note di pulau | Halaman Notes sesuai "Halaman Notes" di 6.3: pulau 960 px dengan tinggi minimal 500 px; grid kartu masonry ala Google Keep dalam urutan pengguna (note baru di atas; mengedit tidak mengubah urutan); editor di kanan hanya muncul saat menambah/mengedit dan tertutup lewat Done atau Esc; note baru yang kosong dibuang saat ditutup; 8 pilihan warna per note yang tersimpan dan tampil di kartu serta area teks; seret kartu untuk mengatur urutan (dan Alt + panah); tersimpan 0,5 detik setelah berhenti mengetik dan saat pulau menutup; cari; hapus dengan konfirmasi; pulau tidak menutup otomatis selama editor fokus atau kartu sedang diseret | 2 |
+| F-TOOL-08 | Note di pulau | Halaman Notes sesuai "Halaman Notes" di 6.3: pulau 960 px dengan tinggi minimal 500 px; grid kartu masonry ala Google Keep selebar penuh dalam urutan pengguna (note baru di atas; mengedit tidak mengubah urutan); kartu yang dibuka tumbuh di tempat menjadi editor ke arah ruang kosong sesuai posisinya (kiri → kanan, kanan → kiri, tengah → dua sisi; ke bawah, atau ke atas bila ruang bawah kurang) dan tidak pernah keluar dari area grid; note baru lahir sebagai kartu kosong di bawah New note lalu tumbuh ke bawah dan ke kiri; editor menyusut kembali ke slot kartunya lewat Done, Esc, atau klik di grid; note baru yang kosong dibuang saat ditutup; 8 pilihan warna per note yang tersimpan dan tampil di kartu serta area teks; seret kartu untuk mengatur urutan (dan Alt + panah); tersimpan 0,5 detik setelah berhenti mengetik dan saat pulau menutup; cari; hapus dengan konfirmasi; pulau tidak menutup otomatis selama editor fokus atau kartu sedang diseret | 2 |
 | F-TOOL-09 | Ketahanan data | Mematikan paksa laptop saat mengetik note kehilangan paling banyak 1 detik ketikan terakhir | 2 |
 | F-TOOL-10 | Hotkey global dan quick capture | `Ctrl+Alt+Space` buka/tutup pulau; `Ctrl+Alt+V` riwayat clipboard; `Ctrl+Alt+N` halaman Notes dengan note baru dan editor fokus; `Ctrl+Alt+T` halaman Calendar di hari ini dengan kolom Add task terbuka dan fokus (Enter simpan, Esc batal) | 4 |
 | F-TOOL-11 | Hotkey bisa diubah | Semua hotkey bisa diganti di Settings; bentrok ditampilkan "Used by another app" | 4 |
+| F-TOOL-12 | Note mengambang | Sesuai "Note mengambang" di 6.3: kartu yang diseret melewati tepi pulau, atau tombol Float on top di editor, menjadi jendela note always on top yang langsung bisa diketik; kembali ke dalam pulau sebelum dilepas membatalkannya; perubahan tampil di kartu pulau dan tersimpan seperti F-TOOL-08; jendela bisa dipindah dan diubah ukurannya hanya di dalam area kerja; klik kartunya di pulau memfokuskan jendela itu; Close mengembalikan note ke pulau tanpa menghapusnya (note kosong dibuang); maksimal 6; posisi dan ukuran kembali setelah restart; tersembunyi saat fullscreen; pulau yang dibuka tampil di atasnya | 2 |
 
 ### 7.6 Suara
 
@@ -750,7 +779,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 - Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
 - Tidak ada hook mouse atau keyboard global selain hook Caps/Num Lock yang sudah ada.
 
-**Anggaran per fitur revisi 4** (diukur di laptop pengguna saat fase fiturnya; kalau melewati anggaran, cadangannya dipakai):
+**Anggaran per fitur revisi 4 dan 5** (diukur di laptop pengguna saat fase fiturnya; kalau melewati anggaran, cadangannya dipakai):
 
 | Fitur | Biaya yang diperkirakan | Anggaran | Cadangan bila lewat |
 |---|---|---|---|
@@ -761,6 +790,8 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Detik di jam | Satu teks kecil diperbarui sekali per detik; timer diselaraskan ke pergantian detik sistem, bukan polling cepat; tata letak bar dihitung ulang hanya saat menit atau tanggal berganti | Tidak terukur (< 0,1%) | Show seconds dimatikan |
 | Timer jendela Claude 5 jam | Satu teks diperbarui tiap detik saat tampil di slot | Tidak terukur | Saat hanya di gelembung, tidak ada pembaruan teks |
 | Tinggi pulau mengikuti isi, posisi bawah, sembunyikan taskbar, tombol Start, jam di kanan | Hanya saat ada perubahan | Tidak terukur | — |
+| Kartu note tumbuh jadi editor | Animasi ±420 ms di dalam jendela pulau (layered, digambar CPU) hanya saat membuka/menutup note; isi editor ditata sekali di ukuran akhir, bukan tiap frame | Masuk anggaran animasi (< 5%) selama animasi, 0% setelahnya | Ukuran berpindah dengan cross-fade 100 ms |
+| Note mengambang | Satu jendela WPF biasa per note yang sedang mengambang (tidak transparan, sudut dari DWM, jadi digambar GPU), di thread UI yang sama; tidak ada jendela untuk note yang tidak mengambang; maksimal 6 | RAM ≤ +3 MB per jendela; CPU 0% saat diam | Batas turun ke 3 |
 
 ### 8.2 Keandalan dan privasi
 - Gagalnya satu provider tidak mematikan bar (bagian 11).
@@ -808,7 +839,11 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Isi pulau muncul | 220 ms: opacity + blur 6 → 0 px + skala 0,98 → 1, mulai 120 ms setelah pulau mulai membesar |
 | Pindah halaman | Geser horizontal 300 ms, ease-out eksponensial; sorotan tab menu bergeser ke tab baru 320 ms ease-out bersamaan |
 | Ukuran pulau saat masuk/keluar Notes | Pegas yang sama dengan membuka pulau |
-| Editor Notes muncul/hilang | Geser 24 px dari kanan + opacity, 320 ms ease-out; grid menyempit/melebar dan kartu pindah posisi 320 ms ease-out |
+| Kartu note tumbuh jadi editor | Posisi dan ukuran dengan pegas membuka pulau (damping 0,82, response 0,42 dtk), radius 12 → 16 px; isi muncul 180 ms mulai 140 ms; kartu lain meredup 220 ms |
+| Editor menyusut kembali ke kartu | Pegas damping 1,0, response 0,32 dtk (tanpa memantul); isi hilang 120 ms; note kosong atau dihapus memudar 160 ms mulai 160 ms; editor berganti kartu di frame yang sama |
+| Kartu dilepas jadi note mengambang | Jendela mengikuti pointer 1:1 dari titik pegang; ukuran tumbuh dari kartu ke 260 × 220 px dengan pegas membuka pulau; dilepas sebagian di luar area kerja: posisi masuk dengan pegas damping 0,82, response 0,34 dtk; batal (kembali ke pulau): jendela mengecil ke skala 0,94 + opacity 160 ms |
+| Note mengambang muncul lewat Float on top / ditutup | Muncul: skala 0,9 → 1 + opacity dengan pegas membuka pulau; tutup: skala 0,94 + opacity 160 ms |
+| Kartu note mengambang diklik | Jendelanya berdenyut skala 1 → 1,035 → 1 dalam 420 ms |
 | Kartu note yang diseret | Mengikuti pointer 1:1 dari titik pegang, terangkat dengan bayangan dan skala 3%; kartu lain bergeser 320 ms; saat dilepas mendarat dengan pegas 340 ms |
 | Isi slot berganti (cuplikan clipboard, progres file, aktivitas lain), atau jam/tanggal hilang dan muncul | Lebar pulau dan rentang isi aktivitas mengikuti dengan pegas compact ↔ wide; isi slot fade 180 ms |
 | Titik kamera/mic dan gelembung aktivitas muncul/hilang | Skala 0 → 1 dengan pegas 320 ms; posisinya ikut bergeser dengan pegas yang sama seperti pulau saat pulau berubah ukuran |
@@ -830,6 +865,7 @@ Semua transisi pulau bisa disela: keadaan baru mulai dari ukuran yang sedang tam
 - Kontras teks minimal 4,5:1.
 - Teks dan ikon ikut skala DPI 100–200%.
 - Mengatur urutan note punya jalur keyboard (Alt + panah pada kartu yang fokus); Enter membuka kartu di editor.
+- Melepas note punya jalur keyboard: tombol Float on top di editor. Jendela note mengambang bisa difokuskan dari kartunya di pulau (Enter), dan Esc melepas fokusnya.
 
 ## 9. Arsitektur teknis
 
@@ -837,7 +873,7 @@ Semua transisi pulau bisa disela: keadaan baru mulai dari ukuran yang sedang tam
 
 | Proyek | Isi | Bergantung pada |
 |---|---|---|
-| `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow` (AppBar), `IslandWindow` (jendela transparan topmost untuk keadaan mengambang), `ToolsWindow`, `SettingsWindow`, ViewModel | Core, Platform, Data |
+| `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow` (AppBar), `IslandWindow` (jendela transparan topmost untuk keadaan mengambang), `NoteWindow` (satu per note mengambang, topmost, tidak transparan), `ToolsWindow`, `SettingsWindow`, ViewModel | Core, Platform, Data |
 | `Gili.Core` | `IslandCoordinator`, `Scheduler`, `ShelfService`, model, format angka/tanggal. Tanpa WPF dan Win32 | — |
 | `Gili.Platform` | Provider Windows (9.2), `AppBarService`, `BarMaterial`, `HotkeyService`, `NotificationService`, helper drag-and-drop | Core |
 | `Gili.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Core |
@@ -920,7 +956,7 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 
 | Tabel | Kolom utama |
 |---|---|
-| `notes` | `id`, `body`, `color` (0–7, default 0), `sort_order`, `created_at`, `updated_at` |
+| `notes` | `id`, `body`, `color` (0–7, default 0), `sort_order`, `created_at`, `updated_at`, `float_x`, `float_y`, `float_w`, `float_h` (posisi dan ukuran note mengambang dalam piksel tanpa skala DPI; kosong bila tidak mengambang) |
 | `todos` | `id`, `title`, `due_date` (opsional), `remind_at` (opsional), `done_at` (opsional), `sort_order`, `created_at` |
 | `alarms` | `id`, `time_of_day`, `repeat_days` (bitmask, 0 = sekali), `label`, `sound` (default `radar`), `enabled`, `next_fire_at` |
 | `timers` | `id`, `kind` (timer/pomodoro), `label`, `duration_s`, `ends_at` (saat jalan), `remaining_s` (saat dijeda), `pomodoro_phase`, `pomodoro_round` |
@@ -992,7 +1028,7 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 - **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri Gili, JSON rusak tidak disentuh, cadangan dibuat.
 - **Test repository** pada file SQLite sementara: simpan/muat, migrasi, batas baris (50 riwayat clipboard, 8 item Shelf).
 - **Mode demo** untuk memeriksa tampilan dan gerak semua keadaan tanpa kejadian nyata.
-- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat Gili mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
+- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, buka note di kolom kiri, tengah, dan kanan serta di baris bawah (arah tumbuh editor), New note dan `Ctrl+Alt+N` (tumbuh ke bawah dan ke kiri), seret note keluar pulau lalu kembali masuk sebelum dilepas, lepas note di luar pulau dan langsung mengetik, Float on top, enam note mengambang lalu yang ketujuh, note mengambang setelah restart dan setelah DPI 125/150%, note mengambang saat YouTube fullscreen, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat Gili mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
 - **Pengukuran performa**: catat RAM dan CPU dari Task Manager setelah 8 jam pemakaian normal.
 
 ## 14. Fase rilis
@@ -1000,7 +1036,7 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 | Fase | Isi | Selesai bila |
 |---|---|---|
 | 1. Fondasi bar | F-BAR-01–07, F-BAR-08 (jam, material, autostart), F-BAR-09, F-BAR-13, F-LEFT-01, F-ISL-17, F-ISL-01–06, F-ISL-07 kerangka + Media, F-ISL-19, F-ISL-21 (Media), F-RIGHT-01, F-RIGHT-11 | Bar dipakai seharian penuh tanpa crash; checklist Fase 1 lulus; target 8.1 terpenuhi |
-| 2. Produktivitas | SQLite, jendela Tools, F-TOOL-01–09 (F-TOOL-04 bagian pulau), F-ISL-07 Timer/Alarms/Calendar/Todo/Notes, F-ISL-08, F-ISL-16, F-ISL-20, F-ISL-21 (halaman lain), F-ISL-22, F-SND-01–06 | Data tahan restart dan matikan paksa; alarm berbunyi tepat waktu termasuk setelah sleep |
+| 2. Produktivitas | SQLite, jendela Tools, F-TOOL-01–09 (F-TOOL-04 bagian pulau), F-TOOL-12, F-ISL-07 Timer/Alarms/Calendar/Todo/Notes, F-ISL-08, F-ISL-16, F-ISL-20, F-ISL-21 (halaman lain), F-ISL-22, F-SND-01–06 | Data tahan restart dan matikan paksa; alarm berbunyi tepat waktu termasuk setelah sleep |
 | 3. Sistem lengkap | F-ISL-10–12, F-ISL-14, F-ISL-18, F-ISL-23, F-LEFT-02, F-LEFT-04–06, F-RIGHT-02–04, F-RIGHT-07–10, F-ISL-07 Shelf + System, F-BAR-08 modul dan baterai, F-BAR-10–12, F-CLD-01–08 (diawali verifikasi hook izin di Claude Desktop, sumber waktu reset 5 jam, dan host tray) | Modul kanan cocok dengan Task Manager; overflow bekerja di 1366 px; file bisa masuk dan keluar Shelf; sesi Claude Desktop dan terminal tampil benar saat bekerja, bertanya, dan selesai |
 | 4. Ekstra | F-TOOL-10–11, F-LEFT-03, F-ISL-15, F-RIGHT-05–06, F-TOOL-04 DND Windows, sisa F-BAR-08 | Semua fitur best-effort punya cadangan yang bekerja saat fiturnya gagal |
 
