@@ -102,7 +102,7 @@ Urutan dari kiri: ikon launcher, ikon Shelf, ikon Claude, **pemisah** (garis ver
 
 | Elemen | Perilaku |
 |---|---|
-| Launcher | Tiga ikon: Timer, Todo, Notes. Masing-masing membuka halamannya di pulau (Timer, Todo, Notes). Kalau pulau sudah terbuka, klik pindah ke halaman itu; klik ikon halaman yang sedang terbuka menutup pulau. Pengelolaan lengkap tetap di jendela Tools (tombol Edit / Manage di halaman pulau). |
+| Launcher | Empat ikon, urut seperti menu tab pulau: Timer, Alarms, Todo, Notes. Masing-masing membuka halamannya di pulau (Timer, Alarms, Todo, Notes). Kalau pulau sudah terbuka, klik pindah ke halaman itu; klik ikon halaman yang sedang terbuka menutup pulau. Pengelolaan lengkap tetap di jendela Tools (tombol Edit / Manage di halaman pulau). |
 | Shelf | Ikon tray tepat setelah launcher, selalu tampil. Kalau Shelf berisi, diikuti jumlah file (`3`). Ikon memantul kecil (skala 1,25, pegas 380 ms) saat file baru masuk. Klik membuka halaman Shelf di pulau; hover menampilkan `Shelf · 3 files`; file bisa diseret ke ikon ini seperti ke bagian bar lain. |
 | Claude | Glyph Claude (warna `#D97757`) tepat setelah Shelf, selalu tampil saat integrasi Claude nyala. Status mengikuti sesi Claude Code (F-CLD): titik kuning di pojok saat ada sesi yang butuh input, glyph berdenyut pelan saat ada sesi bekerja, titik hijau saat ada sesi selesai yang belum dilihat. Klik membuka halaman Claude Sessions di pulau; hover menampilkan ringkasan (`Claude · 1 needs input`). |
 | Pemisah | Garis 1 × 14 px (putih 22%) yang memisahkan grup launcher + Shelf + Claude dari aplikasi. |
@@ -351,7 +351,7 @@ Titik penanda halaman di bawah tengah; halaman aktif berupa garis lebih panjang.
 - Klik pulau compact. Halaman yang dibuka sesuai aktivitas di slot (Media, Timer); kalau tidak ada, halaman terakhir yang dilihat. Slot Claude punya aturan sendiri (lihat "Sesi Claude").
 - Klik jam atau tanggal: halaman Calendar (sebelum Fase 2: halaman terakhir).
 - Klik CPU/RAM/GPU/suhu/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
-- Ikon Timer / Todo di launcher: halaman Timer / Todo.
+- Ikon Timer / Alarms / Todo di launcher: halaman Timer / Alarms / Todo.
 - Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halamannya; klik saat halamannya sedang terbuka menutup pulau.
 - Ikon Notes di launcher: halaman Notes dengan grid kartu (editor tertutup). `Ctrl+Alt+N`: halaman Notes dengan note baru kosong dan editor langsung terbuka dan fokus (Fase 4).
 - `Ctrl+Alt+Space` (Fase 4).
@@ -395,6 +395,7 @@ Suara tiap kartu diatur di 6.5. Kalau alarm atau timer tidak ditanggapi dalam 5 
 - Jaringan memakai dua baris nilai tanpa label: upload di atas, download di bawah (9.5 px), lebar minimum 58 px supaya bar tidak bergeser saat angkanya berubah.
 - Ikon (cuaca, Wi‑Fi) berada di kiri blok dua baris; ikon power berdiri sendiri.
 - Tinggi area klik modul = tinggi bar − 6 px (minimal 24 px). Di tinggi bar terkecil (28 px) dua baris tetap muat.
+- Jarak antar-modul rapat dan rata, seperti deretan ikon toolbar: 16 px dari isi satu modul ke isi modul berikutnya (padding area klik 6 px di tiap sisi + celah 4 px).
 
 Urutan default dari kiri ke kanan:
 
@@ -495,7 +496,7 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
 | F-LEFT-01 | Aplikasi berjalan dan aplikasi aktif | Ikon asli semua aplikasi yang punya jendela di taskbar tampil setelah pemisah; aplikasi aktif selalu menampilkan nama dan aplikasi lain menampilkan namanya inline begitu di-hover (6.2); perpindahan nama dimulai ≤ 200 ms setelah fokus pindah dengan animasi 6.2; aplikasi yang dibuka/ditutup masuk/keluar dari deretan; klik ikon membawa aplikasi ke depan; overflow ke `+N`; berlaku untuk aplikasi desktop (.exe) dan Store (UWP/MSIX); ikon tajam di DPI 100–200% | 1 |
-| F-LEFT-02 | Launcher | Timer, Todo, dan Notes membuka halamannya di pulau; saat pulau terbuka klik berpindah halaman tanpa menutup-membuka ulang; klik ikon halaman yang sedang terbuka menutup pulau | 3 |
+| F-LEFT-02 | Launcher | Timer, Alarms, Todo, dan Notes membuka halamannya di pulau; saat pulau terbuka klik berpindah halaman tanpa menutup-membuka ulang; klik ikon halaman yang sedang terbuka menutup pulau | 3 |
 | F-LEFT-03 | Riwayat clipboard | 50 teks terakhir tersimpan (tahan restart), bisa dicari, klik untuk menyalin ulang, bisa dihapus semua | 4 |
 | F-LEFT-04 | Ikon Shelf | Selalu tampil tepat setelah launcher; jumlah file sesuai isi Shelf; memantul saat file baru masuk; klik membuka halaman Shelf | 3 |
 | F-LEFT-05 | Ikon Claude | Tampil setelah Shelf saat integrasi Claude nyala; status (titik kuning, denyut, titik hijau) sesuai sesi Claude Code dalam ≤ 1 detik; klik membuka halaman Claude Sessions | 3 |

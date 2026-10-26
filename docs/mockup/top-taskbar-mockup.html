@@ -60,6 +60,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .bar.focus .left,.bar.focus .right{text-shadow:0 1px 3px rgba(0,0,0,.55)}
 .under{opacity:0!important;pointer-events:none}
 .left,.right{display:flex;align-items:center;gap:12px;min-width:0}
+/* With each module's 6 px padding this leaves 16 px between modules. */
+.right{gap:4px}
 .launch{display:flex;gap:2px;flex-shrink:0}
 .launch button{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;color:#aeaeb2;transition:background 120ms,color 120ms,opacity 160ms ease}
 .launch button:hover{background:rgba(255,255,255,.08);color:var(--text)}
@@ -555,6 +557,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="left" id="left">
       <div class="launch" id="launch">
         <button data-tool="Timer" aria-label="Open Timer" title="Timer"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg></button>
+        <button data-tool="Alarms" aria-label="Open Alarms" title="Alarms"><svg class="ic" aria-hidden="true"><use href="#i-alarm"/></svg></button>
         <button data-tool="Todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
         <button data-tool="Notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
         <button class="lsh" id="mShelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
@@ -1823,7 +1826,7 @@ function clClick(){
   const ask=clBy('ask'),end=S.clEnd&&clById(S.clEnd),inv=ask.length?ask:end?[end]:clBy('work');
   inv.length===1?clFocus(inv[0]):openExpanded(PAGE.claude);
 }
-const TOOL_PAGE={Timer:PAGE.timer,Todo:PAGE.todo,Notes:PAGE.notes};
+const TOOL_PAGE={Timer:PAGE.timer,Alarms:PAGE.alarms,Todo:PAGE.todo,Notes:PAGE.notes};
 $$('#launch button[data-tool]').forEach(b=>b.onclick=()=>openFromBar(TOOL_PAGE[b.dataset.tool]));
 $$('.win').forEach(w=>w.addEventListener('pointerdown',()=>{
   $$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5;setApp(w.dataset.name,w.dataset.icon);
