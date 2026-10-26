@@ -48,6 +48,48 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Right-hand modules, two-line style (PRD 6.4). -->
+        <Style x:Key="Module" TargetType="Border">
+            <Setter Property="Height" Value="{Binding ModuleHeight}" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="Margin" Value="12,0,0,0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style x:Key="ClickableModule" TargetType="Border" BasedOn="{StaticResource Module}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#14FFFFFF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TwoLine" TargetType="StackPanel">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="MinWidth" Value="28" />
+        </Style>
+        <Style x:Key="ModuleLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="8.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#9A9AA0" />
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="LineHeight" Value="9.2" />
+            <Setter Property="Margin" Value="0,0,0,1" />
+        </Style>
+        <Style x:Key="ModuleValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="LineHeight" Value="12.4" />
+            <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        </Style>
+        <Style x:Key="NetLine" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="9.5" />
+            <Setter Property="Foreground" Value="#D1D1D6" />
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="LineHeight" Value="11.4" />
+            <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        </Style>
     </Window.Resources>
 
     <Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">
@@ -56,6 +98,43 @@
                 <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
             </ContextMenu>
         </Border.ContextMenu>
-        <Grid Margin="10,0" />
+        <Grid Margin="10,0">
+            <Grid.ColumnDefinitions>
+                <!-- Equal star columns keep the island centred on the screen whatever the sides hold. -->
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="1" Background="#000000" MinWidth="200" Padding="12,0" VerticalAlignment="Center"
+                    Height="{Binding IslandHeight}" CornerRadius="{Binding IslandCornerRadius}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Time}" FontSize="{Binding IslandFontSize}" FontWeight="SemiBold"
+                               Typography.NumeralAlignment="Tabular" />
+                    <TextBlock Text="{Binding Date}" FontSize="{Binding IslandFontSize}" Foreground="#8E8E93" Margin="6,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Border Style="{StaticResource Module}" ToolTip="{Binding NetTooltip}">
+                    <StackPanel VerticalAlignment="Center" MinWidth="58">
+                        <TextBlock Text="{Binding UpText}" Style="{StaticResource NetLine}" />
+                        <TextBlock Text="{Binding DownText}" Style="{StaticResource NetLine}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding CpuTooltip}" MouseLeftButtonUp="OnOpenTaskManager">
+                    <StackPanel Style="{StaticResource TwoLine}">
+                        <TextBlock Text="CPU" Style="{StaticResource ModuleLabel}" />
+                        <TextBlock Text="{Binding CpuText}" Style="{StaticResource ModuleValue}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding RamTooltip}" MouseLeftButtonUp="OnOpenTaskManager">
+                    <StackPanel Style="{StaticResource TwoLine}">
+                        <TextBlock Text="RAM" Style="{StaticResource ModuleLabel}" />
+                        <TextBlock Text="{Binding RamText}" Style="{StaticResource ModuleValue}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
     </Border>
 </Window>

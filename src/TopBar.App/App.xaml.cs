@@ -7,6 +7,7 @@ using TopBar.Core;
 using TopBar.Core.Diagnostics;
 using TopBar.Data;
 using TopBar.Platform.Shell;
+using TopBar.Platform.Stats;
 
 namespace TopBar.App;
 
@@ -16,6 +17,7 @@ public partial class App : Application
     private SingleInstance? _instance;
     private SettingsHub? _settings;
     private TransparencyWatcher? _transparency;
+    private StatsService? _stats;
     private BarWindow? _bar;
     private bool _quitting;
 
@@ -50,13 +52,20 @@ public partial class App : Application
         _settings = new SettingsHub(store, loaded.Settings, _log);
         _transparency = new TransparencyWatcher();
 
-        _bar = new BarWindow(_settings, _transparency);
+        var cpu = new CpuSampler();
+        var memory = new MemorySampler();
+        var network = new NetworkSampler();
+        _stats = new StatsService(Dispatcher, cpu.Sample, memory.Sample, network.Sample);
+
+        _bar = new BarWindow(_settings, _transparency, _stats);
         _bar.QuitRequested += Quit;
         _bar.Show();
+        _stats.Start();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _stats?.Dispose();
         _bar?.ReleaseAppBar();
         _settings?.Flush();
         _transparency?.Dispose();
