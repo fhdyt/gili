@@ -2637,17 +2637,23 @@ function limCheck(){
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
   Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
-  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
   Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
 };
 let setSec='General';
+// Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
+const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,notes:PAGE.notes,clipboard:PAGE.clipboard,shelf:PAGE.shelf,claude:PAGE.claude};
+const leftOff=i=>Object.keys(LEFT_TAB).some(k=>LEFT_TAB[k]===i&&!S.left[k]);
 function sget(k){const[a,b]=k.split('.');return a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='glass'?GLASS[$('#glass .on')?.dataset.g]??'strong':k==='auto'?1:S[k]}
 const GLASS={0:'off',12:'light',30:'strong'};
 function sput(k,v){
   const[a,b]=k.split('.');
-  if(a==='L')S.left[b]=v;
+  if(a==='L'){
+    S.left[b]=v;const t=LEFT_TAB[b];
+    if(t!=null){S.tabs[t]=v;if(!S.tabs.some(Boolean)){S.tabs[t]=1;hint('Keep at least one page: its tab stays')}}
+  }
   else if(a==='T'){S.tabs[b]=v;if(!S.tabs.some(Boolean)){S.tabs[b]=1;hint('Keep at least one page')}}
   else if(a==='M')S.mods[b]=v;
   else if(k==='auto'){hint('Only the installed copy starts with Windows');return}
@@ -2667,11 +2673,12 @@ function applySettings(){
 function renderSettings(){
   $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
   $('#setp').innerHTML=`<h3>${setSec}</h3>`+SET[setSec].map(([k,label,type,opts,help])=>{
-    const v=sget(k),dis=k==='pos'&&!S.hideTb;
+    const tabOff=k.startsWith('T.')&&leftOff(+k.split('.')[1]),v=sget(k),dis=k==='pos'&&!S.hideTb||tabOff;
     const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
       :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
-    return `<div class="srow ${dis?'dis':''}"><span>${label}${dis?'<small>Hide the Windows taskbar first</small>':help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
+    const why=tabOff?'Turned off in Left side':'Hide the Windows taskbar first';
+    return `<div class="srow ${dis?'dis':''}"><span>${label}${dis?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
   }).join('');
 }
 function openSettings(){$('#setw').hidden=false;renderSettings();$('#setn [aria-selected="true"]').focus()}
