@@ -1,0 +1,13 @@
+using TopBar.Platform.Interop;
+
+namespace TopBar.Platform.Shell;
+
+public static class WindowStyles
+{
+    /// <summary>Keeps the bar out of Alt+Tab, and stops clicks on it from taking focus from the active app.</summary>
+    public static void MakeNonActivatingToolWindow(IntPtr hwnd)
+    {
+        var style = Win32.GetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE);
+        Win32.SetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE, style | Win32.WS_EX_TOOLWINDOW | Win32.WS_EX_NOACTIVATE);
+    }
+}
