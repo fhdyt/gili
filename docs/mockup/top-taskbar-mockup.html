@@ -305,11 +305,11 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .lcI,.lwI{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;font-size:clamp(11px,calc(var(--isl-h,24px) * .5),15px);letter-spacing:.01em}
 .st-compact .L-compact,.st-wide .L-wide{opacity:1;pointer-events:auto;transition:opacity 180ms ease 90ms}
 .st-compact .island{cursor:pointer}
-.L-exp,.L-card,.L-drop{top:0;left:50%;transform:translate(-50%,-6px) scale(.98);filter:blur(6px);transform-origin:50% 0}
+.L-exp,.L-card,.L-drop,.L-msg{top:0;left:50%;transform:translate(-50%,-6px) scale(.98);filter:blur(6px);transform-origin:50% 0}
 .L-exp{width:560px;height:256px}
 .L-card{width:560px;height:104px;display:flex;align-items:center;gap:14px;padding:0 24px}
 .L-drop{width:420px;height:140px}
-.st-expanded .L-exp,.st-card .L-card,.st-drop .L-drop{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:none;
+.st-expanded .L-exp,.st-card .L-card,.st-drop .L-drop,.st-msg .L-msg{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:none;
   transition:opacity 220ms ease 120ms,transform 380ms var(--out) 120ms,filter 260ms ease 120ms}
 .clk{display:inline-flex;gap:6px;align-items:baseline;font-weight:600}
 .clk .d{font-weight:400;color:var(--text2)}
@@ -654,6 +654,21 @@ li.done .chk .ic{opacity:1;transform:none}
 .ndel:hover{background:var(--surface);color:var(--danger)}
 .ndel.confirm{background:var(--danger);color:#fff}
 
+/* Windows notification banner: the app's icon, the title (contact), app and time, and up to two lines of text. */
+.L-msg{width:440px;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.nicon{width:36px;height:36px;flex-shrink:0}
+.nx{flex:1;min-width:0}
+.nh{display:flex;align-items:baseline;gap:6px;padding-right:22px}
+.nh b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ncount{flex-shrink:0;min-width:16px;height:16px;padding:0 5px;border-radius:8px;background:var(--ctl-h);font-size:10.5px;font-weight:700;line-height:16px;text-align:center;align-self:center}
+.nmeta{margin-left:auto;flex-shrink:0;font-size:11.5px;color:var(--text2);white-space:nowrap}
+.nmsg{margin-top:2px;font-size:12.5px;line-height:1.4;color:rgba(255,255,255,.88);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.nclose{position:absolute;top:10px;right:12px;width:22px;height:22px;border-radius:11px;display:grid;place-items:center;color:var(--text2);opacity:0;transition:opacity 120ms,background 120ms}
+.L-msg:hover .nclose,.nclose:focus-visible{opacity:1}
+.L-msg:hover .nmeta{visibility:hidden}
+.nclose:hover{background:var(--ctl);color:var(--text)}
+.nclose .ic{width:12px;height:12px}
+
 /* clipboard: text you copied, newest first; picking an item pastes it where you were typing */
 .page.pg-clip{align-items:stretch;padding:2px 24px 4px}
 .cbw{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
@@ -796,7 +811,7 @@ body.reduce .ned,body.reduce .fnote{transition:opacity 100ms ease!important;anim
 body.reduce .fnote.proxy>*{transition:opacity 100ms ease!important}
 body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm,body.reduce .xtab,body.reduce .xtab .tl,body.reduce .xind{transition-duration:0ms!important}
 body.reduce .layer,body.reduce .glow{transition:opacity 100ms ease!important}
-body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop{transform:translate(-50%,0)!important;filter:none!important}
+body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop,body.reduce .L-msg{transform:translate(-50%,0)!important;filter:none!important}
 body.reduce .viz i,body.reduce .cic::after,body.reduce .cic .ic,body.reduce .clp,body.reduce .lcl .ic{animation:none!important}
 body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-backdrop-filter:none}
 @media (prefers-reduced-transparency: reduce){.bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-backdrop-filter:none}}
@@ -870,6 +885,9 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="a-code" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="21" height="21" rx="5" fill="#0a7ad1"/><path d="M15 7.5l4.5 4.5-4.5 4.5M9 7.5L4.5 12 9 16.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="a-explorer" viewBox="0 0 24 24"><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4h4.6l2.2 2.4h8.2A2.5 2.5 0 0 1 22 8.9V18a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18z" fill="#e0a82e"/><path d="M2 9.5A1.5 1.5 0 0 1 3.5 8h17A1.5 1.5 0 0 1 22 9.5V18a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18z" fill="#ffc83d"/></symbol>
   <symbol id="a-spotify" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1db954"/><path d="M6.5 9.2c3.8-1.1 8-.8 11.2 1M7.2 12.4c3.1-.9 6.5-.6 9.2.9M7.9 15.4c2.4-.6 5-.4 7 .7" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="a-wa" viewBox="0 0 24 24"><path d="M12 1.5a10.5 10.5 0 0 0-9.1 15.7L1.5 22.5l5.5-1.4A10.5 10.5 0 1 0 12 1.5z" fill="#25d366"/><path d="M8.6 6.9c.3-.1.6 0 .8.3l1 2.2c.1.3 0 .6-.2.8l-.7.8c.8 1.6 2 2.8 3.6 3.6l.8-.7c.2-.2.5-.3.8-.2l2.2 1c.3.2.4.5.3.8-.4 1.3-1.6 2.1-2.9 1.8-3.6-.8-6.5-3.7-7.3-7.3-.3-1.3.5-2.6 1.6-3.1z" fill="#fff"/></symbol>
+  <symbol id="a-outlook" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#0f6cbd"/><rect x="5" y="7" width="9" height="10" rx="1.5" fill="#fff"/><circle cx="9.5" cy="12" r="2.4" fill="none" stroke="#0f6cbd" stroke-width="1.6"/><path d="M15 9h4v6h-4" fill="none" stroke="#fff" stroke-width="1.4"/></symbol>
+  <symbol id="a-telegram" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2aabee"/><path d="M5.5 11.7l11.6-4.5c.5-.2 1 .1.8.9l-2 9.3c-.1.6-.6.8-1.1.5l-3-2.2-1.5 1.4c-.2.2-.3.3-.6.3l.2-3.1 5.6-5.1c.2-.2 0-.3-.3-.1l-7 4.4-3-.9c-.6-.2-.6-.7.3-.9z" fill="#fff"/></symbol>
   <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
@@ -1116,6 +1134,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         </div>
       </div>
       <div class="layer L-card" id="lcard"></div>
+      <div class="layer L-msg" id="lmsg" role="status"></div>
       <div class="layer L-drop">
         <div class="dz"><span class="dzi"><svg class="ic" aria-hidden="true"><use href="#i-traydown"/></svg></span>
           <div><div class="ct" id="dzT">Drop to keep on the Shelf</div><div class="cs" id="dzS">Files stay where they are until you drag them out</div></div></div>
@@ -1161,6 +1180,8 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <p class="note">Clipboard: click the VS Code window first, then the Clipboard icon (or Ctrl+Alt+V) and pick an item. It is pasted where the cursor was.</p>
     <h3>Left side</h3>
     <div class="g"><button data-act="manyApps">Open many apps</button><button data-act="copyText">Copy text</button><button data-act="copyImg">Copy image</button><button data-act="copyFile">Copy files</button><button data-act="cutFile">Cut files</button><button data-act="copySecret">Copy a password</button></div>
+    <h3>Windows notifications</h3>
+    <div class="g"><button data-act="ntfWa">WhatsApp message</button><button data-act="ntfWa2">Same chat again</button><button data-act="ntfMail">Outlook email</button><button data-act="ntfTg">Telegram</button></div>
     <h3>Explorer file operations</h3>
     <div class="g"><button data-act="explorer">Copy</button><button data-act="xmove">Move</button><button data-act="xdel">Delete</button><button data-act="xconflict">File conflict</button><button data-act="xcancel">Cancel</button></div>
     <h3>Privacy</h3>
@@ -1422,7 +1443,7 @@ const nEd=$('#nEd'),nIn=$('#nGridIn'),nWrap=$('#nWrap');
 const BC=276.46;
 
 /* ---------- island sizing and states ---------- */
-const FLOAT=['expanded','card','drop'];
+const FLOAT=['expanded','card','drop','msg'];
 function activities(){
   const a=[];
   if(S.clip)a.push('clip');
@@ -1488,6 +1509,8 @@ function layout(){
     }
   }
   else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;R='28px'}
+  // Notification banner: 440 px, as tall as its text (one or two lines), card corners.
+  else if(s==='msg'){W=Math.min(440,innerWidth-24);lmsg.style.width=W+'px';H=Math.max(64,lmsg.scrollHeight);R='28px'}
   else{W=Math.min(420,innerWidth-24);H=140;R='30px'}
   // Floating states keep the compact island's edge and grow away from the bar: the top stays put at the top, the bottom at the bottom.
   if(FLOAT.includes(s))T=bottom?ct+ih-H:ct;
@@ -1581,6 +1604,7 @@ function setState(next,instant){
   if(next!=='expanded'){clearTimeout(S.leaveT);glowCentre()}
   layout();
   if(next==='expanded')glowSync();
+  if(next==='compact'&&prev!=='msg'&&S.msgQ&&S.msgQ.length)setTimeout(nextMsg,S.reduce?0:360);
 }
 function showWide(key,html,ms,update){
   if(FLOAT.includes(S.state)||S.fs)return;
@@ -1656,6 +1680,59 @@ function stopSound(){
   setTimeout(()=>h.g.disconnect(),300);
 }
 
+/* Windows notifications in the island (PRD 6.3 "Notifikasi Windows"): a new notification from another app (a WhatsApp
+   message, an email) shows for 5 s as a banner that grows out of the island: the app's icon, the title (the contact),
+   the app and time, and the text. Off by default; Windows asks for permission when it is turned on. */
+const NTF_SAMPLES={
+  wa:{app:'WhatsApp',icon:'a-wa',who:'Ayu Wulandari',t:"Are we still on for 3 at Kemang? I'll bring the laptop."},
+  wa2:{app:'WhatsApp',icon:'a-wa',who:'Ayu Wulandari',t:'Also, can you send me the slides before then?'},
+  mail:{app:'Outlook',icon:'a-outlook',who:'Dina Prameswari',t:"Re: Q4 budget. I've added the vendor numbers to the sheet; can you check the totals before Friday?"},
+  tg:{app:'Telegram',icon:'a-telegram',who:'Family',t:'Mom: Dinner at 7, don\'t be late 🙂'},
+};
+Object.assign(S,{ntf:0,ntfText:1,ntfApps:{WhatsApp:1,Outlook:1,Telegram:1,'Microsoft Teams':1},msg:null,msgQ:[],msgT:0,msgHover:false});
+const lmsg=$('#lmsg');
+function msgHTML(m){
+  const body=S.ntfText?esc(m.t):'New notification';
+  return `<svg class="nicon" aria-hidden="true"><use href="#${m.icon}"/></svg>
+    <div class="nx"><div class="nh"><b>${esc(m.who)}</b>${m.count>1?`<span class="ncount num">${m.count}</span>`:''}<span class="nmeta">${esc(m.app)} · now</span></div><div class="nmsg">${body}</div></div>
+    <button class="nclose" aria-label="Close" title="Close">${icon('x')}</button>`;
+}
+function renderMsg(swap){
+  lmsg.innerHTML=msgHTML(S.msg);lmsg.setAttribute('aria-label',`${S.msg.app}, ${S.msg.who}: ${S.ntfText?S.msg.t:'New notification'}`);
+  if(swap&&!S.reduce)lmsg.querySelectorAll('.nicon,.nx').forEach(e=>e.animate([{opacity:0},{opacity:1}],{duration:180}));
+}
+function notify(n){
+  // The mockup turns the feature on for you; in Gili it is off until the user turns it on in Settings.
+  if(!S.ntf){S.ntf=1;hint('Windows notifications in the island turned on (off by default)')}
+  if(!S.ntfApps[n.app]||S.fs||focusOn())return;      // left in Windows' Notification Center only
+  n={...n,at:Date.now(),count:1};
+  // Another message from the same chat while its banner shows: the newest text, a count, and 5 s more.
+  if(S.state==='msg'&&S.msg.app===n.app&&S.msg.who===n.who){S.msg.count++;S.msg.t=n.t;renderMsg(true);armMsg(5000);return}
+  S.msgQ.push(n);
+  if(S.state==='msg'){armMsg(Math.min(2500,S.msgLeft()));return}  // the current banner gives way sooner
+  if(S.state==='compact'||S.state==='wide')nextMsg();
+}
+S.msgLeft=()=>Math.max(0,S.msgUntil-Date.now());
+function armMsg(ms){clearTimeout(S.msgT);S.msgUntil=Date.now()+ms;S.msgT=setTimeout(nextMsg,ms)}
+// Show the next waiting notification (only ones younger than 10 s), or close the banner.
+function nextMsg(){
+  if(S.state!=='msg'&&S.state!=='compact'&&S.state!=='wide')return;
+  if(S.state==='msg'&&S.msgHover){armMsg(2000);return}
+  S.msgQ=S.msgQ.filter(m=>Date.now()-m.at<10000);
+  const n=S.msgQ.shift();
+  if(!n){clearTimeout(S.msgT);S.msg=null;if(S.state==='msg')setState('compact');return}
+  const was=S.state==='msg';S.msg=n;renderMsg(was);
+  if(was){if(!S.reduce)setMotion(SP_WIDE);layout()}else setState('msg');
+  armMsg(S.msgQ.length?2500:5000);
+}
+lmsg.addEventListener('pointerenter',()=>{S.msgHover=true});
+lmsg.addEventListener('pointerleave',()=>{S.msgHover=false;armMsg(2000)});
+lmsg.addEventListener('click',e=>{
+  if(!S.msg)return;
+  if(!e.target.closest('.nclose'))hint(`${S.msg.app} brought to front`);
+  S.msgHover=false;nextMsg();
+});
+
 /* ---------- alert cards ---------- */
 const CARDS={
   alarm:{c:'var(--orange)',i:'alarm',cls:'pulse shake',t:'Alarm 14:30',s:'Take medicine',b:[['Snooze 5m','snooze'],['Stop','dismiss',1]],ring:'loop',snd:()=>Sound.alarm,ramp:true},
@@ -1670,6 +1747,7 @@ const CARDS={
 const val=v=>typeof v==='function'?v():v;
 function showCard(k){
   const c=CARDS[k];
+  if(S.state==='msg'){clearTimeout(S.msgT);S.msg=null;S.state='compact'}
   if(S.state!=='card')S.cardReturn=S.state==='expanded'?'expanded':'compact';
   const muted=S.winMuted&&c.ring==='loop';
   const btns=(muted?[['Unmute','unmute']]:[]).concat(c.b);
@@ -2660,6 +2738,7 @@ const hasFiles=e=>[...(e.dataTransfer?.types||[])].includes('Files');
 let dragDepth=0;
 function enterDrop(){
   if(S.state==='card'||S.fs)return;
+  if(S.state==='msg'){clearTimeout(S.msgT);S.msg=null;S.state='compact'}
   if(S.state!=='drop')S.dropReturn=S.state==='expanded'?'expanded':'compact';
   const full=S.shelf.length>=SHELF_MAX;
   iw.classList.toggle('full',full);
@@ -2831,17 +2910,19 @@ const SET={
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
+  Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off an app's banners in Windows Settings to see them only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
   Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
 const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,notes:PAGE.notes,clipboard:PAGE.clipboard,shelf:PAGE.shelf,claude:PAGE.claude};
 const leftOff=i=>Object.keys(LEFT_TAB).some(k=>LEFT_TAB[k]===i&&!S.left[k]);
-function sget(k){const[a,b]=k.split('.');return a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='glass'?GLASS[$('#glass .on')?.dataset.g]??'strong':k==='auto'?1:S[k]}
+function sget(k){const[a,b]=k.split('.');return a==='A'?S.ntfApps[b]:a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='glass'?GLASS[$('#glass .on')?.dataset.g]??'strong':k==='auto'?1:S[k]}
 const GLASS={0:'off',12:'light',30:'strong'};
 function sput(k,v){
   const[a,b]=k.split('.');
-  if(a==='L'){
+  if(a==='A')S.ntfApps[b]=v;
+  else if(a==='L'){
     S.left[b]=v;const t=LEFT_TAB[b];
     if(t!=null){S.tabs[t]=v;if(!S.tabs.some(Boolean)){S.tabs[t]=1;hint('Keep at least one page: its tab stays')}}
   }
@@ -2865,11 +2946,11 @@ function applySettings(){
 function renderSettings(){
   $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
   $('#setp').innerHTML=`<h3>${setSec}</h3>`+SET[setSec].map(([k,label,type,opts,help])=>{
-    const tabOff=k.startsWith('T.')&&leftOff(+k.split('.')[1]),v=sget(k),dis=k==='pos'&&!S.hideTb||tabOff;
+    const tabOff=k.startsWith('T.')&&leftOff(+k.split('.')[1]),ntfOff=(k==='ntfText'||k.startsWith('A.'))&&!S.ntf,v=sget(k),dis=k==='pos'&&!S.hideTb||tabOff||ntfOff;
     const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
       :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
-    const why=tabOff?'Turned off in Left side':'Hide the Windows taskbar first';
+    const why=tabOff?'Turned off in Left side':ntfOff?'Turn on Show Windows notifications first':'Hide the Windows taskbar first';
     return `<div class="srow ${dis?'dis':''}"><span>${label}${dis?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
   }).join('');
 }
@@ -3189,6 +3270,7 @@ const ACT={
   mic:()=>{S.mic=!S.mic;setPressed('mic',S.mic);layout()},
   drop:()=>{enterDrop();setTimeout(()=>iw.classList.add('hot'),500);
     setTimeout(()=>{iw.classList.remove('hot');addFiles(SAMPLE_DROPS[dropN++%SAMPLE_DROPS.length])},1400)},
+  ntfWa:()=>notify(NTF_SAMPLES.wa),ntfWa2:()=>notify(NTF_SAMPLES.wa2),ntfMail:()=>notify(NTF_SAMPLES.mail),ntfTg:()=>notify(NTF_SAMPLES.tg),
   alarm:()=>showCard('alarm'),
   timerDone:()=>{S.timer.total=600;showCard('timer')},
   todoRem:()=>showCard('todo'),
