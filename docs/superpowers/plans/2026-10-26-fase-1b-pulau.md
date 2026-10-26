@@ -10,6 +10,8 @@
 
 **Spec:** [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](../specs/2026-10-25-top-taskbar-prd.md) (6.3, 8.3, 9.2, F-ISL-02..07). Lanjutan dari [rencana 1a](2026-10-26-fase-1a-bar-dasar.md).
 
+**Nama:** rencana ini ditulis dengan nama `TopBar` yang dipakai kode saat ini. Pengguna sudah memutuskan rename penuh ke **Gili** (`Gili.*`, `Gili.slnx`, `Gili.exe`, `%LOCALAPPDATA%\Gili`). Kalau rename sudah dijalankan sebelum eksekusi, baca setiap `TopBar` di rencana ini sebagai `Gili`; teks UI yang menyebut nama aplikasi (misalnya judul jendela `TopBar Island`) ikut berganti.
+
 ## Global Constraints
 
 - Semua teks UI bahasa Inggris; angka dan waktu memakai format invariant/`en-US`. `TopBar.Core` tanpa WPF/WinRT/P/Invoke.
