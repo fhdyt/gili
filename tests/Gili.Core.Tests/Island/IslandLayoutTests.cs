@@ -5,8 +5,8 @@ namespace Gili.Core.Tests.Island;
 public class IslandLayoutTests
 {
     private static IslandGeometry Layout(
-        IslandMode mode, double content = 120, bool hovered = false, IslandPage page = IslandPage.Media, double screen = 1536) =>
-        IslandLayout.For(mode, page, content, hovered, barHeight: 32, islandHeight: 24, screenWidth: screen);
+        IslandMode mode, double content = 120, bool hovered = false, double screen = 1920, double expandedWidth = 560, double pageHeight = 112) =>
+        IslandLayout.For(mode, new IslandScreen(32, 24, screen, 1080), content, hovered, expandedWidth, pageHeight);
 
     [Fact]
     public void Compact_is_never_narrower_than_200() => Assert.Equal(200, Layout(IslandMode.Compact, content: 100).Width);
@@ -29,23 +29,26 @@ public class IslandLayoutTests
     }
 
     [Fact]
-    public void Expanded_floats_8_below_the_top() =>
-        Assert.Equal(new IslandGeometry(680, 256, 8, 32), Layout(IslandMode.Expanded));
-
-    [Fact]
-    public void The_notes_page_makes_the_island_larger() =>
-        Assert.Equal(new IslandGeometry(960, 500, 8, 32), Layout(IslandMode.Expanded, page: IslandPage.Notes));
-
-    [Fact]
-    public void Cards_and_the_drop_zone_have_their_own_size()
+    public void Floating_states_keep_the_compact_top_edge()
     {
-        Assert.Equal(new IslandGeometry(560, 104, 8, 28), Layout(IslandMode.Card));
-        Assert.Equal(new IslandGeometry(420, 140, 8, 30), Layout(IslandMode.DropZone));
+        Assert.Equal(new IslandGeometry(560, 256, 4, 32), Layout(IslandMode.Expanded));
+        Assert.Equal(new IslandGeometry(560, 104, 4, 28), Layout(IslandMode.Card));
+        Assert.Equal(new IslandGeometry(420, 140, 4, 30), Layout(IslandMode.DropZone));
     }
 
     [Fact]
-    public void A_floating_island_leaves_24_of_the_screen() =>
-        Assert.Equal(576, Layout(IslandMode.Expanded, screen: 600).Width);
+    public void Expanded_is_as_tall_as_its_page() =>
+        Assert.Equal(58 + 300 + 20, Layout(IslandMode.Expanded, pageHeight: 300).Height);
+
+    [Fact]
+    public void Expanded_stops_at_the_screen_height_less_the_top_gap_twice() =>
+        Assert.Equal(1080 - 8, Layout(IslandMode.Expanded, pageHeight: 2000).Height);
+
+    [Fact]
+    public void Expanded_takes_the_menu_width() => Assert.Equal(578, Layout(IslandMode.Expanded, expandedWidth: 578).Width);
+
+    [Fact]
+    public void A_card_leaves_24_of_the_screen() => Assert.Equal(476, Layout(IslandMode.Card, screen: 500).Width);
 
     [Theory]
     [InlineData(1110, 1150, true)]

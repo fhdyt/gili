@@ -2,6 +2,9 @@ namespace Gili.Core.Island;
 
 public readonly record struct IslandGeometry(double Width, double Height, double Top, double CornerRadius);
 
+/// <summary>The bar and island heights from Settings and the primary screen's size, in DIPs.</summary>
+public readonly record struct IslandScreen(int BarHeight, int IslandHeight, double Width, double Height);
+
 /// <summary>Size and position of the island in each mode (PRD 6.3, 8.3), in DIPs relative to the top of the screen.</summary>
 public static class IslandLayout
 {
@@ -9,31 +12,43 @@ public static class IslandLayout
     public const double HoverGrow = 16;
     public const double CompactPadding = 28;
     public const double WidePadding = 32;
-    public const double FloatTop = 8;
     public const double ScreenMargin = 24;
     public const double BubbleGap = 6;
     public const double CoverMargin = 8;
+    public const double ExpandedMinHeight = 256;
 
+    /// <summary>The open island's page area starts below the tab menu (14 + 36 + 8) and keeps 20 below it.</summary>
+    public const double PageTop = 58;
+    public const double PageBottom = 20;
+
+    /// <summary>
+    /// The open island is <paramref name="expandedWidth"/> wide (from the tab menu) and as tall as its page, up to the
+    /// screen with the same gap below as above. Every floating state keeps the compact island's top edge.
+    /// </summary>
     public static IslandGeometry For(
-        IslandMode mode, IslandPage page, double contentWidth, bool hovered, int barHeight, int islandHeight, double screenWidth)
+        IslandMode mode, IslandScreen screen, double contentWidth, bool hovered, double expandedWidth, double pageHeight)
     {
-        var top = (barHeight - islandHeight) / 2.0;
-        var radius = islandHeight / 2.0;
+        var top = (screen.BarHeight - screen.IslandHeight) / 2.0;
+        var radius = screen.IslandHeight / 2.0;
         return mode switch
         {
-            IslandMode.Wide => new(Math.Max(MinCompactWidth, contentWidth + WidePadding), islandHeight, top, radius),
-            IslandMode.Expanded when page == IslandPage.Notes => Floating(960, 500, 32, screenWidth),
-            IslandMode.Expanded => Floating(680, 256, 32, screenWidth),
-            IslandMode.Card => Floating(560, 104, 28, screenWidth),
-            IslandMode.DropZone => Floating(420, 140, 30, screenWidth),
-            _ => new(Math.Max(MinCompactWidth, contentWidth + CompactPadding) + (hovered ? HoverGrow : 0), islandHeight, top, radius),
+            IslandMode.Wide => new(Math.Max(MinCompactWidth, contentWidth + WidePadding), screen.IslandHeight, top, radius),
+            IslandMode.Expanded => new(
+                expandedWidth,
+                Math.Clamp(PageTop + pageHeight + PageBottom, ExpandedMinHeight, screen.Height - 2 * top),
+                top,
+                32),
+            IslandMode.Card => new(Math.Min(560, screen.Width - ScreenMargin), 104, top, 28),
+            IslandMode.DropZone => new(Math.Min(420, screen.Width - ScreenMargin), 140, top, 30),
+            _ => new(
+                Math.Max(MinCompactWidth, contentWidth + CompactPadding) + (hovered ? HoverGrow : 0),
+                screen.IslandHeight,
+                top,
+                radius),
         };
     }
 
     /// <summary>A bar element fades while the floating island covers it, with 8 DIP to spare on each side (PRD 6.3).</summary>
     public static bool Covers(double islandLeft, double islandRight, double elementLeft, double elementRight) =>
         elementRight > islandLeft - CoverMargin && elementLeft < islandRight + CoverMargin;
-
-    private static IslandGeometry Floating(double width, double height, double radius, double screenWidth) =>
-        new(Math.Min(width, screenWidth - ScreenMargin), height, FloatTop, radius);
 }

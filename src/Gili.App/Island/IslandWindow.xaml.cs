@@ -108,6 +108,12 @@ public partial class IslandWindow : Window
         Relayout(snap: true);
     }
 
+    private IslandScreen Screen()
+    {
+        var s = _settings.Current;
+        return new(s.BarHeight, s.IslandHeight, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight);
+    }
+
     private static bool Floats(IslandMode mode) => mode is IslandMode.Expanded or IslandMode.Card or IslandMode.DropZone;
 
     private void OnViewChanged(IslandView view)
@@ -126,9 +132,8 @@ public partial class IslandWindow : Window
         _hovered = view.Mode == IslandMode.Compact && Body.IsMouseOver;
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
-        var s = _settings.Current;
         var width = Floats(view.Mode)
-            ? IslandLayout.For(view.Mode, view.Page, 0, false, s.BarHeight, s.IslandHeight, SystemParameters.PrimaryScreenWidth).Width
+            ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, 178).Width
             : 0;
         FloatingChanged?.Invoke(Floats(view.Mode), width);
     }
@@ -137,9 +142,8 @@ public partial class IslandWindow : Window
     private void Relayout(SpringParameters? parameters = null, bool snap = false)
     {
         if (_hwnd == IntPtr.Zero) return;
-        var s = _settings.Current;
         var content = _mode == IslandMode.Wide ? WideContent.ActualWidth : CompactContent.ActualWidth;
-        var target = IslandLayout.For(_mode, _island.View.Page, content, _hovered, s.BarHeight, s.IslandHeight, SystemParameters.PrimaryScreenWidth);
+        var target = IslandLayout.For(_mode, Screen(), content, _hovered, ExpandedLayer.Width, 178);
         var spring = parameters ?? (Floats(_mode) ? null : SpringParameters.Resize);
         var instant = snap || !SystemParameters.ClientAreaAnimation;
         Retarget(_width, target.Width, spring, instant);
