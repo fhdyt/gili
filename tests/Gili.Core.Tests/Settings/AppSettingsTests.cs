@@ -22,6 +22,7 @@ public class AppSettingsTests
         var s = new AppSettings();
         Assert.Equal(100, s.BarOpacity);
         Assert.True(s.ShowGili && s.ShowSeconds && s.AmbientGlow && s.AmbientMotion);
+        Assert.Equal(("Jakarta", -6.2088, 106.8456), (s.WeatherCity, s.WeatherLatitude, s.WeatherLongitude));
     }
 
     [Theory]

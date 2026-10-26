@@ -22,6 +22,11 @@ public sealed record AppSettings
     public bool AmbientGlow { get; init; } = true;
     public bool AmbientMotion { get; init; } = true;
 
+    /// <summary>The weather city until Settings offers a choice (plan 1e decision 1).</summary>
+    public string WeatherCity { get; init; } = "Jakarta";
+    public double WeatherLatitude { get; init; } = -6.2088;
+    public double WeatherLongitude { get; init; } = 106.8456;
+
     public static int MaxIslandHeight(int barHeight) => barHeight - 4;
 
     /// <summary>Clamps every value to the ranges in PRD 6.1 and F-BAR-08.</summary>
