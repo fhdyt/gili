@@ -2,10 +2,11 @@
 
 | | |
 |---|---|
-| Tanggal | 26 Oktober 2026 (revisi 5: editor note tumbuh dari kartunya, note mengambang di luar pulau, ekspresi Gili; revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi; nama aplikasi TopBar diganti Gili) |
+| Tanggal | 26 Oktober 2026 (revisi 6: Gili dirilis gratis untuk umum lewat Microsoft Store dan GitHub, suhu CPU dihapus; revisi 5: editor note tumbuh dari kartunya, note mengambang di luar pulau, ekspresi Gili; revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi; nama aplikasi TopBar diganti Gili) |
 | Status | Disetujui saat brainstorming, menunggu review dokumen |
-| Platform | Windows 11 (laptop), monitor utama |
-| Pengguna | Pribadi (satu pengguna) |
+| Platform | Windows 11 (laptop dan desktop), monitor utama |
+| Pengguna | Publik: gratis, kode tertutup. Laptop pengembang tetap laptop uji utama |
+| Distribusi | Microsoft Store (MSIX) dan installer bertanda tangan di GitHub Releases (9.4, Fase 5) |
 | Teknologi | C# WPF, .NET 10 LTS |
 | Bahasa UI aplikasi | Inggris saja |
 | Mockup | [`docs/mockup/top-taskbar-mockup.html`](../../mockup/top-taskbar-mockup.html) |
@@ -21,6 +22,8 @@ Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor 
 Saat dibuka, pulau lepas dari bar menjadi panel hitam mengambang sedikit di bawah tepi atas. Latar bar menjadi transparan, isi kiri dan kanan tetap tampil, dan hanya elemen yang tertimpa panel yang memudar. Pulau punya halaman untuk media, timer, alarm, kalender, todo, note, Shelf (tempat file sementara), sesi Claude, dan statistik sistem. Note ditulis langsung di pulau, dan satu note bisa diseret keluar menjadi jendela kecil yang selalu di atas jendela lain. Jendela Tools terpisah dipakai untuk pengelolaan: daftar alarm, edit todo, riwayat clipboard, dan Settings.
 
 Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta isi Shelf tetap tersimpan setelah restart.
+
+Gili dirilis gratis untuk umum (kode tetap tertutup) lewat Microsoft Store dan installer di GitHub Releases, keduanya bertanda tangan sehingga Windows tidak memperingatkan atau memblokirnya.
 
 ## 2. Masalah
 
@@ -43,12 +46,15 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 6. Status sesi Claude Code (bekerja, butuh jawaban, selesai) dan sisa jendela pemakaian 5 jam terlihat tanpa membuka jendelanya.
 7. Bisa menggantikan taskbar Windows sehari-hari: tombol Start, ikon tray, dan kontrol Wi‑Fi/Bluetooth/volume/brightness ada di bar, jadi taskbar Windows boleh disembunyikan.
 8. Setiap bagian bar dan setiap halaman pulau bisa ditampilkan atau disembunyikan di Settings.
+9. Bisa dipasang orang lain tanpa peringatan SmartScreen atau deteksi antivirus: lewat Microsoft Store atau installer bertanda tangan di GitHub, tanpa perlu memasang .NET atau memberi hak admin.
 
 **Bukan tujuan**
 - Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. Gili membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power; sisanya tetap di Windows.
 - Lebih dari satu monitor.
 - Sinkronisasi cloud, aplikasi mobile, atau akun pengguna.
-- Distribusi publik: Microsoft Store, auto-update, code signing.
+- Versi berbayar, langganan, iklan, atau kode sumber terbuka.
+- Telemetri dan analitik pemakaian.
+- Windows 10.
 - Bahasa UI selain Inggris.
 - Riwayat clipboard untuk gambar/file; note berformat kaya.
 
@@ -77,13 +83,14 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 | Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh; tepi atasnya tetap di tempat tepi atas pulau compact (tidak turun), lalu membesar ke bawah. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
 | Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; Gili lalu menyediakan tombol Start, ikon tray, dan pulau kontrol (Wi‑Fi, Bluetooth, volume, brightness, power). Taskbar Windows dipulihkan di semua jalur keluar |
 | Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan (termasuk Wi‑Fi, Bluetooth, Volume, Brightness), tray, dan jam bisa dinyalakan/dimatikan di Settings |
-| Monitor | Monitor utama saja |
+| Monitor | Monitor utama saja, juga di rilis publik pertama |
+| Distribusi | Gratis untuk umum, kode tertutup. Microsoft Store (paket MSIX yang ditandatangani Microsoft, update lewat Store) dan installer di GitHub Releases yang ditandatangani sertifikat code signing OV milik pengembang. Windows 11 saja. Tanpa komponen yang butuh hak admin |
 | Aksi cepat vs pengelolaan | Aksi cepat, menulis note, dan Shelf ada di pulau; daftar alarm, edit todo, riwayat clipboard, dan Settings ada di jendela Tools |
 | Notifikasi | Kartu di pulau + toast Windows (toast tanpa suara supaya bunyi tidak dobel) |
 | Integrasi Claude | Status sesi Claude Code (tab Code di Claude Desktop dan CLI di terminal) dibaca lewat hook Claude Code dan helper kecil; opt-in di Settings. Tab Chat Claude Desktop tidak didukung |
 | Bahasa UI | Inggris saja, tanpa pilihan bahasa |
 | Teknologi | C# WPF di .NET 10 LTS (.NET 8 habis dukungan 10 Nov 2026) |
-| Penyimpanan | SQLite + `settings.json` di `%LOCALAPPDATA%\Gili\` |
+| Penyimpanan | SQLite + `settings.json` di folder data lokal Gili (lokasinya per jenis instalasi, bagian 10) |
 
 ## 6. Tata letak dan perilaku
 
@@ -442,7 +449,7 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 | 6 | Notes | Lebar sama dengan halaman lain; tinggi mengikuti kartu. Atas: kolom cari dan tombol New note. Di bawahnya **grid kartu ala Google Keep** selebar penuh (lihat "Halaman Notes" di bawah). Tidak ada kolom editor: note yang dibuka **tumbuh di tempat dari kartunya** menjadi editor | Buat, klik kartu untuk edit, cari, **seret kartu untuk mengatur urutan** (Alt + panah dari keyboard), **seret kartu keluar pulau untuk melepasnya** (lihat "Note mengambang"), hapus (klik dua kali untuk konfirmasi), Done |
 | 7 | Shelf | Grid tetap 4 × 2 (maksimal 8 item, **tanpa scroll**). Tile ringkas: ikon jenis file dan nama satu baris; bundel menampilkan ikon tumpukan dengan jumlah file. Ringkasan jumlah file dan total ukuran di kiri | Seret tile keluar ke folder/aplikasi, hapus satu, Clear all |
 | 8 | Claude | Baris ringkasan jendela pemakaian 5 jam (bila fiturnya nyala), lalu satu baris per sesi yang hidup, urut Needs input → Working → Done (belum dilihat) → Idle: ikon status, nama sesi, folder, dan waktu (berjalan, lama selesai, atau sejak kapan idle). Baris Needs input menampilkan cuplikan pertanyaan di baris kedua; sesi Idle redup; pulau memanjang mengikuti jumlah sesi. Tanpa sesi: `No Claude sessions`. Halaman hanya ada bila integrasi Claude menyala | Klik baris membawa jendela sesi ke depan dan menandai Done sebagai sudah dilihat |
-| 9 | System | Grafik mini 60 detik untuk CPU, RAM, GPU, unduhan; suhu CPU; sisa ruang C: | Klik membuka Task Manager |
+| 9 | System | Grafik mini 60 detik untuk CPU, RAM, GPU, unduhan; sisa ruang C: | Klik membuka Task Manager |
 
 **Todo hari ini**: todo yang jatuh tempo hari ini, ditambah todo tanpa tanggal yang belum selesai, ditambah todo tanpa tanggal yang diselesaikan hari ini. Rasio dan ring = jumlah selesai / total daftar itu. Kalau daftar kosong tampil "Nothing due today" dan tombol Add in Calendar.
 
@@ -514,7 +521,7 @@ Note bisa dikeluarkan dari pulau menjadi jendela kecil yang selalu di atas jende
 - Klik pulau compact. Halaman yang dibuka sesuai aktivitas di slot (Media, Timer); kalau tidak ada, halaman terakhir yang dilihat. Slot Claude punya aturan sendiri (lihat "Sesi Claude").
 - Klik Gili saat tidak ada aktivitas: halaman terakhir yang dilihat.
 - Klik jam atau tanggal di kanan bar: halaman Calendar (sebelum Fase 2: halaman terakhir), dengan aturan buka/tutup yang sama seperti ikon bar lain.
-- Klik CPU/RAM/GPU/suhu/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
+- Klik CPU/RAM/GPU/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
 - Modul Wi‑Fi, ikon Bluetooth, Volume, Brightness, dan tombol Power: pulau kontrolnya masing-masing, tanpa menu tab ("Pulau kontrol" di 6.4).
 - Ikon Timer / Alarms / Todo di launcher: halaman Timer / Alarms / Todo.
 - Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem, jam, Wi‑Fi, Bluetooth, Volume, Brightness, dan Power di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halaman atau kontrolnya; klik saat halamannya sedang terbuka menutup pulau.
@@ -572,7 +579,6 @@ Urutan default dari kiri ke kanan:
 | CPU | Nyala | `CPU` / `12%` | Klik: halaman System |
 | RAM | Nyala | `RAM` / `54%` | Hover: `8.6 / 16 GB`. Klik: halaman System |
 | GPU | Mati | `GPU` / `4%` | Klik: halaman System |
-| Suhu CPU | Mati | `TEMP` / `62°C`, nilai kuning ≥ 80°C, merah ≥ 90°C | Klik: halaman System |
 | Disk | Mati | `C: FREE` / `120 GB` | Klik: halaman System |
 | Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: pulau Wi‑Fi (lihat "Pulau kontrol") |
 | Bluetooth | Nyala | Ikon Bluetooth saja; titik biru kecil di pojok saat ada perangkat tersambung | Klik: pulau Bluetooth. Hover: `Bluetooth · Galaxy Buds2 Pro` atau `Bluetooth · Off` |
@@ -584,8 +590,8 @@ Urutan default dari kiri ke kanan:
 | Power | Selalu, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: pulau Power |
 
 - Ikon baterai tidak ditampilkan di bar; status ngecas tampil di pulau, dan sisa baterai ada di pulau Power.
-- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Suhu, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU, suhu, dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
-- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, Suhu, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil.
+- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
+- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil.
 
 **Panel tray** (ikon aplikasi latar belakang)
 - Panel kecil yang turun dari tombol Tray (latar `#1C1C1E`, radius 12 px, bayangan lembut), berisi grid ikon notification area **semua** aplikasi latar belakang (yang di taskbar Windows tampil langsung maupun yang tersembunyi di overflow), 16 px dalam sel 32 × 32 px, maksimal 6 kolom.
@@ -632,10 +638,11 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Bagian | Isi |
 |---|---|
 | General | Bar position (Top / Bottom), Hide Windows taskbar, Start with Windows, Clock format (24-hour / 12-hour), Show seconds |
+| About | Versi dan jenis instalasi (`Microsoft Store` / `GitHub`), baris update (`Up to date` atau `Update available · <versi>` dengan Install update; 9.4), tautan Privacy policy dan Release notes, tombol Open logs folder, dan Prepare to uninstall (versi Store, 9.4) |
 | Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Shelf, Claude |
 | Island | Show Gili; saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, System) |
-| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, CPU temperature, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Clock; kota cuaca; ambang baterai |
+| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Clock; kota cuaca; ambang baterai |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
 | Sounds | Suara timer, Alert volume, Gradually increase, contoh suara |
 | Shortcuts | Hotkey (Fase 4) |
@@ -699,7 +706,7 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-BAR-05 | Hanya satu instance | Menjalankan app kedua kalinya hanya memfokuskan instance yang sudah jalan | 1 |
 | F-BAR-06 | Material bar | Opacity dan tingkat kaca mengubah bar langsung; Transparency effects Windows mati memaksa bar polos; pulau tetap hitam pekat | 1 |
 | F-BAR-07 | Jarak dan overflow | Di lebar 1366 px dan 1920 px, isi kiri dan kanan berjarak minimal 24 px dari pulau di semua keadaan pulau yang masih menampilkan bar | 1 |
-| F-BAR-08 | Settings | Jendela Settings dengan bagian di 6.5: jam 12/24, opacity bar (default 100%), tingkat kaca, tinggi bar (28–44 px), tinggi pulau (20 px – tinggi bar − 4), ambient glow/motion, Gili, modul kanan (nyala/urutan), ambang baterai, kota cuaca, hotkey, suhu CPU, autostart | 1 (jam, material, tinggi bar dan pulau, autostart), 3 (modul, baterai), 4 (cuaca, hotkey, suhu) |
+| F-BAR-08 | Settings | Jendela Settings dengan bagian di 6.5: jam 12/24, opacity bar (default 100%), tingkat kaca, tinggi bar (28–44 px), tinggi pulau (20 px – tinggi bar − 4), ambient glow/motion, Gili, modul kanan (nyala/urutan), ambang baterai, kota cuaca, hotkey, autostart | 1 (jam, material, tinggi bar dan pulau, autostart), 3 (modul, baterai), 4 (cuaca, hotkey) |
 | F-BAR-09 | Mode demo | "Demo mode" memutar skenario palsu (media, ngecas, notifikasi, copy, drop ke Shelf, Gili berpindah bentuk, dan mulai Fase 3 sesi Claude serta jendela 5 jam) untuk mengecek UI | 1 |
 | F-BAR-10 | Posisi bar atas/bawah | Bottom hanya bisa dipilih saat taskbar Windows disembunyikan; di bawah, jendela maximize berakhir tepat di atas bar dan semua panel mengambang terbuka ke atas sesuai 6.1; memunculkan taskbar Windows lagi memindahkan bar ke atas | 3 |
 | F-BAR-11 | Sembunyikan taskbar Windows | Saklar menyembunyikan taskbar Windows dan ruangnya kembali ke jendela lain; status asli dipulihkan saat saklar mati, Quit, crash, dan start berikutnya setelah mati paksa; tetap tersembunyi setelah Explorer restart; tombol Windows tetap membuka Start | 3 |
@@ -753,15 +760,16 @@ F-ISL-09 dan F-ISL-13 (OSD brightness dan menyembunyikan OSD brightness Windows)
 |---|---|---|---|
 | F-RIGHT-01 | CPU, RAM, jaringan | Diperbarui tiap 1 detik; selisih dengan Task Manager ≤ 5 poin persen | 1 |
 | F-RIGHT-02 | Wi‑Fi | Nama jaringan tampil; tanpa izin Location tampil ikon saja + tooltip cara memberi izin | 3 |
-| F-RIGHT-03 | Modul GPU, suhu, disk | Default mati; saat nyala, selisih dengan Task Manager ≤ 5 poin | 3 |
+| F-RIGHT-03 | Modul GPU dan disk | Default mati; saat nyala, selisih dengan Task Manager ≤ 5 poin | 3 |
 | F-RIGHT-04 | Atur modul dan overflow | Modul bisa dinyalakan/dimatikan dan diurutkan; overflow mengikuti urutan di 6.4 | 3 |
 | F-RIGHT-05 | Cuaca | Suhu dan ikon dari Open-Meteo untuk kota di Settings; diperbarui tiap 30 menit; offline menampilkan nilai terakhir berwarna abu-abu | 4 |
-| F-RIGHT-06 | Sumber suhu CPU | Tampil bila helper sensor jalan; sembunyi bila tidak bisa membaca nilai | 4 |
 | F-RIGHT-07 | Power | Ikon power selalu paling kanan dan membuka pulau Power; Sleep, Shut down, dan Restart bekerja seperti di Start menu (aplikasi yang belum disimpan tetap ditanyakan oleh Windows); tombolnya bisa dipakai dengan keyboard | 3 |
 | F-RIGHT-09 | Panel tray | Semua ikon notification area aplikasi latar belakang tampil di panel tray, termasuk yang tersembunyi di overflow Windows; klik kiri, klik kanan, dan klik dua kali bekerja seperti di taskbar Windows; ikon baru/berubah/hilang tampil ≤ 1 detik; tetap bekerja saat taskbar Windows disembunyikan | 3 |
 | F-RIGHT-10 | Pulau kontrol | Modul Wi‑Fi dan ikon Bluetooth, Volume, Brightness, serta Power masing-masing membuka pulau berisi kontrol itu saja, tanpa menu tab, dengan ukuran mengikuti isinya; klik ikon yang sama menutup, klik ikon kontrol lain mengganti isi; ikon Volume dan Bluetooth mencerminkan keadaan sistem ≤ 1 detik; saklar Wi‑Fi, Bluetooth, dan Airplane mode mengubah radio sistem; daftar Wi‑Fi bisa menyambung ke jaringan yang tersimpan; daftar Bluetooth bisa menyambung/memutus perangkat ter-pair; slider volume dan brightness mengubah nilai sistem langsung; pilihan perangkat output; tombol Windows Quick Settings dan All settings | 3 |
 | F-RIGHT-11 | Jam dan tanggal di kanan | Gaya dua baris (tanggal di atas, jam dengan detik di bawah) di kiri tombol Settings; detik berganti tepat di pergantian detik sistem (selisih ≤ 50 ms) tanpa menggeser elemen bar lain; Show seconds mati menampilkan jam tanpa detik; format 12/24 jam dari Settings; klik membuka/menutup halaman Calendar; bisa disembunyikan | 1 |
 | F-RIGHT-08 | Update and shut down / Update and restart | Kedua item dan titik oranye hanya muncul saat Windows punya update yang menunggu, cocok dengan yang ditampilkan Start menu; memilihnya memasang update lalu mematikan/restart | 3 |
+
+F-RIGHT-06 (suhu CPU lewat helper sensor admin) dihapus di revisi 6: helper itu butuh hak admin dan driver kernel, sehingga tidak bisa lolos Microsoft Store dan rawan dianggap malware. Nomornya tidak dipakai ulang.
 
 ### 7.5 Tools dan produktivitas
 
@@ -806,6 +814,19 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | F-CLD-08 | Timer jendela 5 jam | Jendela dimulai dari prompt pertama dan dihitung mundur di slot sesuai "Batas pemakaian Claude" di 6.3; batas tercapai mengubah slot ke kuning; saat jendela berakhir kartu `Claude usage reset` muncul dengan suara timer dan toast; waktu reset tetap benar setelah Gili atau laptop restart; tooltip menandai `Estimated` bila waktu resmi tidak tersedia | 3 |
 | F-CLD-07 | Hook tidak memperlambat Claude | `Gili.ClaudeHook` selesai ≤ 50 ms (p95) saat Gili jalan dan ≤ 100 ms saat Gili mati; tidak pernah menulis ke stdout; selalu keluar dengan kode 0 | 3 |
 
+### 7.8 Rilis publik
+
+| ID | Kebutuhan | Kriteria terima | Fase |
+|---|---|---|---|
+| F-PUB-01 | Paket MSIX | `scripts/package.ps1` membangun MSIX self-contained yang terpasang dan jalan di laptop pengembang sejak Fase 1; di Fase 5 semua fitur bekerja sama seperti build biasa (AppBar, tray, hotkey, Shelf, hook Claude lewat app execution alias, StartupTask, toast); lolos Windows App Certification Kit | 1 (paket dasar), 5 |
+| F-PUB-02 | Listing Microsoft Store | Nama `Gili` dipesan di Partner Center (cadangan bila sudah dipakai ditentukan saat itu); deskripsi, screenshot 1920 × 1080, ikon, kategori Productivity, harga gratis, URL privacy policy, alasan kapabilitas `runFullTrust` di catatan sertifikasi; lolos sertifikasi Store | 5 |
+| F-PUB-03 | Installer GitHub bertanda tangan | Installer per-pengguna tanpa UAC sesuai 9.4; installer dan semua exe ditandatangani sertifikat OV dengan timestamp; dirilis di repo publik `gili-releases` bersama release notes dan checksum SHA-256; uninstaller melepas hook Claude, entri Run, dan memulihkan taskbar | 5 |
+| F-PUB-04 | Update | Versi Store: update lewat Store dan baris update di Settings → About. Versi GitHub: cek versi tiap 24 jam, Install update hanya menjalankan installer yang tanda tangannya dari penerbit yang sama, lalu Gili jalan lagi di versi baru dengan data utuh; offline tidak menampilkan error | 5 |
+| F-PUB-05 | Bersih dari deteksi antivirus | Sebelum setiap rilis, installer dan MSIX diunggah ke VirusTotal; deteksi dari Microsoft Defender harus 0, dan deteksi dari engine lain dilaporkan sebagai false positive ke vendornya. Deteksi Defender dilaporkan lewat Microsoft Security Intelligence (submission perangkat lunak pengembang) sebelum rilis | 5 |
+| F-PUB-06 | Uji di mesin bersih | Kedua jalur dipasang di VM Windows 11 baru tanpa .NET dan tanpa alat pengembang: terpasang tanpa UAC, bar muncul, autostart jalan setelah restart, update dan uninstall bekerja, tanpa sisa ruang AppBar atau taskbar tersembunyi setelah uninstall | 5 |
+| F-PUB-07 | Pindah dari GitHub ke Store | Data dan pengaturan versi GitHub terbawa ke versi Store saat pertama jalan (bagian 10); dua versi yang terpasang bersamaan tidak jalan bersamaan | 5 |
+| F-PUB-08 | Privacy policy dan dukungan | Halaman privacy policy (isi di 8.2) dan halaman dukungan (cara lapor bug, lokasi log) tersedia online dan ditautkan dari Store, `gili-releases`, dan Settings → About | 5 |
+
 ## 8. Kebutuhan non-fungsional
 
 ### 8.1 Performa
@@ -835,10 +856,14 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Ekspresi Gili | `GetLastInputInfo` sekali per detik untuk tidur; status tombol mouse dibaca di pembacaan kursor 30×/detik yang sudah ada (tanpa hook); satu kedipan 230 ms per klik; ekspresi dihitung ulang hanya saat ada perubahan; anggukan musik menggambar ulang area mata (lingkaran 24 px) hanya saat bergerak, sekitar 60% waktu selama musik diputar | CPU ≤ 0,2% selama musik diputar, 0% saat tidur dan saat ekspresi lain diam | Anggukan dimatikan (mata setengah terpejam diam) |
 | Kartu note tumbuh jadi editor | Animasi ±420 ms di dalam jendela pulau (layered, digambar CPU) hanya saat membuka/menutup note; isi editor ditata sekali di ukuran akhir, bukan tiap frame | Masuk anggaran animasi (< 5%) selama animasi, 0% setelahnya | Ukuran berpindah dengan cross-fade 100 ms |
 | Note mengambang | Satu jendela WPF biasa per note yang sedang mengambang (tidak transparan, sudut dari DWM, jadi digambar GPU), di thread UI yang sama; tidak ada jendela untuk note yang tidak mengambang; maksimal 6 | RAM ≤ +3 MB per jendela; CPU 0% saat diam | Batas turun ke 3 |
+| Build self-contained (revisi 6) | Runtime .NET ikut di paket, jadi pengguna tidak perlu memasangnya. Tidak menambah RAM atau CPU; ukuran di disk naik | Paket unduhan ≤ 80 MB, terpasang ≤ 200 MB | Trimming dimatikan untuk WPF; kurangi aset yang ikut |
+| Cek update (installer GitHub saja, F-PUB-04) | Satu permintaan HTTPS kecil saat start lalu tiap 24 jam; tidak ada proses latar terpisah | Tidak terukur | — |
 
 ### 8.2 Keandalan dan privasi
 - Gagalnya satu provider tidak mematikan bar (bagian 11).
-- Semua data disimpan lokal. Satu-satunya akses internet adalah API cuaca Open-Meteo (tanpa API key; hanya mengirim koordinat kota).
+- Semua data disimpan lokal. Akses internet hanya API cuaca Open-Meteo (tanpa API key; hanya mengirim koordinat kota) dan, khusus installer GitHub, cek versi terbaru ke GitHub Releases (tanpa data pengguna). Versi Store diperbarui oleh Store sendiri.
+- Tanpa telemetri, analitik, atau pelaporan crash otomatis. Laporan crash versi Store hanya yang dikumpulkan Windows sendiri dan tampil di Partner Center.
+- Listing Store dan halaman rilis GitHub menautkan **privacy policy** yang menyebut: data tersimpan lokal, koordinat kota dikirim ke Open-Meteo, cek versi ke GitHub, clipboard dan sesi Claude hanya di memori, tanpa telemetri.
 - Isi clipboard sensitif tidak ditampilkan dan tidak disimpan (6.3). Thumbnail gambar clipboard hanya di memori, tidak ditulis ke disk.
 - Data sesi Claude (nama sesi, folder, cuplikan pertanyaan) hanya ada di memori, tidak ditulis ke database atau log. Teks prompt pengguna tidak dikirim ke Gili. Gili hanya mengubah `~/.claude/settings.json` saat pengguna menyalakan atau mematikan integrasi.
 
@@ -857,9 +882,9 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | `text-2` | `#8E8E93` | Teks sekunder (kontras 6,6:1 di atas hitam) |
 | `accent` | `#30D158` | Centang, ikon tab aktif, bar level musik di tab Media, hari ini di Calendar |
 | `done-bg` | `#0F2A17` | Baris todo selesai |
-| `warn` | `#FFD60A` | Suhu ≥ 80°C, baterai 20%, Claude Needs input |
+| `warn` | `#FFD60A` | Baterai 20%, Claude Needs input |
 | `claude` | `#D97757` | Ikon Claude saat Working |
-| `danger` | `#FF453A` | Suhu ≥ 90°C, baterai 10%, alarm terlewat |
+| `danger` | `#FF453A` | Baterai 10%, alarm terlewat |
 | `cam` / `mic` | `#30D158` / `#FF9F0A` | Indikator privasi |
 
 **Tipografi**: Segoe UI Variable (font sistem Windows 11). Teks bar 12 px dengan tracking +0,01em, kecuali modul kanan yang memakai gaya dua baris (label 8.5 px kapital, nilai 11.5 px; lihat 6.4); judul di pulau 19 px semibold −0,01em; angka besar 44–46 px tebal −0,02em; digit tabular untuk semua angka yang berubah.
@@ -924,13 +949,13 @@ Semua transisi pulau bisa disela: keadaan baru mulai dari ukuran yang sedang tam
 | `Gili.Core` | `IslandCoordinator`, `Scheduler`, `ShelfService`, model, format angka/tanggal. Tanpa WPF dan Win32 | — |
 | `Gili.Platform` | Provider Windows (9.2), `AppBarService`, `BarMaterial`, `HotkeyService`, `NotificationService`, helper drag-and-drop | Core |
 | `Gili.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Core |
-| `Gili.SensorHelper` | Proses kecil dengan hak admin; membaca suhu CPU via LibreHardwareMonitorLib, kirim lewat named pipe tiap 2 detik | — |
 | `Gili.ClaudeHook` | Console app kecil (NativeAOT, mulai ≤ 20 ms, tanpa hak admin) yang dipanggil hook Claude Code: membaca JSON hook dari stdin, mengambil field yang dibutuhkan, mengirimnya ke named pipe `Gili.Claude` dengan timeout 100 ms, lalu keluar. Tidak pernah menulis ke stdout | — |
 | `Gili.Core.Tests` | Unit test xUnit | Core, Data |
+| `packaging/` | Bukan proyek .NET: manifest MSIX (`AppxManifest.xml`, aset logo), skrip installer GitHub, dan skrip `scripts/package.ps1` yang membangun keduanya dari `dotnet publish` self-contained (9.4) | App, ClaudeHook |
 
 `IslandWindow` terpisah dari `BarWindow` supaya pulau mengambang tidak mengubah ruang AppBar dan jendela lain tidak bergeser saat pulau terbuka.
 
-App utama jalan **tanpa** hak admin. Ini penting untuk Shelf: Windows memblokir drag-and-drop dari proses biasa ke proses admin, jadi hanya helper sensor yang jalan sebagai admin.
+Tidak ada bagian Gili yang jalan dengan hak admin, dan instalasinya juga tidak meminta UAC. Ini penting untuk Shelf (Windows memblokir drag-and-drop dari proses biasa ke proses admin), untuk lolos sertifikasi Microsoft Store, dan supaya Gili tidak tampak mencurigakan bagi antivirus.
 
 ### 9.2 Provider
 
@@ -950,14 +975,13 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Jaringan | `NetworkInterface.GetIPv4Statistics` (selisih byte) | Tiap 1 detik |
 | Wi‑Fi | Native WLAN API (`WlanQueryInterface`) | Tiap 10 detik + event koneksi |
 | Kamera/mic | Registry `...\CapabilityAccessManager\ConsentStore\{webcam,microphone}` (`LastUsedTimeStop = 0` berarti sedang dipakai) | Tiap 2 detik |
-| Suhu CPU | Named pipe dari `Gili.SensorHelper` | Tiap 2 detik |
 | Cuaca | Open-Meteo forecast + geocoding API (HTTP) | Tiap 30 menit, di-cache |
 | Shelf | OLE drag-and-drop di `BarWindow` dan `IslandWindow` (`DataFormats.FileDrop` masuk, `DoDragDrop` dengan Copy dan Move keluar); cek keberadaan file | Event + tiap 60 detik |
 | Hotkey | `RegisterHotKey` | Event |
 | Bluetooth | `DeviceWatcher` (Windows.Devices.Enumeration) untuk perangkat Bluetooth Classic dan LE dengan properti `System.Devices.Aep.IsConnected`; jenis dari `ClassOfDevice` / kategori perangkat; baterai dari properti baterai Bluetooth perangkat atau GATT Battery Service bila tersedia (best-effort) | Event |
 | Power | Sleep: `SetSuspendState(FALSE, FALSE, FALSE)` (PowrProf). Shut down/Restart: `InitiateShutdownW` dengan `SHUTDOWN_POWEROFF` / `SHUTDOWN_RESTART` (tanpa memaksa aplikasi lain), ditambah `SHUTDOWN_INSTALL_UPDATES` untuk varian update. Update yang menunggu dideteksi dari Windows Update Agent (`ISystemInformation.RebootRequired`) dan registry `...\WindowsUpdate\Auto Update\RebootRequired` | Saat menu dibuka + tiap 30 menit |
 | Suara | NAudio: `WasapiOut` (shared mode) di perangkat default, `VolumeSampleProvider` untuk Alert volume dan kurva naik bertahap; `IAudioEndpointVolume` untuk cek mute/volume sistem; `IMMNotificationClient` untuk pergantian perangkat default | Saat dibutuhkan + event perangkat |
-| Notifikasi | Toast via Microsoft.Toolkit.Uwp.Notifications (butuh shortcut Start Menu dengan AUMID, dibuat saat run pertama) | — |
+| Notifikasi | Toast via Microsoft.Toolkit.Uwp.Notifications (MSIX: identitas paket; installer GitHub dan `dotnet run`: shortcut Start Menu dengan AUMID; lihat 9.4) | — |
 | Material bar | `SetWindowCompositionAttribute` (accent policy): acrylic untuk "Strong", blur-behind untuk "Light", tanpa accent (tint polos) untuk "Off"; tint digambar WPF di atasnya. Bukan `DWMWA_SYSTEMBACKDROP_TYPE`, karena backdrop DWM berubah polos saat jendela tidak aktif, padahal bar tidak pernah aktif (diverifikasi 26 Okt 2026). Membaca `UISettings.AdvancedEffectsEnabled` | Saat berubah |
 | Kursor (Gili) | `GetCursorPos` dari `DispatcherTimer` 30 Hz, aktif hanya selama Gili tampil dan bar terlihat | 30×/detik saat aktif |
 | Start | Membuka Start menu seperti tombol Windows: `SendInput` VK_LWIN, atau pesan Start ke `Shell_TrayWnd` bila taskbar disembunyikan (diverifikasi Fase 3) | Saat diklik |
@@ -969,7 +993,7 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 
 **Hook Claude Code**
 
-Semua hook memanggil `"<folder instalasi>/Gili.ClaudeHook.exe" <NamaEvent>` dengan timeout 2 detik. Path ditulis dengan garis miring maju, seperti hook wmux yang sudah ada, supaya aman di shell yang dipakai Claude Code untuk menjalankan hook di Windows.
+Semua hook memanggil `"<path helper>" <NamaEvent>` (path absolut di folder instalasi untuk installer GitHub, app execution alias untuk MSIX; lihat 9.4) dengan timeout 2 detik. Path ditulis dengan garis miring maju, seperti hook wmux yang sudah ada, supaya aman di shell yang dipakai Claude Code untuk menjalankan hook di Windows.
 
 | Hook | Matcher | Dikirim ke Gili | Efek |
 |---|---|---|---|
@@ -991,15 +1015,34 @@ Provider mengirim snapshot ke state di Core. `IslandCoordinator` menentukan apa 
 
 ### 9.4 Instalasi dan autostart
 
-- Build `dotnet publish` framework-dependent (.NET 10 Desktop Runtime terpasang), disalin ke `%LOCALAPPDATA%\Programs\Gili\`.
-- Run pertama: membuat shortcut Start Menu (untuk toast) dan entri autostart di `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
-- Menyalakan suhu CPU di Settings: satu prompt UAC untuk mendaftarkan `Gili.SensorHelper` di Task Scheduler (jalan saat login, "highest privileges").
-- Menyalakan `Show Claude Code sessions` di Settings: Gili menulis hook ke `~/.claude/settings.json` dengan path absolut `Gili.ClaudeHook.exe` di folder instalasi; tanpa UAC. Hook berlaku untuk sesi Claude yang dimulai sesudahnya, dan Settings menuliskan `Applies to Claude sessions started from now on`.
+Gili dirilis lewat dua jalur dari build yang sama. Keduanya `dotnet publish` **self-contained** win-x64 (runtime .NET ikut, karena pengguna umum tidak punya .NET Desktop Runtime), tanpa hak admin, dan bertanda tangan.
+
+| | Microsoft Store | Installer GitHub |
+|---|---|---|
+| Bentuk | Paket MSIX (`runFullTrust`), diunggah ke Partner Center dengan akun developer perorangan (gratis) | Installer per-pengguna (`Gili-Setup-<versi>.exe`) yang memasang ke `%LOCALAPPDATA%\Programs\Gili\` tanpa UAC |
+| Tanda tangan | Ditandatangani Microsoft saat sertifikasi, jadi tanpa peringatan SmartScreen | Installer dan semua exe di dalamnya ditandatangani sertifikat code signing **OV** milik pengembang (sekitar $200–400 per tahun, kunci di token hardware atau HSM cloud) plus timestamp. EV tidak dipakai karena sejak 2024 tidak lagi langsung melewati SmartScreen. Peringatan SmartScreen bisa tetap muncul di minggu-minggu awal sampai reputasi sertifikat terkumpul |
+| Tempat unduh | Halaman Store | Repo **publik** khusus rilis (`gili-releases`, tanpa kode sumber), karena repo kode tetap privat |
+| Autostart | Ekstensi `StartupTask` di manifest (bukan `HKCU\...\Run`, yang divirtualisasi di MSIX). Kalau pengguna mematikannya di Task Manager, Gili tidak bisa menyalakannya lagi; saklar Start with Windows menampilkan `Turned off in Task Manager › Startup apps` | Entri `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, ditulis saat run pertama |
+| Toast | Memakai identitas paket, tanpa shortcut | Shortcut Start Menu dengan AUMID, dibuat installer |
+| Update | Store. Gili juga memeriksa update Store sekali sehari (`StoreContext`); kalau ada, Settings → About menampilkan `Update available · <versi>` dan tombol **Install update** | Cek versi terbaru di `gili-releases` saat start lalu tiap 24 jam (F-PUB-04). Kalau ada, titik biru kecil di tombol Settings dan baris `Update available · <versi>` di Settings → About dengan **Install update** dan **Release notes**. Install update mengunduh installer ke folder temp, memastikan tanda tangannya dari penerbit yang sama, lalu menjalankannya tanpa dialog; installer menutup Gili lewat `--quit` dan menjalankannya lagi |
+| Uninstall | Lewat Windows. MSIX tidak bisa menjalankan kode saat dilepas, jadi Settings punya tombol **Prepare to uninstall** yang melepas hook Claude dan memulihkan taskbar Windows | Uninstaller menjalankan `Gili.exe --quit`, melepas hook Claude dari `~/.claude/settings.json` (aturan F-CLD-01), menghapus entri Run, dan menyisakan data pengguna kecuali pengguna mencentang `Also delete my notes and settings` |
+
+- Pengembangan tetap memakai `dotnet run` (tanpa paket) dan `pwsh scripts/publish.ps1` untuk memasang salinan lokal. `scripts/package.ps1` membangun paket MSIX dan installer GitHub; paket MSIX ikut dibangun dan dipasang di laptop pengembang **sejak Fase 1**, supaya perbedaan perilaku MSIX (virtualisasi file dan registry, StartupTask, identitas paket) ketahuan sebelum Fase 5.
+- Nomor versi `MAJOR.MINOR.PATCH` sama di kedua jalur; MSIX memakai `MAJOR.MINOR.PATCH.0`.
+- Kalau kedua versi terpasang, hanya satu yang jalan (mutex F-BAR-05 dipakai bersama), dan Settings versi yang jalan menampilkan `Another copy of Gili is installed` dengan saran melepas salah satunya.
+- Menyalakan `Show Claude Code sessions` di Settings: Gili menulis hook ke `~/.claude/settings.json` dengan path helper yang tidak berubah antarversi; tanpa UAC. Installer GitHub memakai path absolut `Gili.ClaudeHook.exe` di folder instalasi. MSIX tidak boleh memakai path di `C:\Program Files\WindowsApps\…` karena berubah tiap update, jadi helper didaftarkan sebagai **app execution alias** (`gili-claude-hook.exe` di `%LOCALAPPDATA%\Microsoft\WindowsApps\`) dan path itu yang ditulis ke hook. Hook berlaku untuk sesi Claude yang dimulai sesudahnya, dan Settings menuliskan `Applies to Claude sessions started from now on`.
 - Baris status integrasi di Settings: `Waiting for the first Claude session`, `Connected · last event 2 min ago`, atau salah satu pesan error di bagian 11.
 
 ## 10. Data dan penyimpanan
 
-Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.json`, `backups\`, `logs\`.
+Folder data berisi `gili.db` (SQLite, mode WAL), `settings.json`, `backups\`, `logs\`. Lokasinya tergantung cara Gili dipasang:
+
+| Instalasi | Folder data |
+|---|---|
+| Installer GitHub, `dotnet run`, `scripts/publish.ps1` | `%LOCALAPPDATA%\Gili\` |
+| Microsoft Store (MSIX) | Folder lokal paket (`ApplicationData.Current.LocalFolder`, yaitu `%LOCALAPPDATA%\Packages\<nama paket>\LocalState\`). MSIX mengalihkan tulisan ke AppData ke folder privat paket, jadi folder ini dipakai langsung supaya lokasinya jelas dan file terhapus bersih saat uninstall |
+
+- **Pindah dari GitHub ke Store**: saat versi Store pertama kali jalan dan folder datanya masih kosong, Gili mencari `%LOCALAPPDATA%\Gili\gili.db`. Kalau ada, isinya disalin (database lewat backup API SQLite, bukan salin file mentah) bersama `settings.json`, lalu toast `Imported your notes and settings from the GitHub version` muncul. Folder lama tidak diubah. Arah sebaliknya (Store ke GitHub) tidak didukung otomatis; installer GitHub menawarkan **Import from Store version** bila menemukan folder paket Store.
 
 | Tabel | Kolom utama |
 |---|---|
@@ -1014,7 +1057,7 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan.
 - Migrasi skema lewat tabel `schema_version`.
-- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, ambang baterai, kota cuaca (nama, lat, lon), hotkey, suhu CPU nyala/mati, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
+- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, ambang baterai, kota cuaca (nama, lat, lon), hotkey, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
 
 ## 11. Penanganan error
 
@@ -1040,13 +1083,16 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 | Ikon tray tidak bisa dibaca (host tray gagal) | Tombol Tray menampilkan panel dengan `Can't show tray icons` dan tombol `Show Windows taskbar`; dicoba lagi sesuai aturan provider |
 | Radio, Wi‑Fi, atau brightness tidak bisa diubah | Kontrolnya dinonaktifkan dengan alasan di tooltip; panel lain tetap jalan |
 | Format file sesi Claude tidak dikenali | Nama sesi diganti nama folder, status hanya dari hook, deteksi Esc tidak jalan; dicatat sekali di log |
+| Cek update gagal (offline, GitHub atau Store tidak menjawab) | Diam saja; dicoba lagi di jadwal berikutnya; Settings → About menampilkan `Couldn't check for updates` bila gagal lebih dari 3 hari |
+| Installer update yang diunduh tanda tangannya tidak cocok | Tidak dijalankan dan dihapus; Settings menampilkan `Update couldn't be verified` dan tombol Release notes untuk unduh manual |
+| Gili ditutup paksa oleh update atau uninstall | Sebelum menimpa file, installer GitHub menjalankan `Gili.exe --quit`. Untuk MSIX, Gili menangani `WM_ENDSESSION` dan `WM_CLOSE` lewat jalur Quit biasa (lepas AppBar, pulihkan taskbar) dan mendaftar `RegisterApplicationRestart` supaya jalan lagi setelah update |
+| Versi Store dilepas tanpa Prepare to uninstall | Hook Gili tertinggal di `~/.claude/settings.json` dan menunjuk alias yang sudah hilang; Claude tetap jalan karena hook yang gagal tidak menghentikannya. Taskbar Windows tetap auto-hide sampai pengguna mengubahnya. Halaman dukungan menjelaskan cara membersihkannya |
 
 ## 12. Risiko dan mitigasi
 
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
 | Windows 11 24H2+ mewajibkan izin Location untuk membaca nama Wi‑Fi | Nama tidak tampil | Tampilkan ikon sinyal saja; tooltip menjelaskan izinnya; tombol ke `ms-settings:privacy-location` |
-| Driver sensor diblokir Defender atau tidak didukung laptop | Suhu CPU tidak tampil | Pakai LibreHardwareMonitorLib versi yang memakai driver PawnIO (bukan WinRing0 yang ditandai Defender); verifikasi di Fase 4. Modul sembunyi bila tidak terbaca |
 | VLC 3.x tidak mengirim sesi media Windows | Video VLC tampil dengan judul saja, tanpa progres | Judul dari judul jendela VLC; progres hanya bila HTTP interface VLC diaktifkan (pengaturan opsional). VLC 4 sudah mengirim sesi |
 | Tombol dialog konflik Explorer tidak bisa ditekan dari luar | Pilihan di kartu pulau tidak sampai ke Explorer | Kartu menampilkan Open dialog yang membawa dialog Explorer ke depan; pengguna memilih di sana |
 | Struktur atau teks dialog progres Explorer berubah | Progres copy/move/delete tidak terbaca atau jenis operasinya salah dikenali | Fitur best-effort; kalau jenis operasi tidak dikenali, tampil ikon dan warna netral dengan teks asli dari dialog; cuplikan clipboard tetap jalan |
@@ -1065,6 +1111,11 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 | Host tray tambahan (ManagedShell) tidak menerima semua ikon di Windows 11 versi pengguna | Sebagian ikon tray tidak tampil | Diuji di laptop pengguna di awal Fase 3 sebelum tray dibangun; kalau gagal, tombol Tray membuka overflow tray Windows sebagai cadangan |
 | Menyembunyikan `Shell_TrayWnd` tidak didukung resmi dan bisa berubah setelah update Windows | Taskbar muncul lagi atau ruangnya tertinggal | Pakai auto-hide resmi sebagai dasar, sembunyikan jendela hanya sebagai tambahan; periksa ulang tiap `TaskbarCreated` dan saat bangun dari sleep |
 | Animasi terus-menerus di jendela WPF transparan dirender di CPU | Ambient motion atau mata Gili melewati anggaran CPU | Anggaran dan cadangan di 8.1; diukur di Fase 1 sebelum fitur dianggap selesai |
+| Sertifikasi Microsoft Store menolak perilaku yang mengubah shell Windows: menyembunyikan `Shell_TrayWnd`, menjadi host tray tambahan (ManagedShell), mendaftar AppBar, atau mengubah file konfigurasi app lain (`~/.claude/settings.json`) | Gili tidak bisa masuk Store, atau harus dirilis tanpa fitur tertentu | Semua fitur itu opt-in dan bisa dibatalkan pengguna; catatan sertifikasi menjelaskan alasannya. Paket MSIX diajukan sebagai **private/hidden listing** lebih dulu di awal Fase 5 untuk melihat hasil sertifikasi sebelum rilis. Kalau satu fitur ditolak, fitur itu dimatikan di versi Store saja (flag build) dan tetap ada di versi GitHub |
+| Antivirus menandai Gili sebagai malware (false positive) karena perilakunya mirip spyware: hook keyboard global untuk Caps/Num Lock, listener clipboard, autostart, membaca jendela app lain (UI Automation), dan mengubah `~/.claude/settings.json` | Installer diblokir atau dikarantina di komputer pengguna | Semua exe ditandatangani; tidak ada unduhan kode, obfuscation, atau packer; cek VirusTotal sebelum setiap rilis dan lapor false positive ke Microsoft Security Intelligence serta vendor lain (F-PUB-05). Hook keyboard langsung mengabaikan semua tombol selain Caps Lock dan Num Lock, tanpa menyimpan atau mencatat apa pun; privacy policy menyebutkannya |
+| Reputasi SmartScreen sertifikat OV baru masih nol | Pengguna awal versi GitHub tetap melihat `Windows protected your PC` | Halaman rilis mengarahkan ke Store sebagai jalur utama; reputasi naik seiring unduhan. Sertifikat diperpanjang sebelum habis dengan kunci yang sama bila penerbit memungkinkan, supaya reputasi tidak mulai dari nol |
+| App execution alias menambah waktu mulai `Gili.ClaudeHook` di versi Store | Target ≤ 50 ms (p95) F-CLD-07 terlewati | Diukur di awal Fase 3 dengan paket MSIX. Kalau lewat, helper disalin ke folder di luar paket yang tidak divirtualisasi (kapabilitas `unvirtualizedResources`, perlu alasan di sertifikasi) dan path itu yang ditulis ke hook |
+| Perangkat pengguna umum berbeda dari laptop pengembang (desktop tanpa baterai atau brightness, GPU dan driver lain, versi Windows 11 yang masih didukung Microsoft, DPI dan bahasa sistem lain) | Modul atau pulau kontrol rusak di perangkat yang tidak pernah diuji | Modul yang sumbernya tidak ada disembunyikan, bukan error; matriks uji di bagian 13; log menyebut versi Windows dan jenis instalasi supaya laporan bug bisa dilacak |
 | Update Claude Code mengubah nama event atau isi JSON hook | Status sesi tidak terbaca | Helper mengabaikan field yang tidak dikenal; Settings menampilkan waktu kejadian terakhir (`Connected · last event 2 min ago`) supaya masalah cepat terlihat |
 
 ## 13. Pengujian
@@ -1075,19 +1126,23 @@ Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.js
 - **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri Gili, JSON rusak tidak disentuh, cadangan dibuat.
 - **Test repository** pada file SQLite sementara: simpan/muat, migrasi, batas baris (50 riwayat clipboard, 8 item Shelf).
 - **Mode demo** untuk memeriksa tampilan dan gerak semua keadaan tanpa kejadian nyata.
-- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, buka note di kolom kiri, tengah, dan kanan serta di baris bawah (arah tumbuh editor), New note dan `Ctrl+Alt+N` (tumbuh ke bawah dan ke kiri), seret note keluar pulau lalu kembali masuk sebelum dilepas, lepas note di luar pulau (kartu hilang, pulau menutup) dan langsung mengetik, Float on top, ubah ukuran note mengambang dari keempat tepi dan keempat sudut sampai batas minimal dan maksimal, enam note mengambang lalu yang ketujuh, Back to island saat pulau tertutup dan saat halaman Notes terbuka, note mengambang setelah restart dan setelah DPI 125/150%, note mengambang saat YouTube fullscreen, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat Gili mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip (termasuk lingkaran di kiri menu saat pulau terbuka), ekspresi Gili (kedip setiap klik termasuk klik ganda cepat, mata besar saat menyeret file di Explorer dan jendela, musik, timer dengan lirikan menit, kartu alarm, note kembali ke pulau, diam 5 menit lalu gerakkan kursor, mengetik tanpa menggerakkan kursor tidak membuat Gili tidur), Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
+- **Unit test revisi 6**: perbandingan versi untuk cek update (termasuk versi pra-rilis yang diabaikan), keputusan migrasi data GitHub → Store (folder kosong, sudah ada, database terkunci), pemilihan folder data per jenis instalasi.
+- **Checklist manual per fase** di laptop pengembang, dengan build biasa dan dengan paket MSIX (paket MSIX sejak Fase 1, F-PUB-01): ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, buka note di kolom kiri, tengah, dan kanan serta di baris bawah (arah tumbuh editor), New note dan `Ctrl+Alt+N` (tumbuh ke bawah dan ke kiri), seret note keluar pulau lalu kembali masuk sebelum dilepas, lepas note di luar pulau (kartu hilang, pulau menutup) dan langsung mengetik, Float on top, ubah ukuran note mengambang dari keempat tepi dan keempat sudut sampai batas minimal dan maksimal, enam note mengambang lalu yang ketujuh, Back to island saat pulau tertutup dan saat halaman Notes terbuka, note mengambang setelah restart dan setelah DPI 125/150%, note mengambang saat YouTube fullscreen, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat Gili mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip (termasuk lingkaran di kiri menu saat pulau terbuka), ekspresi Gili (kedip setiap klik termasuk klik ganda cepat, mata besar saat menyeret file di Explorer dan jendela, musik, timer dengan lirikan menit, kartu alarm, note kembali ke pulau, diam 5 menit lalu gerakkan kursor, mengetik tanpa menggerakkan kursor tidak membuat Gili tidur), Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
 - **Pengukuran performa**: catat RAM dan CPU dari Task Manager setelah 8 jam pemakaian normal.
+- **Matriks perangkat (Fase 5)**: selain laptop pengembang, uji di minimal satu PC desktop (tanpa baterai, tanpa brightness, monitor eksternal sebagai monitor utama), satu VM Windows 11 bersih untuk tiap jalur instalasi, versi Windows 11 lama dan terbaru yang masih didukung, DPI 100/125/150/175%, dan bahasa tampilan Windows selain Inggris (format tanggal dan angka mengikuti UI Inggris). Hal yang di PRD ini "diverifikasi di laptop pengguna" (hook izin Claude Desktop, `SHUTDOWN_INSTALL_UPDATES`, `SetSuspendState` di Modern Standby, host tray) diulang di perangkat ini.
+- **Checklist rilis (Fase 5)**: pasang dari Store dan dari installer GitHub di VM bersih (tanpa .NET, tanpa UAC, tanpa peringatan SmartScreen untuk versi Store), autostart setelah restart, update dari versi sebelumnya dengan data utuh, Install update di versi GitHub saat offline dan online, pindah GitHub → Store, dua versi terpasang bersamaan, Prepare to uninstall lalu uninstall versi Store, uninstall versi GitHub (hook Claude terlepas, taskbar pulih, tidak ada ruang AppBar tersisa), Windows App Certification Kit, hasil VirusTotal.
 
 ## 14. Fase rilis
 
 | Fase | Isi | Selesai bila |
 |---|---|---|
-| 1. Fondasi bar | F-BAR-01–07, F-BAR-08 (jam, material, autostart), F-BAR-09, F-BAR-13, F-LEFT-01, F-ISL-17, F-ISL-01–06, F-ISL-07 kerangka + Media, F-ISL-25, F-ISL-19, F-ISL-24 (netral, tidur, musik), F-ISL-21 (Media), F-RIGHT-01, F-RIGHT-11 | Bar dipakai seharian penuh tanpa crash; checklist Fase 1 lulus; target 8.1 terpenuhi |
+| 1. Fondasi bar | F-BAR-01–07, F-BAR-08 (jam, material, autostart), F-BAR-09, F-BAR-13, F-PUB-01 (paket MSIX dasar), F-LEFT-01, F-ISL-17, F-ISL-01–06, F-ISL-07 kerangka + Media, F-ISL-25, F-ISL-19, F-ISL-24 (netral, tidur, musik), F-ISL-21 (Media), F-RIGHT-01, F-RIGHT-11 | Bar dipakai seharian penuh tanpa crash, baik dari build biasa maupun paket MSIX; checklist Fase 1 lulus; target 8.1 terpenuhi |
 | 2. Produktivitas | SQLite, jendela Tools, F-TOOL-01–09 (F-TOOL-04 bagian pulau), F-TOOL-12, F-ISL-07 Timer/Alarms/Calendar/Todo/Notes, F-ISL-24 (fokus, kaget, senang, mengikuti note), F-ISL-08, F-ISL-16, F-ISL-20, F-ISL-21 (halaman lain), F-ISL-22, F-SND-01–06 | Data tahan restart dan matikan paksa; alarm berbunyi tepat waktu termasuk setelah sleep |
 | 3. Sistem lengkap | F-ISL-10–12, F-ISL-14, F-ISL-18, F-ISL-23, F-LEFT-02, F-LEFT-04–06, F-RIGHT-02–04, F-RIGHT-07–10, F-ISL-07 Shelf + System, F-BAR-08 modul dan baterai, F-BAR-10–12, F-CLD-01–08 (diawali verifikasi hook izin di Claude Desktop, sumber waktu reset 5 jam, dan host tray) | Modul kanan cocok dengan Task Manager; overflow bekerja di 1366 px; file bisa masuk dan keluar Shelf; sesi Claude Desktop dan terminal tampil benar saat bekerja, bertanya, dan selesai |
-| 4. Ekstra | F-TOOL-10–11, F-LEFT-03, F-ISL-15, F-RIGHT-05–06, F-TOOL-04 DND Windows, sisa F-BAR-08 | Semua fitur best-effort punya cadangan yang bekerja saat fiturnya gagal |
+| 4. Ekstra | F-TOOL-10–11, F-LEFT-03, F-ISL-15, F-RIGHT-05, F-TOOL-04 DND Windows, sisa F-BAR-08 | Semua fitur best-effort punya cadangan yang bekerja saat fiturnya gagal |
+| 5. Rilis publik | F-PUB-01 (lengkap), F-PUB-02–08, Settings → About. Diawali pengajuan MSIX sebagai listing tersembunyi untuk melihat hasil sertifikasi Store, dan pembelian sertifikat OV (proses verifikasi identitas bisa makan beberapa hari sampai minggu) | Gili tersedia gratis di Microsoft Store dan `gili-releases`; checklist rilis dan matriks perangkat di bagian 13 lulus; Microsoft Defender tidak mendeteksi apa pun |
 
-Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari keempat fase sebagai acuan visual dan gerak.
+Rilis publik pertama dilakukan setelah Fase 4, jadi versi publik pertama sudah berisi semua fitur. Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari Fase 1–4 sebagai acuan visual dan gerak.
 
 ## 15. Di luar cakupan
 
@@ -1101,7 +1156,9 @@ Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari ke
 - Riwayat clipboard untuk gambar dan file.
 - Menyalin file ke dalam Shelf (Shelf hanya menyimpan referensi).
 - File suara milik pengguna untuk alarm atau timer (hanya lima suara bawaan).
-- Installer publik, auto-update, code signing, Microsoft Store.
+- Versi berbayar, langganan, iklan, kode sumber terbuka, dan telemetri.
+- Windows 10, ARM64, dan distribusi lewat winget atau toko lain di rilis pertama.
+- Suhu CPU dan sensor hardware lain yang butuh hak admin atau driver (F-RIGHT-06 dihapus).
 - Tema terang dan kustomisasi warna aksen.
 - Tab Chat Claude Desktop; hanya sesi Claude Code (tab Code dan CLI) yang dipantau.
 - Menjawab pertanyaan atau izin Claude langsung dari pulau, dan membuka percakapan tertentu di dalam Claude Desktop.

@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Apa ini
 
-Gili: bar kaca di tepi atas layar Windows 11 dengan "pulau" hitam ala Dynamic Island di tengah. Namanya dari kata Indonesia untuk pulau kecil, dan maskot mata di pulau memakai nama yang sama. Sebelum 26 Oktober 2026 app ini bernama TopBar, jadi commit lama memakai path `src/TopBar.*`. Dipakai pribadi oleh satu pengguna, di satu monitor (monitor utama). Laptop pengembangan adalah laptop target, jadi menjalankan app langsung mengubah desktop pengguna: area kerja Windows berkurang setinggi bar.
+Gili: bar kaca di tepi atas layar Windows 11 dengan "pulau" hitam ala Dynamic Island di tengah. Namanya dari kata Indonesia untuk pulau kecil, dan maskot mata di pulau memakai nama yang sama. Sebelum 26 Oktober 2026 app ini bernama TopBar, jadi commit lama memakai path `src/TopBar.*`. Gili akan dirilis gratis untuk umum (kode tetap tertutup, repo privat) lewat Microsoft Store dan installer bertanda tangan di GitHub, setelah Fase 4 (PRD 9.4, Fase 5). Hanya Windows 11 dan monitor utama. Laptop pengembangan juga laptop uji utama, jadi menjalankan app langsung mengubah desktop pengembang: area kerja Windows berkurang setinggi bar.
 
 Sumber kebenaran:
-- PRD: [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](docs/superpowers/specs/2026-10-25-top-taskbar-prd.md). Setiap fitur punya ID (`F-BAR-01`, `F-ISL-07`, `F-CLD-03`, …) dan nomor fase (bagian 14). Rencana dan commit merujuk ID ini. `F-ISL-09` dan `F-ISL-13` sudah dihapus; nomornya jangan dipakai lagi.
+- PRD: [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](docs/superpowers/specs/2026-10-25-top-taskbar-prd.md). Setiap fitur punya ID (`F-BAR-01`, `F-ISL-07`, `F-CLD-03`, …) dan nomor fase (bagian 14). Rencana dan commit merujuk ID ini. `F-ISL-09`, `F-ISL-13`, dan `F-RIGHT-06` (suhu CPU) sudah dihapus; nomornya jangan dipakai lagi.
 - Mockup HTML: [docs/mockup/top-taskbar-mockup.html](docs/mockup/top-taskbar-mockup.html), acuan visual dan gerak untuk semua fase. Kalau mockup dan PRD berbeda, PRD yang dipakai.
 - `NOTE.jpg` dan `Untitled Diagram.jpg` di root adalah sketsa awal pengguna. Sketsa kedua ("yang lain fade out") sudah diganti PRD 6.3: hanya elemen yang tertimpa panel (+8 px) yang memudar.
 
@@ -32,7 +32,8 @@ dotnet run --project src/Gili.App
 - Menutup Gili dari luar: `Gili.exe --quit` (exe mana pun) meminta instance yang jalan keluar lewat jalur Quit biasa dan melepas ruang AppBar. Jangan pakai `taskkill`: perintah itu ikut menutup jendela tersembunyi WPF dan bisa membuat proses tetap hidup tanpa bar.
 - Kalau proses dihentikan paksa (debugger, `Stop-Process`) tanpa melepas AppBar, ruang di atas layar bisa tertinggal kosong. Restart Explorer untuk memulihkannya.
 - Build Debug punya item "Simulate crash" di menu klik kanan bar untuk menguji restart otomatis (PRD 11).
-- Pasang build Release ke `%LOCALAPPDATA%\Programs\Gili\` lalu jalankan: `pwsh scripts/publish.ps1`. Hanya salinan terpasang yang menulis entri autostart (`HKCU\...\Run`); `dotnet run` tidak pernah mendaftarkan dirinya.
+- Pasang build Release ke `%LOCALAPPDATA%\Programs\Gili\` lalu jalankan: `pwsh scripts/publish.ps1`. Salinan ini berperilaku seperti installer GitHub: hanya salinan terpasang yang menulis entri autostart (`HKCU\...\Run`); `dotnet run` tidak pernah mendaftarkan dirinya.
+- Paket MSIX (versi Store) dan installer GitHub dibangun oleh `scripts/package.ps1` (PRD 9.4, F-PUB-01; belum ada, masuk Fase 1). Versi MSIX autostart lewat `StartupTask`, bukan `HKCU\...\Run`, dan datanya di folder paket, bukan `%LOCALAPPDATA%\Gili\`. Uji perubahan yang menyentuh file, registry, autostart, toast, atau hook Claude di kedua bentuk.
 - Mode demo (klik kanan bar → Demo mode, F-BAR-09) memutar skenario palsu untuk mengecek tampilan semua keadaan pulau tanpa kejadian nyata. Belum ada; masuk rencana 1c.
 - `Gili.ClaudeHook` (Fase 3) dipublish NativeAOT, jadi butuh workload C++ Build Tools.
 
@@ -47,7 +48,6 @@ Proyek dan arah dependensi (PRD 9.1):
 | `Gili.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Bergantung ke Core |
 | `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow`, `IslandWindow`, `ToolsWindow`, `SettingsWindow`, ViewModel | Komposisi semuanya |
 | `Gili.ClaudeHook` | Console NativeAOT yang dipanggil hook Claude Code | Berdiri sendiri |
-| `Gili.SensorHelper` | Proses admin untuk suhu CPU (LibreHardwareMonitorLib), kirim lewat named pipe | Berdiri sendiri |
 | `Gili.Core.Tests` | xUnit untuk Core dan Data | |
 
 Hal yang butuh membaca beberapa bagian PRD untuk dipahami:
@@ -56,9 +56,10 @@ Hal yang butuh membaca beberapa bagian PRD untuk dipahami:
 - **Alur data.** Provider (interface di Core, implementasi di Platform) mengirim snapshot ke state di Core. `IslandCoordinator` memutuskan apa yang tampil di pulau. ViewModel berlangganan state dan memperbarui UI lewat dispatcher WPF. Mode demo hanyalah set implementasi provider palsu, jadi fitur baru selalu butuh interface provider supaya bisa didemokan.
 - **`IslandCoordinator` adalah inti aturan.** Ada dua tabel prioritas yang terpisah di PRD 6.3: prioritas tampilan (1 kartu alarm/timer/konflik file … 6 jam saja) dan urutan aktivitas di slot compact (1 cuplikan clipboard … 8 ngecas). Expanded yang dibuka pengguna berada di atas prioritas 4–6 dan di bawah 1–3. Fullscreen dan fase fokus pomodoro mengubah aturan ini. Aktivitas kedua jadi gelembung di kanan pulau. Semua aturan ini wajib punya unit test (F-ISL-03, PRD 13).
 - **Waktu.** `Scheduler` menyimpan setiap jadwal sebagai waktu absolut UTC di database, lalu menghitung ulang saat app mulai, bangun dari sleep, dan saat jam atau zona waktu berubah. Timer dan stopwatch harus tetap benar setelah restart.
-- **Hak akses.** App utama selalu jalan tanpa hak admin, karena Windows (UIPI) memblokir drag-and-drop dari proses biasa ke proses admin dan Shelf akan rusak. Hanya `Gili.SensorHelper` yang jalan sebagai admin, didaftarkan lewat Task Scheduler.
+- **Hak akses.** Tidak ada bagian Gili yang jalan sebagai admin, dan instalasinya tidak meminta UAC: Windows (UIPI) memblokir drag-and-drop dari proses biasa ke proses admin sehingga Shelf rusak, Microsoft Store menolaknya, dan antivirus jadi curiga. Jangan menambah fitur yang butuh admin atau driver (karena itu suhu CPU dihapus).
+- **Distribusi.** Build self-contained (pengguna tidak punya .NET). Hindari perilaku yang mirip malware: tidak mengunduh atau menjalankan kode, tanpa obfuscation atau packer, semua exe ditandatangani, dan setiap hook atau akses ke data app lain harus opt-in. Path helper Claude di versi MSIX memakai app execution alias, bukan folder `WindowsApps` (PRD 9.4, 12).
 - **Kegagalan terisolasi.** Provider yang gagal tidak boleh mematikan bar: modulnya menampilkan "—" dengan alasan di tooltip, lalu dicoba lagi setelah 5 detik, 30 detik, kemudian tiap 2 menit (PRD 11).
-- **Penyimpanan.** `%LOCALAPPDATA%\Gili\`: `gili.db` (SQLite WAL, migrasi lewat tabel `schema_version`, backup harian 7 salinan), `settings.json`, `logs\`. Thumbnail clipboard dan semua data sesi Claude hanya di memori, tidak pernah ditulis ke disk atau log.
+- **Penyimpanan.** `%LOCALAPPDATA%\Gili\` (versi MSIX: folder lokal paket, PRD 10): `gili.db` (SQLite WAL, migrasi lewat tabel `schema_version`, backup harian 7 salinan), `settings.json`, `logs\`. Thumbnail clipboard dan semua data sesi Claude hanya di memori, tidak pernah ditulis ke disk atau log.
 - **Integrasi Claude (Fase 3).** Hook Claude Code → `Gili.ClaudeHook.exe <Event>` → named pipe `\\.\pipe\Gili.Claude`, dilengkapi `~/.claude/sessions/*.json` yang dipantau. Helper tidak boleh menulis ke stdout, selalu keluar dengan kode 0, dan harus selesai ≤ 50 ms p95. Penggabung `~/.claude/settings.json` wajib membuat cadangan, tidak menggandakan entri, dan tidak menyentuh hook lain: `settings.json` pengguna sudah berisi hook wmux. JSON yang tidak valid dibiarkan apa adanya.
 
 ## UI dan gerak
@@ -78,7 +79,9 @@ Pengguna sudah menolak atau menghapus hal-hal ini saat brainstorming. Jangan diu
 - Kolom input todo di halaman Todo: todo hanya dibuat dari Calendar (Add task).
 - Panel dropdown untuk Wi‑Fi/Bluetooth/volume/brightness dan menu power: semuanya ada di halaman Controls di pulau, tanpa tab di menu (dibuka dari tombol Controls, modul Wi‑Fi, dan Power).
 - Jam dan tanggal di dalam pulau: pindah ke kanan bar. Pulau tanpa aktivitas berisi maskot Gili, yang matanya berjalan sepanjang pulau mengikuti kursor.
+- Suhu CPU dan helper admin (`Gili.SensorHelper`): dihapus supaya Gili lolos Store dan tidak dianggap malware.
+- Versi berbayar, kode terbuka, dan telemetri: Gili gratis, kode tertutup, tanpa telemetri.
 
 Pengguna minta Gili tetap sangat ringan: setiap fitur baru harus punya anggaran CPU/RAM di PRD 8.1, dan ingatkan pengguna kalau fitur yang diminta berat.
 
-Hal yang harus diverifikasi di laptop pengguna sebelum diimplementasikan (Fase 3): hook `Notification` untuk prompt izin di Claude Desktop, `SHUTDOWN_INSTALL_UPDATES` beserta deteksi update yang menunggu, dan `SetSuspendState` di laptop Modern Standby.
+Hal yang harus diverifikasi di laptop pengembang sebelum diimplementasikan (Fase 3): hook `Notification` untuk prompt izin di Claude Desktop, `SHUTDOWN_INSTALL_UPDATES` beserta deteksi update yang menunggu, `SetSuspendState` di laptop Modern Standby, dan waktu mulai `Gili.ClaudeHook` lewat app execution alias di paket MSIX. Di Fase 5 semuanya diulang di matriks perangkat PRD 13 (desktop, VM bersih).
