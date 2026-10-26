@@ -76,5 +76,9 @@ Pengguna sudah menolak atau menghapus hal-hal ini saat brainstorming. Jangan diu
 - Navigasi pulau selain menu tab selebar pulau (ikon + nama, 9 tab).
 - Titik kamera/mic dengan lingkaran hitam: titik 8 px tanpa latar.
 - Kolom input todo di halaman Todo: todo hanya dibuat dari Calendar (Add task).
+- Panel dropdown untuk Wi‑Fi/Bluetooth/volume/brightness dan menu power: semuanya ada di halaman Controls di pulau, tanpa tab di menu (dibuka dari tombol Controls, modul Wi‑Fi, dan Power).
+- Jam dan tanggal di dalam pulau: pindah ke kanan bar. Pulau tanpa aktivitas berisi maskot Gili, yang matanya berjalan sepanjang pulau mengikuti kursor.
+
+Pengguna minta TopBar tetap sangat ringan: setiap fitur baru harus punya anggaran CPU/RAM di PRD 8.1, dan ingatkan pengguna kalau fitur yang diminta berat.
 
 Hal yang harus diverifikasi di laptop pengguna sebelum diimplementasikan (Fase 3): hook `Notification` untuk prompt izin di Claude Desktop, `SHUTDOWN_INSTALL_UPDATES` beserta deteksi update yang menunggu, dan `SetSuspendState` di laptop Modern Standby.
