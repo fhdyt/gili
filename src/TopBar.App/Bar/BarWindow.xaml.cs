@@ -41,6 +41,8 @@ public partial class BarWindow : Window
 
     public event Action? QuitRequested;
 
+    public event Action? SettingsRequested;
+
     public void ReleaseAppBar() => _appBar?.Unregister();
 
     public void Reassert() => _appBar?.Reposition();
@@ -135,6 +137,8 @@ public partial class BarWindow : Window
             // The user declined the UAC prompt.
         }
     }
+
+    private void OnSettings(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
 
     private void OnQuit(object sender, RoutedEventArgs e)
     {

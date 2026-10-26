@@ -7,8 +7,8 @@
     <AssemblyName>TopBar</AssemblyName>
     <RootNamespace>TopBar.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- WPF, not WinRT AOT: field-backed [ObservableProperty] is fine here. -->
-    <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+    <!-- WPF, not WinRT AOT: field-backed [ObservableProperty] is fine here. Window.ThemeMode is still marked experimental. -->
+    <NoWarn>$(NoWarn);MVVMTK0045;WPF0001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\TopBar.Core\TopBar.Core.csproj" />

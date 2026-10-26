@@ -1,10 +1,13 @@
 ﻿using System.Globalization;
 using System.IO;
+using System.Security;
 using System.Windows;
 using System.Windows.Markup;
 using TopBar.App.Bar;
+using TopBar.App.Settings;
 using TopBar.Core;
 using TopBar.Core.Diagnostics;
+using TopBar.Core.Settings;
 using TopBar.Data;
 using TopBar.Platform.Shell;
 using TopBar.Platform.Stats;
@@ -13,12 +16,17 @@ namespace TopBar.App;
 
 public partial class App : Application
 {
+    private static readonly bool IsInstalledBuild =
+        Environment.ProcessPath is { } exe && AppPaths.IsUnder(exe, AppPaths.InstallDirectory);
+
     private FileLog? _log;
     private SingleInstance? _instance;
     private SettingsHub? _settings;
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
     private BarWindow? _bar;
+    private SettingsWindow? _settingsWindow;
+    private bool? _autostartApplied;
     private bool _quitting;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -38,7 +46,7 @@ public partial class App : Application
 
         var restarted = e.Args.Contains("--restarted");
         _instance = SingleInstance.Acquire(restarted ? TimeSpan.FromSeconds(5) : TimeSpan.Zero,
-            () => Dispatcher.InvokeAsync(() => _bar?.Reassert()),
+            () => Dispatcher.InvokeAsync(ShowSettings),
             () => Dispatcher.InvokeAsync(Quit));
         if (_instance is null)
         {
@@ -50,6 +58,8 @@ public partial class App : Application
         var loaded = store.Load();
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
+        _settings.Changed += SyncAutostart;
+        SyncAutostart(_settings.Current);
         _transparency = new TransparencyWatcher();
 
         var cpu = new CpuSampler();
@@ -58,6 +68,7 @@ public partial class App : Application
         _stats = new StatsService(Dispatcher, cpu.Sample, memory.Sample, network.Sample);
 
         _bar = new BarWindow(_settings, _transparency, _stats);
+        _bar.SettingsRequested += ShowSettings;
         _bar.QuitRequested += Quit;
         _bar.Show();
         _stats.Start();
@@ -78,6 +89,36 @@ public partial class App : Application
         _bar?.ReleaseAppBar();
         _settings?.Flush();
         base.OnSessionEnding(e);
+    }
+
+    private void ShowSettings()
+    {
+        if (_settingsWindow is not null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+        _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, IsInstalledBuild));
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Show();
+    }
+
+    /// <summary>
+    /// Only the installed copy owns the Run entry, so a dev build started with `dotnet run` never registers itself
+    /// (F-BAR-04; the first run of the installed copy creates the entry, PRD 9.4).
+    /// </summary>
+    private void SyncAutostart(AppSettings settings)
+    {
+        if (!IsInstalledBuild || _autostartApplied == settings.Autostart) return;
+        try
+        {
+            Autostart.Apply(settings.Autostart, Environment.ProcessPath!);
+            _autostartApplied = settings.Autostart;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or SecurityException)
+        {
+            _log?.Write("Could not update the autostart entry", ex);
+        }
     }
 
     private void Quit()

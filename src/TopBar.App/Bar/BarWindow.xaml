@@ -95,6 +95,8 @@
     <Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">
         <Border.ContextMenu>
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
+                <MenuItem Header="Settings" Style="{StaticResource BarMenuItem}" Click="OnSettings" />
+                <Separator Style="{StaticResource BarMenuSeparator}" />
                 <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
             </ContextMenu>
         </Border.ContextMenu>
