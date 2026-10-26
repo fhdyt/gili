@@ -403,7 +403,8 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 
 /* media */
 .pg-media .vid{display:none}
-.pg-media.is-video .mus{display:none}
+.pg-media.is-video .mcol{display:none}
+.mcol{display:flex;flex-direction:column;gap:12px;width:100%;min-width:0}
 .pg-media.is-video .vid{display:flex}
 .mus{display:flex;align-items:center;gap:24px;width:100%}
 .cover{width:112px;height:112px;border-radius:16px;flex-shrink:0;display:grid;place-items:center;color:rgba(255,255,255,.85);transition:background 400ms}
@@ -423,6 +424,22 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .mctl .main{width:52px;height:52px;border-radius:26px;background:var(--text);color:#000}
 .mctl .main:hover{background:#d1d1d6}
 .mctl .ic{width:20px;height:20px}
+/* Lyrics on the Media page: the previous line, the current one, the next one; a new line rolls up. */
+.mctl .mlyr{width:34px;height:34px;color:var(--text2)}
+.mctl .mlyr .ic{width:17px;height:17px}
+.mctl .mlyr[aria-pressed="true"]{color:var(--accent)}
+.lyr{display:flex;flex-direction:column;gap:2px;padding:10px 4px 0;border-top:1px solid rgba(255,255,255,.08)}
+.lyr p{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lyr .l0{font-size:13px;line-height:18px;min-height:18px;color:var(--text3)}
+.lyr .l1{font-size:17px;line-height:24px;min-height:24px;font-weight:600;letter-spacing:-.01em}
+.lyr .l2{font-size:13px;line-height:18px;min-height:18px;color:var(--text2)}
+.lyr.msg .l1{font-size:14px;font-weight:400;color:var(--text2)}
+.lyr.roll p{animation:lyRoll 300ms var(--out)}
+@keyframes lyRoll{from{transform:translateY(10px);opacity:.35}}
+.lsrc{margin-top:6px;font-size:10.5px;color:var(--text3)}
+/* In the compact island a new lyric line rises into place */
+.slot .tt.lyin{animation:lyIn 260ms var(--out)}
+@keyframes lyIn{from{transform:translateY(5px);opacity:0}}
 .vid{flex-direction:column;justify-content:center;width:100%;max-width:520px;margin:0 auto}
 .vtitle{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .vid .mprog{margin-top:18px}
@@ -821,6 +838,7 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></symbol>
   <symbol id="i-clip" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></symbol>
+  <symbol id="i-lyrics" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
   <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 11h8M8 15h5"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></symbol>
   <symbol id="i-files" viewBox="0 0 24 24"><path d="M15 2H9a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5"/><path d="M4 7v13a2 2 0 0 0 2 2h9"/></symbol>
@@ -958,6 +976,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <div class="xp" id="xp">
           <div class="track" id="track">
             <section class="page pg-media" id="pgMedia" aria-label="Media">
+              <div class="mcol">
               <div class="mus">
                 <div class="cover" id="cover"><svg class="ic" aria-hidden="true"><use href="#i-music"/></svg></div>
                 <div class="minfo">
@@ -967,10 +986,13 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                   <div class="mprog num"><span id="mCur"></span><div class="bar2" id="mBar"><i id="mFill"></i></div><span id="mDur"></span></div>
                 </div>
                 <div class="mctl">
+                  <button class="mlyr" id="mLyr" aria-pressed="false" aria-label="Lyrics" title="Lyrics"><svg class="ic" aria-hidden="true"><use href="#i-lyrics"/></svg></button>
                   <button id="mPrev" aria-label="Previous track"><svg class="ic" aria-hidden="true"><use href="#i-prev"/></svg></button>
                   <button class="main" id="mPlay" aria-label="Pause"></button>
                   <button id="mNext" aria-label="Next track"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
                 </div>
+              </div>
+              <div class="lyr" id="lyr" hidden><p class="l0"></p><p class="l1"></p><p class="l2"></p><span class="lsrc">Lyrics from LRCLIB</span></div>
               </div>
               <div class="vid">
                 <div class="msrc" id="vSrc"></div>
@@ -1133,7 +1155,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Clipboard</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
-    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false">Lyrics</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat80">80% reached</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
     <p class="note">Clipboard: click the VS Code window first, then the Clipboard icon (or Ctrl+Alt+V) and pick an item. It is pasted where the cursor was.</p>
@@ -1221,7 +1243,7 @@ const S={
   mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1},
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,notes:1,clipboard:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1,1],
-  gili:1,glow:1,motion:1,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
+  gili:1,glow:1,motion:1,lyrics:0,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
   wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
@@ -1708,14 +1730,15 @@ function slotHTML(k){
   if(ACT_ICON[k]){const[i,c]=ACT_ICON[k];return `<span style="color:${c}">${icon(i)}</span><span class="num sv">${slotValue(k)}</span>`}
   const m=cur();
   if(m.kind==='video')return `<span style="color:var(--orange)">${icon('film')}</span><span class="tt">${esc(trunc(m.t,32))}</span><span class="mini"><i class="sv" style="width:${pct()}%"></i></span>`;
-  return `${artHTML(m)}<span class="tt">${esc(trunc(m.t+' – '+m.a,36))}</span><span class="viz ${S.media.playing?'':'off'}" style="color:${m.c[0]}"><i></i><i></i><i></i><i></i></span><button class="pp" data-pp aria-label="${S.media.playing?'Pause':'Play'}">${icon(S.media.playing?'pause':'play')}</button>`;
+  const ly=curLyric();
+  return `${artHTML(m)}${ly?`<span class="tt lyin" title="${esc(ly)}">${esc(trunc(ly,44))}</span>`:`<span class="tt">${esc(trunc(m.t+' – '+m.a,36))}</span>`}<span class="viz ${S.media.playing?'':'off'}" style="color:${m.c[0]}"><i></i><i></i><i></i><i></i></span><button class="pp" data-pp aria-label="${S.media.playing?'Pause':'Play'}">${icon(S.media.playing?'pause':'play')}</button>`;
 }
 // The track's artwork (the mockup draws it from the cover's two colours); a note glyph when the player sends none.
 const artHTML=(m,round)=>m.c?`<span class="art${round?' round':''}" style="--art:linear-gradient(135deg,${m.c[0]},${m.c[1]})" aria-hidden="true"></span>`:`<span class="art${round?' round':''}" aria-hidden="true">${icon('music')}</span>`;
 function renderSlot(){
   const a=activities(),k=a[0];
   const xs=k==='xop'?(S.xop?(S.xop.paused?'p':'r')+S.xop.kind:S.xopEnd.status+S.xopEnd.kind):'';
-  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing:'')+(k==='lim'?S.lim.hit:'')+'|'+(a[1]||'')+(a[1]==='media'?S.media.i:'')+'|'+clSig();
+  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing+(curLyric()?'L':''):'')+(k==='lim'?S.lim.hit:'')+'|'+(a[1]||'')+(a[1]==='media'?S.media.i:'')+'|'+clSig();
   if(sig!==slotSig){
     slotSig=sig;
     // Clock and date only show while the island has nothing else to say.
@@ -1899,16 +1922,70 @@ function renderMedia(){
   $(`.xtab[data-i="${PAGE.media}"]`).classList.toggle('playing',S.media.playing&&!video);
   if(S.page===PAGE.media)renderGlow();
 }
-function toggleMedia(){S.media.active=true;S.media.playing=!S.media.playing;renderMedia();renderSlot();setPressed('music',S.media.playing)}
+function toggleMedia(){S.media.active=true;S.media.playing=!S.media.playing;renderMedia();renderSlot();setPressed('music',S.media.playing);renderLyrics()}
 function nextSong(n){
   let i=S.media.i;
   do{i=(i+n+MEDIA.length)%MEDIA.length}while(MEDIA[i].kind!=='music');
-  Object.assign(S.media,{i,pos:0,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);
+  Object.assign(S.media,{i,pos:0,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack();
 }
 $('#mPlay').onclick=toggleMedia;
 $('#mPrev').onclick=()=>nextSong(-1);
 $('#mNext').onclick=()=>nextSong(1);
-$('#mBar').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();S.media.pos=(e.clientX-r.left)/r.width*cur().d;renderMedia()};
+$('#mBar').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();S.media.pos=(e.clientX-r.left)/r.width*cur().d;renderMedia();lyricsTick(true)};
+
+/* lyrics (PRD 6.3 "Lirik lagu"): time-synced lyrics for the playing song, looked up on LRCLIB by title, artist, album and
+   length once Show lyrics is on (off by default). The current line takes the place of the title in the compact island;
+   the Media page shows the previous, current and next lines. */
+// Placeholder lines for the mockup, not the songs' real lyrics.
+const LYR_LINES=['Morning light is on the window again','I kept the list of things I meant to say','Every road leads back to the same small room','Hold on, the night is almost through','We ran out of words but not of time','Count the lights until the city sleeps','I am learning how to let it go','Slow down, the song is still playing','Tell me where the quiet places are','We will laugh about this one day'];
+const LY={st:'off',lines:null,i:-1,t:0,told:false};
+// A song by the mockup's playlist index: a line every 4.5–5.9 s from 0:08, with an instrumental break from 1:36 to 1:58.
+// The lofi stream has no lyrics.
+function lyricsFor(i){
+  const m=MEDIA[i];if(m.kind!=='music'||m.a==='Lofi Girl')return null;
+  const out=[];let t=8,k=i*3;
+  while(t<m.d){if(t>=96&&t<118){out.push([96,'']);t=118;continue}out.push([t,LYR_LINES[k++%LYR_LINES.length]]);t+=4.5+(k*7%3)*.7}
+  return out;
+}
+// A new song (or lyrics just turned on): look it up, then follow the playback position.
+function lyricsTrack(){
+  clearTimeout(LY.t);LY.lines=null;LY.i=-1;
+  LY.st=S.lyrics&&cur().kind==='music'?'search':'off';
+  if(LY.st==='search')LY.t=setTimeout(()=>{LY.lines=lyricsFor(S.media.i);LY.st=LY.lines?'ok':'none';renderLyrics();lyricsTick(true)},800);
+  renderLyrics();slotSig='';renderSlot();
+}
+// The line playing now: the last one whose time has come. Empty text is an instrumental break.
+function lyricIndex(){let k=-1;if(LY.lines)for(let j=0;j<LY.lines.length&&LY.lines[j][0]<=S.media.pos;j++)k=j;return k}
+const curLyric=()=>S.lyrics&&LY.st==='ok'&&LY.i>=0&&S.media.playing&&cur().kind==='music'&&LY.lines[LY.i][1]||null;
+// Only the text changes on a new line: it rises into place, and the island's width follows on the compact spring.
+function lyricsTick(force){
+  if(LY.st!=='ok')return;
+  const k=lyricIndex();if(k===LY.i&&!force)return;
+  const was=!!curLyric();LY.i=k;renderLyrics(true);
+  const now=curLyric(),tt=slot.dataset.k==='media'&&slot.querySelector('.tt');
+  if(!tt||was!==!!now){slotSig='';renderSlot();return}
+  if(!now)return;
+  tt.textContent=trunc(now,44);tt.title=now;tt.classList.remove('lyin');void tt.offsetWidth;tt.classList.add('lyin');
+  if(S.state==='compact'&&!S.reduce)setMotion(SP_WIDE);layout();
+}
+function renderLyrics(roll){
+  const box=$('#lyr'),on=!!S.lyrics&&cur().kind==='music';
+  $('#mLyr').setAttribute('aria-pressed',!!S.lyrics);box.hidden=!on;
+  if(on){
+    let a='',b='',c='',msg=true;
+    if(LY.st==='search')b='Searching for lyrics…';
+    else if(LY.st==='none')b='No lyrics for this song';
+    else{const L=LY.lines,i=LY.i;msg=false;a=i>0?L[i-1][1]:'';b=i>=0&&L[i][1]||'♪';c=L[i+1]?L[i+1][1]||'♪':''}
+    box.classList.toggle('msg',msg);
+    const[p0,p1,p2]=box.querySelectorAll('p');p0.textContent=a;p1.textContent=b;p2.textContent=c;
+    if(roll&&!S.reduce){box.classList.remove('roll');void box.offsetWidth;box.classList.add('roll')}
+  }
+  if(S.state==='expanded'&&S.page===PAGE.media)layout();
+}
+$('#mLyr').onclick=()=>{
+  S.lyrics=S.lyrics?0:1;setPressed('lyrics',!!S.lyrics);lyricsTrack();
+  if(S.lyrics&&!LY.told){LY.told=true;hint('Lyrics come from lrclib.net: only the song title, artist, album and length are sent')}
+};
 
 /* timer, stopwatch, pomodoro */
 function renderTimerPage(){
@@ -2752,7 +2829,7 @@ const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
   Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':'Turning it off also hides the '+n+' page in the island']),
-  Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
+  Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
   Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
 };
@@ -2773,6 +2850,7 @@ function sput(k,v){
   else if(k==='auto'){hint('Only the installed copy starts with Windows');return}
   else if(k==='glass'){const g=Object.keys(GLASS).find(x=>GLASS[x]===v);$(`#glass button[data-g="${g}"]`).click()}
   else S[k]=v;
+  if(k==='lyrics')lyricsTrack();
   if(k==='hideTb'&&!v&&S.pos==='bottom'){S.pos='top';hint('Moved to the top because the Windows taskbar is back')}
   applySettings();renderSettings();
 }
@@ -3086,7 +3164,8 @@ const ACT={
     hint('No activity: Gili sits in the island');
   },
   song:()=>nextSong(1),
-  video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true)},
+  video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack()},
+  lyrics:()=>$('#mLyr').click(),
   timer10:()=>{Object.assign(S.timer,{mode:'timer',total:10,left:10,running:true});renderTimerPage();renderSlot()},
   pomo:()=>{Object.assign(S.pomo,{running:true,left:1500,len:1500,phase:'focus',round:1,fast:true});S.timer.mode='pomo';renderTimerPage();renderSlot()},
   sw:toggleSw,
@@ -3256,7 +3335,7 @@ function tick1s(){
   if(S.media.playing){
     S.media.pos+=1;
     if(S.media.pos>=cur().d){if(cur().kind==='music')nextSong(1);else{S.media.pos=cur().d;S.media.playing=false;renderMedia();renderSlot()}}
-    else renderMedia();
+    else{renderMedia();lyricsTick()}
   }
   S.battery=S.charging?Math.min(100,S.battery+0.1):Math.max(1,S.battery-1/30);
   renderRight();renderSys();renderSlot();limCheck();fitBar(compactWidth());
