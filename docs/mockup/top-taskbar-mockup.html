@@ -308,7 +308,7 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .st-compact .L-compact,.st-wide .L-wide{opacity:1;pointer-events:auto;transition:opacity 180ms ease 90ms}
 .st-compact .island{cursor:pointer}
 .L-exp,.L-card,.L-drop{top:0;left:50%;transform:translate(-50%,-6px) scale(.98);filter:blur(6px);transform-origin:50% 0}
-.L-exp{width:680px;height:256px}
+.L-exp{width:560px;height:256px}
 .L-card{width:560px;height:104px;display:flex;align-items:center;gap:14px;padding:0 24px}
 .L-drop{width:420px;height:140px}
 .st-expanded .L-exp,.st-card .L-card,.st-drop .L-drop{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:none;
@@ -350,10 +350,12 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .pc.cam{background:var(--accent)}.pc.mic{background:var(--orange)}
 
 /* expanded */
-/* Page menu: icon + name for all nine pages, spanning the island's full width. One highlight slides to the active tab;
-   its offset is a multiple of its own width, so it stays aligned while the island grows to the Notes size.
+/* Page menu: one icon per page. The active tab shows its name, and so does the tab under the pointer or keyboard focus:
+   the name slides out of the icon like an app name on the left of the bar. Tabs share the menu's leftover width evenly,
+   so the icons stay spread across it while a name opens. One highlight slides to the active tab and takes its width
+   (placeInd() works out where the tab will end up, so both move together).
    Corners are concentric with the island: 14 px inset + 18 px menu radius = 32 px island radius; 3 px inset + 15 px = 18 px for the highlight. */
-.xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(var(--n,9),1fr);gap:2px}
+.xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:flex;gap:2px}
 /* Gili sits left of the menu while the island is open: a circle as tall as the menu, in the menu's own material,
    concentric with the island's corner like the menu (14 px inset + 18 px radius). The menu starts 6 px after it. */
 .xgili{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;--es:9px;--er:3px}
@@ -361,24 +363,32 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .xtabs.wg{left:56px}
 .iw.ctlm .xgili{display:none}
 .xtab[hidden]{display:none}
-.xind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px - (var(--n,9) - 1) * 2px) / var(--n,9));border-radius:15px;background:rgba(255,255,255,.14);
-  transform:translateX(calc(var(--i,0) * (100% + 2px)));transition:transform 320ms var(--out)}
-.xtab{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;border-radius:15px;font-size:12px;color:var(--text2);white-space:nowrap;transition:color 160ms}
-.xtab:hover{color:var(--text)}
-.xtab[aria-selected="true"]{color:var(--text);font-weight:600}
-.xtab .ic{width:15px;height:15px}
+.xind{position:absolute;top:3px;bottom:3px;left:0;width:var(--w,36px);border-radius:15px;background:rgba(255,255,255,.14);
+  transform:translateX(var(--x,3px));transition:transform 300ms var(--out),width 300ms var(--out)}
+/* An icon-only tab is 36 px (10.5 + 15 + 10.5); an open one is 12 + icon + 5 + name + 12. */
+.xtab{position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;padding:0 10.5px;border-radius:15px;font-size:12px;color:var(--text2);white-space:nowrap;
+  transition:color 160ms,gap 300ms var(--out),padding 300ms var(--out)}
+.xtab.hov,.xtab[aria-selected="true"]{gap:5px;padding:0 12px;color:var(--text)}
+.xtab[aria-selected="true"]{font-weight:600}
+.xtab .ic{width:15px;height:15px;flex-shrink:0}
 .xtab[aria-selected="true"] .ic{color:var(--accent)}
 .xtab[data-i="7"] .ic{color:var(--claude)}
-/* While music plays, the Media tab's icon becomes the level meter. */
-.xtab .viz{display:none;height:13px}.xtab .viz i{height:13px}
+/* The name stays in the button while hidden, so every tab keeps its accessible name. Each tab's exact name width at
+   both weights (--tl4, --tl6) is set from JS, so the slide lasts the whole 300 ms and the highlight lands on the tab. */
+.xtab .tl{max-width:0;opacity:0;overflow:hidden;transition:max-width 300ms var(--out),opacity 160ms ease}
+.xtab.hov .tl{max-width:var(--tl4);opacity:1}
+.xtab[aria-selected="true"] .tl{max-width:var(--tl6);opacity:1;transition:max-width 300ms var(--out),opacity 220ms ease 90ms}
+/* Only when the screen is too narrow for a second name: the hovered tab stays an icon. */
+.xtabs.tight .xtab.hov:not([aria-selected="true"]){gap:0;padding:0 10.5px}
+.xtabs.tight .xtab.hov:not([aria-selected="true"]) .tl{max-width:0;opacity:0}
+/* While music plays, the Media tab's icon becomes the level meter, at the icon's 15 px width. */
+.xtab .viz{display:none;width:15px;height:13px;gap:0;justify-content:space-between;flex-shrink:0}.xtab .viz i{height:13px}
 .xtab.playing .ic{display:none}.xtab.playing .viz{display:inline-flex;color:var(--accent)}
-/* Only when the screen is too narrow for every tab at full size: inactive tabs drop their names. */
-.xtabs.tight .xtab:not([aria-selected="true"]) .tl{display:none}
 /* The page area's height comes from the open page's content (min 178 px, Notes 422 px); see layout(). */
 .xp{position:absolute;top:58px;left:0;right:0;height:178px;overflow:hidden;transition:height var(--d,300ms) var(--e,ease)}
 .xp.scroll .page{overflow-y:auto}
 .track{display:flex;height:100%;transition:transform 300ms var(--out)}
-.page{flex:0 0 100%;height:100%;padding:0 32px;display:flex;gap:24px;align-items:center}
+.page{flex:0 0 100%;min-width:0;height:100%;padding:0 32px;display:flex;gap:24px;align-items:center}
 .pill{height:36px;padding:0 14px;border-radius:18px;background:var(--ctl);display:inline-flex;align-items:center;gap:8px;font-size:14px;white-space:nowrap;transition:background 120ms,transform 100ms}
 .pill:hover{background:var(--ctl-h)}
 .pill:active{transform:scale(.96)}
@@ -448,7 +458,7 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .cal button.sel:not(.today){background:var(--ctl-h)}
 .cal button.ev::after{content:"";position:absolute;bottom:1px;left:50%;width:3px;height:3px;margin-left:-1.5px;border-radius:50%;background:var(--orange)}
 .cal button.today.ev::after{background:#000}
-.cev{margin-left:auto;width:270px}
+.cev{margin-left:auto;flex:0 1 270px;min-width:0}
 .cev h4{margin:0 0 8px;font-size:14px;font-weight:600}
 .cev .e{background:var(--surface);border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:6px;animation:fadeUp 220ms var(--out);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cev .e.dn{text-decoration:line-through;color:var(--text2)}
@@ -469,7 +479,7 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .field{height:36px;border-radius:18px;border:0;background:var(--surface);color:var(--text);padding:0 14px;font:inherit;font-size:13px;outline:none;transition:box-shadow 150ms}
 .field:focus{box-shadow:inset 0 0 0 1px var(--text3)}
 .field::placeholder{color:var(--text3)}
-.tlist{list-style:none;margin:0 0 0 auto;padding:0 6px 0 0;width:290px;display:flex;flex-direction:column;gap:6px;
+.tlist{list-style:none;margin:0 0 0 auto;padding:0 6px 0 0;flex:0 1 290px;min-width:0;display:flex;flex-direction:column;gap:6px;
   scrollbar-width:thin;scrollbar-color:#48484a transparent}
 .tlist li{display:flex;align-items:center;gap:10px;min-height:44px;flex-shrink:0;border-radius:12px;padding:0 12px;background:var(--surface);font-size:15px;transition:background 280ms}
 .tlist li span{transition:color 200ms}
@@ -712,7 +722,7 @@ body.bottom #winA{top:0}
 .desk.fs .gcirc{opacity:0}
 .desk.fs .fnote{opacity:0;pointer-events:none}
 body.reduce .ned,body.reduce .fnote{transition:opacity 100ms ease!important;animation:none!important}
-body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm{transition-duration:0ms!important}
+body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm,body.reduce .xtab,body.reduce .xtab .tl,body.reduce .xind{transition-duration:0ms!important}
 body.reduce .layer,body.reduce .glow{transition:opacity 100ms ease!important}
 body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop{transform:translate(-50%,0)!important;filter:none!important}
 body.reduce .viz i,body.reduce .cic::after,body.reduce .cic .ic,body.reduce .clp,body.reduce .lcl .ic{animation:none!important}
@@ -1343,6 +1353,8 @@ function naturalWidth(){
 }
 // The island fits what it shows, but is never narrower than the charging notice (MIN_COMPACT).
 const MIN_COMPACT=200;
+// The open island is never narrower than this, so pages keep room when few tabs are on.
+const X_MIN=560;
 function compactWidth(){return Math.max(naturalWidth(),MIN_COMPACT)}
 // Height of the open page's content, so the island grows to show it all without scrolling.
 function pageNeed(i){
@@ -1362,12 +1374,15 @@ function layout(){
   else if(s==='expanded'){
     // As tall as the content, up to the whole screen: the same gap below as above, and only then does the page scroll.
     const min=256,max=innerHeight-2*(S.barH-ih)/2;
-    // Every page, Notes included, is as wide as the menu needs at full size (Gili + every enabled tab), never under 680 px.
-    W=Math.min(Math.max(680,menuNeed()),innerWidth-24);xtabs.classList.toggle('tight',menuNeed()>W);
+    // Every page, Notes included, is as wide as the menu needs (Gili, an icon per enabled tab, two names), never under X_MIN.
+    W=Math.min(Math.max(X_MIN,menuNeed()),innerWidth-24);xtabs.classList.toggle('tight',menuNeed()>W);
+    // Too narrow for a hovered name to open: the name shows as a tooltip instead.
+    $$('#xtabs .xtab').forEach(t=>t.title=menuNeed()>W?t.textContent.trim():'');
     // Lay the cards out at the new width before measuring, so the Notes height fits the columns that will show.
     $('#lx').style.width=W+'px';if(S.page===PAGE.notes)layoutNotes(true);
     H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
     $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
+    placeInd();
     if(S.page===PAGE.controls){
       // Control islands: one control, no page menu, sized to it (PRD 6.4 "Pulau kontrol").
       W=Math.min(S.ctl==='wifi'||S.ctl==='bt'?400:360,innerWidth-24);H=Math.min(max,$('.cv.on').offsetHeight+32);R='28px';
@@ -1679,21 +1694,51 @@ xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" 
 xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
 // Hidden pages leave the menu; one opened directly (slot, bar icon, card) gets its tab back while it is showing.
 // Controls never has a tab: while it is open no tab is highlighted.
-// Every tab is as wide as the widest name needs, plus 12 px either side, so names never touch the highlight's edge.
-// Measured once at the semibold weight the active tab uses, so selecting a tab never changes the width.
-const TAB_PAD=12;let tabWv=0;
-function tabW(){
-  if(tabWv)return tabWv;
-  const c=document.createElement('canvas').getContext('2d');c.font='600 12px '+getComputedStyle(document.body).fontFamily;
-  return tabWv=Math.ceil(Math.max(...TABS.map(([n])=>c.measureText(n).width))+15+5+TAB_PAD*2);
+// Tabs are icons (36 px); an open tab adds 8 px of padding and gap plus its name. Names are measured once per weight:
+// regular while hovered, semibold while active.
+const TAB_ICON=36,TAB_OPEN=8;let tabNm=null;
+function tabNames(){
+  if(tabNm)return tabNm;
+  const c=document.createElement('canvas').getContext('2d'),f=getComputedStyle(document.body).fontFamily,m=w=>TABS.map(([n])=>{c.font=w+' 12px '+f;return c.measureText(n).width});
+  tabNm={r:m(400),b:m(600)};
+  $$('#xtabs .xtab').forEach((t,i)=>{t.style.setProperty('--tl4',tabNm.r[i]+'px');t.style.setProperty('--tl6',tabNm.b[i]+'px')});
+  return tabNm;
 }
-// The open island's width for its menu: 14 px insets, Gili (36 + 6), the menu's 3 px padding, n tabs with 2 px gaps.
-function menuNeed(){const n=+xtabs.style.getPropertyValue('--n')||9;return 14+(S.gili?42:0)+6+n*tabW()+(n-1)*2+14}
+const visTabs=()=>$$('#xtabs .xtab').filter(t=>!t.hidden);
+// The open island's width for its menu: 14 px insets, Gili (36 + 6), the menu's 3 px padding, n icons with 2 px gaps,
+// and room for two names (the active tab and the one under the pointer), so a name opening never widens the island.
+function menuNeed(){
+  const n=visTabs().length||TABS.length,two=2*(TAB_OPEN+Math.max(...tabNames().b));
+  return 14+(S.gili?42:0)+6+n*TAB_ICON+(n-1)*2+two+14;
+}
 function renderTabs(){
-  const tabs=$$('#xtabs .xtab');let n=0,pos=-1;
-  tabs.forEach((t,i)=>{const on=!!S.tabs[i]||i===S.page;t.hidden=!on;if(on){if(i===S.page)pos=n;n++}});
-  xtabs.style.setProperty('--n',n);xind.style.setProperty('--i',Math.max(0,pos));xind.style.opacity=pos<0?0:1;
+  tabNames();
+  $$('#xtabs .xtab').forEach((t,i)=>{t.hidden=!(S.tabs[i]||i===S.page)});
+  placeInd();
 }
+// Where the active tab will be once every name has finished opening or closing, worked out like the flex layout does:
+// each tab gets its content width plus an equal share of what is left (or gives back in proportion when it is short).
+// The highlight then moves there with the same 300 ms curve as the names, so it stays on its tab the whole way.
+function placeInd(){
+  const tabs=visTabs(),nm=tabNames(),tight=xtabs.classList.contains('tight');
+  const w=tabs.map(t=>{const i=+t.dataset.i,act=i===S.page;return act?TAB_ICON+TAB_OPEN+nm.b[i]:t.classList.contains('hov')&&!tight?TAB_ICON+TAB_OPEN+nm.r[i]:TAB_ICON});
+  const inner=xtabs.clientWidth-6-(tabs.length-1)*2,sum=w.reduce((a,b)=>a+b,0),left=inner-sum;
+  const fw=w.map(x=>left>=0?x+left/tabs.length:x+left*x/sum);
+  const k=tabs.findIndex(t=>+t.dataset.i===S.page);
+  xind.style.opacity=k<0?0:1;if(k<0)return;
+  xind.style.setProperty('--x',3+fw.slice(0,k).reduce((a,b)=>a+b+2,0)+'px');xind.style.setProperty('--w',fw[k]+'px');
+}
+// Hover opens a name at once. Only a pointer that actually moves picks the hovered tab, so tabs sliding under a
+// resting pointer don't set off a chain of openings (same rule as the apps on the left). Keyboard focus opens it too.
+let tabPt='';
+function hovTab(b){
+  if(b&&b.classList.contains('hov')||!b&&!xtabs.querySelector('.xtab.hov'))return;
+  $$('#xtabs .xtab').forEach(x=>x.classList.toggle('hov',x===b));placeInd();
+}
+xtabs.addEventListener('pointermove',e=>{const at=e.clientX+','+e.clientY;if(at===tabPt)return;tabPt=at;hovTab(e.target.closest('.xtab'))});
+xtabs.addEventListener('pointerleave',()=>{tabPt='';hovTab(null)});
+xtabs.addEventListener('focusin',e=>{const b=e.target.closest('.xtab');if(b&&b.matches(':focus-visible'))hovTab(b)});
+xtabs.addEventListener('focusout',()=>hovTab(null));
 // Arrow keys and swipes walk the visible tabs only.
 function stepPage(d){
   if(S.page===PAGE.controls)return; // control islands have no page menu to walk
