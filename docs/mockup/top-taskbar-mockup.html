@@ -286,13 +286,13 @@ body.reduce .geyes.blink i,body.reduce .geyes.blink2 i{animation:gfade 200ms lin
 .geyes.x-wide i{scale:1.3;border-radius:50%}
 .geyes.x-happy i{transform-origin:50% 100%;scale:1 .42;border-radius:50% 50% 1px 1px}
 .geyes.x-sleep i{scale:1 .16;translate:0 1px;border-radius:2px;transition-duration:900ms}
-/* Music: the eyes rock gently on the beat, a tilt every 0.48 s that rests between beats */
-.geyes.x-sway{animation:gsway 960ms infinite}
-@keyframes gsway{0%,30%{rotate:-6deg;animation-timing-function:cubic-bezier(.4,0,.2,1)}50%,80%{rotate:6deg;animation-timing-function:cubic-bezier(.4,0,.2,1)}100%{rotate:-6deg}}
+/* Music: the eyes nod on the beat, once every 0.48 s: a quick dip of 22% of the eye size, back up, then still until the next beat */
+.geyes.x-nod{animation:gnod 480ms infinite}
+@keyframes gnod{0%{translate:0 0;animation-timing-function:cubic-bezier(.3,0,.6,1)}25%{translate:0 calc(var(--es) * .22);animation-timing-function:cubic-bezier(.4,0,.2,1)}60%,100%{translate:0 0}}
 .gz{position:absolute;left:100%;bottom:60%;margin-left:3px;font-size:8px;font-weight:700;line-height:1;color:var(--text2);opacity:0;translate:0 2px;transition:opacity 400ms ease,translate 900ms var(--out)}
 .geyes.x-sleep .gz{opacity:1;translate:0 0;transition-delay:600ms}
 body.reduce .geyes i{transition:none}
-body.reduce .geyes.x-sway{animation:none}
+body.reduce .geyes.x-nod{animation:none}
 .gin{position:absolute;left:9px;right:9px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;--es:calc(var(--isl-h,24px) * .42);--er:3px;pointer-events:none;
   transition:opacity 200ms ease 60ms,translate var(--gd,450ms) var(--ge,ease),scale var(--gd,450ms) var(--ge,ease)}
 .gin.off{opacity:0;translate:-12px 0;scale:.5;transition-delay:0ms}
@@ -309,7 +309,6 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .st-compact .island{cursor:pointer}
 .L-exp,.L-card,.L-drop{top:0;left:50%;transform:translate(-50%,-6px) scale(.98);filter:blur(6px);transform-origin:50% 0}
 .L-exp{width:680px;height:256px}
-.iw.tall .L-exp{width:960px;height:500px}
 .L-card{width:560px;height:104px;display:flex;align-items:center;gap:14px;padding:0 24px}
 .L-drop{width:420px;height:140px}
 .st-expanded .L-exp,.st-card .L-card,.st-drop .L-drop{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:none;
@@ -373,7 +372,8 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 /* While music plays, the Media tab's icon becomes the level meter. */
 .xtab .viz{display:none;height:13px}.xtab .viz i{height:13px}
 .xtab.playing .ic{display:none}.xtab.playing .viz{display:inline-flex;color:var(--accent)}
-@media (max-width:700px){.xtab:not([aria-selected="true"]) .tl{display:none}}
+/* Only when the screen is too narrow for every tab at full size: inactive tabs drop their names. */
+.xtabs.tight .xtab:not([aria-selected="true"]) .tl{display:none}
 /* The page area's height comes from the open page's content (min 178 px, Notes 422 px); see layout(). */
 .xp{position:absolute;top:58px;left:0;right:0;height:178px;overflow:hidden;transition:height var(--d,300ms) var(--e,ease)}
 .xp.scroll .page{overflow-y:auto}
@@ -1251,7 +1251,7 @@ function gMood(){
 }
 function gExpr(){
   const m=gMood();if(m===GX.mood)return;GX.mood=m;
-  gEyes.forEach(e=>{e.classList.remove('x-enjoy','x-focus','x-surprise','x-happy','x-wide','x-sleep','x-sway');if(m)e.classList.add('x-'+m,...(m==='enjoy'?['x-sway']:[]))});
+  gEyes.forEach(e=>{e.classList.remove('x-enjoy','x-focus','x-surprise','x-happy','x-wide','x-sleep','x-nod');if(m)e.classList.add('x-'+m,...(m==='enjoy'?['x-nod']:[]))});
   // Asleep, the eyes settle in the middle and stop following.
   if(m==='sleep'){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}
 }
@@ -1347,7 +1347,8 @@ function compactWidth(){return Math.max(naturalWidth(),MIN_COMPACT)}
 // Height of the open page's content, so the island grows to show it all without scrolling.
 function pageNeed(i){
   const p=$$('.page')[i];if(!p)return 0;
-  if(i===PAGE.notes)return 42+$('#nGridIn').offsetHeight;
+  // Notes: the cards, or the open editor when it is taller, so a note always has room to grow into.
+  if(i===PAGE.notes)return 42+Math.max($('#nGridIn').offsetHeight,S.editing?EDH:0);
   return Math.max(...[...p.children].map(c=>c.scrollHeight));
 }
 function layout(){
@@ -1358,9 +1359,13 @@ function layout(){
   if(s==='compact'){W=cw+(S.hover?HOVER_GROW:0);H=ih;T=ct;R=ih/2+'px'}
   else if(s==='wide'){W=Math.max(MIN_COMPACT,Math.ceil(lwI.getBoundingClientRect().width)+32);H=ih;T=ct;R=ih/2+'px'}
   else if(s==='expanded'){
-    const nt=S.page===PAGE.notes,min=nt?500:256,max=innerHeight-16;
-    W=Math.min(nt?960:680,innerWidth-24);H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
-    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width='';
+    const min=256,max=innerHeight-16;
+    // Every page, Notes included, is as wide as the menu needs at full size (Gili + every enabled tab), never under 680 px.
+    W=Math.min(Math.max(680,menuNeed()),innerWidth-24);xtabs.classList.toggle('tight',menuNeed()>W);
+    // Lay the cards out at the new width before measuring, so the Notes height fits the columns that will show.
+    $('#lx').style.width=W+'px';if(S.page===PAGE.notes)layoutNotes(true);
+    H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
+    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
     if(S.page===PAGE.controls){
       // Control islands: one control, no page menu, sized to it (PRD 6.4 "Pulau kontrol").
       W=Math.min(S.ctl==='wifi'||S.ctl==='bt'?400:360,innerWidth-24);H=Math.min(max,$('.cv.on').offsetHeight+32);R='28px';
@@ -1672,6 +1677,16 @@ xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" 
 xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
 // Hidden pages leave the menu; one opened directly (slot, bar icon, card) gets its tab back while it is showing.
 // Controls never has a tab: while it is open no tab is highlighted.
+// Every tab is as wide as the widest name needs, plus 12 px either side, so names never touch the highlight's edge.
+// Measured once at the semibold weight the active tab uses, so selecting a tab never changes the width.
+const TAB_PAD=12;let tabWv=0;
+function tabW(){
+  if(tabWv)return tabWv;
+  const c=document.createElement('canvas').getContext('2d');c.font='600 12px '+getComputedStyle(document.body).fontFamily;
+  return tabWv=Math.ceil(Math.max(...TABS.map(([n])=>c.measureText(n).width))+15+5+TAB_PAD*2);
+}
+// The open island's width for its menu: 14 px insets, Gili (36 + 6), the menu's 3 px padding, n tabs with 2 px gaps.
+function menuNeed(){const n=+xtabs.style.getPropertyValue('--n')||9;return 14+(S.gili?42:0)+6+n*tabW()+(n-1)*2+14}
 function renderTabs(){
   const tabs=$$('#xtabs .xtab');let n=0,pos=-1;
   tabs.forEach((t,i)=>{const on=!!S.tabs[i]||i===S.page;t.hidden=!on;if(on){if(i===S.page)pos=n;n++}});
@@ -1993,6 +2008,8 @@ function openEditor(id,from){
   S.noteSel=id;S.editing=true;nEd.value=n.b;resetDel();renderSwatches();
   $('#nSave').classList.remove('busy');$('#nSaveT').textContent='Saved';
   nWrap.classList.add('editing');markEditing();
+  // The island grows first if the editor needs more height than the cards; the grid area is final right away.
+  layout();
   const o=from||slotRect(id),T=edTarget(o);S.edFrom=o;
   // Content is laid out at the final size and pinned to the corner the editor grows from, so it never reflows mid-flight.
   Object.assign(nEdIn.style,{width:T.w+'px',height:T.h+'px',left:T.ax==='r'?'auto':T.ax==='c'?'50%':'0',right:T.ax==='r'?'0':'auto',
@@ -2012,6 +2029,7 @@ function shutEditor(r,gone){
     nPanel.style.transition='none';nPanel.classList.remove('live','shut','gone');
     nIn.querySelectorAll('.ncard.src').forEach(c=>{c.style.transition='none';c.classList.remove('src');c.offsetWidth;c.style.transition=''});
     nPanel.offsetWidth;nPanel.style.transition='';
+    if(!S.editing&&S.state==='expanded'&&S.page===PAGE.notes)layout();
   },S.reduce?100:340);
 }
 // A written note lands in its slot; an empty one goes back where it came from and is discarded, like Keep.
