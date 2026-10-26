@@ -277,6 +277,21 @@ body.noglow .glow{display:none}
 @keyframes gblink2{0%{transform:scaleY(1);animation-timing-function:ease-in}15.5%{transform:scaleY(.1);animation-timing-function:ease-out}39.7%,60.3%{transform:scaleY(1);animation-timing-function:ease-in}75.9%{transform:scaleY(.1);animation-timing-function:ease-out}100%{transform:scaleY(1)}}
 body.reduce .geyes.blink i,body.reduce .geyes.blink2 i{animation:gfade 200ms linear}
 @keyframes gfade{50%{opacity:.2}}
+/* Expressions (PRD 6.3 "Ekspresi Gili"). Shapes use scale/translate/border-radius, so a blink (transform) still plays on top. */
+.geyes{position:relative}
+.geyes i{transition:scale 260ms var(--spr),translate 260ms var(--spr),border-radius 200ms ease}
+.geyes.x-enjoy i{transform-origin:50% 100%;scale:1 .5}
+.geyes.x-focus i{scale:1 .7}
+.geyes.x-surprise i{scale:1.3;border-radius:50%}
+.geyes.x-happy i{transform-origin:50% 100%;scale:1 .42;border-radius:50% 50% 1px 1px}
+.geyes.x-sleep i{scale:1 .16;translate:0 1px;border-radius:2px;transition-duration:900ms}
+/* Music: the eyes rock gently on the beat, a tilt every 0.48 s that rests between beats */
+.geyes.x-sway{animation:gsway 960ms infinite}
+@keyframes gsway{0%,30%{rotate:-6deg;animation-timing-function:cubic-bezier(.4,0,.2,1)}50%,80%{rotate:6deg;animation-timing-function:cubic-bezier(.4,0,.2,1)}100%{rotate:-6deg}}
+.gz{position:absolute;left:100%;bottom:60%;margin-left:3px;font-size:8px;font-weight:700;line-height:1;color:var(--text2);opacity:0;translate:0 2px;transition:opacity 400ms ease,translate 900ms var(--out)}
+.geyes.x-sleep .gz{opacity:1;translate:0 0;transition-delay:600ms}
+body.reduce .geyes i{transition:none}
+body.reduce .geyes.x-sway{animation:none}
 .gin{position:absolute;left:9px;right:9px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;--es:calc(var(--isl-h,24px) * .42);--er:3px;pointer-events:none;
   transition:opacity 200ms ease 60ms,translate var(--gd,450ms) var(--ge,ease),scale var(--gd,450ms) var(--ge,ease)}
 .gin.off{opacity:0;translate:-12px 0;scale:.5;transition-delay:0ms}
@@ -847,7 +862,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
   <div class="iw" id="iw">
     <div class="island" id="isl">
       <div class="glow" id="glow" aria-hidden="true"><i class="b1"></i><i class="b2"></i></div>
-      <span class="gin" id="gIn" aria-hidden="true"><span class="geyes"><i></i><i></i></span></span>
+      <span class="gin" id="gIn" aria-hidden="true"><span class="geyes"><i></i><i></i><b class="gz">z</b></span></span>
       <div class="layer L-compact" id="lc">
         <span class="lcI" id="lcI">
           <span class="slot" id="slot"></span>
@@ -1027,7 +1042,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Shelf</button><button data-page="7">Claude</button><button data-page="8">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
-    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat80">80% reached</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
     <h3>Left side</h3>
@@ -1157,10 +1172,11 @@ addEventListener('pointermove',e=>{G.px=e.clientX;G.py=e.clientY;G.still=Date.no
 // width to either side puts them at that end. In the circle they lean 2 px once the pointer is 400 px away.
 // Up and down follow the pointer's height on the screen (top = up, middle = level, bottom = down), so the eyes look up too.
 function gAim(){
-  if(G.px<0||S.reduce)return;
+  if(S.reduce||GX.asleep)return;
+  const p=gTarget();if(!p)return;
   const r=(gCirc.classList.contains('on')?gCirc:$('#gIn')).getBoundingClientRect();
   const span=gCirc.classList.contains('on')?400:innerWidth*.4;
-  G.tx=Math.max(-1,Math.min(1,(G.px-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(G.py-innerHeight/2)/(innerHeight*.4)));
+  G.tx=Math.max(-1,Math.min(1,(p[0]-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(p[1]-innerHeight/2)/(innerHeight*.4)));
   if(!G.raf)G.raf=requestAnimationFrame(gStep);
 }
 // Spring toward the target (damping .8, response .25 s). It stops once settled, so nothing runs while the pointer rests.
@@ -1176,7 +1192,7 @@ function gStep(t){
   G.raf=requestAnimationFrame(gStep);
 }
 // After 8 s without pointer movement the eyes drift back to centre.
-setInterval(()=>{if(G.still&&Date.now()-G.still>8000&&(G.tx||G.ty)){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}},1000);
+setInterval(()=>{if(G.still&&Date.now()-G.still>8000&&(G.tx||G.ty)&&!gHeld()){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}},1000);
 // While the island is open the ambient glow leans toward the pointer: up to 25% of the island's width and 30% of its
 // height, eased over 900 ms. Updated at most once a frame, only while the island is open and Ambient motion is on.
 let glowRaf=0,glowPt=null;
@@ -1193,9 +1209,64 @@ function glowCentre(){const g=$('#glow');g.style.setProperty('--gx','0px');g.sty
 // A soft blink every 3–6 s; one in five is a double blink.
 function gBlink(){
   const two=Math.random()<.2;
-  gEyes.forEach(e=>{e.classList.remove('blink','blink2');void e.offsetWidth;e.classList.add(two?'blink2':'blink')});
+  // Closed, startled or smiling eyes don't blink.
+  if(!['sleep','surprise','happy'].includes(GX.mood))gEyes.forEach(e=>{e.classList.remove('blink','blink2');void e.offsetWidth;e.classList.add(two?'blink2':'blink')});
   setTimeout(gBlink,3000+Math.random()*3000+(two?350:0));
 }
+/* Gili's expressions (PRD 6.3 "Ekspresi Gili"): one at a time, the highest that applies.
+   1 startled by an alarm, timer or reminder card · 2 happy for 0.9 s when a note comes home · 3 asleep after 5 minutes
+   without input · 4 focused on a running timer, stopwatch or focus session · 5 enjoying music · neutral otherwise.
+   The gaze is separate: a note on the move or the timer's digits at each new minute take it over from the pointer. */
+const STARTLE=['alarm','timer','todo','pomo','pomo2'],SLEEP_MS=5*60e3;
+const GX={mood:'',asleep:false,input:Date.now(),happyUntil:0,watchEl:null,watchUntil:0,glanceUntil:0,glanceAt:0,min:null};
+function gMood(){
+  if(S.state==='card'&&STARTLE.includes(S.card))return'surprise';
+  if(Date.now()<GX.happyUntil)return'happy';
+  if(GX.asleep)return'sleep';
+  const k=activities()[0];
+  if(k==='timer'||k==='sw'||k==='pomo'&&S.pomo.phase==='focus')return'focus';
+  if(k==='media'&&S.media.playing&&cur().kind!=='video')return'enjoy';
+  return'';
+}
+function gExpr(){
+  const m=gMood();if(m===GX.mood)return;GX.mood=m;
+  gEyes.forEach(e=>{e.classList.remove('x-enjoy','x-focus','x-surprise','x-happy','x-sleep','x-sway');if(m)e.classList.add('x-'+m,...(m==='enjoy'?['x-sway']:[]))});
+  // Asleep, the eyes settle in the middle and stop following.
+  if(m==='sleep'){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}
+}
+const gHeld=()=>GX.watchEl&&Date.now()<GX.watchUntil||Date.now()<GX.glanceUntil;
+// What the eyes look at: a note on the move, then the timer digits during a glance, then the pointer.
+function gTarget(){
+  const now=Date.now();
+  if(GX.watchEl&&now<GX.watchUntil&&GX.watchEl.isConnected){const r=GX.watchEl.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
+  if(now<GX.glanceUntil){const r=slot.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}
+  return G.px<0?null:[G.px,G.py];
+}
+// Watch an element for ms, following it while it moves (the frame loop runs only for that long).
+function gWatch(el,ms){
+  GX.watchEl=el;GX.watchUntil=Date.now()+ms;
+  const loop=()=>{gAim();if(Date.now()<GX.watchUntil)requestAnimationFrame(loop);else{GX.watchEl=null;gAim()}};
+  requestAnimationFrame(loop);
+}
+// Any pointer or keyboard input keeps Gili awake; waking up is a double blink.
+function gWake(){
+  GX.input=Date.now();
+  if(!GX.asleep)return;
+  GX.asleep=false;gExpr();
+  gEyes.forEach(e=>{e.classList.remove('blink','blink2');void e.offsetWidth;e.classList.add('blink2')});
+}
+addEventListener('pointermove',gWake,{passive:true});
+addEventListener('keydown',gWake,{capture:true});
+// Once a second: fall asleep after 5 minutes without input, and glance at the digits whenever a running timer reaches a new minute.
+setInterval(()=>{
+  if(!GX.asleep&&Date.now()-GX.input>=SLEEP_MS){GX.asleep=true;gExpr()}
+  const k=activities()[0];
+  const min=k==='timer'?Math.ceil(S.timer.left/60):k==='pomo'?Math.ceil(S.pomo.left/60):k==='sw'?Math.floor(swMs()/60000):null;
+  if(GX.mood==='focus'&&min!==null&&GX.min!==null&&min!==GX.min&&Date.now()-GX.glanceAt>4000){
+    GX.glanceAt=Date.now();GX.glanceUntil=GX.glanceAt+1200;gAim();setTimeout(gAim,1250);
+  }
+  GX.min=min;
+},1000);
 const nEd=$('#nEd'),nIn=$('#nGridIn'),nWrap=$('#nWrap');
 const BC=276.46;
 
@@ -1268,20 +1339,22 @@ function layout(){
   // The "finished, not seen yet" bubble always sits rightmost.
   cbub.classList.toggle('on',cOn);cbub.tabIndex=cOn?0:-1;
   cbub.style.left=(innerWidth/2+W/2+6+(bOn?ih+6:0))+'px';
-  // Gili: eyes inside the idle island; a circle 6 px left of it while something else is showing; gone while it floats.
-  const idle=s==='compact'&&!activities().length,gOn=S.gili&&!idle&&!FLOAT.includes(s)&&!S.fs,isLeft=innerWidth/2-W/2;
+  // Gili: eyes inside the idle island; a circle 6 px left of it while something else is showing; gone while it floats,
+  // except beside an alarm, timer or reminder card, where it peeks out at the card's top left with wide eyes.
+  const idle=s==='compact'&&!activities().length,startle=s==='card'&&STARTLE.includes(S.card);
+  const gOn=S.gili&&!S.fs&&(startle||!idle&&!FLOAT.includes(s)),isLeft=innerWidth/2-W/2;
   $('#gIn').classList.toggle('off',!(S.gili&&idle));
   gCirc.classList.toggle('on',gOn);gCirc.tabIndex=gOn?0:-1;
-  gCirc.style.top=ct+'px';gCirc.style.width=gCirc.style.height=ih+'px';
+  gCirc.style.top=(startle?T:ct)+'px';gCirc.style.width=gCirc.style.height=ih+'px';
   gCirc.style.left=(gOn?isLeft-6-ih:isLeft-ih/2)+'px';
   // Privacy dots: a row left of the island (and Gili's circle), camera closest; stacked down the panel's left edge when it floats.
   const fl=FLOAT.includes(s),edge=isLeft-14-(gOn?ih+6:0);let k=0;
   for(const[el,on]of[[pCam,S.cam],[pMic,S.mic]]){
     el.classList.toggle('on',on&&!S.fs);
-    el.style.left=(fl?isLeft-14:edge-k*13)+'px';el.style.top=(fl?T+20+k*13:ct+ih/2-4)+'px';
+    el.style.left=(fl?isLeft-14:edge-k*13)+'px';el.style.top=(fl?T+(startle&&S.gili?ih+8:20)+k*13:ct+ih/2-4)+'px';
     if(on)k++;
   }
-  fitBar(cw);markCovered(W,fl);gAim();
+  fitBar(cw);markCovered(W,fl);gExpr();gAim();
 }
 // While the island floats, fade out only the bar items it would cover (with 8 px of breathing room).
 function markCovered(W,floating){
@@ -2037,10 +2110,10 @@ function makeFloat(n){
   // Move by the header, 1:1 from where it was grabbed, kept inside the work area.
   hd.addEventListener('pointerdown',e=>{
     if(e.button!==0||e.target.closest('button'))return;
-    e.preventDefault();hd.setPointerCapture(e.pointerId);el.classList.add('held');
+    e.preventDefault();hd.setPointerCapture(e.pointerId);el.classList.add('held');gWatch(el,60*60e3);
     const ox=e.clientX-el.offsetLeft,oy=e.clientY-el.offsetTop;
     const mv=ev=>{n.f=clampF({x:ev.clientX-ox,y:ev.clientY-oy,w:el.offsetWidth,h:el.offsetHeight});placeF(el,n.f)};
-    const up=()=>{el.classList.remove('held');hd.removeEventListener('pointermove',mv);hd.removeEventListener('pointerup',up);hd.removeEventListener('pointercancel',up)};
+    const up=()=>{el.classList.remove('held');GX.watchUntil=0;hd.removeEventListener('pointermove',mv);hd.removeEventListener('pointerup',up);hd.removeEventListener('pointercancel',up)};
     hd.addEventListener('pointermove',mv);hd.addEventListener('pointerup',up);hd.addEventListener('pointercancel',up);
   });
   fLayer.appendChild(el);
@@ -2074,8 +2147,9 @@ function returnFloat(id){
   const done=()=>{
     el.remove();
     if(card)card.classList.remove('torn');
-    else if(S.state!=='expanded'){isl.classList.remove('gulp');isl.offsetWidth;isl.classList.add('gulp')}
+    else if(S.state!=='expanded'){isl.classList.remove('gulp');isl.offsetWidth;isl.classList.add('gulp');GX.happyUntil=Date.now()+900;gExpr();setTimeout(gExpr,920)}
   };
+  if(!card)gWatch(el,S.reduce?100:440);
   if(S.reduce){el.animate([{opacity:1},{opacity:0}],{duration:100}).onfinish=done;return}
   // Speeds up toward the island like something pulled in, then the island bulges once as it arrives.
   el.animate([
@@ -2109,6 +2183,7 @@ function landTear(d){
   // The note has left the island: its card is gone from the grid and the island closes behind it.
   d.card.classList.remove('torn');renderNotes();closeExpanded();
   el.querySelector('textarea').focus();
+  gWatch(el,1500);
 }
 
 /* shelf */
@@ -2685,6 +2760,7 @@ const ACT={
   clTerm:()=>{const s=S.cl[2];s.st==='work'||s.st==='ask'?clDone(s):clWork(s)},
   clFocus:()=>clFocus(S.cl[0]),
   note:()=>openNote(true),
+  sleep:()=>{GX.input=0;hint('Gili falls asleep within a second; move the pointer to wake it')},
   float:()=>{
     const n=S.notes.find(x=>!x.f&&x.b.trim());if(!n){hint('Every note is already floating');return}
     if(S.editing&&S.noteSel===n.id)closeEditor();
