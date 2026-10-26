@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/TopBar.Core/TopBar.Core.csproj" />
+    <Project Path="src/TopBar.Data/TopBar.Data.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj" />

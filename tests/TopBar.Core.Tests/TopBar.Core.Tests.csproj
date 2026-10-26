@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TopBar.Core\TopBar.Core.csproj" />
+    <ProjectReference Include="..\..\src\TopBar.Data\TopBar.Data.csproj" />
   </ItemGroup>
 
 </Project>
