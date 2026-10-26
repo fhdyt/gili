@@ -14,7 +14,7 @@ Catatan: dokumen ini berbahasa Indonesia, tetapi semua teks yang tampil di aplik
 
 ## 1. Ringkasan
 
-TopBar adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon tray, tombol Controls (membuka Wi‑Fi, Bluetooth, volume, brightness, dan power di pulau), jam dan tanggal, Settings, dan power.
+TopBar adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon Bluetooth, volume, dan brightness (masing-masing membuka pulau kontrolnya sendiri), ikon tray, jam dan tanggal, Settings, dan power.
 
 Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor dan berkedip. Saat ada aktivitas, Gili berpindah ke kiri pulau sebagai lingkaran kecil, dan pulau menampilkan aktivitasnya.
 
@@ -45,7 +45,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 8. Setiap bagian bar dan setiap halaman pulau bisa ditampilkan atau disembunyikan di Settings.
 
 **Bukan tujuan**
-- Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. TopBar membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya halaman Controls di pulau; sisanya tetap di Windows.
+- Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. TopBar membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power; sisanya tetap di Windows.
 - Lebih dari satu monitor.
 - Sinkronisasi cloud, aplikasi mobile, atau akun pengguna.
 - Distribusi publik: Microsoft Store, auto-update, code signing.
@@ -75,8 +75,8 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 | Maskot | Gili: dua mata putih di pulau saat tidak ada aktivitas, lingkaran kecil di kiri pulau saat ada aktivitas. Mata mengikuti kursor dan berkedip |
 | Material pulau | Hitam pekat di semua keadaan |
 | Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh, 8 px di bawah tepi atas. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
-| Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; TopBar lalu menyediakan tombol Start, ikon tray, dan halaman Controls. Taskbar Windows dipulihkan di semua jalur keluar |
-| Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan, tray, Controls, dan jam bisa dinyalakan/dimatikan di Settings |
+| Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; TopBar lalu menyediakan tombol Start, ikon tray, dan pulau kontrol (Wi‑Fi, Bluetooth, volume, brightness, power). Taskbar Windows dipulihkan di semua jalur keluar |
+| Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan (termasuk Wi‑Fi, Bluetooth, Volume, Brightness), tray, dan jam bisa dinyalakan/dimatikan di Settings |
 | Monitor | Monitor utama saja |
 | Aksi cepat vs pengelolaan | Aksi cepat, menulis note, dan Shelf ada di pulau; daftar alarm, edit todo, riwayat clipboard, dan Settings ada di jendela Tools |
 | Notifikasi | Kartu di pulau + toast Windows (toast tanpa suara supaya bunyi tidak dobel) |
@@ -146,6 +146,7 @@ Cuplikan clipboard (copy/cut teks, gambar, file) dan progres copy, move, dan del
 | Compact | Di dalam bar, kapsul hitam setinggi pengaturan "Tinggi pulau" (default 24 px), di tengah tinggi bar | Mata Gili saat tidak ada aktivitas; saat ada aktivitas hanya aktivitas itu, dan Gili pindah ke lingkaran di kiri pulau. Lebar mengikuti isinya, minimal 200 px | Tampil |
 | Wide | Di dalam bar, kapsul lebih panjang | Kejadian singkat: Caps/Num Lock, charger, peringatan baterai | Tampil |
 | Expanded | Panel mengambang 8 px di bawah tepi atas, lebar 680 px (Notes 960 px); **tinggi mengikuti isi halaman** (lihat "Tinggi pulau terbuka"), minimal 256 px (Notes 500 px), radius sudut 32 px di semua halaman | Menu tab (ikon + nama) selebar pulau, lalu halaman | Latar transparan; elemen tertimpa memudar |
+| Kontrol | Panel mengambang 8 px di bawah tepi atas, lebar 360 px (Volume, Brightness, Power) atau 400 px (Wi‑Fi, Bluetooth), tinggi mengikuti isi, radius 28 px | Satu kontrol saja, tanpa menu tab (lihat "Pulau kontrol" di 6.4) | Latar transparan; elemen tertimpa memudar |
 | Kartu notifikasi | Panel mengambang sekitar 560 × 104 px, radius 28 px | Satu notifikasi dengan tombol aksi | Latar transparan; elemen tertimpa memudar |
 | Drop zone | Panel mengambang sekitar 420 × 140 px, radius 30 px | Target "Drop to keep on the Shelf" saat file diseret ke atas bar | Latar transparan; elemen tertimpa memudar |
 
@@ -345,7 +346,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 | Perangkat Bluetooth tersambung | Ikon jenis perangkat (biru) + nama (`Galaxy Buds2 Pro`) + `Connected` + baterai perangkat (`80%`) kalau perangkat melaporkannya | 4 detik |
 | Perangkat Bluetooth terputus | Ikon abu-abu + nama + `Disconnected` | 2 detik |
 
-Perubahan volume dan brightness tidak ditampilkan di pulau; flyout bawaan Windows sudah menanganinya. Mengatur keduanya bisa lewat halaman Controls (6.4).
+Perubahan volume dan brightness tidak ditampilkan di pulau; flyout bawaan Windows sudah menanganinya. Mengatur keduanya bisa lewat pulau Volume dan Brightness (6.4).
 
 **Bluetooth**: berlaku untuk perangkat audio (TWS, headphone, speaker), mouse, keyboard, controller, dan ponsel, dengan ikon sesuai jenisnya. Hanya kejadian sambung/putus yang ditampilkan, bukan perangkat yang sudah tersambung saat TopBar mulai. Kalau perangkat yang sama tersambung-putus berulang dalam 10 detik, hanya kejadian terakhir yang ditampilkan.
 
@@ -360,7 +361,7 @@ Kalau beberapa kejadian bersamaan, `IslandCoordinator` menampilkan yang paling t
 5. Aktivitas berjalan (slot compact)
 6. Gili saja (tanpa aktivitas)
 
-Pulau yang dibuka pengguna (expanded) berada di atas prioritas 4–6 dan di bawah 1–3. Alarm menggantikan halaman yang sedang terbuka, lalu halaman itu kembali setelah alarm ditanggapi. Saat aplikasi fullscreen aktif, hanya prioritas 1 yang muncul (sebagai overlay); prioritas 2 lewat toast saja (kartu Claude dilewati karena tidak punya toast), prioritas 3–6 dilewati.
+Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas prioritas 4–6 dan di bawah 1–3. Alarm menggantikan halaman atau kontrol yang sedang terbuka, lalu keduanya kembali setelah alarm ditanggapi. Saat aplikasi fullscreen aktif, hanya prioritas 1 yang muncul (sebagai overlay); prioritas 2 lewat toast saja (kartu Claude dilewati karena tidak punya toast), prioritas 3–6 dilewati.
 
 #### Halaman expanded
 
@@ -446,9 +447,9 @@ Pulau yang dibuka pengguna (expanded) berada di atas prioritas 4–6 dan di bawa
 - Klik Gili saat tidak ada aktivitas: halaman terakhir yang dilihat.
 - Klik jam atau tanggal di kanan bar: halaman Calendar (sebelum Fase 2: halaman terakhir), dengan aturan buka/tutup yang sama seperti ikon bar lain.
 - Klik CPU/RAM/GPU/suhu/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
-- Tombol Controls, modul Wi‑Fi, dan tombol Power: halaman Controls (tanpa tab; Wi‑Fi membuka daftar jaringannya).
+- Modul Wi‑Fi, ikon Bluetooth, Volume, Brightness, dan tombol Power: pulau kontrolnya masing-masing, tanpa menu tab ("Pulau kontrol" di 6.4).
 - Ikon Timer / Alarms / Todo di launcher: halaman Timer / Alarms / Todo.
-- Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem, jam, Controls, Wi‑Fi, dan Power di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halamannya; klik saat halamannya sedang terbuka menutup pulau.
+- Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem, jam, Wi‑Fi, Bluetooth, Volume, Brightness, dan Power di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halaman atau kontrolnya; klik saat halamannya sedang terbuka menutup pulau.
 - Ikon Notes di launcher: halaman Notes dengan grid kartu (editor tertutup). `Ctrl+Alt+N`: halaman Notes dengan note baru kosong dan editor langsung terbuka dan fokus (Fase 4).
 - `Ctrl+Alt+Space` (Fase 4).
 
@@ -505,16 +506,18 @@ Urutan default dari kiri ke kanan:
 | GPU | Mati | `GPU` / `4%` | Klik: halaman System |
 | Suhu CPU | Mati | `TEMP` / `62°C`, nilai kuning ≥ 80°C, merah ≥ 90°C | Klik: halaman System |
 | Disk | Mati | `C: FREE` / `120 GB` | Klik: halaman System |
-| Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: halaman Controls di pulau dengan daftar Wi‑Fi terbuka |
+| Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: pulau Wi‑Fi (lihat "Pulau kontrol") |
+| Bluetooth | Nyala | Ikon Bluetooth saja; titik biru kecil di pojok saat ada perangkat tersambung | Klik: pulau Bluetooth. Hover: `Bluetooth · Galaxy Buds2 Pro` atau `Bluetooth · Off` |
+| Volume | Nyala | Ikon speaker yang mengikuti keadaan: mute, pelan (< 34%), sedang, keras (≥ 67%) | Klik: pulau Volume. Hover: `Volume 46%` atau `Muted` |
+| Brightness | Nyala | Ikon matahari; disembunyikan kalau layar tidak mendukung pengaturan brightness | Klik: pulau Brightness. Hover: `Brightness 70%` |
 | Tray | Nyala | Ikon chevron (`^` saat bar di atas: menunjuk ke bawah; saat bar di bawah: ke atas) | Klik: panel tray (di bawah). Hover: `Show hidden icons` |
-| Controls | Nyala | Satu ikon slider | Klik: halaman Controls di pulau (di bawah). Hover: `Controls` |
-| Jam dan tanggal | Nyala | Gaya dua baris: tanggal di atas sebagai label (`SAT 25 OCT`), jam di bawah sebagai nilai (`14:32`, 24 jam tanpa detik, atau 12 jam sesuai Settings) | Klik: halaman Calendar. Hover: `Saturday, 25 October 2026` |
+| Jam dan tanggal | Nyala | Gaya dua baris: tanggal di atas sebagai label (`SAT 25 OCT`), jam di bawah sebagai nilai dengan detik (`14:32:05`, atau `2:32:05 PM` bila 12 jam), digit tabular dan lebar tetap supaya bar tidak bergeser setiap detik. Detik bisa dimatikan (Settings → General → **Show seconds**, default nyala), menjadi `14:32` | Klik: halaman Calendar. Hover: `Saturday, 25 October 2026` |
 | Settings | Selalu | Ikon roda gigi, tepat di kiri Power | Klik: jendela Settings. Hover: `Settings` |
-| Power | Selalu, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: halaman Controls di pulau, berisi tombol power (di bawah) |
+| Power | Selalu, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: pulau Power |
 
-- Ikon volume dan baterai tidak ditampilkan di bar; volume ada di halaman Controls, dan status ngecas tampil di pulau.
-- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Suhu, Disk, Wi‑Fi, Tray, Controls, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU, suhu, dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
-- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, Suhu, GPU, RAM, CPU. Wi‑Fi, Tray, Controls, Jam, Settings, dan Power selalu tampil.
+- Ikon baterai tidak ditampilkan di bar; status ngecas tampil di pulau, dan sisa baterai ada di pulau Power.
+- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Suhu, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU, suhu, dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
+- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, Suhu, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil.
 
 **Panel tray** (ikon aplikasi latar belakang)
 - Panel kecil yang turun dari tombol Tray (latar `#1C1C1E`, radius 12 px, bayangan lembut), berisi grid ikon notification area **semua** aplikasi latar belakang (yang di taskbar Windows tampil langsung maupun yang tersembunyi di overflow), 16 px dalam sel 32 × 32 px, maksimal 6 kolom.
@@ -523,20 +526,26 @@ Urutan default dari kiri ke kanan:
 - Menutup dengan klik di luar, Esc, atau setelah aksi dijalankan. Bisa dipakai dengan keyboard (panah, Enter, Shift+F10 untuk menu konteks).
 - Kosong: `No background apps`.
 
-**Halaman Controls di pulau** (pengganti Quick Settings dan menu power; dipilih user 2026-10-26)
+**Pulau kontrol** (pengganti Quick Settings dan menu power; dipilih user 2026-10-26, menggantikan halaman Controls gabungan)
 
-Wi‑Fi, Bluetooth, volume, brightness, dan power diatur di **pulau yang membesar**, bukan di panel dropdown. Halaman ini **tidak punya tab** di menu halaman: ia hanya dibuka dari bar.
+Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau sendiri**. Klik ikonnya di bar membuat pulau membesar **hanya berisi kontrol itu**, tanpa menu tab dan tanpa kontrol lain. Ukuran pulau mengikuti isi kontrolnya, jadi pulau Volume kecil dan pulau Wi‑Fi memanjang mengikuti daftar jaringannya.
 
-- **Dibuka dari**: tombol Controls, modul Wi‑Fi (langsung dengan daftar Wi‑Fi terbuka), dan tombol Power. Ketiganya mengikuti aturan buka/tutup ikon bar: saat halaman Controls sedang terbuka, klik tombol yang sama menutup pulau.
-- **Menu halaman tetap tampil** di atas, tetapi **tidak ada tab yang tersorot** (sorotan memudar 160 ms). Klik tab mana pun pindah ke halaman itu. Panah kiri/kanan dan geser touchpad dari Controls pindah ke halaman bertab terdekat; Controls tidak pernah ikut dilewati saat menggeser antarhalaman lain.
-- Ambient glow halaman ini biru `#0A84FF`. Tinggi pulau mengikuti isinya seperti halaman lain.
-- **Kolom kiri** (330 px):
-  1. Tiga tombol saklar besar: **Wi‑Fi**, **Bluetooth**, **Airplane** (nyala = latar biru `#0A84FF`), masing-masing dengan baris kecil status (`Home_5G`, `Galaxy Buds2 Pro`, `Off`). Panah kecil di Wi‑Fi dan Bluetooth membuka daftarnya di kolom kanan. Airplane nyala mematikan Wi‑Fi dan Bluetooth.
-  2. **Volume**: ikon speaker (klik = mute/unmute), slider 0–100, persen; di bawahnya nama perangkat output (`Speakers (Realtek(R) Audio)`), klik untuk memilih perangkat lain.
-  3. **Brightness**: ikon matahari, slider 0–100, persen. Disembunyikan kalau layar tidak mendukung (monitor eksternal tanpa kontrol brightness).
-- **Kolom kanan**, default **Power**: tombol dengan urutan Start menu Windows 11, lalu baris bawah berisi baterai (`64% · 2 h 10 min` atau `Charging`), tombol **Windows Quick Settings** (panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility), dan **All settings** (`ms-settings:`).
+- **Gerak dan posisi** sama dengan pulau terbuka: mengambang 8 px dari tepi bar, pegas buka/tutup yang sama, latar bar transparan, elemen yang tertimpa memudar (6.3). Radius sudut 28 px, isi diberi jarak 16 px dari tepi (radius dalam 12 px).
+- **Buka/tutup**: klik ikon yang sama, Esc, klik di luar pulau, atau mouse di luar pulau selama 3 detik menutupnya (ditunda selama slider sedang digeser). Klik ikon kontrol lain saat pulau kontrol terbuka langsung mengganti isinya; pulau berubah ukuran dengan pegas, isi lama memudar 90 ms dan isi baru muncul 180 ms.
+- **Tidak ada menu tab**: panah kiri/kanan dan geser touchpad tidak berpindah halaman. Pulau kontrol bukan halaman, jadi tidak muncul di menu halaman dan tidak bisa disembunyikan lewat Settings → Island (ikonnya yang disembunyikan lewat Settings → Right side).
+- **Prioritas** sama dengan pulau yang dibuka pengguna: di atas kejadian wide dan aktivitas, di bawah kartu dan drop zone. Kartu alarm menggantikannya sementara, lalu pulau kontrol kembali setelah kartu ditanggapi.
+- Ambient glow biru `#0A84FF` untuk semua pulau kontrol.
+- Pembacaan status (daftar Wi‑Fi, perangkat Bluetooth, perangkat audio) hanya berjalan selama pulau kontrolnya terbuka. Nilai volume, mute, dan status Bluetooth untuk ikon bar dibaca dari event sistem, bukan polling.
 
-| Tombol | Kapan tampil | Aksi |
+| Pulau | Ukuran | Isi |
+|---|---|---|
+| Volume | 360 px, tinggi ikut isi (± 112 px) | Baris judul: ikon speaker (klik = mute/unmute), `Volume`, persen di kanan. Slider 0–100. Baris perangkat output (`Speakers (Realtek(R) Audio)` + `›`); klik membuka daftar perangkat output di dalam pulau (centang di perangkat aktif, klik = jadikan default), pulau memanjang mengikutinya |
+| Brightness | 360 px, ± 88 px | Baris judul: ikon matahari, `Brightness`, persen. Slider 0–100 |
+| Wi‑Fi | 400 px, tinggi ikut daftar (maks. 6 jaringan, sisanya di-scroll) | Baris judul: ikon Wi‑Fi, `Wi‑Fi`, saklar. Baris **Airplane mode** dengan saklar (nyala mematikan Wi‑Fi dan Bluetooth). Daftar jaringan dari sinyal terkuat: tersambung paling atas dengan `Connected`, lalu `Saved` atau `Secured`. Klik jaringan tersimpan langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena TopBar tidak menangani password. Baris terakhir **More Wi‑Fi settings** (`ms-settings:network-wifi`). Saat Wi‑Fi mati, daftar diganti `Wi‑Fi is off` |
+| Bluetooth | 400 px, tinggi ikut daftar (maks. 6 perangkat) | Baris judul: ikon Bluetooth, `Bluetooth`, saklar. Daftar perangkat ter-pair dengan ikon jenisnya dan status `Connected` / `Paired` (plus baterai bila dilaporkan); klik menyambung/memutus. Baris terakhir **Add device** (`ms-settings:bluetooth`). Saat Bluetooth mati: `Bluetooth is off` |
+| Power | 360 px, tinggi ikut isi | Tombol berurutan seperti Start menu Windows 11 (tabel di bawah), lalu baris bawah: baterai (`64% · 2 h 10 min`, `Charging · 64%`, atau kosong tanpa baterai), tombol **Windows Quick Settings** (panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility), dan **All settings** (`ms-settings:`) |
+
+| Tombol Power | Kapan tampil | Aksi |
 |---|---|---|
 | Sleep | Selalu | Laptop tidur |
 | Update and shut down | Hanya saat ada update yang menunggu | Pasang update, lalu matikan |
@@ -544,12 +553,9 @@ Wi‑Fi, Bluetooth, volume, brightness, dan power diatur di **pulau yang membesa
 | Update and restart | Hanya saat ada update yang menunggu | Pasang update, lalu restart |
 | Restart | Selalu | Restart |
 
-- **Daftar Wi‑Fi** (menggantikan kolom Power sampai ditutup dengan tombol ‹ atau panah Wi‑Fi lagi): jaringan yang terlihat diurutkan dari sinyal terkuat, jaringan tersambung paling atas dengan `Connected`, lalu `Saved` atau `Secured`. Klik jaringan tersimpan langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena TopBar tidak menangani password. **More Wi‑Fi settings** di bawah daftar.
-- **Daftar Bluetooth**: perangkat yang sudah di-pair beserta statusnya (`Connected` / `Paired`); klik menyambung/memutus. **Add device** membuka `ms-settings:bluetooth`.
 - Tombol update dan titik di ikon Power memakai titik oranye. Tidak ada konfirmasi tambahan untuk Sleep/Shut down/Restart; seperti Start menu, butuh dua klik (buka pulau, pilih tombol). Kalau ada aplikasi dengan pekerjaan belum disimpan, Windows sendiri yang menampilkan layar "These apps are preventing shutdown".
-- Slider berlaku langsung saat digeser; flyout volume/brightness bawaan Windows boleh ikut muncul. Scroll di atas slider mengubah nilainya 2 poin (tidak pindah halaman).
-- Pembacaan status (daftar Wi‑Fi, perangkat Bluetooth, volume) hanya berjalan selama halaman Controls tampil.
-- Saat pulau terbuka, tombol Controls, Wi‑Fi, dan Power ikut aturan elemen tertimpa (6.3).
+- Slider berlaku langsung saat digeser; flyout volume/brightness bawaan Windows boleh ikut muncul. Scroll di atas slider mengubah nilainya 2 poin.
+- Semua isi bisa dipakai dengan keyboard: Tab berpindah antar-kontrol, panah mengubah slider, Enter/Spasi menekan tombol dan saklar.
 
 ### 6.5 Settings
 
@@ -557,11 +563,11 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 
 | Bagian | Isi |
 |---|---|
-| General | Bar position (Top / Bottom), Hide Windows taskbar, Start with Windows, Clock format (24-hour / 12-hour) |
+| General | Bar position (Top / Bottom), Hide Windows taskbar, Start with Windows, Clock format (24-hour / 12-hour), Show seconds |
 | Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Shelf, Claude |
 | Island | Show Gili; saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, System) |
-| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, CPU temperature, Disk; saklar Wi‑Fi, Tray, Controls, Clock; kota cuaca; ambang baterai |
+| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, CPU temperature, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Clock; kota cuaca; ambang baterai |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
 | Sounds | Suara timer, Alert volume, Gradually increase, contoh suara |
 | Shortcuts | Hotkey (Fase 4) |
@@ -681,10 +687,10 @@ F-ISL-09 dan F-ISL-13 (OSD brightness dan menyembunyikan OSD brightness Windows)
 | F-RIGHT-04 | Atur modul dan overflow | Modul bisa dinyalakan/dimatikan dan diurutkan; overflow mengikuti urutan di 6.4 | 3 |
 | F-RIGHT-05 | Cuaca | Suhu dan ikon dari Open-Meteo untuk kota di Settings; diperbarui tiap 30 menit; offline menampilkan nilai terakhir berwarna abu-abu | 4 |
 | F-RIGHT-06 | Sumber suhu CPU | Tampil bila helper sensor jalan; sembunyi bila tidak bisa membaca nilai | 4 |
-| F-RIGHT-07 | Power | Ikon power selalu paling kanan dan membuka halaman Controls; Sleep, Shut down, dan Restart bekerja seperti di Start menu (aplikasi yang belum disimpan tetap ditanyakan oleh Windows); tombolnya bisa dipakai dengan keyboard | 3 |
+| F-RIGHT-07 | Power | Ikon power selalu paling kanan dan membuka pulau Power; Sleep, Shut down, dan Restart bekerja seperti di Start menu (aplikasi yang belum disimpan tetap ditanyakan oleh Windows); tombolnya bisa dipakai dengan keyboard | 3 |
 | F-RIGHT-09 | Panel tray | Semua ikon notification area aplikasi latar belakang tampil di panel tray, termasuk yang tersembunyi di overflow Windows; klik kiri, klik kanan, dan klik dua kali bekerja seperti di taskbar Windows; ikon baru/berubah/hilang tampil ≤ 1 detik; tetap bekerja saat taskbar Windows disembunyikan | 3 |
-| F-RIGHT-10 | Halaman Controls | Halaman di pulau tanpa tab, dibuka dari tombol Controls, modul Wi‑Fi, dan Power; menu tetap tampil tanpa tab tersorot; saklar Wi‑Fi, Bluetooth, dan Airplane mode mengubah radio sistem; daftar Wi‑Fi bisa menyambung ke jaringan yang tersimpan; daftar Bluetooth bisa menyambung/memutus perangkat ter-pair; slider volume dan brightness mengubah nilai sistem langsung; pilihan perangkat output; tombol Windows Quick Settings dan All settings | 3 |
-| F-RIGHT-11 | Jam dan tanggal di kanan | Gaya dua baris (tanggal di atas, jam di bawah) di kiri tombol Settings; berganti tepat di pergantian menit; format 12/24 jam dari Settings; klik membuka/menutup halaman Calendar; bisa disembunyikan | 1 |
+| F-RIGHT-10 | Pulau kontrol | Modul Wi‑Fi dan ikon Bluetooth, Volume, Brightness, serta Power masing-masing membuka pulau berisi kontrol itu saja, tanpa menu tab, dengan ukuran mengikuti isinya; klik ikon yang sama menutup, klik ikon kontrol lain mengganti isi; ikon Volume dan Bluetooth mencerminkan keadaan sistem ≤ 1 detik; saklar Wi‑Fi, Bluetooth, dan Airplane mode mengubah radio sistem; daftar Wi‑Fi bisa menyambung ke jaringan yang tersimpan; daftar Bluetooth bisa menyambung/memutus perangkat ter-pair; slider volume dan brightness mengubah nilai sistem langsung; pilihan perangkat output; tombol Windows Quick Settings dan All settings | 3 |
+| F-RIGHT-11 | Jam dan tanggal di kanan | Gaya dua baris (tanggal di atas, jam dengan detik di bawah) di kiri tombol Settings; detik berganti tepat di pergantian detik sistem (selisih ≤ 50 ms) tanpa menggeser elemen bar lain; Show seconds mati menampilkan jam tanpa detik; format 12/24 jam dari Settings; klik membuka/menutup halaman Calendar; bisa disembunyikan | 1 |
 | F-RIGHT-08 | Update and shut down / Update and restart | Kedua item dan titik oranye hanya muncul saat Windows punya update yang menunggu, cocok dengan yang ditampilkan Start menu; memilihnya memasang update lalu mematikan/restart | 3 |
 
 ### 7.5 Tools dan produktivitas
@@ -739,7 +745,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 - Helper hook Claude selesai ≤ 50 ms (p95), jadi Claude tidak terasa lebih lambat walau hook dipanggil di setiap tool.
 
 **Aturan ringan** (pengguna meminta TopBar tetap sangat ringan dan minta diingatkan bila fitur berat):
-- Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
+- Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik) dan detik di jam (satu teks per detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
 - Panel tray dan jendela Settings dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup.
 - Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
 - Tidak ada hook mouse atau keyboard global selain hook Caps/Num Lock yang sudah ada.
@@ -751,7 +757,8 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Mata Gili mengikuti kursor | Baca posisi kursor 30×/detik; gambar ulang dua kotak kecil (area kecil di dalam pulau 200 px) hanya saat kursor bergerak | CPU ≤ 0,3% rata-rata saat mouse aktif dipakai, 0% saat kursor diam | Turun ke 15×/detik |
 | Ambient glow bergerak dan mengikuti kursor | **Paling berat di revisi ini**: menggambar ulang gradasi selebar pulau terus-menerus, ditambah setiap kali mouse bergerak selama pulau terbuka. WPF menggambar jendela transparan (layered) di CPU, jadi tiap frame mahal | CPU ≤ 3% selama pulau terbuka, 0% saat tertutup | Turun ke 15 fps; kalau tetap lewat, Ambient motion default mati (glow diam tetap ada) |
 | Panel tray | Library notification area (ManagedShell) + bitmap ikon tray | RAM ≤ +10 MB; CPU 0% saat diam (berbasis event) | — |
-| Halaman Controls | Daftar Wi‑Fi dan Bluetooth hanya dipindai saat halaman tampil | 0 saat tidak tampil | — |
+| Pulau kontrol | Daftar Wi‑Fi, Bluetooth, dan perangkat audio hanya dibaca saat pulaunya terbuka; ikon bar memakai event sistem | 0 saat tidak tampil | — |
+| Detik di jam | Satu teks kecil diperbarui sekali per detik; timer diselaraskan ke pergantian detik sistem, bukan polling cepat; tata letak bar dihitung ulang hanya saat menit atau tanggal berganti | Tidak terukur (< 0,1%) | Show seconds dimatikan |
 | Timer jendela Claude 5 jam | Satu teks diperbarui tiap detik saat tampil di slot | Tidak terukur | Saat hanya di gelembung, tidak ada pembaruan teks |
 | Tinggi pulau mengikuti isi, posisi bawah, sembunyikan taskbar, tombol Start, jam di kanan | Hanya saat ada perubahan | Tidak terukur | — |
 
@@ -812,7 +819,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Ambient glow bergerak | Dua lintasan elips 22 dan 31 detik, napas skala 9 detik, linear terus-menerus; warna halaman bersilang 600 ms; condong ke kursor dengan ease-out 900 ms (cubic-bezier .16, 1, .3, 1), dibaca paling banyak sekali per frame |
 | Tinggi pulau terbuka berubah | Pegas membuka pulau saat pindah halaman; pegas compact ↔ wide saat isi berubah |
 | Panel tray dan daftar `+N` | Turun 4 px + fade 160 ms ease-out (naik 4 px saat bar di bawah) |
-| Sorotan tab saat halaman Controls dibuka | Opacity sorotan ke 0, 160 ms; kembali saat pindah ke halaman bertab |
+| Pindah antar-pulau kontrol | Ukuran dengan pegas buka; isi lama memudar 90 ms, isi baru muncul 180 ms |
 | Elemen bar disembunyikan/dimunculkan dari Settings | Skala 0,6 → 1 dan opacity, pegas 320 ms; deretan merapat 300 ms ease-out |
 | Bar pindah posisi atas ↔ bawah | Keluar dari tepi lama dan masuk dari tepi baru, masing-masing pegas compact ↔ wide |
 
@@ -873,7 +880,7 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Start | Membuka Start menu seperti tombol Windows: `SendInput` VK_LWIN, atau pesan Start ke `Shell_TrayWnd` bila taskbar disembunyikan (diverifikasi Fase 3) | Saat diklik |
 | Taskbar Windows | `SHAppBarMessage(ABM_GETSTATE/ABM_SETSTATE)` untuk auto-hide, `ShowWindow(SW_HIDE/SW_SHOW)` pada `Shell_TrayWnd` dan `Shell_SecondaryTrayWnd`; status asli disimpan di `settings.json` | Saat saklar berubah + `TaskbarCreated` |
 | Notification area (tray) | ManagedShell (MIT, dipakai RetroBar) `NotificationArea`: menjadi host tray tambahan sehingga aplikasi mengirim ikonnya (`Shell_NotifyIcon`) juga ke TopBar, sementara Explorer tetap menerima salinannya. Klik diteruskan ke aplikasi lewat pesan callback ikon (`uCallbackMessage`) | Event |
-| Controls | Radio Wi‑Fi/Bluetooth/airplane: `Windows.Devices.Radios`; daftar dan sambung Wi‑Fi: Native WLAN API (`WlanScan`, `WlanGetAvailableNetworkList`, `WlanConnect` dengan profil tersimpan); Bluetooth ter-pair: `DeviceInformation` + `BluetoothDevice`; volume dan perangkat output: Core Audio (`IAudioEndpointVolume`, `IPolicyConfig` untuk ganti perangkat default); brightness: WMI `WmiMonitorBrightness` / `WmiMonitorBrightnessMethods` | Saat panel terbuka |
+| Pulau kontrol | Radio Wi‑Fi/Bluetooth/airplane: `Windows.Devices.Radios`; daftar dan sambung Wi‑Fi: Native WLAN API (`WlanScan`, `WlanGetAvailableNetworkList`, `WlanConnect` dengan profil tersimpan); Bluetooth ter-pair: `DeviceInformation` + `BluetoothDevice`; volume dan perangkat output: Core Audio (`IAudioEndpointVolume`, `IPolicyConfig` untuk ganti perangkat default); brightness: WMI `WmiMonitorBrightness` / `WmiMonitorBrightnessMethods` | Saat pulaunya terbuka; ikon bar dari event (`IAudioEndpointVolumeCallback`, `Radio.StateChanged`, `DeviceWatcher`) |
 | Jendela Claude 5 jam | Waktu `UserPromptSubmit` dari hook (sudah ada) untuk perkiraan; waktu reset resmi dari data Claude Code bila tersedia (diverifikasi Fase 3). Waktu akhir jendela disimpan sebagai UTC lewat `Scheduler`, jadi tahan restart | Event + jadwal |
 | Sesi Claude | Hook Claude Code → `TopBar.ClaudeHook` → named pipe `\\.\pipe\TopBar.Claude` (tabel di bawah). Pelengkap: file `~/.claude/sessions/<pid>.json` (judul sesi, status `busy`/`idle`, PID) dipantau dengan `FileSystemWatcher`. Jendela sesi dicari dari rantai proses induk (Toolhelp snapshot) lalu dipulihkan dan difokuskan (`ShowWindow` + `SetForegroundWindow`). Pembaruan UI digabung, maksimal 4 kali per detik | Event + cek proses hidup tiap 5 detik selama ada sesi |
 
@@ -924,7 +931,7 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan.
 - Migrasi skema lewat tabel `schema_version`.
-- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), tray/Controls/jam nyala, timer Claude 5 jam nyala, ambang baterai, kota cuaca (nama, lat, lon), hotkey, suhu CPU nyala/mati, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
+- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, ambang baterai, kota cuaca (nama, lat, lon), hotkey, suhu CPU nyala/mati, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
 
 ## 11. Penanganan error
 
@@ -985,7 +992,7 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 - **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri TopBar, JSON rusak tidak disentuh, cadangan dibuat.
 - **Test repository** pada file SQLite sementara: simpan/muat, migrasi, batas baris (50 riwayat clipboard, 8 item Shelf).
 - **Mode demo** untuk memeriksa tampilan dan gerak semua keadaan tanpa kejadian nyata.
-- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, tombol power di halaman Controls (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat TopBar mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), halaman Controls di pulau (Wi‑Fi, Bluetooth, volume, brightness; tanpa tab tersorot), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
+- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat TopBar mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
 - **Pengukuran performa**: catat RAM dan CPU dari Task Manager setelah 8 jam pemakaian normal.
 
 ## 14. Fase rilis
@@ -1002,8 +1009,8 @@ Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari ke
 ## 15. Di luar cakupan
 
 - Lebih dari satu monitor.
-- Membuat ulang Start menu, Quick Settings, atau Notification Center Windows (TopBar hanya membukanya, menampilkan ikon tray, dan punya halaman Controls di pulau).
-- Memasukkan password Wi‑Fi baru dari halaman Controls (diserahkan ke daftar jaringan Windows).
+- Membuat ulang Start menu, Quick Settings, atau Notification Center Windows (TopBar hanya membukanya, menampilkan ikon tray, dan punya pulau kontrol).
+- Memasukkan password Wi‑Fi baru dari pulau Wi‑Fi (diserahkan ke daftar jaringan Windows).
 - Ekspresi atau suasana hati maskot selain mengikuti kursor dan berkedip.
 - Bahasa UI selain Inggris.
 - Sinkronisasi cloud dan backup online.

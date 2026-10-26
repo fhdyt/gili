@@ -133,6 +133,9 @@ body.bottom .pmenu,body.bottom .pop{top:auto;bottom:calc(100% + 6px);animation-n
 .left [hidden]{display:none!important}
 /* Clock on the right: the date is the small label, the time the value. */
 .mod[data-m="clock"] .tw{min-width:46px}
+/* Seconds: tabular digits and a fixed width, so the bar never shifts as they tick. */
+.mod[data-m="clock"] b{display:inline-block;min-width:7.2ch}
+body.nosecs .mod[data-m="clock"] b{min-width:0}
 #mTray .ic{width:14px;height:14px}
 body.bottom #mTray .ic{transform:rotate(180deg)}
 /* Tray panel: background apps' notification-area icons. */
@@ -1000,7 +1003,7 @@ const S={
   mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1,tray:1,ctl:1,clock:1},
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,notes:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1],
-  gili:1,glow:1,motion:1,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,
+  gili:1,glow:1,motion:1,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
   wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
@@ -1396,14 +1399,17 @@ function renderSlot(){
     if(k==='media')sv.style.width=pct()+'%';else sv.textContent=slotValue(k);
   }
 }
-// Clock and date live on the right of the bar: the date is the small label, the time the value.
+// Clock and date live on the right of the bar: the date is the small label, the time the value, with seconds by default.
+// Only the text changes each second; the bar is laid out again only when the minute or the date changes.
 function renderClock(force){
-  const n=new Date(),h=n.getHours(),t=S.h12?`${h%12||12}:${pad(n.getMinutes())} ${h<12?'AM':'PM'}`:pad(h)+':'+pad(n.getMinutes());
-  const d=`${DAYS[n.getDay()]} ${n.getDate()} ${MONTHS[n.getMonth()]}`;
-  if(force||$('#clkT').textContent!==t||$('#clkD').textContent!==d){
-    $('#clkT').textContent=t;$('#clkD').textContent=d;
+  const n=new Date(),h=n.getHours(),mm=pad(n.getMinutes()),ss=S.secs?':'+pad(n.getSeconds()):'';
+  const t=S.h12?`${h%12||12}:${mm}${ss} ${h<12?'AM':'PM'}`:pad(h)+':'+mm+ss;
+  const d=`${DAYS[n.getDay()]} ${n.getDate()} ${MONTHS[n.getMonth()]}`,key=d+h+mm+S.secs+S.h12;
+  $('#clkT').textContent=t;
+  if(force||key!==renderClock.key){
+    renderClock.key=key;$('#clkD').textContent=d;
     $('#mClock').title=n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    $('#tray').innerHTML=`${pad(h)}:${pad(n.getMinutes())}<br>${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()}`;
+    $('#tray').innerHTML=`${pad(h)}:${mm}<br>${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()}`;
     layout();
   }
 }
@@ -1982,7 +1988,7 @@ function limCheck(){
 
 /* Settings window */
 const SET={
-  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'TopBar gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['auto','Start with Windows','sw']],
+  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'TopBar gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
   Appearance:[['opacity','Bar opacity','range'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
@@ -2004,6 +2010,7 @@ function sput(k,v){
 function applySettings(){
   $$('#left [data-l]').forEach(b=>b.hidden=!S.left[b.dataset.l]);
   $('#lsep').hidden=!Object.values(S.left).some(Boolean);
+  document.body.classList.toggle('nosecs',!S.secs);
   document.body.classList.toggle('noglow',!S.glow);document.body.classList.toggle('nomotion',!S.motion);setPressed('glow',!!S.glow);
   $('#desk').classList.toggle('notb',!!S.hideTb);document.body.classList.toggle('bottom',S.pos==='bottom');
   slotSig='';renderTabs();renderClock(true);renderSlot();renderClPage();if(!S.reduce)setMotion(SP_WIDE);layout();
