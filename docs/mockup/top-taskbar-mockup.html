@@ -74,13 +74,15 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .launch .lcl.ask::after{--sdot:var(--warn);transform:scale(1)}
 .launch .lcl.seen::after{--sdot:var(--accent);transform:scale(1)}
 .lsep{width:1px;height:14px;background:rgba(255,255,255,.22);flex-shrink:0}
-/* Open apps: icon only, except the active one, whose name slides out beside its icon. */
+/* Open apps: icon only, except the active one and the hovered one, whose names slide out beside their icons. */
 .apps{display:flex;align-items:center;gap:2px;min-width:0}
 .appi{height:24px;display:flex;align-items:center;gap:0;padding:0 5px;border-radius:6px;opacity:.7;flex-shrink:0;
   transition:opacity 160ms ease,background 220ms ease,gap 300ms var(--out),padding 300ms var(--out)}
-.appi:hover{opacity:1;background:rgba(255,255,255,.08)}
+.appi.hov,.appi:focus-visible{opacity:1;background:rgba(255,255,255,.08)}
+.apps:not(.tight) .appi.hov,.apps:not(.tight) .appi:focus-visible{gap:7px;padding:0 9px 0 6px}
 .appi.act{opacity:1;gap:7px;padding:0 9px 0 6px;background:rgba(255,255,255,.1)}
 .anm{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:max-width 300ms var(--out),opacity 160ms ease}
+.apps:not(.tight) .appi.hov:not(.act) .anm,.apps:not(.tight) .appi:focus-visible:not(.act) .anm{max-width:var(--anm-hov,160px);opacity:1}
 .appi.act .anm{max-width:var(--anm-max,160px);opacity:1;transition:max-width 300ms var(--out),opacity 220ms ease 90ms}
 .amore{font-size:12px;color:var(--text2);padding:0 4px;flex-shrink:0}
 .k2{color:var(--text2)}
@@ -937,8 +939,15 @@ function fitApps(){
   const ICON=28,ACT=36,MORE=26;let hid=0;
   const need=()=>(items.length-hid-1)*ICON+ACT+(hid?MORE:0);
   for(let k=items.length-1;k>=0&&avail-need()<60;k--){if(items[k].classList.contains('act'))continue;items[k].hidden=true;hid++}
-  if(hid){more.hidden=false;more.textContent='+'+hid;more.title=items.filter(b=>b.hidden).map(b=>b.title).join(', ')}
-  $('#apps').style.setProperty('--anm-max',Math.max(0,Math.min(160,avail-need()))+'px');
+  if(hid){more.hidden=false;more.textContent='+'+hid;more.title=items.filter(b=>b.hidden).map(b=>b.dataset.name).join(', ')}
+  const free=Math.max(0,avail-need()),act=$('#apps .appi.act .anm');
+  $('#apps').style.setProperty('--anm-max',Math.min(160,free)+'px');
+  // A hovered name only gets what the active name leaves (12 px goes to its capsule), so hovering never breaks GAP.
+  // Too little left: the name falls back to a tooltip.
+  const hov=Math.min(160,free-Math.min(160,free,act?act.scrollWidth:0)-12),tight=hov<40;
+  $('#apps').style.setProperty('--anm-hov',Math.max(0,hov)+'px');
+  $('#apps').classList.toggle('tight',tight);
+  items.forEach(b=>b.title=tight?b.dataset.name:'');
 }
 function setMotion(m){for(const el of[iw,bubble,cbub,pCam,pMic]){el.style.setProperty('--d',m.dur+'ms');el.style.setProperty('--e',m.ease)}}
 function setState(next,instant){
@@ -1618,7 +1627,7 @@ const SHOT=(()=>{
 // taskbar and extracts each app's own icon; the mockup uses drawn stand-ins.
 function appButton(a){
   const b=document.createElement('button');
-  b.className='appi';b.dataset.name=a.n;b.title=a.n;b.setAttribute('aria-label',a.n);
+  b.className='appi';b.dataset.name=a.n;b.setAttribute('aria-label',a.n);
   b.innerHTML=`<svg class="aic" aria-hidden="true"><use href="#${a.i}"/></svg><span class="anm">${esc(a.n)}</span>`;
   return b;
 }
@@ -1642,6 +1651,15 @@ $('#apps').addEventListener('click',e=>{
   if(w){$$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5}
   setApp(b.dataset.name);
 });
+// Hover slides the name out at once. Only a pointer that actually moves picks the hovered app, so icons sliding
+// under a resting pointer don't set off a chain of expansions.
+let appPt='';
+$('#apps').addEventListener('pointermove',e=>{
+  const at=e.clientX+','+e.clientY;if(at===appPt)return;appPt=at;
+  const b=e.target.closest('.appi');
+  $$('#apps .appi').forEach(x=>x.classList.toggle('hov',x===b));
+});
+$('#apps').addEventListener('pointerleave',()=>{appPt='';$$('#apps .appi.hov').forEach(x=>x.classList.remove('hov'))});
 // Clipboard snippets take the island's slot for 3 s; a new copy replaces the snippet and restarts the timer.
 function showClip(html,tip){
   S.clip={html,tip,n:(S.clip?S.clip.n:0)+1};renderSlot();
