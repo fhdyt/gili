@@ -1056,7 +1056,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <p class="note">Click the island, the clock, the Notes icon, or CPU in the bar. Drag a real file from your desktop onto the island. Swipe the island with a touchpad or use the arrow keys; Esc closes it.</p>
     <div class="g"><button data-act="demo" aria-pressed="false">Play the demo</button></div>
     <h3>Island</h3>
-    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Shelf</button><button data-page="7">Claude</button><button data-page="8">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button></div>
+    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Shelf</button><button data-page="7">Claude</button><button data-page="8">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
     <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
@@ -1348,7 +1348,8 @@ function compactWidth(){return Math.max(naturalWidth(),MIN_COMPACT)}
 function pageNeed(i){
   const p=$$('.page')[i];if(!p)return 0;
   // Notes: the cards, or the open editor when it is taller, so a note always has room to grow into.
-  if(i===PAGE.notes)return 42+Math.max($('#nGridIn').offsetHeight,S.editing?EDH:0);
+  // The page's own top and bottom padding counts too, or the grid ends a few pixels short and scrolls.
+  if(i===PAGE.notes){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+Math.max($('#nGridIn').offsetHeight,S.editing?EDH:0)+parseFloat(cs.paddingBottom)}
   return Math.max(...[...p.children].map(c=>c.scrollHeight));
 }
 function layout(){
@@ -1359,7 +1360,8 @@ function layout(){
   if(s==='compact'){W=cw+(S.hover?HOVER_GROW:0);H=ih;T=ct;R=ih/2+'px'}
   else if(s==='wide'){W=Math.max(MIN_COMPACT,Math.ceil(lwI.getBoundingClientRect().width)+32);H=ih;T=ct;R=ih/2+'px'}
   else if(s==='expanded'){
-    const min=256,max=innerHeight-16;
+    // As tall as the content, up to the whole screen: the same gap below as above, and only then does the page scroll.
+    const min=256,max=innerHeight-2*(S.barH-ih)/2;
     // Every page, Notes included, is as wide as the menu needs at full size (Gili + every enabled tab), never under 680 px.
     W=Math.min(Math.max(680,menuNeed()),innerWidth-24);xtabs.classList.toggle('tight',menuNeed()>W);
     // Lay the cards out at the new width before measuring, so the Notes height fits the columns that will show.
@@ -2842,6 +2844,17 @@ const ACT={
   clTerm:()=>{const s=S.cl[2];s.st==='work'||s.st==='ask'?clDone(s):clWork(s)},
   clFocus:()=>clFocus(S.cl[0]),
   note:()=>openNote(true),
+  // Fills Notes with 40 sample notes of mixed lengths and colours, to check that the island grows to the screen and only then scrolls.
+  many:()=>{
+    const on=!S.notes.some(n=>n.many);
+    if(on){
+      const W=['Groceries','Ideas','Meeting','Reading list','Trip','Gift ideas','Recipe','Bug notes'];
+      for(let k=0;k<40;k++)S.notes.push({id:S.nextId++,many:1,c:k%8,t:nowHM(),b:W[k%W.length]+' '+(k+1)+'\n'+Array.from({length:k%7},(_,j)=>'- item '+(j+1)).join('\n')});
+    }else S.notes=S.notes.filter(n=>!n.many||n.f);
+    setPressed('many',on);if(S.editing)closeEditor();renderNotes();
+    if(S.state==='expanded'&&S.page===PAGE.notes)layout();else openNote(false);
+    hint(on?'40 notes added; press again to remove them':'Sample notes removed');
+  },
   sleep:()=>{GX.input=0;hint('Gili falls asleep within a second; move the pointer to wake it')},
   float:()=>{
     const n=S.notes.find(x=>!x.f&&x.b.trim());if(!n){hint('Every note is already floating');return}
