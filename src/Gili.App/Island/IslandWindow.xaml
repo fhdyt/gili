@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:Gili.App.Controls"
         xmlns:m="clr-namespace:Gili.App.Mascot"
+        xmlns:i="clr-namespace:Gili.App.Island"
         xmlns:gm="clr-namespace:Gili.Core.Mascot;assembly=Gili.Core"
         Title="Gili Island" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True" UseLayoutRounding="True"
@@ -61,6 +62,9 @@
         <Border x:Name="Body" Background="#000000"
                 MouseLeftButtonUp="OnBodyClick" MouseEnter="OnBodyEnter" MouseLeave="OnBodyLeave">
             <Grid>
+                <!-- Behind everything, clipped by the island's shape: the open page's colour, drifting (PRD 6.3). -->
+                <i:AmbientGlow x:Name="Glow" />
+
                 <!-- Thin light line along the top edge while floating, so the black panel stands apart from dark windows. -->
                 <Border x:Name="TopHighlight" BorderBrush="#17FFFFFF" BorderThickness="0,1,0,0" Opacity="0" IsHitTestVisible="False" />
 

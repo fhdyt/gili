@@ -61,6 +61,20 @@ public partial class IslandWindow : Window
     private static readonly Brush TextBrush = Frozen(0xF5, 0xF5, 0xF7);
     private static readonly Brush SecondaryBrush = Frozen(0x8E, 0x8E, 0x93);
     private static readonly Brush AccentBrush = Frozen(0x30, 0xD1, 0x58);
+
+    /// <summary>Glow colours per page (PRD 6.3 "Ambient glow"); Media takes the artwork's colours instead.</summary>
+    private static readonly Dictionary<IslandPage, Color> PageGlow = new()
+    {
+        [IslandPage.Timer] = Color.FromRgb(0xFF, 0x9F, 0x0A),
+        [IslandPage.Alarms] = Color.FromRgb(0xFF, 0xD6, 0x0A),
+        [IslandPage.Calendar] = Color.FromRgb(0xFF, 0x45, 0x3A),
+        [IslandPage.Todo] = Color.FromRgb(0x0A, 0x84, 0xFF),
+        [IslandPage.Notes] = Color.FromRgb(0xFF, 0xD6, 0x0A),
+        [IslandPage.Clipboard] = Color.FromRgb(0x66, 0xD4, 0xCF),
+        [IslandPage.Shelf] = Color.FromRgb(0x64, 0xD2, 0xFF),
+        [IslandPage.Claude] = Color.FromRgb(0xD9, 0x77, 0x57),
+        [IslandPage.System] = Color.FromRgb(0xBF, 0x5A, 0xF2),
+    };
     private readonly List<(Button Button, IconView Icon, Border Name, LevelMeter? Meter)> _tabs = [];
     private TabName[] _names = [];
     private int _hoveredTab = -1;
@@ -97,6 +111,7 @@ public partial class IslandWindow : Window
             SizeExpanded();
             Relayout();
             UpdateGili();
+            UpdateGlow();
         };
         CompactContent.SizeChanged += (_, _) => Relayout();
         WideContent.SizeChanged += (_, _) => Relayout();
@@ -157,6 +172,7 @@ public partial class IslandWindow : Window
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
         UpdateGili();
+        UpdateGlow();
         var width = Floats(view.Mode)
             ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, _pageHeight).Width
             : 0;
@@ -282,6 +298,26 @@ public partial class IslandWindow : Window
         Canvas.SetLeft(GiliCircle, islandLeft - s.IslandHeight / 2.0 + circle * (-IslandLayout.BubbleGap - s.IslandHeight / 2.0));
         Canvas.SetTop(GiliCircle, (s.BarHeight - s.IslandHeight) / 2.0);
         _giliCircleScale.ScaleX = _giliCircleScale.ScaleY = 0.6 + 0.4 * circle;
+    }
+
+    /// <summary>
+    /// The glow takes the open page's colour and wanders only while the island is open with Ambient motion and Windows
+    /// animations on; on Media it holds still at half strength while the music is paused (PRD 6.3).
+    /// </summary>
+    private void UpdateGlow()
+    {
+        var s = _settings.Current;
+        Glow.Visibility = s.AmbientGlow ? Visibility.Visible : Visibility.Collapsed;
+        var page = _vm.Tabs[_vm.SelectedTab].Page;
+        var paused = page == IslandPage.Media && !_vm.IsPlaying;
+        if (page == IslandPage.Media) Glow.SetColors(_vm.GlowPrimary, _vm.GlowSecondary, paused);
+        else Glow.SetColors(PageGlow[page], PageGlow[page], dim: false);
+        if (_mode != IslandMode.Expanded || !s.AmbientGlow)
+        {
+            Glow.Hide();
+            return;
+        }
+        Glow.Show(ExpandedLayer.Width, _height.Target, s.AmbientMotion && SystemParameters.ClientAreaAnimation && !paused);
     }
 
     /// <summary>
@@ -663,6 +699,10 @@ public partial class IslandWindow : Window
                 ShowPage(animate);
                 _pageHeight = PageHeight();
                 if (animate) Relayout(SpringParameters.Open);
+                UpdateGlow();
+                break;
+            case nameof(IslandViewModel.IsPlaying) or nameof(IslandViewModel.GlowPrimary) or nameof(IslandViewModel.GlowSecondary):
+                UpdateGlow();
                 break;
             case nameof(IslandViewModel.MusicPlaying):
                 UpdateTabs(animate: false);
