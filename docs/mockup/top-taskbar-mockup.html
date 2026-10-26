@@ -573,6 +573,11 @@ li.done .chk .ic{opacity:1;transform:none}
 .ned textarea{flex:1;resize:none;border:0;background:none;color:var(--text);padding:0;font:inherit;font-size:14px;line-height:1.6;outline:none;
   scrollbar-width:thin;scrollbar-color:#48484a transparent}
 .ned textarea::placeholder{color:var(--text3)}
+/* Grip along the editor's top edge: drag the open note out of the island to float it (PRD 6.3 "Note mengambang"). */
+.nedgrip{height:16px;margin:-6px -14px 2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab;touch-action:none;color:rgba(255,255,255,.3);transition:color 150ms}
+.nedgrip:hover{color:rgba(255,255,255,.65)}
+.nedgrip .ic{width:14px;height:14px;transform:rotate(90deg)}
+.ncard.ghost,.ned.ghost{opacity:0!important;pointer-events:none}
 .npop{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text2);transition:background 150ms,color 150ms}
 .npop:hover{background:rgba(255,255,255,.08);color:var(--text)}
 .npop .ic{width:15px;height:15px}
@@ -593,6 +598,17 @@ li.done .chk .ic{opacity:1;transform:none}
   transition:width 420ms var(--spr),height 420ms var(--spr),opacity 160ms,transform 160ms var(--out)}
 .fnote.drag{transition:width 420ms var(--spr),height 420ms var(--spr);cursor:grabbing}
 .fnote.home>*{opacity:0;transition:opacity 100ms}
+/* A note being dragged: one object above the island and every window. Inside the island it shows the card (or the
+   editor's text); torn off it shows the window; the two cross-fade while the size springs between them. */
+.fnote.proxy{transition:transform 220ms var(--out),box-shadow 220ms ease;box-shadow:0 16px 32px -10px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.1)}
+.fnote.proxy.lifted.fromcard:not(.torn){transform:scale(1.03)}
+.fnote.proxy.torn{box-shadow:0 28px 56px -14px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.14)}
+.fnote.proxy>*{transition:opacity 160ms ease}
+.fnote.proxy:not(.torn)>:not(.fsrc),.fnote.proxy.torn>.fsrc{opacity:0}
+.fsrc{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.fsrc.ncard{width:auto!important;transform:none!important;background:none;box-shadow:none;filter:none}
+.fsed{padding:22px 14px 10px;font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+.fsed.fs0{font-size:12px}.fsed.fs1{font-size:13px}.fsed.fs3{font-size:16px}
 /* The island swallows a note coming home */
 .island.gulp{animation:gulp 420ms var(--spr)}
 @keyframes gulp{40%{scale:1.07 1.18}}
@@ -760,6 +776,7 @@ body.bottom #winA{top:0}
 .desk.fs .gcirc{opacity:0}
 .desk.fs .fnote{opacity:0;pointer-events:none}
 body.reduce .ned,body.reduce .fnote{transition:opacity 100ms ease!important;animation:none!important}
+body.reduce .fnote.proxy>*{transition:opacity 100ms ease!important}
 body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm,body.reduce .xtab,body.reduce .xtab .tl,body.reduce .xind{transition-duration:0ms!important}
 body.reduce .layer,body.reduce .glow{transition:opacity 100ms ease!important}
 body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop{transform:translate(-50%,0)!important;filter:none!important}
@@ -1002,6 +1019,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                   <div class="ngrid" id="nGrid"><div class="ngin" id="nGridIn" aria-label="Notes. Drag a note, or press Alt and an arrow key, to reorder."></div></div>
                 </div>
                 <div class="ned" id="nEdPanel" role="dialog" aria-label="Edit note"><div class="nedin" id="nEdIn">
+                  <div class="nedgrip" id="nEdGrip" title="Drag out of the island to float on top"><svg class="ic" aria-hidden="true"><use href="#i-grip"/></svg></div>
                   <textarea id="nEd" placeholder="Write something. The first line becomes the title." aria-label="Note text"></textarea>
                   <div class="nrow"><div class="nsw" id="nSw" role="group" aria-label="Note color"></div><div class="nfs" id="nFs" role="radiogroup" aria-label="Text size"></div></div>
                   <div class="nfoot"><span class="nsave" id="nSave"><i></i><span id="nSaveT">Saved</span></span>
@@ -1113,7 +1131,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="demo" aria-pressed="false">Play the demo</button></div>
     <h3>Island</h3>
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Clipboard</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
-    <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. The arrow on a floating note sends it back into the island.</p>
+    <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
     <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
@@ -2101,7 +2119,6 @@ function layoutNotes(instant){
     c.style.width=cw+'px';
     const i=h.indexOf(Math.min(...h)),x=i*(cw+NGAP),y=h[i];
     c.dataset.x=x;c.dataset.y=y;h[i]+=c.offsetHeight+NGAP;
-    if(noteDrag&&noteDrag.moved&&!noteDrag.tear&&noteDrag.card===c)continue;
     if(instant||S.reduce){c.style.transition='none';c.style.transform=`translate(${x}px,${y}px)`;c.offsetWidth;c.style.transition=''}
     else c.style.transform=`translate(${x}px,${y}px)`;
   }
@@ -2197,24 +2214,67 @@ function moveNote(from,to){
 nGrid.addEventListener('pointerdown',()=>{if(S.editing)closeEditor()});
 nIn.addEventListener('pointerdown',e=>{
   const c=e.target.closest('.ncard');if(!c||e.button!==0||S.editing)return;
-  const r=c.getBoundingClientRect();
-  noteDrag={card:c,id:+c.dataset.id,x0:e.clientX,y0:e.clientY,gx:e.clientX-r.left,gy:e.clientY-r.top,pid:e.pointerId,moved:false,lock:0};
+  noteDrag={id:+c.dataset.id,card:c,from:c,grab:c,x0:e.clientX,y0:e.clientY,pid:e.pointerId,moved:false,lock:0};
 });
+// The open editor (a note being written or a new one) can leave the island too: drag it by the grip along its top.
+$('#nEdGrip').addEventListener('pointerdown',e=>{
+  if(e.button!==0||!S.editing)return;
+  e.preventDefault();flushNote();
+  noteDrag={id:S.noteSel,ed:true,card:nIn.querySelector(`.ncard[data-id="${S.noteSel}"]`),from:nPanel,grab:$('#nEdGrip'),x0:e.clientX,y0:e.clientY,pid:e.pointerId,moved:false,lock:0};
+});
+/* Dragging a note (PRD 6.3 "Note mengambang"). From the moment it lifts, the note is one object: a window above the
+   island and every other window, so the island's edge never clips it. Inside the island it keeps the card's (or the
+   open editor's) size and reorders the grid; past the edge it grows into the floating-note window around the point
+   under the pointer while its content cross-fades from card to window. Back inside before release, it shrinks back the
+   same way. The size follows the open-island spring frame by frame and the position is worked out from that size, so
+   the grab point never leaves the pointer and nothing jumps when it tears off or comes back. */
+const DSP=(()=>{const w=2*Math.PI/.42;return{k:w*w,c:2*.82*w}})();
+function beginDrag(d,e){
+  const n=noteById(d.id),r=d.from.getBoundingClientRect();
+  d.moved=true;try{d.grab.setPointerCapture(e.pointerId)}catch{}
+  const el=makeFloat(n);$('#desk').appendChild(el);
+  el.classList.add('proxy');if(!d.ed)el.classList.add('fromcard');el.style.zIndex=40;el.style.pointerEvents='none';
+  el.insertAdjacentHTML('afterbegin',d.ed
+    ?`<div class="fsrc fsed fs${noteSize(n)}">${esc(n.b)}</div>`
+    :`<div class="fsrc ncard fs${noteSize(n)} ${n.c?'tinted':''}">${cardInner(n)}</div>`);
+  Object.assign(d,{el,w:r.width,h:r.height,w0:r.width,h0:r.height,tw:r.width,th:r.height,vw:0,vh:0,r0:d.ed?16:12,raf:0,
+    rx:(e.clientX-r.left)/r.width,ry:(e.clientY-r.top)/r.height,px:e.clientX,py:e.clientY});
+  el.style.transformOrigin=`${(d.rx*100).toFixed(1)}% ${(d.ry*100).toFixed(1)}%`;
+  dragPlace(d);el.offsetWidth;el.classList.add('lifted');
+  d.from.classList.add('ghost');
+}
+function dragPlace(d){
+  const span=FW-d.w0,p=Math.abs(span)>1?Math.max(0,Math.min(1,(d.w-d.w0)/span)):d.tear?1:0;
+  Object.assign(d.el.style,{width:d.w+'px',height:d.h+'px',left:(d.px-d.rx*d.w)+'px',top:(d.py-d.ry*d.h)+'px',borderRadius:(d.r0+(8-d.r0)*p).toFixed(2)+'px'});
+}
+function dragSize(d,w,h){
+  d.tw=w;d.th=h;
+  if(S.reduce){d.w=w;d.h=h;dragPlace(d);return}
+  if(!d.raf){d.lt=0;d.raf=requestAnimationFrame(t=>dragStep(d,t))}
+}
+// The open-island spring (damping 0.82, response 0.42 s) on width and height, in small fixed steps.
+function dragStep(d,t){
+  const dt=d.lt?Math.min(.05,(t-d.lt)/1000):1/60;d.lt=t;
+  for(let n=Math.ceil(dt*240),h=dt/n;n>0;n--)for(const a of['w','h']){const v='v'+a;d[v]+=(-DSP.k*(d[a]-d['t'+a])-DSP.c*d[v])*h;d[a]+=d[v]*h}
+  if(Math.abs(d.w-d.tw)+Math.abs(d.h-d.th)+Math.abs(d.vw)+Math.abs(d.vh)<.05){d.w=d.tw;d.h=d.th;d.vw=d.vh=0;d.raf=0}
+  dragPlace(d);
+  if(d.raf)d.raf=requestAnimationFrame(t2=>dragStep(d,t2));
+}
 addEventListener('pointermove',e=>{
   const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
   if(!d.moved){
     if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<6)return;
-    if($('#nSearch').value.trim()){noteDrag=null;hint('Clear the search to reorder notes');return}
-    d.moved=true;try{d.card.setPointerCapture(e.pointerId)}catch{}d.card.classList.add('lift');
+    if(!d.ed&&$('#nSearch').value.trim()){noteDrag=null;hint('Clear the search to reorder notes');return}
+    beginDrag(d,e);
   }
-  // Past the island's edge the card tears off into a floating note; back inside, it is a card again.
+  d.px=e.clientX;d.py=e.clientY;
+  // Past the island's edge the note tears off into a floating note; back inside, it is a card (or the editor) again.
   const ir=iw.getBoundingClientRect(),out=e.clientX<ir.left||e.clientX>ir.right||e.clientY<ir.top||e.clientY>ir.bottom;
   if(out&&!d.tear)startTear(d);else if(!out&&d.tear)cancelTear(d);
-  if(d.tear){d.el.style.left=(e.clientX-d.fx)+'px';d.el.style.top=(e.clientY-d.fy)+'px';return}
-  // 1:1 with the pointer, from where the card was grabbed
+  if(!d.raf)dragPlace(d);
+  if(d.tear||d.ed||Date.now()<d.lock)return;
+  // Inside the island a card reorders the grid as it passes over the others.
   const g=nIn.getBoundingClientRect(),px=e.clientX-g.left,py=e.clientY-g.top;
-  d.card.style.transform=`translate(${px-d.gx}px,${py-d.gy}px) scale(1.03)`;
-  if(Date.now()<d.lock)return;
   const over=[...nIn.querySelectorAll('.ncard')].find(c=>c!==d.card&&px>=+c.dataset.x&&px<=+c.dataset.x+c.offsetWidth&&py>=+c.dataset.y&&py<=+c.dataset.y+c.offsetHeight);
   if(over){
     const from=S.notes.findIndex(n=>n.id===d.id),to=S.notes.findIndex(n=>n.id===+over.dataset.id);
@@ -2224,10 +2284,8 @@ addEventListener('pointermove',e=>{
 function endNoteDrag(e){
   const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
   noteDrag=null;
-  if(!d.moved){openEditor(d.id);return}
-  if(d.tear){landTear(d);return}
-  d.card.classList.remove('lift');d.card.classList.add('settle');layoutNotes();
-  setTimeout(()=>{d.card.classList.remove('settle');syncNoteDom()},S.reduce?0:340);
+  if(!d.moved){if(!d.ed)openEditor(d.id);return}
+  if(d.tear)landTear(d);else dropBack(d);
 }
 addEventListener('pointerup',endNoteDrag);
 addEventListener('pointercancel',endNoteDrag);
@@ -2371,31 +2429,41 @@ function returnFloat(id){
     {left:to.x+'px',top:to.y+'px',width:to.w+'px',height:to.h+'px',borderRadius:to.rad+'px',background:to.bg,opacity:to.op}
   ],{duration:440,easing:'cubic-bezier(.55,0,.75,.2)',fill:'forwards'}).onfinish=done;
 }
-// Tear-off: the window starts as the card under the pointer and grows to its size, keeping the grab point under the pointer.
+// Tear-off: the dragged note grows from the card (or editor) into the 260 x 220 window, around the grab point, and its
+// content cross-fades to the window's. The grid closes the gap at once.
 function startTear(d){
   const n=noteById(d.id);if(!n||n.f)return;
   if(floatCount()>=MAXF){if(!d.warned){d.warned=1;hint(`Up to ${MAXF} floating notes`)}return}
-  const r=d.card.getBoundingClientRect(),el=makeFloat(n);
-  el.classList.add('drag');placeF(el,{x:r.left,y:r.top,w:r.width,h:r.height});el.offsetWidth;
-  el.style.width=FW+'px';el.style.height=FH+'px';
-  d.tear=true;d.el=el;d.fx=Math.min(d.gx,FW-24);d.fy=Math.min(d.gy,FH-24);
-  d.card.classList.remove('lift');d.card.classList.add('torn');layoutNotes();
+  d.tear=true;d.el.classList.add('torn');dragSize(d,FW,FH);layoutNotes();
 }
-function cancelTear(d){
-  const el=d.el;d.tear=false;d.el=null;
-  el.classList.add('bye');setTimeout(()=>el.remove(),S.reduce?100:180);
-  d.card.classList.remove('torn');d.card.classList.add('lift');
+// Back inside before release: the same spring takes it back to the card's (or editor's) size and look.
+function cancelTear(d){d.tear=false;d.el.classList.remove('torn');dragSize(d,d.w0,d.h0);layoutNotes()}
+// Released inside the island: the note flies back into its slot (or the editor's frame) and becomes it again.
+function dropBack(d){
+  const el=d.el;cancelAnimationFrame(d.raf);d.raf=0;
+  let to;
+  if(d.ed){const r=nPanel.getBoundingClientRect();to={l:r.left,t:r.top,w:r.width,h:r.height,rad:16}}
+  else{layoutNotes();setTimeout(syncNoteDom,S.reduce?0:340);const g=nIn.getBoundingClientRect();to={l:g.left+ +d.card.dataset.x,t:g.top+ +d.card.dataset.y,w:d.card.offsetWidth,h:d.card.offsetHeight,rad:12}}
+  const fin=()=>{el.remove();d.from.classList.remove('ghost');if(d.ed)nEd.focus()};
+  el.classList.remove('lifted');
+  if(S.reduce){fin();return}
+  el.animate([{left:el.style.left,top:el.style.top,width:el.style.width,height:el.style.height,borderRadius:el.style.borderRadius},
+    {left:to.l+'px',top:to.t+'px',width:to.w+'px',height:to.h+'px',borderRadius:to.rad+'px'}],{duration:340,easing:'cubic-bezier(.34,1.3,.64,1)',fill:'forwards'}).onfinish=fin;
 }
+// Released outside: the dragged object simply becomes the floating note. It finishes growing, springs back inside the
+// work area if it was dropped half off-screen or over the bar, and the island closes behind it.
 function landTear(d){
-  const n=noteById(d.id),el=d.el;
-  n.f=clampF({x:parseFloat(el.style.left),y:parseFloat(el.style.top),w:FW,h:FH});
-  // Dropped half off-screen or over the bar, it springs back inside the work area.
-  el.style.transition='left 340ms var(--spr),top 340ms var(--spr),width 420ms var(--spr),height 420ms var(--spr)';
-  el.classList.remove('drag');placeF(el,n.f);
-  setTimeout(()=>{el.style.transition=''},420);
-  // The note has left the island: its card is gone from the grid and the island closes behind it.
-  d.card.classList.remove('torn');renderNotes();closeExpanded();
-  el.querySelector('textarea').focus();
+  const n=noteById(d.id),el=d.el;cancelAnimationFrame(d.raf);d.raf=0;
+  n.f=clampF({x:d.px-d.rx*FW,y:d.py-d.ry*FH,w:FW,h:FH});
+  el.querySelector('.fsrc').remove();el.classList.remove('proxy','lifted','torn','fromcard');
+  fLayer.appendChild(el);el.style.zIndex=++fZ;el.style.pointerEvents='auto';el.offsetWidth;
+  el.style.transition='left 340ms var(--spr),top 340ms var(--spr),width 420ms var(--spr),height 420ms var(--spr),border-radius 200ms ease';
+  placeF(el,n.f);el.style.borderRadius='8px';
+  setTimeout(()=>{el.style.transition='';el.style.borderRadius=''},420);
+  // The note has left the island: its card is gone from the grid (an open editor closes with it) and the island closes.
+  if(d.ed){S.editing=false;nWrap.classList.remove('editing');nPanel.style.transition='none';nPanel.classList.remove('live','open','shut','gone');nPanel.offsetWidth;nPanel.style.transition=''}
+  d.from.classList.remove('ghost');renderNotes();closeExpanded();
+  const ta=el.querySelector('textarea');ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
   gWatch(el,1500);
 }
 
