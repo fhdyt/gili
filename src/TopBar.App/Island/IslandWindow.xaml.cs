@@ -1,12 +1,17 @@
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
+using TopBar.App.Controls;
 using TopBar.Core.Island;
 using TopBar.Core.Motion;
+using TopBar.Platform.Interop;
 using TopBar.Platform.Shell;
 
 namespace TopBar.App.Island;
@@ -42,6 +47,12 @@ public partial class IslandWindow : Window
     private bool _floatingEnvelope;
     private IntPtr _hwnd;
     private IntPtr _previousForeground;
+    private static readonly Brush TextBrush = Frozen(0xF5, 0xF5, 0xF7);
+    private static readonly Brush SecondaryBrush = Frozen(0x8E, 0x8E, 0x93);
+    private static readonly Brush AccentBrush = Frozen(0x30, 0xD1, 0x58);
+    private readonly List<(Button Button, IconView Icon, TextBlock Label, LevelMeter? Meter)> _tabs = [];
+    private int _wheel;
+    private DateTime _wheelPausedUntil;
 
     public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings)
     {
@@ -53,6 +64,12 @@ public partial class IslandWindow : Window
         DataContext = vm;
         Body.Clip = _clip;
         Bubble.RenderTransform = _bubbleScale;
+        ExpandedLayer.Width = Math.Min(680, SystemParameters.PrimaryScreenWidth - IslandLayout.ScreenMargin);
+        BuildTabs();
+        BuildPages();
+        ShowPage(animate: false);
+        vm.PropertyChanged += OnViewModelChanged;
+        TabStrip.SizeChanged += (_, _) => UpdateTabs(animate: false);
         island.ViewChanged += OnViewChanged;
         settings.Changed += _ =>
         {
@@ -85,6 +102,7 @@ public partial class IslandWindow : Window
         base.OnSourceInitialized(e);
         _hwnd = new WindowInteropHelper(this).Handle;
         WindowStyles.MakeNonActivatingToolWindow(_hwnd);
+        HwndSource.FromHwnd(_hwnd)!.AddHook(WndProc);
         SetEnvelope(false);
         OnViewChanged(_island.View);
         Relayout(snap: true);
@@ -188,8 +206,8 @@ public partial class IslandWindow : Window
         var left = (Width - w) / 2;
         foreach (var plate in new[] { Body, ShadowPlate })
         {
-            System.Windows.Controls.Canvas.SetLeft(plate, left);
-            System.Windows.Controls.Canvas.SetTop(plate, _top.Value);
+            Canvas.SetLeft(plate, left);
+            Canvas.SetTop(plate, _top.Value);
             plate.Width = w;
             plate.Height = h;
             plate.CornerRadius = new CornerRadius(r);
@@ -206,8 +224,8 @@ public partial class IslandWindow : Window
         Bubble.Width = s.IslandHeight;
         Bubble.Height = s.IslandHeight;
         Bubble.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
-        System.Windows.Controls.Canvas.SetLeft(Bubble, Width / 2 + w / 2 + IslandLayout.BubbleGap);
-        System.Windows.Controls.Canvas.SetTop(Bubble, (s.BarHeight - s.IslandHeight) / 2.0);
+        Canvas.SetLeft(Bubble, Width / 2 + w / 2 + IslandLayout.BubbleGap);
+        Canvas.SetTop(Bubble, (s.BarHeight - s.IslandHeight) / 2.0);
         var scale = Math.Max(0, _bubble.Value);
         _bubbleScale.ScaleX = scale;
         _bubbleScale.ScaleY = scale;
@@ -287,8 +305,21 @@ public partial class IslandWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_mode != IslandMode.Expanded || e.Key != Key.Escape) return;
-        _island.Close();
+        if (_mode != IslandMode.Expanded) return;
+        switch (e.Key)
+        {
+            case Key.Escape:
+                _island.Close();
+                break;
+            case Key.Left:
+                StepPage(-1);
+                break;
+            case Key.Right:
+                StepPage(1);
+                break;
+            default:
+                return;
+        }
         e.Handled = true;
     }
 
@@ -320,4 +351,155 @@ public partial class IslandWindow : Window
     }
 
     private void OnPlayPause(object sender, RoutedEventArgs e) => _ = _island.Media.TogglePlayPauseAsync();
+
+    private static SolidColorBrush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    private void BuildTabs()
+    {
+        foreach (var tab in _vm.Tabs)
+        {
+            var icon = new IconView { Glyph = tab.Glyph, Width = 15, Height = 15 };
+            var meter = tab.Page == IslandPage.Media ? new LevelMeter { BarBrush = AccentBrush, Visibility = Visibility.Collapsed } : null;
+            var glyph = new Grid { MinWidth = 15, Height = 15, VerticalAlignment = VerticalAlignment.Center };
+            glyph.Children.Add(icon);
+            if (meter is not null) glyph.Children.Add(meter);
+            var label = new TextBlock { Text = tab.Name, FontSize = 12, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            var content = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+            content.Children.Add(glyph);
+            content.Children.Add(label);
+            var button = new Button { Style = (Style)FindResource("TabButton"), Content = content };
+            AutomationProperties.SetName(button, tab.Name);
+            button.Click += (_, _) => _island.Open(tab.Page);
+            TabStrip.Children.Add(button);
+            _tabs.Add((button, icon, label, meter));
+        }
+    }
+
+    private void BuildPages()
+    {
+        foreach (var tab in _vm.Tabs)
+        {
+            PageTrack.Children.Add(new Border { Width = ExpandedLayer.Width, Height = 164, Child = CreatePage(tab) });
+        }
+    }
+
+    /// <summary>Real pages replace their placeholders here as they are built (Media in Task 11, the rest in Phases 2–3).</summary>
+    private FrameworkElement CreatePage(IslandTab tab) => Placeholder(tab);
+
+    private static FrameworkElement Placeholder(IslandTab tab)
+    {
+        var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        panel.Children.Add(new TextBlock { Text = tab.Name, FontSize = 19, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
+        panel.Children.Add(new TextBlock
+        {
+            Text = tab.Placeholder ?? "",
+            FontSize = 13,
+            Foreground = SecondaryBrush,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 4, 0, 0),
+        });
+        return panel;
+    }
+
+    /// <summary>
+    /// One highlight slides to the open page's tab (320 ms); that tab's text turns white and semibold and its icon
+    /// green. While music plays, the Media icon becomes the level meter. On a narrow screen only the open tab keeps its name.
+    /// </summary>
+    private void UpdateTabs(bool animate)
+    {
+        if (_tabs.Count == 0 || TabStrip.ActualWidth <= 0) return;
+        var selected = _vm.SelectedTab;
+        var narrow = ExpandedLayer.Width < 680;
+        for (var i = 0; i < _tabs.Count; i++)
+        {
+            var (button, icon, label, meter) = _tabs[i];
+            var active = i == selected;
+            if (active) button.Foreground = TextBrush;
+            else button.ClearValue(ForegroundProperty);
+            if (active) icon.Foreground = AccentBrush;
+            else icon.ClearValue(IconView.ForegroundProperty);
+            label.FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal;
+            label.Visibility = active || !narrow ? Visibility.Visible : Visibility.Collapsed;
+            var playing = meter is not null && _vm.MusicPlaying;
+            icon.Visibility = playing ? Visibility.Collapsed : Visibility.Visible;
+            if (meter is null) continue;
+            meter.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
+            meter.IsPlaying = playing;
+        }
+        var cell = TabStrip.ActualWidth / _tabs.Count;
+        TabHighlight.Width = cell - 2;
+        Slide(TabHighlightShift, selected * cell + 1, 320, animate, new CubicEase { EasingMode = EasingMode.EaseOut });
+    }
+
+    private void ShowPage(bool animate) =>
+        Slide(PageShift, -_vm.SelectedTab * ExpandedLayer.Width, 300, animate,
+            new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 7 });
+
+    private static void Slide(TranslateTransform shift, double x, int milliseconds, bool animate, IEasingFunction ease)
+    {
+        if (!animate || !SystemParameters.ClientAreaAnimation)
+        {
+            shift.BeginAnimation(TranslateTransform.XProperty, null);
+            shift.X = x;
+            return;
+        }
+        shift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(x, TimeSpan.FromMilliseconds(milliseconds)) { EasingFunction = ease });
+    }
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(IslandViewModel.SelectedTab):
+                // Opening the island lands on its page; only switching while open slides.
+                var animate = _mode == IslandMode.Expanded;
+                UpdateTabs(animate);
+                ShowPage(animate);
+                break;
+            case nameof(IslandViewModel.MusicPlaying):
+                UpdateTabs(animate: false);
+                break;
+        }
+    }
+
+    private void StepPage(int direction)
+    {
+        var next = Math.Clamp(_vm.SelectedTab + direction, 0, _vm.Tabs.Count - 1);
+        if (next != _vm.SelectedTab) _island.Open(_vm.Tabs[next].Page);
+    }
+
+    private void OnPagesWheel(object sender, MouseWheelEventArgs e)
+    {
+        Scroll(-e.Delta);
+        e.Handled = true;
+    }
+
+    /// <summary>Wheel and touchpad deltas add up to one page per notch (120), then pause while the page slides.</summary>
+    private void Scroll(int delta)
+    {
+        if (DateTime.UtcNow < _wheelPausedUntil) return;
+        _wheel += delta;
+        if (Math.Abs(_wheel) < 120) return;
+        StepPage(Math.Sign(_wheel));
+        _wheel = 0;
+        _wheelPausedUntil = DateTime.UtcNow.AddMilliseconds(300);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        // Horizontal touchpad swipes and wheel tilts arrive only as WM_MOUSEHWHEEL; WPF has no event for them.
+        if (msg == WindowMessages.WM_MOUSEHWHEEL && _mode == IslandMode.Expanded)
+        {
+            Scroll((short)((wParam.ToInt64() >> 16) & 0xFFFF));
+            handled = true;
+        }
+        return IntPtr.Zero;
+    }
+
+    private void OnFooterClick(object sender, RoutedEventArgs e) => _island.Open(IslandPage.Calendar);
 }

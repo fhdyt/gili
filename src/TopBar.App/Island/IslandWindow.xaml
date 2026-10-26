@@ -26,6 +26,44 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="TabButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#F5F5F7" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="FooterButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Height="22" Padding="10,0" CornerRadius="11" Background="Transparent">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#1C1C1E" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Canvas>
@@ -100,9 +138,39 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Filled in Task 10: page menu, pages and the clock line. -->
+                <!-- The open island (PRD 6.3): page menu, the page itself, and a quiet clock line at the bottom. -->
                 <Grid x:Name="ExpandedLayer" Width="680" Height="256" HorizontalAlignment="Center" VerticalAlignment="Top"
-                      Opacity="0" IsHitTestVisible="False" />
+                      Opacity="0" IsHitTestVisible="False">
+                    <!-- 14 px inset + 18 px radius = the island's 32 px, so the menu's curve follows the island's. -->
+                    <Border Margin="14,14,14,0" Height="36" VerticalAlignment="Top" CornerRadius="18" Background="#1C1C1E" Padding="3">
+                        <Grid>
+                            <!-- 3 px inset + 15 px radius = the menu's 18 px. -->
+                            <Border x:Name="TabHighlight" HorizontalAlignment="Left" CornerRadius="15" Background="#3A3A3C">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="TabHighlightShift" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <UniformGrid x:Name="TabStrip" Rows="1" />
+                        </Grid>
+                    </Border>
+
+                    <Canvas Margin="0,58,0,0" Height="164" VerticalAlignment="Top" ClipToBounds="True" Background="Transparent"
+                            MouseWheel="OnPagesWheel">
+                        <StackPanel x:Name="PageTrack" Orientation="Horizontal" Height="164">
+                            <StackPanel.RenderTransform>
+                                <TranslateTransform x:Name="PageShift" />
+                            </StackPanel.RenderTransform>
+                        </StackPanel>
+                    </Canvas>
+
+                    <Button Style="{StaticResource FooterButton}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                            Margin="0,0,0,8" Click="OnFooterClick" AutomationProperties.Name="Open calendar">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Time}" Foreground="#F5F5F7" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
+                            <TextBlock Text="{Binding Date}" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
             </Grid>
         </Border>
 
