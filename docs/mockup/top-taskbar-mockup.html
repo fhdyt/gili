@@ -6,7 +6,7 @@
 <title>TopBar Mockup</title>
 <style>
 :root{
-  --bar-rgb:22,22,24;--bar-a:.78;--bar-blur:30px;
+  --bar-rgb:22,22,24;--bar-a:1;--bar-blur:30px;
   --island:#000;--surface:#1c1c1e;--ctl:#2c2c2e;--ctl-h:#3a3a3c;--line:#3a3a3c;
   --text:#f5f5f7;--text2:#8e8e93;--text3:#636366;
   --accent:#30d158;--done:#0f2a17;--warn:#ffd60a;--danger:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--claude:#d97757;
@@ -86,7 +86,13 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .anm{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:max-width 300ms var(--out),opacity 160ms ease}
 .apps:not(.tight) .appi.hov:not(.act) .anm,.apps:not(.tight) .appi:focus-visible:not(.act) .anm{max-width:var(--anm-hov,160px);opacity:1}
 .appi.act .anm{max-width:var(--anm-max,160px);opacity:1;transition:max-width 300ms var(--out),opacity 220ms ease 90ms}
-.amore{font-size:12px;color:var(--text2);padding:0 4px;flex-shrink:0}
+.amw{flex-shrink:0}
+/* "+N": apps that don't fit. A small capsule; click lists them. */
+.amore{height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:600;color:var(--text);background:rgba(255,255,255,.08);transition:background 120ms}
+.amore:hover,.amore[aria-expanded="true"]{background:rgba(255,255,255,.16)}
+.alst{left:0;right:auto;min-width:210px;max-height:60vh;overflow-y:auto;padding:4px;display:flex;flex-direction:column}
+.alst button{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;white-space:nowrap;text-align:left}
+.alst button:hover,.alst button:focus-visible{background:var(--ctl-h);outline:none}
 .k2{color:var(--text2)}
 .thumb{height:20px;width:36px;border-radius:4px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.16);display:block}
 .slot>*{animation:slotIn 180ms ease}
@@ -113,6 +119,71 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .pmenu .udot{position:static;margin-left:auto;box-shadow:none}
 .psep{display:block;height:1px;background:rgba(255,255,255,.08);margin:4px 6px}
 .warn{color:var(--warn)}.danger{color:var(--danger)}
+/* Bar at the bottom: menus and panels open upwards. */
+body.bottom .bar{top:auto;bottom:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.pop{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border-radius:12px;z-index:5;text-shadow:none;font-size:13px;
+  box-shadow:0 16px 32px -10px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.07);animation:dropIn 160ms var(--out)}
+body.bottom .pmenu,body.bottom .pop{top:auto;bottom:calc(100% + 6px);animation-name:dropUp}
+@keyframes dropUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Start: far left, opens the Windows Start menu. */
+.start{width:28px;height:24px;border-radius:6px;display:grid;place-items:center;flex-shrink:0;transition:background 120ms,opacity 160ms ease}
+.start:hover{background:rgba(255,255,255,.08)}
+.start:active{background:rgba(255,255,255,.14)}
+.start .ic{width:15px;height:15px}
+.left [hidden]{display:none!important}
+/* Clock on the right: the date is the small label, the time the value. */
+.mod[data-m="clock"] .tw{min-width:46px}
+#mTray .ic{width:14px;height:14px}
+body.bottom #mTray .ic{transform:rotate(180deg)}
+/* Tray panel: background apps' notification-area icons. */
+.tp{padding:6px;display:grid;grid-template-columns:repeat(4,32px);gap:2px}
+.tp button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px}
+.tp button:hover,.tp button:focus-visible{background:var(--ctl-h);outline:none}
+.ti{width:16px;height:16px;border-radius:4px;background:var(--c);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;line-height:1}
+/* Controls panel: Wi-Fi, Bluetooth, airplane mode, volume, brightness. */
+.qs{width:320px;padding:12px;display:flex;flex-direction:column;gap:12px;cursor:default}
+.qsg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;border-radius:10px;background:var(--ctl);text-align:left;font-size:12px;font-weight:600;transition:background 160ms,color 160ms}
+.qt:hover{background:var(--ctl-h)}
+.qt>*{pointer-events:none}.qt>button{pointer-events:auto}
+.qtb{position:absolute;inset:0;border-radius:10px}
+.qx{z-index:1}
+.qt[aria-pressed="true"]{background:var(--blue);color:#fff}
+.qt .ic{width:16px;height:16px;margin-bottom:4px}
+.qt small{font-size:11px;font-weight:400;opacity:.75;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qx{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:6px;display:grid;place-items:center}
+.qx:hover{background:rgba(255,255,255,.14)}
+.qx .ic{width:13px;height:13px;transition:transform 200ms var(--out)}
+.qx[aria-expanded="true"] .ic{transform:rotate(180deg)}
+.qsl{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2)}
+.qsl input{flex:1;accent-color:var(--text)}
+.qsl .num{width:34px;text-align:right;color:var(--text)}
+.qi{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:var(--text);flex-shrink:0}
+button.qi:hover{background:var(--ctl)}
+.qdev{font-size:11px;color:var(--text2);margin:-8px 0 0 38px}
+.qlist{display:flex;flex-direction:column;gap:2px;background:rgba(0,0,0,.25);border-radius:10px;padding:4px;animation:fadeUp 200ms var(--out)}
+.qn{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;font-size:12px;text-align:left}
+.qn:hover{background:var(--ctl)}
+.qn .ic{width:14px;height:14px;color:var(--text2)}
+.qn b{flex:1;font-weight:500}
+.qn span{color:var(--text2);font-size:11px}
+.qn.on b{font-weight:600}.qn.on span{color:var(--accent)}
+.qfoot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);border-top:1px solid rgba(255,255,255,.08);padding-top:10px}
+.qfoot span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qfoot button{padding:4px 8px;border-radius:6px;background:var(--ctl);color:var(--text);white-space:nowrap}
+.qfoot button:hover{background:var(--ctl-h)}
+.pg-ctl{gap:20px}
+.cleft{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+.cright{flex:1;min-width:0;display:flex;flex-direction:column}
+.pwbox{display:flex;flex-direction:column;gap:12px}
+.pwl{display:flex;flex-direction:column;gap:6px}
+.pwl .pill{height:34px;font-size:13px;width:100%}
+.pwl .pill .ic{width:15px;height:15px;color:#aeaeb2}
+.pwl .udot{position:static;margin-left:auto;box-shadow:none}
+.qlh{display:flex;align-items:center;gap:6px;padding:4px 6px 6px;font-size:13px;font-weight:600}
+.qlh button{width:24px;height:24px;border-radius:12px;display:grid;place-items:center}
+.qlh button:hover{background:var(--ctl)}
+.qlh .ic{width:14px;height:14px}
 
 /* island */
 .iw{position:absolute;left:50%;top:4px;width:180px;height:24px;transform:translateX(-50%);z-index:30;
@@ -121,13 +192,39 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   transition:border-radius var(--d,300ms) var(--e,ease),box-shadow 320ms ease}
 /* Ambient glow: a soft wash of the open page's colour behind the content (album art on Media, orange on Timer, Claude's
    orange on Claude…). The colours are registered properties so a page change crossfades instead of jumping. */
-@property --g1{syntax:'<color>';inherits:false;initial-value:transparent}
-@property --g2{syntax:'<color>';inherits:false;initial-value:transparent}
+@property --g1{syntax:'<color>';inherits:true;initial-value:transparent}
+@property --g2{syntax:'<color>';inherits:true;initial-value:transparent}
 .glow{position:absolute;inset:0;pointer-events:none;opacity:0;
   background:radial-gradient(70% 130% at 0% 60%,var(--g1),transparent 62%),radial-gradient(75% 110% at 100% 100%,var(--g2),transparent 64%);
   transition:opacity 400ms ease,--g1 600ms ease,--g2 600ms ease}
 .st-expanded .glow{opacity:1}
 body.noglow .glow{display:none}
+/* Slow motion: two soft blobs drift on their own elliptical paths and breathe. Paused unless the island is open. */
+.glow i{position:absolute;width:75%;height:190%;border-radius:50%;filter:blur(28px);will-change:transform}
+.glow .b1{left:-18%;top:-30%;background:radial-gradient(closest-side,var(--g1),transparent);animation:gd1 22s ease-in-out infinite,gbr 9s ease-in-out infinite alternate}
+.glow .b2{right:-20%;bottom:-70%;background:radial-gradient(closest-side,var(--g2),transparent);animation:gd2 31s ease-in-out infinite,gbr 9s ease-in-out -4.5s infinite alternate}
+@keyframes gd1{0%,100%{translate:0 0}25%{translate:12% 10%}50%{translate:6% 22%}75%{translate:-4% 8%}}
+@keyframes gd2{0%,100%{translate:0 0}25%{translate:-10% -14%}50%{translate:-14% -4%}75%{translate:-4% -16%}}
+@keyframes gbr{from{scale:.92}to{scale:1.08}}
+.iw:not(.st-expanded) .glow i,body.nomotion .glow i,body.reduce .glow i,.glow.paused i{animation-play-state:paused}
+/* Gili, the mascot: two white eyes. In the idle island they travel the whole island toward the pointer (centre at rest); with an activity Gili drips out into a
+   small black circle left of the island. The eyes lean toward the pointer (--ex/--ey) and blink every few seconds. */
+.geyes{display:flex;gap:2px;transform:translate(var(--ex,0px),var(--ey,0px))}
+.geyes i{display:block;width:var(--es);height:var(--es);border-radius:var(--er);background:#fff}
+.geyes.blink i{animation:gblink 230ms linear}
+.geyes.blink2 i{animation:gblink2 580ms linear}
+@keyframes gblink{0%{transform:scaleY(1);animation-timing-function:ease-in}39%{transform:scaleY(.1);animation-timing-function:ease-out}100%{transform:scaleY(1)}}
+@keyframes gblink2{0%{transform:scaleY(1);animation-timing-function:ease-in}15.5%{transform:scaleY(.1);animation-timing-function:ease-out}39.7%,60.3%{transform:scaleY(1);animation-timing-function:ease-in}75.9%{transform:scaleY(.1);animation-timing-function:ease-out}100%{transform:scaleY(1)}}
+body.reduce .geyes.blink i,body.reduce .geyes.blink2 i{animation:gfade 200ms linear}
+@keyframes gfade{50%{opacity:.2}}
+.gin{position:absolute;left:9px;right:9px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;--es:calc(var(--isl-h,24px) * .42);--er:3px;pointer-events:none;
+  transition:opacity 200ms ease 60ms,translate var(--gd,450ms) var(--ge,ease),scale var(--gd,450ms) var(--ge,ease)}
+.gin.off{opacity:0;translate:-12px 0;scale:.5;transition-delay:0ms}
+.gcirc{position:absolute;top:4px;width:24px;height:24px;border-radius:50%;background:var(--island);display:grid;place-items:center;z-index:29;
+  --es:6px;--er:2px;scale:.6;opacity:0;pointer-events:none;
+  transition:scale var(--gd,450ms) var(--ge,ease),opacity 160ms ease,left var(--gd,450ms) var(--ge,ease),top var(--d,300ms) var(--e,ease)}
+.gcirc.on{scale:1;opacity:1;pointer-events:auto;cursor:pointer}
+body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .iw.float .island{box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 22px 44px -14px rgba(0,0,0,.7),0 8px 18px -10px rgba(0,0,0,.5)}
 .layer{position:absolute;opacity:0;pointer-events:none;transition:opacity 90ms ease}
 .L-compact,.L-wide{inset:0;display:flex;align-items:center;justify-content:center}
@@ -181,8 +278,9 @@ body.noglow .glow{display:none}
 /* Page menu: icon + name for all nine pages, spanning the island's full width. One highlight slides to the active tab;
    its offset is a multiple of its own width, so it stays aligned while the island grows to the Notes size.
    Corners are concentric with the island: 14 px inset + 18 px menu radius = 32 px island radius; 3 px inset + 15 px = 18 px for the highlight. */
-.xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(9,1fr);gap:2px}
-.xind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 22px) / 9);border-radius:15px;background:rgba(255,255,255,.14);
+.xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(var(--n,9),1fr);gap:2px}
+.xtab[hidden]{display:none}
+.xind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px - (var(--n,9) - 1) * 2px) / var(--n,9));border-radius:15px;background:rgba(255,255,255,.14);
   transform:translateX(calc(var(--i,0) * (100% + 2px)));transition:transform 320ms var(--out)}
 .xtab{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;border-radius:15px;font-size:12px;color:var(--text2);white-space:nowrap;transition:color 160ms}
 .xtab:hover{color:var(--text)}
@@ -194,12 +292,9 @@ body.noglow .glow{display:none}
 .xtab .viz{display:none;height:13px}.xtab .viz i{height:13px}
 .xtab.playing .ic{display:none}.xtab.playing .viz{display:inline-flex;color:var(--accent)}
 @media (max-width:700px){.xtab:not([aria-selected="true"]) .tl{display:none}}
-.xp{position:absolute;top:58px;left:0;right:0;height:164px;overflow:hidden}
-.iw.tall .xp{height:408px}
-/* Clock while the island is open: a quiet line at the bottom centre, away from the menu. Click opens Calendar. */
-.xfoot{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);height:22px;padding:0 10px;border-radius:11px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);white-space:nowrap;transition:background 120ms}
-.xfoot:hover{background:var(--surface)}
-.xfoot .tm{color:var(--text);font-weight:600}
+/* The page area's height comes from the open page's content (min 178 px, Notes 422 px); see layout(). */
+.xp{position:absolute;top:58px;left:0;right:0;height:178px;overflow:hidden;transition:height var(--d,300ms) var(--e,ease)}
+.xp.scroll .page{overflow-y:auto}
 .track{display:flex;height:100%;transition:transform 300ms var(--out)}
 .page{flex:0 0 100%;height:100%;padding:0 32px;display:flex;gap:24px;align-items:center}
 .pill{height:36px;padding:0 14px;border-radius:18px;background:var(--ctl);display:inline-flex;align-items:center;gap:8px;font-size:14px;white-space:nowrap;transition:background 120ms,transform 100ms}
@@ -292,12 +387,29 @@ body.noglow .glow{display:none}
 .field{height:36px;border-radius:18px;border:0;background:var(--surface);color:var(--text);padding:0 14px;font:inherit;font-size:13px;outline:none;transition:box-shadow 150ms}
 .field:focus{box-shadow:inset 0 0 0 1px var(--text3)}
 .field::placeholder{color:var(--text3)}
-.tlist{list-style:none;margin:0 0 0 auto;padding:0 6px 0 0;width:270px;height:156px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;
+.tlist{list-style:none;margin:0 0 0 auto;padding:0 6px 0 0;width:290px;display:flex;flex-direction:column;gap:6px;
   scrollbar-width:thin;scrollbar-color:#48484a transparent}
 .tlist li{display:flex;align-items:center;gap:10px;min-height:44px;flex-shrink:0;border-radius:12px;padding:0 12px;background:var(--surface);font-size:15px;transition:background 280ms}
 .tlist li span{transition:color 200ms}
 .tlist li.done{background:var(--done)}
 .tlist li.done span{text-decoration:line-through;color:#aeaeb2}
+/* Row time, then Edit and Delete that appear on hover or focus. */
+.tlist .tt2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlist .tm2{font-size:12px;color:var(--text2)}
+.tact{display:flex;gap:2px;width:0;overflow:hidden;opacity:0;transition:width 220ms var(--out),opacity 160ms}
+.tlist li:hover .tact,.tlist li:focus-within .tact{width:60px;opacity:1}
+.tact button{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:var(--text2);flex-shrink:0;transition:background 120ms,color 120ms,width 200ms var(--out)}
+.tact button:hover{background:var(--ctl);color:var(--text)}
+.tact .ic{width:14px;height:14px}
+.tact .del:hover{color:var(--danger)}
+.tact .del.confirm{width:auto;padding:0 10px;background:var(--danger);color:#fff;font-size:12px;font-weight:600}
+.tlist li:has(.del.confirm) .tact{width:auto}
+.tlist li.edit{padding:6px 8px 6px 12px;animation:fadeUp 200ms var(--out)}
+.tlist li.edit form{flex:1;display:flex;gap:6px;min-width:0}
+.tlist li.edit .field{height:32px;font-size:13px}
+.tlist li.gone{animation:gone 260ms var(--out) forwards}
+@keyframes gone{to{opacity:0;transform:scale(.92);min-height:0;height:0;margin-top:-6px}}
+.ftime{flex:0 0 86px!important;padding:0 10px!important;color-scheme:dark}
 .tlist li.new{animation:pop 420ms var(--pop)}
 @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
 .chk{width:24px;height:24px;border-radius:12px;border:2px solid var(--text3);display:grid;place-items:center;flex-shrink:0;transition:background 200ms,border-color 200ms,transform 200ms var(--pop)}
@@ -394,7 +506,7 @@ li.done .chk .ic{opacity:1;transform:none}
 .dbar i{display:block;height:100%;width:76%;background:var(--text2)}
 
 /* claude sessions */
-.clist{width:100%;height:156px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:6px;
+.clist{width:100%;display:flex;flex-direction:column;gap:6px;padding-right:6px;
   scrollbar-width:thin;scrollbar-color:#48484a transparent}
 .crow{display:flex;align-items:center;gap:12px;min-height:44px;flex-shrink:0;padding:6px 12px;border-radius:12px;background:var(--surface);text-align:left;transition:background 120ms}
 .crow:hover{background:var(--ctl)}
@@ -406,6 +518,11 @@ li.done .chk .ic{opacity:1;transform:none}
 .crow.done .cr,.crow.done .clp{color:var(--accent)}
 .crow.idle{opacity:.55}
 .clempty{margin:auto;color:var(--text2);font-size:14px}
+.lrow{cursor:default}.lrow:hover{background:var(--surface)}
+.lring{width:22px;height:22px;transform:rotate(-90deg);flex-shrink:0}
+.lring circle{fill:none;stroke-width:3;stroke:var(--ctl)}
+.lring .fg{stroke:var(--claude);stroke-linecap:round}
+.lrow.ask .lring .fg{stroke:var(--warn)}
 
 /* cards */
 .cic{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);flex-shrink:0;position:relative}
@@ -422,6 +539,27 @@ li.done .chk .ic{opacity:1;transform:none}
 .cs.cq{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbt{display:flex;gap:8px}
 
+/* Settings window */
+.setw{position:absolute;left:50%;top:50%;width:640px;max-width:calc(100% - 32px);height:460px;max-height:calc(100% - 140px);transform:translate(-50%,-50%);
+  background:#202020;border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;box-shadow:0 24px 60px -10px rgba(0,0,0,.6);z-index:15;
+  display:flex;flex-direction:column;font-size:13px;animation:fadeUp 200ms var(--out)}
+.stb{height:36px;display:flex;align-items:center;gap:8px;padding-left:12px;font-size:12px;color:#c7c7cc;background:#2b2b2b;flex-shrink:0}
+.stb .ic{width:14px;height:14px}
+.stb button{margin-left:auto;width:46px;height:100%;display:grid;place-items:center}
+.stb button:hover{background:#c42b1c;color:#fff}
+.setb{flex:1;display:flex;min-height:0}
+.setn{width:150px;padding:8px;display:flex;flex-direction:column;gap:2px;border-right:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.setn button{padding:7px 10px;border-radius:6px;text-align:left;color:var(--text2)}
+.setn button:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.setn button[aria-selected="true"]{background:rgba(255,255,255,.09);color:var(--text);font-weight:600}
+.setp{flex:1;overflow-y:auto;padding:16px 20px;scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.setp h3{margin:0 0 12px;font-size:18px;font-weight:600}
+.srow{display:flex;align-items:center;gap:12px;min-height:46px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.04);margin-bottom:4px}
+.srow>span{flex:1;min-width:0}
+.srow small{display:block;color:var(--text2);font-size:11.5px;margin-top:2px}
+.srow.dis{opacity:.45;pointer-events:none}
+.srow input[type=range]{width:150px;accent-color:var(--accent)}
+.srow .num{width:38px;text-align:right}
 /* windows taskbar */
 .wtb{position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(28,28,30,.86);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);
   display:flex;align-items:center;justify-content:center;gap:4px;z-index:10;transition:transform 300ms var(--out)}
@@ -437,7 +575,10 @@ li.done .chk .ic{opacity:1;transform:none}
 .desk.fs .bar{transform:translateY(-100%);opacity:0}
 .desk.fs .iw:not(.st-card){opacity:0;pointer-events:none}
 .desk.fs .bubble,.desk.fs .pc{opacity:0}
-.desk.fs .wtb{transform:translateY(100%)}
+.desk.fs .wtb,.desk.notb .wtb{transform:translateY(100%)}
+.desk.notb #winA{height:calc(100% - var(--bar-h,32px))}
+body.bottom #winA{top:0}
+.desk.fs .gcirc{opacity:0}
 body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm{transition-duration:0ms!important}
 body.reduce .layer,body.reduce .glow{transition:opacity 100ms ease!important}
 body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop{transform:translate(-50%,0)!important;filter:none!important}
@@ -530,6 +671,11 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.5" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="i-bt" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
   <symbol id="i-start" viewBox="0 0 24 24"><rect x="3" y="3" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="12.5" y="3" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="3" y="12.5" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="12.5" y="12.5" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/></symbol>
 </svg>
 
@@ -555,15 +701,16 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
 
   <header class="bar" id="bar">
     <div class="left" id="left">
+      <button class="start" id="mStart" data-l="start" aria-label="Start" title="Start"><svg class="ic" aria-hidden="true"><use href="#i-start"/></svg></button>
       <div class="launch" id="launch">
-        <button data-tool="Timer" aria-label="Open Timer" title="Timer"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg></button>
-        <button data-tool="Alarms" aria-label="Open Alarms" title="Alarms"><svg class="ic" aria-hidden="true"><use href="#i-alarm"/></svg></button>
-        <button data-tool="Todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
-        <button data-tool="Notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
-        <button class="lsh" id="mShelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
-        <button class="lcl" id="mClaude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
+        <button data-tool="Timer" data-l="timer" aria-label="Open Timer" title="Timer"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg></button>
+        <button data-tool="Alarms" data-l="alarms" aria-label="Open Alarms" title="Alarms"><svg class="ic" aria-hidden="true"><use href="#i-alarm"/></svg></button>
+        <button data-tool="Todo" data-l="todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
+        <button data-tool="Notes" data-l="notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
+        <button class="lsh" id="mShelf" data-l="shelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
+        <button class="lcl" id="mClaude" data-l="claude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
       </div>
-      <span class="lsep" aria-hidden="true"></span>
+      <span class="lsep" id="lsep" aria-hidden="true"></span>
       <div class="apps" id="apps" role="toolbar" aria-label="Open apps"></div>
     </div>
     <div class="right" id="right">
@@ -576,26 +723,25 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       <button class="mod" data-m="disk" data-sys title="Free space on C:"><span class="tw"><small>C: free</small><b class="num">120 GB</b></span></button>
       <button class="mod" id="mMore" aria-label="More modules" hidden><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
       <button class="mod" data-m="wifi" id="mWifi" title="Strong signal · Home_5G"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><span class="tw"><small>Strong</small><b>Home_5G</b></span></button>
+      <span class="pwr" data-m="tray">
+        <button class="mod" id="mTray" aria-label="Show hidden icons" aria-haspopup="menu" aria-expanded="false" title="Show hidden icons"><svg class="ic" aria-hidden="true"><use href="#i-chevd"/></svg></button>
+        <span class="pop tp" id="tp" role="menu" aria-label="Background apps" hidden></span>
+      </span>
+      <button class="mod" data-m="ctl" id="mCtl" aria-label="Controls" title="Controls"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button>
+      <button class="mod" data-m="clock" id="mClock" title=""><span class="tw"><small id="clkD"></small><b class="num" id="clkT"></b></span></button>
+      <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
       <span class="pwr">
-        <button class="mod" id="mPower" aria-label="Power" aria-haspopup="menu" aria-expanded="false" title="Power"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg><i class="udot" id="uDot" hidden></i></button>
-        <span class="pmenu" id="pMenu" role="menu" hidden>
-          <button type="button" role="menuitem" data-pw="sleep"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
-          <span class="psep" role="separator"></span>
-          <button type="button" role="menuitem" data-pw="upd-shutdown" class="upd" hidden><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Update and shut down<i class="udot"></i></button>
-          <button type="button" role="menuitem" data-pw="shutdown"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Shut down</button>
-          <button type="button" role="menuitem" data-pw="upd-restart" class="upd" hidden><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Update and restart<i class="udot"></i></button>
-          <button type="button" role="menuitem" data-pw="restart"><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
-        </span>
+        <button class="mod" id="mPower" aria-label="Power" title="Power"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg><i class="udot" id="uDot" hidden></i></button>
       </span>
     </div>
   </header>
 
   <div class="iw" id="iw">
     <div class="island" id="isl">
-      <div class="glow" id="glow" aria-hidden="true"></div>
+      <div class="glow" id="glow" aria-hidden="true"><i class="b1"></i><i class="b2"></i></div>
+      <span class="gin" id="gIn" aria-hidden="true"><span class="geyes"><i></i><i></i></span></span>
       <div class="layer L-compact" id="lc">
         <span class="lcI" id="lcI">
-          <button class="clk num" id="clk" aria-label="Open calendar"><span id="clkT"></span><span class="d" id="clkD"></span></button>
           <span class="slot" id="slot"></span>
         </span>
       </div>
@@ -655,7 +801,6 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 <div class="tdsub">Tasks done today</div>
                 <div class="tdbtns">
                   <button class="pill" id="tdCal"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg>Add in Calendar</button>
-                  <button class="pill" id="tdEdit"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Edit</button>
                 </div>
               </div>
               <ul class="tlist" id="tlist"></ul>
@@ -698,9 +843,34 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 <div class="tile"><div class="tl">Disk C:<span class="tv num">120 GB free</span></div><div class="dbar"><i></i></div></div>
               </div>
             </section>
+            <!-- Controls: no tab in the menu; opened from the Controls, Wi-Fi and Power buttons on the bar. -->
+            <section class="page pg-ctl" aria-label="Controls">
+              <div class="cleft">
+                <div class="qsg">
+                  <div class="qt" data-q="wifi" aria-pressed="true"><button class="qtb" aria-pressed="true" aria-label="Wi‑Fi"></button><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg>Wi‑Fi<small id="qWifiS">Home_5G</small><button class="qx" data-x="wifi" aria-label="Show Wi‑Fi networks" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-chevr"/></svg></button></div>
+                  <div class="qt" data-q="bt" aria-pressed="true"><button class="qtb" aria-pressed="true" aria-label="Bluetooth"></button><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg>Bluetooth<small id="qBtS">Galaxy Buds2 Pro</small><button class="qx" data-x="bt" aria-label="Show Bluetooth devices" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-chevr"/></svg></button></div>
+                  <div class="qt" data-q="air" aria-pressed="false"><button class="qtb" aria-pressed="false" aria-label="Airplane mode"></button><svg class="ic" aria-hidden="true"><use href="#i-plane"/></svg>Airplane<small id="qAirS">Off</small></div>
+                </div>
+                <div class="qsl"><button class="qi" id="qMute" aria-label="Mute"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg></button><input type="range" id="qVol" min="0" max="100" value="46" aria-label="Volume"><span class="num" id="qVolV">46%</span></div>
+                <div class="qdev">Speakers (Realtek(R) Audio)</div>
+                <div class="qsl"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><input type="range" id="qBri" min="0" max="100" value="70" aria-label="Brightness"><span class="num" id="qBriV">70%</span></div>
+              </div>
+              <div class="cright">
+                <div class="qlist" id="qList" hidden></div>
+                <div class="pwbox" id="pwBox">
+                  <div class="pwl" id="pwList" role="group" aria-label="Power">
+                    <button class="pill" data-pw="sleep"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
+                    <button class="pill upd" data-pw="upd-shutdown" hidden><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Update and shut down<i class="udot"></i></button>
+                    <button class="pill" data-pw="shutdown"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Shut down</button>
+                    <button class="pill upd" data-pw="upd-restart" hidden><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Update and restart<i class="udot"></i></button>
+                    <button class="pill" data-pw="restart"><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
+                  </div>
+                  <div class="qfoot"><span class="num" id="qBat">64% · 2 h 10 min</span><button data-qf="win">Windows Quick Settings</button><button data-qf="all">All settings</button></div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-        <button class="xfoot" id="xClk" aria-label="Open Calendar"><span class="tm num" id="xTime"></span><span id="xDate"></span></button>
       </div>
       <div class="layer L-card" id="lcard"></div>
       <div class="layer L-drop">
@@ -709,10 +879,16 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       </div>
     </div>
   </div>
+  <button class="gcirc" id="gCirc" aria-label="Gili: open the island" tabindex="-1"><span class="geyes"><i></i><i></i></span></button>
   <div class="bubble" id="bubble"></div>
   <button class="bubble cdone" id="cbub" tabindex="-1"></button>
   <span class="pc cam" id="pCam" role="img" aria-label="Camera in use: Zoom" title="Camera in use: Zoom"></span>
   <span class="pc mic" id="pMic" role="img" aria-label="Microphone in use: Discord" title="Microphone in use: Discord"></span>
+
+  <div class="setw" id="setw" role="dialog" aria-label="TopBar Settings" hidden>
+    <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>TopBar Settings<button id="setX" aria-label="Close Settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="setb"><nav class="setn" id="setn" role="tablist" aria-label="Settings sections"></nav><div class="setp" id="setp" role="tabpanel"></div></div>
+  </div>
 
   <div class="wtb">
     <span class="ap"><svg class="ic" aria-hidden="true"><use href="#i-start"/></svg></span>
@@ -735,11 +911,11 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <h3>Island</h3>
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Shelf</button><button data-page="7">Claude</button><button data-page="8">System</button><button data-act="note">New note (Ctrl+Alt+N)</button></div>
     <h3>Live activities</h3>
-    <div class="g"><button data-act="idle">No activity (idle)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat80">80% reached</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
     <h3>Left side</h3>
-    <div class="g"><button data-act="copyText">Copy text</button><button data-act="copyImg">Copy image</button><button data-act="copyFile">Copy files</button><button data-act="cutFile">Cut files</button><button data-act="copySecret">Copy a password</button></div>
+    <div class="g"><button data-act="manyApps">Open many apps</button><button data-act="copyText">Copy text</button><button data-act="copyImg">Copy image</button><button data-act="copyFile">Copy files</button><button data-act="cutFile">Cut files</button><button data-act="copySecret">Copy a password</button></div>
     <h3>Explorer file operations</h3>
     <div class="g"><button data-act="explorer">Copy</button><button data-act="xmove">Move</button><button data-act="xdel">Delete</button><button data-act="xconflict">File conflict</button><button data-act="xcancel">Cancel</button></div>
     <h3>Privacy</h3>
@@ -748,6 +924,8 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="drop">Simulate a file drop</button></div>
     <h3>Alerts</h3>
     <div class="g"><button data-act="alarm">Alarm</button><button data-act="timerDone">Timer done</button><button data-act="todoRem">Todo reminder</button></div>
+    <h3>Claude 5-hour window</h3>
+    <div class="g"><button data-act="limStart">Start a window (ends in 12 s)</button><button data-act="limHit">Limit reached</button></div>
     <h3>Claude sessions</h3>
     <div class="g"><button data-act="clWork">Start working</button><button data-act="clAsk">Ask a question</button><button data-act="clPerm">Ask permission</button><button data-act="clPlan">Plan ready</button><button data-act="clAnswer">Answer in Claude</button><button data-act="clDone">Finish</button><button data-act="clEsc">Stop with Esc</button><button data-act="clTwo">Second session</button><button data-act="clTerm">Terminal session</button><button data-act="clFocus">Switch to Claude</button></div>
     <p class="note">The first buttons drive one Claude Desktop session. Finish while another app is in front to see the green bubble; switch to Claude (or click its taskbar icon) to clear it.</p>
@@ -757,7 +935,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <label class="rng" style="margin-top:8px">Volume <input type="range" id="sVol" min="0" max="100" step="1" value="80" aria-label="Alert volume"><span class="num" id="sVolV">80%</span></label>
     <p class="note">Pick an alarm sound to hear it. The browser plays sound only after you've clicked somewhere on the page.</p>
     <h3>Bar appearance</h3>
-    <label class="rng">Opacity <input type="range" id="opA" min="40" max="100" step="1" value="78" aria-label="Bar opacity"><span class="num" id="opAv">78%</span></label>
+    <label class="rng">Opacity <input type="range" id="opA" min="40" max="100" step="1" value="100" aria-label="Bar opacity"><span class="num" id="opAv">100%</span></label>
     <label class="rng">Bar height <input type="range" id="barH" min="28" max="44" step="1" value="32" aria-label="Bar height"><span class="num" id="barHv">32px</span></label>
     <label class="rng">Island height <input type="range" id="islH" min="20" max="28" step="1" value="24" aria-label="Island height"><span class="num" id="islHv">24px</span></label>
     <div class="segc" id="glass" role="group" aria-label="Glass"><button data-g="0">Off</button><button data-g="12">Light</button><button data-g="30" class="on">Strong</button></div>
@@ -817,11 +995,14 @@ const S={
   charging:false,battery:64,caps:false,barH:32,islH:24,
   cpu:12,gpu:4,ram:54,temp:62,down:2100,up:300,
   hist:{cpu:[],ram:[],gpu:[],down:[],temp:[]},
-  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1},
+  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1,tray:1,ctl:1,clock:1},
+  // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
+  left:{start:1,timer:1,alarms:1,todo:1,notes:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1],
+  gili:1,glow:1,motion:1,limOn:1,lim:null,pos:'top',hideTb:0,h12:0,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
   wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
-  todos:[{t:'Revise the report',d:1},{t:'Reply to Dina',d:1},{t:'Post weekly update',d:1},{t:'Pay electricity bill',d:1},{t:'Prepare meeting slides',d:0}],
+  todos:[{t:'Revise the report',d:1},{t:'Reply to Dina',d:1},{t:'Post weekly update',d:1},{t:'Pay electricity bill',d:1},{t:'Prepare meeting slides',d:0,tm:'15:00'}],
   notes:[
     {id:1,b:'TopBar ideas\n- drag the island down\n- custom accent color\n- hover to stretch',t:'19:20',c:3},
     {id:2,b:'Groceries\neggs, coffee, dish soap',t:'Yesterday',c:4},
@@ -841,13 +1022,50 @@ const S={
   clEnd:null,fgName:'Chrome',
   apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
 };
-const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,notes:5,shelf:6,claude:7,system:8};
-const LAST=8,GAP=24;
+// Controls (9) has no tab: the Controls, Wi-Fi and Power buttons on the bar open it.
+const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,notes:5,shelf:6,claude:7,system:8,controls:9};
+const LAST=9,GAP=24;
 const HIDE_ORDER=['weather','net','disk','temp','gpu','ram','cpu'];
 
 const iw=$('#iw'),isl=$('#isl'),bar=$('#bar'),bubble=$('#bubble'),cbub=$('#cbub'),lcI=$('#lcI'),lwI=$('#lwI'),lcard=$('#lcard');
 const slot=$('#slot'),track=$('#track');
 const pCam=$('#pCam'),pMic=$('#pMic');
+
+/* ---------- Gili: eyes follow the pointer and blink ---------- */
+const gCirc=$('#gCirc'),gEyes=[$('#gIn .geyes'),$('#gCirc .geyes')];
+const G={tx:0,ty:0,x:0,y:0,vx:0,vy:0,raf:0,last:0,still:0,px:-1,py:-1};
+const SP_GILI=LIN?spring(.8,.45):{dur:480,ease:'cubic-bezier(.34,1.3,.64,1)'};
+for(const el of[$('#gIn'),gCirc]){el.style.setProperty('--gd',SP_GILI.dur+'ms');el.style.setProperty('--ge',SP_GILI.ease)}
+addEventListener('pointermove',e=>{G.px=e.clientX;G.py=e.clientY;G.still=Date.now();gAim()},{passive:true});
+// Aim from whichever eyes are showing. In the idle island the eyes travel end to end: the pointer 40% of the screen
+// width to either side puts them at that end. In the circle they lean 2 × 1.5 px once the pointer is 400 px away.
+function gAim(){
+  if(G.px<0||S.reduce)return;
+  const r=(gCirc.classList.contains('on')?gCirc:$('#gIn')).getBoundingClientRect();
+  const span=gCirc.classList.contains('on')?400:innerWidth*.4;
+  G.tx=Math.max(-1,Math.min(1,(G.px-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(G.py-(r.top+r.height/2))/400));
+  if(!G.raf)G.raf=requestAnimationFrame(gStep);
+}
+// Spring toward the target (damping .8, response .25 s). It stops once settled, so nothing runs while the pointer rests.
+function gStep(t){
+  const dt=G.last?Math.min(.25,(t-G.last)/1000):1/60;G.last=t;
+  const w=2*Math.PI/.25,k=w*w,c=2*.8*w;
+  // Small fixed steps keep the spring stable when frames arrive late.
+  for(let n=Math.ceil(dt*240),h=dt/n;n>0;n--)for(const a of['x','y']){const v='v'+a;G[v]+=(-k*(G[a]-G['t'+a])-c*G[v])*h;G[a]+=G[v]*h}
+  const room=Math.max(0,(iw.offsetWidth-18-gEyes[0].offsetWidth)/2);
+  gEyes[0].style.setProperty('--ex',(G.x*room).toFixed(2)+'px');gEyes[0].style.setProperty('--ey',(G.y*2).toFixed(2)+'px');
+  gEyes[1].style.setProperty('--ex',(G.x*2).toFixed(2)+'px');gEyes[1].style.setProperty('--ey',(G.y*1.5).toFixed(2)+'px');
+  if(Math.abs(G.x-G.tx)+Math.abs(G.y-G.ty)+Math.abs(G.vx)+Math.abs(G.vy)<.003){G.raf=0;G.last=0;return}
+  G.raf=requestAnimationFrame(gStep);
+}
+// After 8 s without pointer movement the eyes drift back to centre.
+setInterval(()=>{if(G.still&&Date.now()-G.still>8000&&(G.tx||G.ty)){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}},1000);
+// A soft blink every 3–6 s; one in five is a double blink.
+function gBlink(){
+  const two=Math.random()<.2;
+  gEyes.forEach(e=>{e.classList.remove('blink','blink2');void e.offsetWidth;e.classList.add(two?'blink2':'blink')});
+  setTimeout(gBlink,3000+Math.random()*3000+(two?350:0));
+}
 const nEd=$('#nEd'),nIn=$('#nGridIn'),nWrap=$('#nWrap');
 const BC=276.46;
 
@@ -858,35 +1076,50 @@ function activities(){
   if(S.clip)a.push('clip');
   // Claude is one activity: high while it waits for an answer or just finished, lower while it works.
   if(clBy('ask').length||S.clEnd)a.push('cl');
+  // The 5-hour window jumps up once the limit is hit; otherwise it is the quietest activity.
+  if(S.limOn&&S.lim&&S.lim.hit)a.push('lim');
   if(S.xop||S.xopEnd)a.push('xop');
   if(S.pomo.running)a.push('pomo');else if(S.timer.running)a.push('timer');
   if(S.sw.running)a.push('sw');
   if(!a.includes('cl')&&clBy('work').length)a.push('cl');
   if(S.media.active)a.push('media');
   if(S.charging)a.push('charge');
+  if(S.limOn&&S.lim&&!S.lim.hit)a.push('lim');
   return a;
 }
 // Natural width: the clock when idle, otherwise the activity's own pieces (measured one by one so the
 // stretched slot width never feeds back into the measurement).
 function naturalWidth(){
   const r=e=>e.getBoundingClientRect().width;
-  if(!slot.dataset.k)return Math.ceil(r($('#clk')))+28;
+  if(!slot.dataset.k)return MIN_COMPACT;
   const kids=[...slot.children];
   return Math.ceil(kids.reduce((a,e)=>a+r(e),0)+6*Math.max(0,kids.length-1))+28;
 }
 // The island fits what it shows, but is never narrower than the charging notice (MIN_COMPACT).
 const MIN_COMPACT=200;
 function compactWidth(){return Math.max(naturalWidth(),MIN_COMPACT)}
+// Height of the open page's content, so the island grows to show it all without scrolling.
+function pageNeed(i){
+  const p=$$('.page')[i];if(!p)return 0;
+  if(i===PAGE.notes)return 42+$('#nGridIn').offsetHeight;
+  return Math.max(...[...p.children].map(c=>c.scrollHeight));
+}
 function layout(){
-  const s=S.state,cw=compactWidth();
+  const s=S.state,cw=compactWidth(),bottom=S.pos==='bottom';
   let W,H,T,R;
-  // Compact and wide sit vertically centred in the bar; both heights come from Settings.
-  const ih=S.islH,ct=(S.barH-ih)/2;
+  // Compact and wide sit vertically centred in the bar (top or bottom edge); both heights come from Settings.
+  const ih=S.islH,barTop=bottom?innerHeight-S.barH:0,ct=barTop+(S.barH-ih)/2;
   if(s==='compact'){W=cw+(S.hover?HOVER_GROW:0);H=ih;T=ct;R=ih/2+'px'}
   else if(s==='wide'){W=Math.max(MIN_COMPACT,Math.ceil(lwI.getBoundingClientRect().width)+32);H=ih;T=ct;R=ih/2+'px'}
-  else if(s==='expanded'){const nt=S.page===PAGE.notes;W=Math.min(nt?960:680,innerWidth-24);H=nt?500:256;T=8;R='32px'}
-  else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;T=8;R='28px'}
-  else{W=Math.min(420,innerWidth-24);H=140;T=8;R='30px'}
+  else if(s==='expanded'){
+    const nt=S.page===PAGE.notes,min=nt?500:256,max=innerHeight-16;
+    W=Math.min(nt?960:680,innerWidth-24);H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
+    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';
+  }
+  else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;R='28px'}
+  else{W=Math.min(420,innerWidth-24);H=140;R='30px'}
+  // Floating states hang 8 px off the bar's edge: below it at the top, above it at the bottom.
+  if(FLOAT.includes(s))T=bottom?innerHeight-8-H:8;
   iw.style.width=W+'px';iw.style.height=H+'px';iw.style.top=T+'px';isl.style.borderRadius=R;
   slot.style.setProperty('--slotw',slot.dataset.k&&s==='compact'?(W-28)+'px':'auto');
   iw.classList.toggle('tall',s==='expanded'&&S.page===PAGE.notes);
@@ -899,19 +1132,25 @@ function layout(){
   // The "finished, not seen yet" bubble always sits rightmost.
   cbub.classList.toggle('on',cOn);cbub.tabIndex=cOn?0:-1;
   cbub.style.left=(innerWidth/2+W/2+6+(bOn?ih+6:0))+'px';
-  // Privacy dots: a row left of the island in the bar (camera closest); stacked down its left edge when it floats.
-  const fl=FLOAT.includes(s),edge=innerWidth/2-W/2-14;let k=0;
+  // Gili: eyes inside the idle island; a circle 6 px left of it while something else is showing; gone while it floats.
+  const idle=s==='compact'&&!activities().length,gOn=S.gili&&!idle&&!FLOAT.includes(s)&&!S.fs,isLeft=innerWidth/2-W/2;
+  $('#gIn').classList.toggle('off',!(S.gili&&idle));
+  gCirc.classList.toggle('on',gOn);gCirc.tabIndex=gOn?0:-1;
+  gCirc.style.top=ct+'px';gCirc.style.width=gCirc.style.height=ih+'px';
+  gCirc.style.left=(gOn?isLeft-6-ih:isLeft-ih/2)+'px';
+  // Privacy dots: a row left of the island (and Gili's circle), camera closest; stacked down the panel's left edge when it floats.
+  const fl=FLOAT.includes(s),edge=isLeft-14-(gOn?ih+6:0);let k=0;
   for(const[el,on]of[[pCam,S.cam],[pMic,S.mic]]){
     el.classList.toggle('on',on&&!S.fs);
-    el.style.left=(fl?edge:edge-k*13)+'px';el.style.top=(fl?T+20+k*13:ct+ih/2-4)+'px';
+    el.style.left=(fl?isLeft-14:edge-k*13)+'px';el.style.top=(fl?T+20+k*13:ct+ih/2-4)+'px';
     if(on)k++;
   }
-  fitBar(cw);markCovered(W,fl);
+  fitBar(cw);markCovered(W,fl);gAim();
 }
 // While the island floats, fade out only the bar items it would cover (with 8 px of breathing room).
 function markCovered(W,floating){
   const L=innerWidth/2-W/2-8,R=innerWidth/2+W/2+8;
-  $$('#launch button,#apps .appi,#right .mod').forEach(el=>{
+  $$('#mStart,#launch button,#apps .appi,#right .mod').forEach(el=>{
     if(!floating){el.classList.remove('under');return}
     const r=el.getBoundingClientRect();
     el.classList.toggle('under',r.width>0&&r.right>L&&r.left<R);
@@ -919,7 +1158,7 @@ function markCovered(W,floating){
 }
 // Keep the left and right sections at least GAP px away from the island and whatever sits beside it; overflow right modules into "…".
 function fitBar(cw){
-  const priv=((S.cam?1:0)+(S.mic?1:0))*13,bub=(activities().length>1?S.islH+6:0)+(cbubOn()?S.islH+6:0);
+  const priv=((S.cam?1:0)+(S.mic?1:0))*13+(S.gili&&activities().length?S.islH+6:0),bub=(activities().length>1?S.islH+6:0)+(cbubOn()?S.islH+6:0);
   // Reserve the hover growth too, so modules don't shift when the pointer rests on the island.
   const half=cw/2+HOVER_GROW/2;
   const rightSide=innerWidth/2-Math.max(half+bub,150)-GAP-10;
@@ -939,7 +1178,7 @@ function fitApps(){
   const avail=S.leftMax-$('#launch').offsetWidth-26,items=$$('#apps .appi'),more=$('#aMore');
   if(!more)return;
   items.forEach(b=>b.hidden=false);more.hidden=true;
-  const ICON=28,ACT=36,MORE=26;let hid=0;
+  const ICON=28,ACT=36,MORE=38;let hid=0;
   const need=()=>(items.length-hid-1)*ICON+ACT+(hid?MORE:0);
   for(let k=items.length-1;k>=0&&avail-need()<60;k--){if(items[k].classList.contains('act'))continue;items[k].hidden=true;hid++}
   if(hid){more.hidden=false;more.textContent='+'+hid;more.title=items.filter(b=>b.hidden).map(b=>b.dataset.name).join(', ')}
@@ -961,7 +1200,7 @@ function setState(next,instant){
   else setMotion(SP_CLOSE);
   iw.className='iw st-'+next;
   bar.classList.toggle('focus',FLOAT.includes(next));
-  if(FLOAT.includes(next))powerMenu(false);
+  if(FLOAT.includes(next))closePops();
   if(next!=='wide'){clearTimeout(S.wideT);S.wideKey=null}
   if(next!=='expanded')clearTimeout(S.leaveT);
   layout();
@@ -977,7 +1216,7 @@ function showWide(key,html,ms,update){
 function pageFor(k){
   if(k==='media')return PAGE.media;
   if(k==='timer'||k==='pomo'||k==='sw'){S.timer.mode=k;return PAGE.timer}
-  if(k==='cl')return PAGE.claude;
+  if(k==='cl'||k==='lim')return PAGE.claude;
   return S.lastPage;
 }
 function openExpanded(p){
@@ -1048,6 +1287,7 @@ const CARDS={
   pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`5-minute break · session ${S.pomo.round} of 4`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
   conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
+  lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
   pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${Math.min(4,S.pomo.round+1)} of 4 ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
 };
 const val=v=>typeof v==='function'?v():v;
@@ -1073,6 +1313,7 @@ lcard.addEventListener('click',e=>{
   if(a==='unmute'){S.winMuted=false;setPressed('winmute',false);showCard(S.card);return}
   if(a==='xskip'||a==='xreplace')resolveConflict(a);
   if(a==='clopen')clFocus(clById(S.clCard));
+  if(a==='limopen')hint('Opening Claude');
   if(a==='snooze')hint(S.card==='todo'?'Reminder snoozed for 10 minutes':'Alarm snoozed for 5 minutes');
   if(a==='repeat')Object.assign(S.timer,{left:S.timer.total,running:true});
   if(a==='done'){const t=S.todos.find(x=>x.t==='Prepare meeting slides');if(t)t.d=1;renderTodos()}
@@ -1084,7 +1325,7 @@ lcard.addEventListener('click',e=>{
 
 /* ---------- compact: clock and activity slot ---------- */
 let slotSig='';
-const ACT_ICON={timer:['hourglass','var(--orange)'],pomo:['hourglass','var(--danger)'],sw:['stopwatch','var(--orange)'],charge:['bolt','var(--accent)']};
+const ACT_ICON={lim:['hourglass','var(--claude)'],timer:['hourglass','var(--orange)'],pomo:['hourglass','var(--danger)'],sw:['stopwatch','var(--orange)'],charge:['bolt','var(--accent)']};
 const cur=()=>MEDIA[S.media.i];
 const pct=()=>Math.min(100,S.media.pos/cur().d*100);
 function swMs(){return S.sw.acc+(S.sw.running?Date.now()-S.sw.start:0)}
@@ -1094,12 +1335,14 @@ function slotValue(k){
   if(k==='pomo')return mmss(S.pomo.left);
   if(k==='sw')return swText(false);
   if(k==='charge')return Math.round(S.battery)+'%';
+  if(k==='lim')return fmtDur((S.lim.end-Date.now())/1000);
   if(k==='cl'){const w=clBy('work');return w.length===1?fmtDur((Date.now()-w[0].t0)/1000):''}
   return '';
 }
 function slotHTML(k){
   if(k==='clip')return S.clip.html;
   if(k==='cl')return clSlotHTML();
+  if(k==='lim')return `<span style="color:${S.lim.hit?'var(--warn)':'var(--claude)'}">${icon('hourglass')}</span><span class="k2">${S.lim.hit?'Limit reached':'Resets in'}</span><span class="num sv">${slotValue(k)}</span>`;
   if(k==='xop'){
     const x=S.xop,o=XOPS[(x||S.xopEnd).kind];
     const nm=`<span class="tt">${esc(trunc(o.name,28))}</span>`;
@@ -1115,12 +1358,12 @@ function slotHTML(k){
 function renderSlot(){
   const a=activities(),k=a[0];
   const xs=k==='xop'?(S.xop?(S.xop.paused?'p':'r')+S.xop.kind:S.xopEnd.status+S.xopEnd.kind):'';
-  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing:'')+'|'+(a[1]||'')+'|'+clSig();
+  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing:'')+(k==='lim'?S.lim.hit:'')+'|'+(a[1]||'')+'|'+clSig();
   if(sig!==slotSig){
     slotSig=sig;
     // Clock and date only show while the island has nothing else to say.
-    $('#clk').hidden=!!k;slot.innerHTML=k?slotHTML(k):'';slot.dataset.k=k||'';
-    slot.title=k==='xop'?XOPS[(S.xop||S.xopEnd).kind].run:k==='clip'?S.clip.tip:k==='cl'?clTip():'';
+    slot.innerHTML=k?slotHTML(k):'';slot.dataset.k=k||'';
+    slot.title=k==='lim'?limTip():k==='xop'?XOPS[(S.xop||S.xopEnd).kind].run:k==='clip'?S.clip.tip:k==='cl'?clTip():'';
     if(S.state==='compact'&&!S.reduce)setMotion(SP_WIDE);
     if(a[1]==='cl')bubble.innerHTML=clIcon();
     else if(a[1]){
@@ -1137,18 +1380,19 @@ function renderSlot(){
     if(k==='media')sv.style.width=pct()+'%';else sv.textContent=slotValue(k);
   }
 }
-function renderClock(){
-  const n=new Date(),t=pad(n.getHours())+':'+pad(n.getMinutes());
+// Clock and date live on the right of the bar: the date is the small label, the time the value.
+function renderClock(force){
+  const n=new Date(),h=n.getHours(),t=S.h12?`${h%12||12}:${pad(n.getMinutes())} ${h<12?'AM':'PM'}`:pad(h)+':'+pad(n.getMinutes());
   const d=`${DAYS[n.getDay()]} ${n.getDate()} ${MONTHS[n.getMonth()]}`;
-  if($('#clkT').textContent!==t||$('#clkD').textContent!==d){
-    $('#clkT').textContent=t;$('#clkD').textContent=d;$('#xTime').textContent=t;$('#xDate').textContent=d;
-    $('#tray').innerHTML=`${t}<br>${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()}`;
+  if(force||$('#clkT').textContent!==t||$('#clkD').textContent!==d){
+    $('#clkT').textContent=t;$('#clkD').textContent=d;
+    $('#mClock').title=n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    $('#tray').innerHTML=`${pad(h)}:${pad(n.getMinutes())}<br>${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()}`;
     layout();
   }
 }
 $('#lc').addEventListener('click',e=>{
   if(e.target.closest('[data-pp]')){toggleMedia();return}
-  if(e.target.closest('#clk')){openExpanded(PAGE.calendar);return}
   if(e.target.closest('.slot')){
     const k=slot.dataset.k;
     if(k==='xop'){xopClick();return}
@@ -1167,27 +1411,42 @@ const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calenda
 const xtabs=$('#xtabs'),xind=$('#xind');
 xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" role="tab" data-i="${i}" aria-selected="false" aria-controls="xp">${icon(ic)}${i===PAGE.media?'<span class="viz" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':''}<span class="tl">${n}</span></button>`).join(''));
 xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
-$('#xClk').onclick=()=>goPage(PAGE.calendar);
+// Hidden pages leave the menu; one opened directly (slot, bar icon, card) gets its tab back while it is showing.
+// Controls never has a tab: while it is open no tab is highlighted.
+function renderTabs(){
+  const tabs=$$('#xtabs .xtab');let n=0,pos=-1;
+  tabs.forEach((t,i)=>{const on=!!S.tabs[i]||i===S.page;t.hidden=!on;if(on){if(i===S.page)pos=n;n++}});
+  xtabs.style.setProperty('--n',n);xind.style.setProperty('--i',Math.max(0,pos));xind.style.opacity=pos<0?0:1;
+}
+// Arrow keys and swipes walk the visible tabs only.
+function stepPage(d){
+  const vis=TABS.map((_,i)=>i).filter(i=>S.tabs[i]);if(!vis.length)return;
+  const at=vis.indexOf(S.page);
+  // From a page without a tab (hidden, or Controls), go to the nearest visible one in that direction.
+  if(at<0)goPage(d>0?(vis.find(i=>i>S.page)??vis[vis.length-1]):([...vis].reverse().find(i=>i<S.page)??vis[0]));
+  else goPage(vis[Math.max(0,Math.min(vis.length-1,at+d))]);
+}
 function goPage(i,instant){
   i=Math.max(0,Math.min(LAST,i));
   const wasTall=S.page===PAGE.notes;S.page=i;S.lastPage=i;
   if(instant||S.reduce){
     for(const el of[track,xind])el.style.transition='none';
-    track.style.transform=`translateX(${-i*100}%)`;xind.style.setProperty('--i',i);track.offsetWidth;
+    track.style.transform=`translateX(${-i*100}%)`;renderTabs();track.offsetWidth;
     for(const el of[track,xind])el.style.transition='';
-  }else{track.style.transform=`translateX(${-i*100}%)`;xind.style.setProperty('--i',i)}
+  }else{track.style.transform=`translateX(${-i*100}%)`;renderTabs()}
   $$('#xtabs .xtab').forEach((t,k)=>t.setAttribute('aria-selected',k===i));
   $$('.page').forEach((p,k)=>p.inert=k!==i);
   if(i===PAGE.calendar)renderCev();
   if(wasTall&&i!==PAGE.notes)flushNote();
-  if(S.state==='expanded'&&wasTall!==(i===PAGE.notes)){if(!S.reduce)setMotion(SP_OPEN);layout()}
+  if(S.state==='expanded'){if(!S.reduce)setMotion(SP_OPEN);layout()}
   renderTimerPage();renderSys();renderClPage();renderGlow();
 }
 // Ambient glow colours per page. Media takes the cover's two colours (dimmer while paused); Timer follows the mode and pomodoro phase.
-const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.notes]:'#ffd60a',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2'};
+const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.notes]:'#ffd60a',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2',[PAGE.controls]:'#0a84ff'};
 const tint=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
 function renderGlow(){
   const g=$('#glow');let c1,c2,k=1;
+  g.classList.toggle('paused',S.page===PAGE.media&&!S.media.playing);
   if(S.page===PAGE.media){const m=cur();c1=m.c[0];c2=m.c[1];if(!S.media.playing)k=.5}
   else if(S.page===PAGE.timer){const m=S.timer.mode;c1=c2=m==='sw'?'#64d2ff':m==='pomo'?(S.pomo.phase==='focus'?'#ff453a':'#30d158'):'#ff9f0a'}
   else c1=c2=GLOW[S.page];
@@ -1201,7 +1460,7 @@ $('#xp').addEventListener('wheel',e=>{
   e.preventDefault();
   if(Date.now()<wheelLock)return;
   wheelAcc+=horiz?e.deltaX:e.deltaY;
-  if(Math.abs(wheelAcc)>40){goPage(S.page+(wheelAcc>0?1:-1));wheelAcc=0;wheelLock=Date.now()+380}
+  if(Math.abs(wheelAcc)>40){stepPage(wheelAcc>0?1:-1);wheelAcc=0;wheelLock=Date.now()+380}
 },{passive:false});
 // Hovering the compact island stretches it a little: a hint that it opens.
 function setHover(on){
@@ -1218,7 +1477,7 @@ iw.addEventListener('pointerleave',()=>{
 });
 document.addEventListener('pointerdown',e=>{
   // Bar icons that open island pages handle the click themselves (switch page or close).
-  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys]'))closeExpanded();
+  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mCtl,#mPower,#mWifi,#setw'))closeExpanded();
 });
 
 /* media */
@@ -1300,7 +1559,7 @@ const todayKey=()=>dkey(new Date());
 const dayKey=d=>{const n=new Date();return dkey(new Date(n.getFullYear(),n.getMonth(),d))};
 function fmtDay(key){const[y,m,d]=key.split('-').map(Number),dt=new Date(y,m,d);return `${DAYS[dt.getDay()]} ${d} ${MONTHS[m]}`}
 function dayItems(key){
-  return (EV[key]||[]).map(t=>({text:t})).concat(S.todos.filter(t=>t.due===key).map(t=>({text:'Task · '+t.t,done:!!t.d})));
+  return (EV[key]||[]).map(t=>({text:t})).concat(S.todos.filter(t=>t.due===key).map(t=>({text:(t.tm?t.tm+' · ':'Task · ')+t.t,done:!!t.d})));
 }
 function buildCal(){
   const n=new Date(),y=n.getFullYear(),m=n.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
@@ -1315,18 +1574,18 @@ function selectDate(d){S.calSel=d;S.calAdding=false;$$('#cal button').forEach(b=
 function renderCev(){
   const cev=$('#cev');
   const key=dayKey(S.calSel||new Date().getDate()),items=dayItems(key);
-  const shown=items.length>2?items.slice(0,1):items;
+  // Every item shows: the island grows to fit the day instead of cutting it off at "+N more".
   cev.innerHTML=`<h4>${key===todayKey()?'Today':fmtDay(key)}</h4>`+
-    (shown.length?shown.map(it=>`<div class="e ${it.done?'dn':''}">${esc(it.text)}</div>`).join(''):'<div class="none">Nothing scheduled.</div>')+
-    (items.length>2?`<div class="none">+${items.length-1} more</div>`:'')+
-    (S.calAdding?`<form class="cadd" id="cAdd"><input class="field" id="cAddIn" placeholder="Add a task for this day" maxlength="60" aria-label="New task for ${fmtDay(key)}"><button class="pill pri iconbtn" aria-label="Add task">${icon('check')}</button></form>`
+    (items.length?items.map(it=>`<div class="e ${it.done?'dn':''}">${esc(it.text)}</div>`).join(''):'<div class="none">Nothing scheduled.</div>')+
+    (S.calAdding?`<form class="cadd" id="cAdd"><input class="field" id="cAddIn" placeholder="Add a task for this day" maxlength="60" aria-label="New task for ${fmtDay(key)}"><input class="field ftime" id="cAddTm" type="time" aria-label="Time (optional)" title="Time (optional): a reminder card appears then"><button class="pill pri iconbtn" aria-label="Add task">${icon('check')}</button></form>`
       :`<button class="pill sm" id="cAddBtn">${icon('plus')}Add task</button>`);
+  if(S.state==='expanded')layout();
 }
-function addTodo(text,key){
-  S.todos.push({t:text,d:0,due:key});
+function addTodo(text,key,tm){
+  S.todos.push({t:text,d:0,due:key,tm:tm||''});
   const today=key===todayKey();
   renderTodos(today?S.todos.length-1:undefined);refreshCalDots();
-  if(today){const l=$('#tlist');l.scrollTop=l.scrollHeight}else hint('Added to '+fmtDay(key));
+  if(!today)hint('Added to '+fmtDay(key)+(tm?' · '+tm:''));
 }
 $('#cal').onclick=e=>{
   const b=e.target.closest('button');if(b)selectDate(+b.dataset.d);
@@ -1337,32 +1596,62 @@ $('#cev').addEventListener('click',e=>{
 $('#cev').addEventListener('submit',e=>{
   e.preventDefault();const inp=$('#cAddIn'),v=inp.value.trim();
   if(!v){inp.focus();return}
-  addTodo(v,dayKey(S.calSel));S.calAdding=false;renderCev();
+  addTodo(v,dayKey(S.calSel),$('#cAddTm').value);S.calAdding=false;renderCev();
 });
-$('#cev').addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target.id==='cAddIn'){e.stopPropagation();S.calAdding=false;renderCev()}});
+$('#cev').addEventListener('keydown',e=>{if(e.key==='Escape'&&/^cAdd/.test(e.target.id)){e.stopPropagation();S.calAdding=false;renderCev()}});
 
 /* todo */
 // Today's list: undated tasks plus tasks due today; tasks for other days live on the Calendar page.
 const isToday=t=>!t.due||t.due===todayKey();
+function todoRow(t,i,cls){
+  return `<li class="${t.d?'done':''} ${cls||''}" data-i="${i}" tabindex="-1"><button class="chk" role="checkbox" aria-checked="${!!t.d}" aria-label="${esc(t.t)}">${icon('check')}</button><span class="tt2">${esc(t.t)}</span>${t.tm?`<span class="tm2 num">${t.tm}</span>`:''}
+    <span class="tact"><button class="ed" aria-label="Edit ${esc(t.t)}" title="Edit">${icon('pencil')}</button><button class="del" aria-label="Delete ${esc(t.t)}" title="Delete">${icon('trash')}</button></span></li>`;
+}
 function renderTodos(newIdx){
-  $('#tlist').innerHTML=S.todos.map((t,i)=>({t,i})).filter(({t})=>isToday(t)).map(({t,i})=>`<li class="${t.d?'done':''} ${i===newIdx?'new':''}" data-i="${i}"><button class="chk" role="checkbox" aria-checked="${!!t.d}" aria-label="${esc(t.t)}">${icon('check')}</button><span>${esc(t.t)}</span></li>`).join('');
-  renderTodoCount();
+  $('#tlist').innerHTML=S.todos.map((t,i)=>({t,i})).filter(({t})=>isToday(t)).map(({t,i})=>todoRow(t,i,i===newIdx?'new':'')).join('');
+  renderTodoCount();if(S.state==='expanded')layout();
 }
 function renderTodoCount(){
   const list=S.todos.filter(isToday),d=list.filter(t=>t.d).length,n=list.length;
   $('#tdDone').textContent=d;$('#tdTot').textContent=n;
 }
+// Edit in place: title and an optional time. Enter or the check saves, Esc cancels.
+function editTodo(li){
+  const t=S.todos[+li.dataset.i];
+  li.className='edit';li.innerHTML=`<form><input class="field" value="${esc(t.t)}" maxlength="60" aria-label="Task"><input class="field ftime" type="time" value="${t.tm||''}" aria-label="Time (optional)"><button class="pill pri iconbtn" aria-label="Save">${icon('check')}</button></form>`;
+  const[inp,tm]=li.querySelectorAll('input');inp.focus();inp.select();
+  li.querySelector('form').onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v){inp.focus();return}t.t=v;t.tm=tm.value;renderTodos();refreshCalDots()};
+  li.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();renderTodos()}};
+  layout();
+}
+// Delete asks once: the first click turns the button into "Delete?" for 3 seconds.
+function delTodo(li,b){
+  if(!b.classList.contains('confirm')){
+    $$('#tlist .del.confirm').forEach(x=>{x.classList.remove('confirm');x.innerHTML=icon('trash')});
+    b.classList.add('confirm');b.textContent='Delete?';clearTimeout(delTodo.t);
+    delTodo.t=setTimeout(()=>{b.classList.remove('confirm');b.innerHTML=icon('trash')},3000);return;
+  }
+  const i=+li.dataset.i;li.classList.add('gone');
+  setTimeout(()=>{S.todos.splice(i,1);renderTodos();refreshCalDots()},S.reduce?0:260);
+}
 $('#tlist').onclick=e=>{
+  const li=e.target.closest('li');if(!li||li.classList.contains('edit'))return;
+  if(e.target.closest('.ed')){editTodo(li);return}
+  const del=e.target.closest('.del');if(del){delTodo(li,del);return}
   const b=e.target.closest('.chk');if(!b)return;
-  const li=b.closest('li'),t=S.todos[+li.dataset.i];t.d=t.d?0:1;
+  const t=S.todos[+li.dataset.i];t.d=t.d?0:1;
   li.classList.toggle('done',!!t.d);b.setAttribute('aria-checked',!!t.d);renderTodoCount();
 };
+$('#tlist').addEventListener('keydown',e=>{
+  const li=e.target.closest('li');if(!li||li.classList.contains('edit')||e.target.tagName==='INPUT')return;
+  if(e.key==='Enter'&&e.target===li){editTodo(li)}
+  if(e.key==='Delete'){e.preventDefault();delTodo(li,li.querySelector('.del'))}
+});
 // Todos are only created on the Calendar page; this button jumps there with today selected and the field open.
 $('#tdCal').onclick=()=>{
   goPage(PAGE.calendar);selectDate(new Date().getDate());S.calAdding=true;renderCev();
   setTimeout(()=>$('#cAddIn').focus(),S.reduce?0:320);
 };
-$('#tdEdit').onclick=()=>hint('Opening Tools · Todo tab');
 
 /* notes: Keep-style masonry grid in the user's order; the editor slides in only while adding or editing */
 let saveT=0,delT=0,noteDrag=null;
@@ -1583,28 +1872,149 @@ $$('[data-sys]').forEach(b=>b.onclick=()=>openFromBar(PAGE.system));
 $('#mMore').onclick=()=>{const names={weather:'weather',net:'network',disk:'disk',temp:'CPU temp',gpu:'GPU',ram:'RAM',cpu:'CPU'};hint('Hidden to keep space around the island: '+S.overflow.map(k=>names[k]).join(', '))};
 $('#mWifi').onclick=()=>hint('Opening the Windows network list');
 
-/* power menu: the update variants only appear when Windows has updates waiting, like the Start menu */
-function powerMenu(open){
-  $('#pMenu').hidden=!open;$('#mPower').setAttribute('aria-expanded',open);
-  if(open)$('#pMenu button:not([hidden])').focus();
-}
+/* power: Sleep, Shut down and Restart sit on the island's Controls page; the update variants only appear when Windows has updates waiting */
 function renderUpdates(){
-  $('#uDot').hidden=!S.updates;$$('#pMenu .upd').forEach(b=>b.hidden=!S.updates);
+  $('#uDot').hidden=!S.updates;$$('#pwList .upd').forEach(b=>b.hidden=!S.updates);
   $('#mPower').title=S.updates?'Power · updates are ready to install':'Power';
 }
-$('#mPower').onclick=()=>powerMenu($('#pMenu').hidden);
-$('#pMenu').onclick=e=>{
+$('#pwList').onclick=e=>{
   const b=e.target.closest('[data-pw]');if(!b)return;
-  powerMenu(false);
   hint({sleep:'Going to sleep',shutdown:'Shutting down',restart:'Restarting','upd-shutdown':'Installing updates, then shutting down','upd-restart':'Installing updates, then restarting'}[b.dataset.pw]+' (mockup only)');
 };
-$('#pMenu').onkeydown=e=>{
-  const items=[...$('#pMenu').querySelectorAll('button:not([hidden])')],i=items.indexOf(document.activeElement);
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();items[(i+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus()}
-  if(e.key==='Escape'){e.stopPropagation();powerMenu(false);$('#mPower').focus()}
-};
-document.addEventListener('pointerdown',e=>{if(!$('#pMenu').hidden&&!e.target.closest('.pwr'))powerMenu(false)});
 $('#mShelf').onclick=()=>openFromBar(PAGE.shelf);
+$('#mStart').onclick=()=>hint('Opening the Windows Start menu');
+$('#mClock').onclick=()=>openFromBar(PAGE.calendar);
+gCirc.onclick=()=>openExpanded(S.lastPage);
+
+/* tray: background apps' notification-area icons in a small panel */
+const TRAY=[['OneDrive','#0f6cbd','O'],['Discord','#5865f2','D'],['Steam','#1b2838','S'],['Windows Security','#2f7d32','W'],['NVIDIA','#5a9e00','N'],['Google Drive','#c48a00','G'],['PowerToys','#6c5ce7','P'],['Logi Options+','#0083b3','L']];
+function closePops(){$$('.pop').forEach(p=>{if(!p.hidden){p.hidden=true;p.previousElementSibling.setAttribute('aria-expanded',false)}})}
+$('#mTray').onclick=()=>{
+  const p=$('#tp'),open=p.hidden;closePops();if(!open)return;
+  p.innerHTML=TRAY.map(([n,c,l])=>`<button role="menuitem" aria-label="${n}" title="${n}"><span class="ti" style="--c:${c}">${l}</span></button>`).join('');
+  p.hidden=false;$('#mTray').setAttribute('aria-expanded',true);p.querySelector('button').focus();
+};
+$('#tp').onclick=e=>{const b=e.target.closest('button');if(b){closePops();hint(b.title+': same as clicking its tray icon')}};
+$('#tp').oncontextmenu=e=>{const b=e.target.closest('button');if(b){e.preventDefault();closePops();hint(b.title+': its own right-click menu opens')}};
+$('#tp').onkeydown=e=>{
+  const items=[...$('#tp').querySelectorAll('button')],i=items.indexOf(document.activeElement);
+  if(/Arrow(Right|Down)/.test(e.key)){e.preventDefault();items[(i+1)%items.length].focus()}
+  if(/Arrow(Left|Up)/.test(e.key)){e.preventDefault();items[(i-1+items.length)%items.length].focus()}
+  if(e.key==='Escape'){e.stopPropagation();closePops();$('#mTray').focus()}
+};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pwr'))closePops()});
+
+/* Controls page: Wi-Fi, Bluetooth, airplane mode, volume, brightness and power, in the open island without a tab */
+const WIFI=[['Home_5G',1],['Home_2.4G',1],['Kopi Kenangan',1],['Rumah Rani',0]];
+const BTD=[['Galaxy Buds2 Pro','headphones',1],['MX Master 3S','bt',0],['Xbox Wireless Controller','bt',0]];
+S.wifiNet='Home_5G';
+function showQList(k){
+  const L=$('#qList');
+  $$('.qx').forEach(x=>x.setAttribute('aria-expanded',x.dataset.x===k));
+  if(k){
+    L.innerHTML=`<div class="qlh"><button data-back aria-label="Back">${icon('chevl')}</button>${k==='wifi'?'Wi‑Fi networks':'Bluetooth devices'}</div>`+(k==='wifi'
+      ?WIFI.map(([n,saved],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
+      :BTD.map(([n,ic,on],i)=>`<button class="qn ${on?'on':''}" data-b="${i}">${icon(ic)}<b>${n}</b><span>${on?'Connected':'Paired'}</span></button>`).join('')+`<button class="qn" data-qf="addbt">${icon('plus')}<b>Add device</b></button>`);
+  }
+  L.hidden=!k;$('#pwBox').hidden=!!k;if(S.state==='expanded')layout();
+}
+function setQ(k,on){
+  const t=$(`.qt[data-q="${k}"]`),sm=t.querySelector('small');
+  t.setAttribute('aria-pressed',on);t.querySelector('.qtb').setAttribute('aria-pressed',on);
+  if(k==='wifi')sm.textContent=on?S.wifiNet:'Off';
+  if(k==='bt')sm.textContent=on?(BTD.find(d=>d[2])||['On'])[0]:'Off';
+  if(k==='air'){sm.textContent=on?'On':'Off';if(on){setQ('wifi',false);setQ('bt',false)}}
+}
+$('.pg-ctl').addEventListener('click',e=>{
+  const q=e.target.closest('.qtb');if(q){setQ(q.parentElement.dataset.q,q.getAttribute('aria-pressed')!=='true');return}
+  const x=e.target.closest('.qx');if(x){showQList(x.getAttribute('aria-expanded')==='true'?null:x.dataset.x);return}
+  if(e.target.closest('[data-back]')){showQList(null);return}
+  const w=e.target.closest('[data-w]');
+  if(w){
+    const[n,saved]=WIFI[+w.dataset.w];
+    if(n===S.wifiNet)return;
+    if(!saved){hint('New network: the Windows network list opens to take the password');return}
+    w.querySelector('span').textContent='Connecting…';
+    setTimeout(()=>{S.wifiNet=n;setQ('wifi',true);$('#mWifi b').textContent=n;showQList('wifi')},900);return;
+  }
+  const b=e.target.closest('[data-b]');if(b){const d=BTD[+b.dataset.b];d[2]=d[2]?0:1;showQList('bt');setQ('bt',true);return}
+  const f=e.target.closest('[data-qf]');if(f){hint({win:'Opening Windows Quick Settings',all:'Opening Windows Settings',more:'Opening the Windows network list',addbt:'Opening Bluetooth & devices settings'}[f.dataset.qf]);return}
+  if(e.target.closest('#qMute')){S.qMuted=!S.qMuted;$('#qMute').innerHTML=icon(S.qMuted?'mute':'vol');$('#qMute').setAttribute('aria-label',S.qMuted?'Unmute':'Mute')}
+});
+$('#qVol').oninput=e=>$('#qVolV').textContent=e.target.value+'%';
+$('#qBri').oninput=e=>$('#qBriV').textContent=e.target.value+'%';
+// Scrolling over a slider nudges it 2 points instead of changing page.
+for(const id of['qVol','qBri'])$('#'+id).addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();const r=e.target;r.value=+r.value+(e.deltaY<0?2:-2);r.dispatchEvent(new Event('input'))},{passive:false});
+$('#mCtl').onclick=()=>{showQList(null);openFromBar(PAGE.controls)};
+$('#mPower').onclick=()=>{showQList(null);openFromBar(PAGE.controls)};
+$('#mWifi').onclick=()=>{if(S.state!=='expanded'||S.page!==PAGE.controls)openExpanded(PAGE.controls);showQList('wifi')};
+
+/* Claude 5-hour usage window */
+function limTip(){const r=new Date(S.lim.end);return `Claude 5-hour window · resets at ${pad(r.getHours())}:${pad(r.getMinutes())} · ${S.lim.hit?'limit reached':'Estimated'}`}
+function limRow(){
+  if(!S.limOn||!S.lim)return '';
+  const left=Math.max(0,(S.lim.end-Date.now())/1000),f=1-left/(S.lim.len/1000),r=new Date(S.lim.end);
+  return `<div class="crow lrow ${S.lim.hit?'ask':''}"><svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>
+    <span class="cn"><b>5-hour window</b><span>${S.lim.hit?'Limit reached · ':''}Resets ${pad(r.getHours())}:${pad(r.getMinutes())}</span></span><span class="cr num" id="limLeft">${fmtDur(left)}</span></div>`;
+}
+// When the window ends: the card rings like a timer.
+function limCheck(){
+  if(!S.lim)return;
+  const l=$('#limLeft');if(l)l.textContent=fmtDur((S.lim.end-Date.now())/1000);
+  if(Date.now()>=S.lim.end){S.lim=null;renderSlot();renderClPage();if(S.limOn)showCard('lim')}
+}
+
+/* Settings window */
+const SET={
+  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'TopBar gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['auto','Start with Windows','sw']],
+  Appearance:[['opacity','Bar opacity','range'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
+  Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
+  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['tray','Tray icons'],['ctl','Controls'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
+  Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
+};
+let setSec='General';
+function sget(k){const[a,b]=k.split('.');return a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='auto'?1:S[k]}
+function sput(k,v){
+  const[a,b]=k.split('.');
+  if(a==='L')S.left[b]=v;
+  else if(a==='T'){S.tabs[b]=v;if(!S.tabs.some(Boolean)){S.tabs[b]=1;hint('Keep at least one page')}}
+  else if(a==='M')S.mods[b]=v;
+  else if(k==='auto'){hint('Only the installed copy starts with Windows');return}
+  else S[k]=v;
+  if(k==='hideTb'&&!v&&S.pos==='bottom'){S.pos='top';hint('Moved to the top because the Windows taskbar is back')}
+  applySettings();renderSettings();
+}
+function applySettings(){
+  $$('#left [data-l]').forEach(b=>b.hidden=!S.left[b.dataset.l]);
+  $('#lsep').hidden=!Object.values(S.left).some(Boolean);
+  document.body.classList.toggle('noglow',!S.glow);document.body.classList.toggle('nomotion',!S.motion);setPressed('glow',!!S.glow);
+  $('#desk').classList.toggle('notb',!!S.hideTb);document.body.classList.toggle('bottom',S.pos==='bottom');
+  slotSig='';renderTabs();renderClock(true);renderSlot();renderClPage();if(!S.reduce)setMotion(SP_WIDE);layout();
+}
+function renderSettings(){
+  $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
+  $('#setp').innerHTML=`<h3>${setSec}</h3>`+SET[setSec].map(([k,label,type,opts,help])=>{
+    const v=sget(k),dis=k==='pos'&&!S.hideTb;
+    const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${S.pos===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
+      :type==='range'?`<input type="range" min="40" max="100" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}%</span>`
+      :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
+    return `<div class="srow ${dis?'dis':''}"><span>${label}${dis?'<small>Hide the Windows taskbar first</small>':help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
+  }).join('');
+}
+function openSettings(){$('#setw').hidden=false;renderSettings();$('#setn [aria-selected="true"]').focus()}
+function closeSettings(){$('#setw').hidden=true;$('#mSet').focus()}
+$('#mSet').onclick=()=>$('#setw').hidden?openSettings():closeSettings();
+$('#setX').onclick=closeSettings;
+$('#setw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeSettings()}});
+$('#setn').onclick=e=>{const b=e.target.closest('[data-sec]');if(b){setSec=b.dataset.sec;renderSettings()}};
+$('#setp').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-k]');if(!b)return;
+  b.classList.contains('sw')?sput(b.dataset.k,b.getAttribute('aria-checked')==='true'?0:1):sput(b.dataset.k,b.dataset.v);
+});
+// Opacity updates live without rebuilding the row, so dragging the slider keeps working.
+$('#setp').addEventListener('input',e=>{if(e.target.dataset.k!=='opacity')return;const v=+e.target.value;$('#opA').value=v;$('#opA').oninput({target:$('#opA')});e.target.nextElementSibling.textContent=v+'%'});
+
 
 /* quick events */
 function showCaps(){showWide('caps'+S.caps,`${icon('caps')}<span>Caps Lock <b>${S.caps?'on':'off'}</b></span>`,1500)}
@@ -1637,18 +2047,28 @@ function appButton(a){
 function renderApps(){
   const box=$('#apps');box.innerHTML='';
   for(const a of S.apps)box.appendChild(appButton(a));
-  box.insertAdjacentHTML('beforeend','<span class="amore" id="aMore" hidden></span>');
+  box.insertAdjacentHTML('beforeend','<span class="pwr amw"><button class="amore num" id="aMore" aria-haspopup="menu" aria-expanded="false" hidden></button><span class="pop alst" id="aList" role="menu" aria-label="More open apps" hidden></span></span>');
 }
 function setApp(name,ic){
   if(!S.apps.some(a=>a.n===name)){
     // A newly opened app pops in at the end of the strip.
-    S.apps.push({n:name,i:ic});const b=appButton({n:name,i:ic});$('#apps').insertBefore(b,$('#aMore'));
+    S.apps.push({n:name,i:ic});const b=appButton({n:name,i:ic});$('#apps').insertBefore(b,$('#apps .amw'));
     if(!S.reduce)b.animate([{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.34,1.3,.64,1)'});
   }
   $$('#apps .appi').forEach(b=>{const on=b.dataset.name===name;b.classList.toggle('act',on);b.setAttribute('aria-current',on?'true':'false')});
   fitApps();S.fgName=name;clSeen();
 }
+// "+N" lists the apps that didn't fit; picking one brings it to the front, and it takes a place in the strip.
+function appsList(){
+  const p=$('#aList'),open=p.hidden;closePops();if(!open)return;
+  p.innerHTML=$$('#apps .appi').filter(b=>b.hidden).map(b=>{const a=S.apps.find(x=>x.n===b.dataset.name);
+    return `<button role="menuitem" data-app="${esc(a.n)}"><svg class="aic" aria-hidden="true"><use href="#${a.i}"/></svg>${esc(a.n)}</button>`}).join('');
+  p.hidden=false;$('#aMore').setAttribute('aria-expanded',true);p.querySelector('button').focus();
+}
 $('#apps').addEventListener('click',e=>{
+  if(e.target.closest('#aMore')){appsList();return}
+  const r=e.target.closest('[data-app]');
+  if(r){closePops();const a=S.apps.find(x=>x.n===r.dataset.app);setApp(a.n,a.i);return}
   const b=e.target.closest('.appi');if(!b)return;
   const w=$$('.win').find(x=>x.dataset.name===b.dataset.name);
   if(w){$$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5}
@@ -1769,11 +2189,12 @@ function clRight(s){
 function renderClPage(){
   if(S.page!==PAGE.claude)return;
   const list=[...S.cl].sort((a,b)=>CL_ORDER[a.st]-CL_ORDER[b.st]);
-  $('#clist').innerHTML=list.length?list.map(s=>{
+  $('#clist').innerHTML=limRow()+(list.length?list.map(s=>{
     const sub=s.st==='ask'?esc(s.kind==='ask'?`"${s.q}"`:s.q||CL_ASK[s.kind][0]):`${esc(s.dir)} · ${CL_APP[s.app][3]}`;
     return `<button class="crow ${s.st}" data-cl="${s.id}"><span class="clp${s.st==='work'?' work':''}">${icon(s.st==='done'?'check':'claude')}</span>
       <span class="cn"><b>${esc(clName(s))}</b><span>${sub}</span></span><span class="cr num">${clRight(s)}</span></button>`;
-  }).join(''):'<div class="clempty">No Claude sessions</div>';
+  }).join(''):'<div class="clempty">No Claude sessions</div>');
+  if(S.state==='expanded')layout();
 }
 function clTick(){$$('#clist .crow.work').forEach(r=>{r.querySelector('.cr').textContent=clRight(clById(+r.dataset.cl))})}
 $('#clist').addEventListener('click',e=>{const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl))});
@@ -1843,6 +2264,7 @@ const SAMPLE_DROPS=[
 let dropN=0;
 function hint(m){const h=$('#hint');h.textContent=m;h.classList.add('on');clearTimeout(hint.t);hint.t=setTimeout(()=>h.classList.remove('on'),2400)}
 function setPressed(act,on){const b=$(`[data-act="${act}"]`);if(b)b.setAttribute('aria-pressed',on)}
+const MANY=[['Word','#185abd','W'],['Excel','#107c41','X'],['Figma','#a259ff','F'],['Slack','#4a154b','S'],['Notion','#37352f','N'],['Microsoft Teams','#5b5fc7','T'],['Discord','#5865f2','D'],['OBS Studio','#302e31','O'],['Photos','#0078d4','P'],['Microsoft Edge','#0c8484','E'],['Telegram','#2aabee','T'],['Postman','#ff6c37','P']];
 const ACT={
   expand:()=>S.state==='expanded'?closeExpanded():openExpanded(),
   music:toggleMedia,
@@ -1859,7 +2281,8 @@ const ACT={
     clearTimeout(S.clEndT);S.clEnd=null;if(S.card==='claude')closeCard();renderClPage();
     S.shelf=[];renderShelf();
     renderMedia();renderTimerPage();renderSlot();
-    hint('No activity: the island shows the clock and date');
+    S.lim=null;renderClPage();
+    hint('No activity: Gili sits in the island');
   },
   song:()=>nextSong(1),
   video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true)},
@@ -1909,7 +2332,21 @@ const ACT={
   ramp:()=>{Sound.ramp=!Sound.ramp;setPressed('ramp',Sound.ramp)},
   winmute:()=>{S.winMuted=!S.winMuted;setPressed('winmute',S.winMuted);if(S.winMuted)stopSound();
     if(S.state==='card'&&CARDS[S.card].ring==='loop')showCard(S.card)},
-  glow:()=>{const off=document.body.classList.toggle('noglow');setPressed('glow',!off)},
+  glow:()=>{S.glow=S.glow?0:1;applySettings()},
+  // Twelve more apps: the ones that don't fit drop into "+N", whose list brings any of them to the front.
+  manyApps:()=>{
+    const sprite=$('svg symbol').parentNode;
+    MANY.forEach(([n,c,l],k)=>{
+      const id='a-m'+k;
+      if(!$('#'+id))sprite.insertAdjacentHTML('beforeend',`<symbol id="${id}" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="${c}"/><text x="12" y="16.3" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff" font-family="Segoe UI,system-ui,sans-serif">${l}</text></symbol>`);
+      if(S.apps.some(a=>a.n===n))return;
+      S.apps.push({n,i:id});const b=appButton({n,i:id});$('#apps').insertBefore(b,$('#apps .amw'));
+      if(!S.reduce)b.animate([{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'none'}],{duration:320,delay:k*40,fill:'backwards',easing:'cubic-bezier(.34,1.3,.64,1)'});
+    });
+    fitApps();hint(`${S.apps.length} apps open: the ones that don't fit go into +N`);
+  },
+  limStart:()=>{S.lim={end:Date.now()+12e3,len:12e3,hit:false};renderSlot();renderClPage();hint('Window ends in 12 seconds; the reset card follows')},
+  limHit:()=>{S.lim={end:Date.now()+3852e3,len:5*3600e3,hit:true};renderSlot();renderClPage()},
   extra:()=>{const on=!S.mods.gpu;S.mods.gpu=S.mods.temp=S.mods.disk=on?1:0;setPressed('extra',on);layout()},
   fs:()=>{closeExpanded();if(S.state==='wide')setState('compact');S.fs=!S.fs;$('#desk').classList.toggle('fs',S.fs);setPressed('fs',S.fs);
     hint(S.fs?'Fullscreen: the bar hides; only alarms and timers still appear':'Bar is back')},
@@ -1977,8 +2414,8 @@ document.addEventListener('keydown',e=>{
   if(S.state!=='expanded')return;
   const typing=/INPUT|TEXTAREA/.test(e.target.tagName);
   if(e.key==='Escape')closeExpanded();
-  else if(!typing&&!e.altKey&&e.key==='ArrowRight')goPage(S.page+1);
-  else if(!typing&&!e.altKey&&e.key==='ArrowLeft')goPage(S.page-1);
+  else if(!typing&&!e.altKey&&e.key==='ArrowRight')stepPage(1);
+  else if(!typing&&!e.altKey&&e.key==='ArrowLeft')stepPage(-1);
 });
 
 /* clock and simulated data */
@@ -2003,7 +2440,7 @@ function tick1s(){
     else renderMedia();
   }
   S.battery=S.charging?Math.min(100,S.battery+0.1):Math.max(1,S.battery-1/30);
-  renderRight();renderSys();renderSlot();fitBar(compactWidth());
+  renderRight();renderSys();renderSlot();limCheck();fitBar(compactWidth());
   if(S.state==='expanded'&&S.page===PAGE.claude)clTick();
 }
 
@@ -2012,7 +2449,7 @@ document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce);
 for(let i=0;i<60;i++)sample();
 renderApps();setApp('Chrome','a-chrome');renderClLauncher();
 renderClock();renderMedia();renderTodos();buildCal();renderNotes();renderShelf();renderRight();renderTimerPage();
-renderSlot();goPage(PAGE.todo,true);setState('compact',true);
+renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();setTimeout(gBlink,2500);
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);
 new ResizeObserver(()=>layout()).observe(document.documentElement);
