@@ -188,6 +188,7 @@ Keadaan mengambang memakai bayangan lembut dan garis cahaya tipis di tepi atas, 
      - Video: ikon film + judul (maks. 32 karakter) + garis progres 36 px
   8. Sedang dicas: ikon petir + persen
   9. Jendela pemakaian Claude 5 jam yang sedang berjalan: ikon jam pasir oranye Claude + `Resets in` + `3:12:40` (lihat "Batas pemakaian Claude"). Saat batas sudah tercapai, aktivitas ini naik ke posisi tepat setelah sesi Claude yang butuh jawaban (posisi 2)
+- Media yang di-pause tetap memegang slot selama 2 menit setelah sebelumnya diputar, lalu slot dilepas; session yang ditemukan dalam keadaan pause saat Gili mulai tidak memegang slot.
 - **Artwork musik** (revisi 8): selama sesi musik tampil di slot, ujung kiri slot menampilkan artwork lagu yang sedang diputar dari pemutar mana pun yang mengirimnya ke Windows (Spotify, YouTube Music dan YouTube di Chrome/Edge, Apple Music, Media Player, dan lainnya).
   - Ukuran tinggi pulau − 6 px (18 × 18 px pada pulau 24 px), jadi sisa 3 px di atas dan bawah; radius 5 px seperti sampul album kecil, dengan garis tepi tipis putih 14% supaya artwork gelap tetap terpisah dari pulau hitam. Artwork berada di dalam padding slot, di luar lengkung sudut pulau, jadi tidak memakai radius konsentris.
   - Berganti dengan cross-fade 180 ms saat lagu berganti; warna bar level di slot diambil dari warna dominan artwork (sama dengan ambient glow halaman Media).
@@ -526,6 +527,8 @@ Pulau yang dibuka pengguna (expanded atau pulau kontrol) berada di atas priorita
 | 8 | Shelf | Grid tetap 4 × 2 (maksimal 8 item, **tanpa scroll**). Tile ringkas: ikon jenis file dan nama satu baris; bundel menampilkan ikon tumpukan dengan jumlah file. Ringkasan jumlah file dan total ukuran di kiri | Seret tile keluar ke folder/aplikasi, hapus satu, Clear all |
 | 9 | Claude | Baris ringkasan jendela pemakaian 5 jam (bila fiturnya nyala), lalu satu baris per sesi yang hidup, urut Needs input → Working → Done (belum dilihat) → Idle: ikon status, nama sesi, folder, dan waktu (berjalan, lama selesai, atau sejak kapan idle). Baris Needs input menampilkan cuplikan pertanyaan di baris kedua; sesi Idle redup; pulau memanjang mengikuti jumlah sesi. Tanpa sesi: `No Claude sessions`. Halaman hanya ada bila integrasi Claude menyala | Klik baris membawa jendela sesi ke depan dan menandai Done sebagai sudah dilihat |
 | 10 | System | Grafik mini 60 detik untuk CPU, RAM, GPU, unduhan; sisa ruang C: | Klik membuka Task Manager |
+
+Tab untuk halaman yang belum dibangun tetap tampil dengan isi `Coming in Phase 2` atau `Coming in Phase 3`; tab Claude baru muncul di Fase 3 bersama integrasinya.
 
 **Todo hari ini**: todo yang jatuh tempo hari ini, ditambah todo tanpa tanggal yang belum selesai, ditambah todo tanpa tanggal yang diselesaikan hari ini. Rasio dan ring = jumlah selesai / total daftar itu. Kalau daftar kosong tampil `Nothing due today` saja, tanpa tombol.
 
