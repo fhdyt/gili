@@ -28,10 +28,13 @@ dotnet format TopBar.slnx --verify-no-changes
 dotnet run --project src/TopBar.App
 ```
 
-- Hanya satu instance yang bisa jalan (F-BAR-05). Tutup TopBar yang sedang jalan sebelum `dotnet run`, kalau tidak instance baru hanya memfokuskan yang lama lalu keluar.
-- Kalau proses dihentikan paksa dari debugger tanpa melepas AppBar, ruang di atas layar bisa tertinggal kosong. Restart Explorer untuk memulihkannya.
-- Mode demo (klik kanan bar → Demo mode, F-BAR-09) memutar skenario palsu untuk mengecek tampilan semua keadaan pulau tanpa kejadian nyata.
-- Instalasi (PRD 9.4): `dotnet publish` framework-dependent, disalin ke `%LOCALAPPDATA%\Programs\TopBar\`. `TopBar.ClaudeHook` dipublish NativeAOT, jadi butuh workload C++ Build Tools.
+- Hanya satu instance yang bisa jalan (F-BAR-05). Menjalankan TopBar saat sudah ada yang jalan hanya membuka Settings di instance lama lalu keluar, jadi tutup dulu instance lama sebelum `dotnet run`.
+- Menutup TopBar dari luar: `TopBar.exe --quit` (exe mana pun) meminta instance yang jalan keluar lewat jalur Quit biasa dan melepas ruang AppBar. Jangan pakai `taskkill`: perintah itu ikut menutup jendela tersembunyi WPF dan bisa membuat proses tetap hidup tanpa bar.
+- Kalau proses dihentikan paksa (debugger, `Stop-Process`) tanpa melepas AppBar, ruang di atas layar bisa tertinggal kosong. Restart Explorer untuk memulihkannya.
+- Build Debug punya item "Simulate crash" di menu klik kanan bar untuk menguji restart otomatis (PRD 11).
+- Pasang build Release ke `%LOCALAPPDATA%\Programs\TopBar\` lalu jalankan: `pwsh scripts/publish.ps1`. Hanya salinan terpasang yang menulis entri autostart (`HKCU\...\Run`); `dotnet run` tidak pernah mendaftarkan dirinya.
+- Mode demo (klik kanan bar → Demo mode, F-BAR-09) memutar skenario palsu untuk mengecek tampilan semua keadaan pulau tanpa kejadian nyata. Belum ada; masuk rencana 1c.
+- `TopBar.ClaudeHook` (Fase 3) dipublish NativeAOT, jadi butuh workload C++ Build Tools.
 
 ## Arsitektur
 

@@ -21,6 +21,11 @@
 - Semua angka yang berubah memakai digit tabular (`Typography.NumeralAlignment="Tabular"`).
 - Target performa: RAM < 120 MB, CPU diam < 1%. Polling dijeda saat bar tersembunyi (fullscreen) dan saat sleep.
 
+## Catatan eksekusi (26 Okt 2026)
+
+- Task 8: `taskkill` tanpa `/F` ternyata juga mengirim `WM_CLOSE` ke jendela tersembunyi WPF ("Hidden Window", "SystemResourceNotifyWindow", …), sehingga proses bisa tetap hidup tanpa bar. Sebagai gantinya ditambahkan `TopBar.exe --quit`: `SingleInstance.Acquire(wait, onActivateRequest, onQuitRequest)` mendengarkan named event `Local\TopBar.Quit`, dan `SingleInstance.RequestQuit()` memicunya. `App.OnStartup` menangani `--quit` sebelum hal lain. Skrip di Task 11 dan CLAUDE.md memakai `--quit`, bukan `taskkill`.
+- Task 8: kaca lewat accent policy terbukti blur di jendela yang tidak aktif (Strong dan Light), jadi baris "Material bar" di PRD 9.2 sudah diperbarui.
+
 ## Di luar rencana ini (Fase 1 lanjutan)
 
 - **Rencana 1b**: `IslandWindow`, keadaan wide/expanded/kartu/drop zone, animator pegas, hover +16 px, `IslandCoordinator` dan prioritas (F-ISL-02/03), media (F-ISL-04/05), ngecas (F-ISL-06), kerangka expanded + halaman Media (F-ISL-07).
