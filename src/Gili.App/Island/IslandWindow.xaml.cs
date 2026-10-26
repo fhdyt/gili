@@ -9,7 +9,9 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using Gili.App.Controls;
+using Gili.App.Mascot;
 using Gili.Core.Island;
+using Gili.Core.Mascot;
 using Gili.Core.Motion;
 using Gili.Platform.Interop;
 using Gili.Platform.Shell;
@@ -36,7 +38,15 @@ public partial class IslandWindow : Window
     private readonly Spring _radius = new(12);
     private readonly Spring _float = new(0);
     private readonly Spring _bubble = new(0);
+    private readonly Spring _giliInside = new(1) { Parameters = GiliRules.ShapeSpring };
+    private readonly Spring _giliCircle = new(0) { Parameters = GiliRules.ShapeSpring };
     private readonly Spring[] _springs;
+    private readonly GiliService _gili;
+    private readonly ScaleTransform _giliInsideScale = new(1, 1);
+    private readonly TranslateTransform _giliInsideShift = new();
+    private readonly ScaleTransform _giliCircleScale = new(0.6, 0.6);
+    private bool? _giliInsideOn;
+    private bool? _giliCircleOn;
     private readonly ScaleTransform _bubbleScale = new(0, 0);
     private readonly RectangleGeometry _clip = new();
     private readonly DispatcherTimer _awayTimer = new() { Interval = TimeSpan.FromSeconds(3) };
@@ -54,16 +64,21 @@ public partial class IslandWindow : Window
     private int _wheel;
     private DateTime _wheelPausedUntil;
 
-    public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings)
+    public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings, GiliService gili)
     {
         _island = island;
         _vm = vm;
         _settings = settings;
-        _springs = [_width, _height, _top, _radius, _float, _bubble];
+        _gili = gili;
+        _springs = [_width, _height, _top, _radius, _float, _bubble, _giliInside, _giliCircle];
         InitializeComponent();
         DataContext = vm;
         Body.Clip = _clip;
         Bubble.RenderTransform = _bubbleScale;
+        GiliInside.RenderTransform = new TransformGroup { Children = { _giliInsideScale, _giliInsideShift } };
+        GiliCircle.RenderTransform = _giliCircleScale;
+        gili.Register(GiliInside);
+        gili.Register(GiliCircleEyes);
         ExpandedLayer.Width = Math.Min(680, SystemParameters.PrimaryScreenWidth - IslandLayout.ScreenMargin);
         BuildTabs();
         BuildPages();
@@ -75,6 +90,7 @@ public partial class IslandWindow : Window
         {
             if (!_floatingEnvelope) SetEnvelope(false);
             Relayout();
+            UpdateGili();
         };
         CompactContent.SizeChanged += (_, _) => Relayout();
         WideContent.SizeChanged += (_, _) => Relayout();
@@ -132,6 +148,7 @@ public partial class IslandWindow : Window
         _hovered = view.Mode == IslandMode.Compact && Body.IsMouseOver;
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
+        UpdateGili();
         var width = Floats(view.Mode)
             ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, 178).Width
             : 0;
@@ -234,6 +251,53 @@ public partial class IslandWindow : Window
         _bubbleScale.ScaleX = scale;
         _bubbleScale.ScaleY = scale;
         Bubble.IsHitTestVisible = _bubble.Target > 0;
+
+        // Gili's eyes shrink and slide out of the island's left end while the circle drips from that end to 6 px
+        // beside it; both follow the island's width every frame, hover included (PRD 6.3 "Berpindah bentuk").
+        var inside = _giliInside.Value;
+        _giliInsideScale.ScaleX = _giliInsideScale.ScaleY = 1 - 0.5 * (1 - inside);
+        _giliInsideShift.X = -12 * (1 - inside);
+        var circle = _giliCircle.Value;
+        var islandLeft = (Width - w) / 2;
+        GiliCircle.Width = GiliCircle.Height = s.IslandHeight;
+        GiliCircle.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
+        Canvas.SetLeft(GiliCircle, islandLeft - s.IslandHeight / 2.0 + circle * (-IslandLayout.BubbleGap - s.IslandHeight / 2.0));
+        Canvas.SetTop(GiliCircle, (s.BarHeight - s.IslandHeight) / 2.0);
+        _giliCircleScale.ScaleX = _giliCircleScale.ScaleY = 0.6 + 0.4 * circle;
+    }
+
+    /// <summary>
+    /// Gili lives in the idle compact island, in the circle beside the island while something else shows (and in the
+    /// wide island), and beside the tab menu while open; it is gone while a card or the drop zone floats or in fullscreen.
+    /// </summary>
+    private void UpdateGili()
+    {
+        var show = _settings.Current.ShowGili && _mode != IslandMode.Hidden;
+        var insideOn = show && _mode == IslandMode.Compact && !_vm.HasActivity;
+        var circleOn = show && ((_mode == IslandMode.Compact && _vm.HasActivity) || _mode == IslandMode.Wide);
+        var instant = !SystemParameters.ClientAreaAnimation;
+        if (insideOn != _giliInsideOn)
+        {
+            _giliInsideOn = insideOn;
+            Retarget(_giliInside, insideOn ? 1 : 0, null, instant);
+            // Fading in waits 60 ms, so the circle has started merging back before the eyes reappear.
+            GiliInside.BeginAnimation(OpacityProperty, new DoubleAnimation(insideOn ? 1 : 0, TimeSpan.FromMilliseconds(instant ? 100 : 200))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(insideOn && !instant ? 60 : 0),
+            });
+        }
+        if (circleOn != _giliCircleOn)
+        {
+            _giliCircleOn = circleOn;
+            Retarget(_giliCircle, circleOn ? 1 : 0, null, instant);
+            GiliCircle.IsHitTestVisible = circleOn;
+            GiliCircle.BeginAnimation(OpacityProperty, new DoubleAnimation(circleOn ? 1 : 0, TimeSpan.FromMilliseconds(instant ? 100 : 160)));
+        }
+        if (instant) Apply();
+        else StartAnimating();
+        _gili.SetActiveForm(circleOn ? GiliForm.Circle : GiliForm.InIsland);
+        _gili.SetVisible(insideOn || circleOn);
+        _gili.SetMusicPlayingInSlot(_vm.ShowMediaSlot && _vm.MusicPlaying);
     }
 
     private void ShowLayers(IslandMode mode)
@@ -468,6 +532,18 @@ public partial class IslandWindow : Window
                 break;
             case nameof(IslandViewModel.MusicPlaying):
                 UpdateTabs(animate: false);
+                UpdateGili();
+                break;
+            case nameof(IslandViewModel.HasActivity):
+                UpdateGili();
+                break;
+            case nameof(IslandViewModel.Slot) or nameof(IslandViewModel.MediaSlotTitle) or nameof(IslandViewModel.IsMusic):
+                // New slot content fades in over 180 ms (mockup slotIn).
+                if (SystemParameters.ClientAreaAnimation)
+                {
+                    CompactContent.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
+                }
+                UpdateGili();
                 break;
         }
     }

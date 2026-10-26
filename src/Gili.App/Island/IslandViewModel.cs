@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Gili.Core.Formatting;
 using Gili.Core.Island;
 using Gili.Core.Layout;
 using Gili.Core.Media;
@@ -17,26 +16,27 @@ public sealed partial class IslandViewModel : ObservableObject
 {
     private const string Phase2 = "Coming in Phase 2";
     private const string Phase3 = "Coming in Phase 3";
+    private const string Phase4 = "Coming in Phase 4";
+    private static readonly Color FallbackGlow = Color.FromRgb(0x30, 0xD1, 0x58);
     private static readonly Brush Accent = Frozen("#30D158");
     private static readonly Brush VideoOrange = Frozen("#FF9F0A");
     private static readonly Brush Text = Frozen("#F5F5F7");
 
     private readonly IslandController _island;
-    private readonly ClockService _clock;
     private readonly SettingsHub _settings;
     private byte[]? _coverBytes;
     private string? _levelColor;
 
-    [ObservableProperty] private string _time = "";
-    [ObservableProperty] private string _date = "";
     [ObservableProperty] private double _fontSize = 12;
+    [ObservableProperty] private int _islandHeight = 24;
+    [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowClock), nameof(ShowMediaSlot), nameof(ShowChargingSlot))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowClock), nameof(ShowMediaSlot))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(HasActivity))]
     private bool _hasMedia;
 
     [ObservableProperty] private bool _isMusic;
@@ -48,10 +48,17 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private string _mediaArtist = "";
     [ObservableProperty] private string _mediaApp = "";
     [ObservableProperty] private Brush _levelBrush = Accent;
+    [ObservableProperty] private Color _glowPrimary = FallbackGlow;
+    [ObservableProperty] private Color _glowSecondary = FallbackGlow;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCover))]
     private ImageSource? _cover;
+
+    /// <summary>The track's artwork at the slot's size (twice that in pixels, for high DPI).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasArtwork))]
+    private ImageSource? _artwork;
 
     [ObservableProperty] private double _progress;
     [ObservableProperty] private string _positionText = "";
@@ -72,12 +79,12 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private Geometry? _bubbleGlyph;
     [ObservableProperty] private Brush _bubbleBrush = Text;
     [ObservableProperty] private bool _bubbleFilled;
+    [ObservableProperty] private bool _bubbleIsMusic;
     [ObservableProperty] private int _selectedTab;
 
-    public IslandViewModel(IslandController island, ClockService clock, SettingsHub settings)
+    public IslandViewModel(IslandController island, SettingsHub settings)
     {
         _island = island;
-        _clock = clock;
         _settings = settings;
         // The Claude page joins in Phase 3, when its integration exists.
         Tabs =
@@ -88,10 +95,10 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Calendar, "Calendar", Glyph("Icon.Calendar"), Phase2),
             new(IslandPage.Todo, "Todo", Glyph("Icon.Todo"), Phase2),
             new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), Phase2),
+            new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), Phase3),
             new(IslandPage.System, "System", Glyph("Icon.Cpu"), Phase3),
         ];
-        clock.Ticked += UpdateClock;
         settings.Changed += _ => UpdateSettings();
         island.ViewChanged += UpdateView;
         island.PowerChanged += UpdatePower;
@@ -104,26 +111,29 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public IReadOnlyList<IslandTab> Tabs { get; }
 
-    public bool ShowClock => Slot is not (ActivityKind.Media or ActivityKind.Charging) || (Slot == ActivityKind.Media && !HasMedia);
-
     public bool ShowMediaSlot => Slot == ActivityKind.Media && HasMedia;
 
     public bool ShowChargingSlot => Slot == ActivityKind.Charging;
 
+    /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot;
+
     public bool HasCover => Cover is not null;
+
+    public bool HasArtwork => Artwork is not null;
 
     public bool HasWideValue => WideValue is not null;
 
-    private void UpdateClock()
-    {
-        Time = ClockText.Time(_clock.Now, _settings.Current.Use24HourClock);
-        Date = ClockText.Date(_clock.Now);
-    }
-
     private void UpdateSettings()
     {
-        FontSize = BarMetrics.IslandFontSize(_settings.Current.IslandHeight);
-        UpdateClock();
+        var height = _settings.Current.IslandHeight;
+        FontSize = BarMetrics.IslandFontSize(height);
+        IslandHeight = height;
+        if (ArtworkSize != height - 6)
+        {
+            ArtworkSize = height - 6;
+            Artwork = Decode(_coverBytes, (int)ArtworkSize * 2);
+        }
     }
 
     private void UpdatePower() =>
@@ -146,6 +156,8 @@ public sealed partial class IslandViewModel : ObservableObject
 
     private void UpdateBubble()
     {
+        // Music as the second activity shows its artwork in the bubble instead of a note glyph.
+        BubbleIsMusic = _island.View.Bubble == ActivityKind.Media && IsMusic;
         (BubbleGlyph, BubbleBrush, BubbleFilled) = _island.View.Bubble switch
         {
             ActivityKind.Media => (Glyph(IsVideo ? "Icon.Film" : "Icon.Music"), IsVideo ? VideoOrange : Accent, false),
@@ -176,11 +188,22 @@ public sealed partial class IslandViewModel : ObservableObject
         MediaTitle = media.Title;
         MediaArtist = media.Artist;
         MediaApp = MediaRules.AppName(media.AppId);
-        var color = MediaRules.LevelColor(media.AppId);
+        if (!ReferenceEquals(media.Cover, _coverBytes))
+        {
+            _coverBytes = media.Cover;
+            Cover = Decode(media.Cover, 224);
+            Artwork = Decode(media.Cover, (int)ArtworkSize * 2);
+            _levelColor = null;
+        }
+        // The artwork's main colour tints the level meter, the source dot and the glow; the app's colour without artwork.
+        var palette = Cover is BitmapSource cover ? Palette(cover) : null;
+        var color = palette?.Primary.Hex ?? MediaRules.LevelColor(media.AppId);
         if (color != _levelColor)
         {
             _levelColor = color;
             LevelBrush = Frozen(color);
+            GlowPrimary = (Color)ColorConverter.ConvertFromString(color);
+            GlowSecondary = palette is { } p ? (Color)ColorConverter.ConvertFromString(p.Secondary.Hex) : GlowPrimary;
         }
         HasTimeline = media.HasTimeline;
         Progress = MediaRules.Progress(position, media.Duration);
@@ -189,15 +212,25 @@ public sealed partial class IslandViewModel : ObservableObject
         RemainingText = MediaRules.Remaining(position, media.Duration);
         CanSeek = media.CanSeek && media.HasTimeline;
         CanSkip = media.CanSkip;
-        if (!ReferenceEquals(media.Cover, _coverBytes))
-        {
-            _coverBytes = media.Cover;
-            Cover = Decode(media.Cover);
-        }
         UpdateBubble();
     }
 
-    private static ImageSource? Decode(byte[]? bytes)
+    private (Rgb Primary, Rgb Secondary)? _palette;
+    private BitmapSource? _paletteOf;
+
+    /// <summary>Worked out once per artwork (PRD 8.1), from the 224 px cover the page already holds.</summary>
+    private (Rgb Primary, Rgb Secondary)? Palette(BitmapSource cover)
+    {
+        if (ReferenceEquals(cover, _paletteOf)) return _palette;
+        _paletteOf = cover;
+        var pixels = new FormatConvertedBitmap(cover, PixelFormats.Bgra32, null, 0);
+        var bytes = new byte[pixels.PixelWidth * pixels.PixelHeight * 4];
+        pixels.CopyPixels(bytes, pixels.PixelWidth * 4, 0);
+        _palette = ArtworkPalette.From(bytes, pixels.PixelWidth, pixels.PixelHeight);
+        return _palette;
+    }
+
+    private static ImageSource? Decode(byte[]? bytes, int width)
     {
         if (bytes is not { Length: > 0 }) return null;
         try
@@ -206,7 +239,7 @@ public sealed partial class IslandViewModel : ObservableObject
             var image = new BitmapImage();
             image.BeginInit();
             image.CacheOption = BitmapCacheOption.OnLoad;
-            image.DecodePixelWidth = 224;
+            image.DecodePixelWidth = width;
             image.StreamSource = stream;
             image.EndInit();
             image.Freeze();

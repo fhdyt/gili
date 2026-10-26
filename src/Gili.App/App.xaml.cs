@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Markup;
 using Gili.App.Bar;
 using Gili.App.Island;
+using Gili.App.Mascot;
 using Gili.App.Settings;
 using Gili.Core;
 using Gili.Core.Diagnostics;
@@ -29,6 +30,7 @@ public partial class App : Application
     private MediaService? _media;
     private IslandController? _islandController;
     private IslandWindow? _islandWindow;
+    private GiliService? _gili;
     private BarWindow? _bar;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
@@ -84,7 +86,8 @@ public partial class App : Application
         _bar.Show();
 
         // Owned by the bar, so the island stays above it whenever the bar re-asserts its topmost place.
-        _islandWindow = new IslandWindow(_islandController, new IslandViewModel(_islandController, _clock, _settings), _settings)
+        _gili = new GiliService();
+        _islandWindow = new IslandWindow(_islandController, new IslandViewModel(_islandController, _settings), _settings, _gili)
         {
             Owner = _bar,
         };
@@ -97,6 +100,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _stats?.Dispose();
+        _gili?.Dispose();
         _islandController?.Dispose();
         _media?.Dispose();
         _bar?.ReleaseAppBar();

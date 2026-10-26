@@ -2,6 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:Gili.App.Controls"
+        xmlns:m="clr-namespace:Gili.App.Mascot"
+        xmlns:gm="clr-namespace:Gili.Core.Mascot;assembly=Gili.Core"
         Title="Gili Island" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True" UseLayoutRounding="True"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
@@ -80,19 +82,42 @@
                 <!-- Thin light line along the top edge while floating, so the black panel stands apart from dark windows. -->
                 <Border x:Name="TopHighlight" BorderBrush="#17FFFFFF" BorderThickness="0,1,0,0" Opacity="0" IsHitTestVisible="False" />
 
+                <!-- Gili in the idle island: the eyes travel the island 9 px from its ends (PRD 6.3 "Maskot Gili"). -->
+                <m:GiliEyes x:Name="GiliInside" Form="{x:Static gm:GiliForm.InIsland}" IslandHeight="{Binding IslandHeight}"
+                            Margin="9,0" VerticalAlignment="Stretch" RenderTransformOrigin="0.5,0.5" />
+
                 <!-- Layers are wider than the island and centred, so measuring their content never depends on the animated width. -->
                 <Grid x:Name="CompactLayer" Width="760" HorizontalAlignment="Center" TextElement.FontSize="{Binding FontSize}">
                     <Grid x:Name="CompactContent" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Visibility="{Binding ShowClock, Converter={StaticResource VisibleWhen}}">
-                            <TextBlock Text="{Binding Time}" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
-                            <TextBlock Text="{Binding Date}" Foreground="#8E8E93" Margin="6,0,0,0" />
-                        </StackPanel>
-
                         <!-- Activities span at least the 200 px island edge to edge: icon left, value right (PRD 6.3). -->
                         <Grid Visibility="{Binding ShowMediaSlot, Converter={StaticResource VisibleWhen}}">
-                            <DockPanel MinWidth="172" Visibility="{Binding IsMusic, Converter={StaticResource VisibleWhen}}">
-                                <c:LevelMeter DockPanel.Dock="Left" IsPlaying="{Binding IsPlaying}" BarBrush="{Binding LevelBrush}" />
-                                <Button DockPanel.Dock="Right" Style="{StaticResource SlotButton}" Margin="6,0,0,0" Click="OnPlayPause">
+                            <!-- Music: artwork, title, level meter, play/pause, spread end to end (mockup .slot). -->
+                            <Grid MinWidth="172" Visibility="{Binding IsMusic, Converter={StaticResource VisibleWhen}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" MinWidth="6" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" MinWidth="6" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" MinWidth="6" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <!-- Artwork past the island's corner arc: a 5 px radius and a faint white edge (PRD 6.3 "Artwork musik"). -->
+                                <Border Width="{Binding ArtworkSize}" Height="{Binding ArtworkSize}" CornerRadius="5" Background="#1C1C1E">
+                                    <Grid>
+                                        <c:IconView Glyph="{StaticResource Icon.Music}" Width="11" Height="11" Foreground="#8E8E93" />
+                                        <Border CornerRadius="5" Visibility="{Binding HasArtwork, Converter={StaticResource VisibleWhen}}">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="{Binding Artwork}" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                        </Border>
+                                        <Border CornerRadius="5" BorderBrush="#24FFFFFF" BorderThickness="0.5" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Grid.Column="2" Text="{Binding MediaSlotTitle}" VerticalAlignment="Center" />
+                                <c:LevelMeter Grid.Column="4" IsPlaying="{Binding IsPlaying}" BarBrush="{Binding LevelBrush}" VerticalAlignment="Center" />
+                                <Button Grid.Column="6" Style="{StaticResource SlotButton}" Click="OnPlayPause"
+                                        AutomationProperties.Name="Play or pause">
                                     <Grid>
                                         <c:IconView Glyph="{StaticResource Icon.Pause}" Filled="True" Width="11" Height="11"
                                                     Visibility="{Binding IsPlaying, Converter={StaticResource VisibleWhen}}" />
@@ -100,8 +125,7 @@
                                                     Visibility="{Binding IsPlaying, Converter={StaticResource VisibleWhenFalse}}" />
                                     </Grid>
                                 </Button>
-                                <TextBlock Text="{Binding MediaSlotTitle}" Margin="6,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </DockPanel>
+                            </Grid>
                             <DockPanel MinWidth="172" Visibility="{Binding IsVideo, Converter={StaticResource VisibleWhen}}">
                                 <c:IconView DockPanel.Dock="Left" Glyph="{StaticResource Icon.Film}" Width="14" Height="14" Foreground="#FF9F0A" />
                                 <Grid DockPanel.Dock="Right" Width="36" Height="3" Margin="6,0,0,0" VerticalAlignment="Center"
@@ -175,7 +199,27 @@
         </Border>
 
         <Border x:Name="Bubble" Background="#000000" RenderTransformOrigin="0.5,0.5" MouseLeftButtonUp="OnBubbleClick">
-            <c:IconView Glyph="{Binding BubbleGlyph}" Filled="{Binding BubbleFilled}" Foreground="{Binding BubbleBrush}" Width="13" Height="13" />
+            <Grid>
+                <c:IconView Glyph="{Binding BubbleGlyph}" Filled="{Binding BubbleFilled}" Foreground="{Binding BubbleBrush}" Width="13" Height="13"
+                            Visibility="{Binding BubbleIsMusic, Converter={StaticResource VisibleWhenFalse}}" />
+                <!-- Music as the second activity: its artwork as a circle, 3 px inside the bubble. -->
+                <Grid Margin="3" Visibility="{Binding BubbleIsMusic, Converter={StaticResource VisibleWhen}}">
+                    <Ellipse Fill="#1C1C1E" />
+                    <c:IconView Glyph="{StaticResource Icon.Music}" Width="11" Height="11" Foreground="#8E8E93" />
+                    <Ellipse Visibility="{Binding HasArtwork, Converter={StaticResource VisibleWhen}}">
+                        <Ellipse.Fill>
+                            <ImageBrush ImageSource="{Binding Artwork}" Stretch="UniformToFill" />
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse Stroke="#24FFFFFF" StrokeThickness="0.5" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Gili's circle 6 px left of the island while an activity shows (PRD 6.3 "Maskot Gili"). -->
+        <Border x:Name="GiliCircle" Background="#000000" RenderTransformOrigin="0.5,0.5" Opacity="0" IsHitTestVisible="False"
+                MouseLeftButtonUp="OnBodyClick">
+            <m:GiliEyes x:Name="GiliCircleEyes" Form="{x:Static gm:GiliForm.Circle}" IslandHeight="{Binding IslandHeight}" />
         </Border>
     </Canvas>
 </Window>
