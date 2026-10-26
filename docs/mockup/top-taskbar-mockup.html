@@ -354,6 +354,12 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
    its offset is a multiple of its own width, so it stays aligned while the island grows to the Notes size.
    Corners are concentric with the island: 14 px inset + 18 px menu radius = 32 px island radius; 3 px inset + 15 px = 18 px for the highlight. */
 .xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(var(--n,9),1fr);gap:2px}
+/* Gili sits left of the menu while the island is open: a circle as tall as the menu, in the menu's own material,
+   concentric with the island's corner like the menu (14 px inset + 18 px radius). The menu starts 6 px after it. */
+.xgili{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;--es:9px;--er:3px}
+.xgili .geyes{gap:3px}
+.xtabs.wg{left:56px}
+.iw.ctlm .xgili{display:none}
 .xtab[hidden]{display:none}
 .xind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px - (var(--n,9) - 1) * 2px) / var(--n,9));border-radius:15px;background:rgba(255,255,255,.14);
   transform:translateX(calc(var(--i,0) * (100% + 2px)));transition:transform 320ms var(--out)}
@@ -870,6 +876,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       </div>
       <div class="layer L-wide"><span class="lwI" id="lwI"></span></div>
       <div class="layer L-exp" id="lx">
+        <span class="xgili" id="xGili" aria-hidden="true"><span class="geyes"><i></i><i></i></span></span>
         <div class="xtabs" id="xtabs" role="tablist" aria-label="Island pages"><span class="xind" id="xind" aria-hidden="true"></span></div>
         <div class="xp" id="xp">
           <div class="track" id="track">
@@ -1163,7 +1170,7 @@ const slot=$('#slot'),track=$('#track');
 const pCam=$('#pCam'),pMic=$('#pMic');
 
 /* ---------- Gili: eyes follow the pointer and blink ---------- */
-const gCirc=$('#gCirc'),gEyes=[$('#gIn .geyes'),$('#gCirc .geyes')];
+const gCirc=$('#gCirc'),xGili=$('#xGili'),gEyes=[$('#gIn .geyes'),$('#gCirc .geyes'),$('#xGili .geyes')];
 const G={tx:0,ty:0,x:0,y:0,vx:0,vy:0,raf:0,last:0,still:0,px:-1,py:-1};
 const SP_GILI=LIN?spring(.8,.45):{dur:480,ease:'cubic-bezier(.34,1.3,.64,1)'};
 for(const el of[$('#gIn'),gCirc]){el.style.setProperty('--gd',SP_GILI.dur+'ms');el.style.setProperty('--ge',SP_GILI.ease)}
@@ -1174,8 +1181,9 @@ addEventListener('pointermove',e=>{G.px=e.clientX;G.py=e.clientY;G.still=Date.no
 function gAim(){
   if(S.reduce||GX.asleep)return;
   const p=gTarget();if(!p)return;
-  const r=(gCirc.classList.contains('on')?gCirc:$('#gIn')).getBoundingClientRect();
-  const span=gCirc.classList.contains('on')?400:innerWidth*.4;
+  // Open island: Gili left of the tab menu. Otherwise the circle beside the island, or the eyes in the idle island.
+  const ref=xGiliOn()?xGili:gCirc.classList.contains('on')?gCirc:$('#gIn'),r=ref.getBoundingClientRect();
+  const span=ref===$('#gIn')?innerWidth*.4:400;
   G.tx=Math.max(-1,Math.min(1,(p[0]-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(p[1]-innerHeight/2)/(innerHeight*.4)));
   if(!G.raf)G.raf=requestAnimationFrame(gStep);
 }
@@ -1188,6 +1196,7 @@ function gStep(t){
   const room=Math.max(0,(iw.offsetWidth-18-gEyes[0].offsetWidth)/2);
   gEyes[0].style.setProperty('--ex',(G.x*room).toFixed(2)+'px');gEyes[0].style.setProperty('--ey',(G.y*Math.max(0,(iw.offsetHeight-gEyes[0].offsetHeight)/2-3)).toFixed(2)+'px');
   gEyes[1].style.setProperty('--ex',(G.x*2).toFixed(2)+'px');gEyes[1].style.setProperty('--ey',(G.y*2).toFixed(2)+'px');
+  gEyes[2].style.setProperty('--ex',(G.x*3).toFixed(2)+'px');gEyes[2].style.setProperty('--ey',(G.y*3).toFixed(2)+'px');
   if(Math.abs(G.x-G.tx)+Math.abs(G.y-G.ty)+Math.abs(G.vx)+Math.abs(G.vy)<.003){G.raf=0;G.last=0;return}
   G.raf=requestAnimationFrame(gStep);
 }
@@ -1234,6 +1243,7 @@ function gExpr(){
   // Asleep, the eyes settle in the middle and stop following.
   if(m==='sleep'){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}
 }
+const xGiliOn=()=>S.gili&&S.state==='expanded'&&S.page!==PAGE.controls;
 const gHeld=()=>GX.watchEl&&Date.now()<GX.watchUntil||Date.now()<GX.glanceUntil;
 // What the eyes look at: a note on the move, then the timer digits during a glance, then the pointer.
 function gTarget(){
@@ -1344,6 +1354,8 @@ function layout(){
   const idle=s==='compact'&&!activities().length,startle=s==='card'&&STARTLE.includes(S.card);
   const gOn=S.gili&&!S.fs&&(startle||!idle&&!FLOAT.includes(s)),isLeft=innerWidth/2-W/2;
   $('#gIn').classList.toggle('off',!(S.gili&&idle));
+  // Open with the tab menu: Gili moves into the island, left of the menu.
+  xGili.hidden=!S.gili;$('#xtabs').classList.toggle('wg',!!S.gili);
   gCirc.classList.toggle('on',gOn);gCirc.tabIndex=gOn?0:-1;
   gCirc.style.top=(startle?T:ct)+'px';gCirc.style.width=gCirc.style.height=ih+'px';
   gCirc.style.left=(gOn?isLeft-6-ih:isLeft-ih/2)+'px';
