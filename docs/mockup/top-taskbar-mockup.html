@@ -2095,20 +2095,22 @@ function limCheck(){
 /* Settings window */
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
-  Appearance:[['opacity','Bar opacity','range'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
+  Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['temp','CPU temperature'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']),
   Claude:[['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
 };
 let setSec='General';
-function sget(k){const[a,b]=k.split('.');return a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='auto'?1:S[k]}
+function sget(k){const[a,b]=k.split('.');return a==='L'?S.left[b]:a==='T'?S.tabs[b]:a==='M'?S.mods[b]:k==='opacity'?+$('#opA').value:k==='glass'?GLASS[$('#glass .on')?.dataset.g]??'strong':k==='auto'?1:S[k]}
+const GLASS={0:'off',12:'light',30:'strong'};
 function sput(k,v){
   const[a,b]=k.split('.');
   if(a==='L')S.left[b]=v;
   else if(a==='T'){S.tabs[b]=v;if(!S.tabs.some(Boolean)){S.tabs[b]=1;hint('Keep at least one page')}}
   else if(a==='M')S.mods[b]=v;
   else if(k==='auto'){hint('Only the installed copy starts with Windows');return}
+  else if(k==='glass'){const g=Object.keys(GLASS).find(x=>GLASS[x]===v);$(`#glass button[data-g="${g}"]`).click()}
   else S[k]=v;
   if(k==='hideTb'&&!v&&S.pos==='bottom'){S.pos='top';hint('Moved to the top because the Windows taskbar is back')}
   applySettings();renderSettings();
@@ -2125,8 +2127,8 @@ function renderSettings(){
   $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
   $('#setp').innerHTML=`<h3>${setSec}</h3>`+SET[setSec].map(([k,label,type,opts,help])=>{
     const v=sget(k),dis=k==='pos'&&!S.hideTb;
-    const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${S.pos===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
-      :type==='range'?`<input type="range" min="40" max="100" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}%</span>`
+    const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
+      :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
     return `<div class="srow ${dis?'dis':''}"><span>${label}${dis?'<small>Hide the Windows taskbar first</small>':help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
   }).join('');
@@ -2142,7 +2144,15 @@ $('#setp').addEventListener('click',e=>{
   b.classList.contains('sw')?sput(b.dataset.k,b.getAttribute('aria-checked')==='true'?0:1):sput(b.dataset.k,b.dataset.v);
 });
 // Opacity updates live without rebuilding the row, so dragging the slider keeps working.
-$('#setp').addEventListener('input',e=>{if(e.target.dataset.k!=='opacity')return;const v=+e.target.value;$('#opA').value=v;$('#opA').oninput({target:$('#opA')});e.target.nextElementSibling.textContent=v+'%'});
+$('#setp').addEventListener('input',e=>{
+  const k=e.target.dataset.k,v=+e.target.value;
+  if(k==='opacity'){$('#opA').value=v;$('#opA').oninput({target:$('#opA')});e.target.nextElementSibling.textContent=v+'%';return}
+  if(k!=='barH'&&k!=='islH')return;
+  S[k]=v;$('#'+k).value=v;setHeights();
+  e.target.nextElementSibling.textContent=v+' px';
+  const isl=$('#setp input[data-k="islH"]');
+  if(isl){isl.max=S.barH-4;isl.value=S.islH;isl.nextElementSibling.textContent=S.islH+' px'}
+});
 
 
 /* quick events */
@@ -2525,8 +2535,8 @@ function setHeights(){
   document.documentElement.style.setProperty('--isl-h',S.islH+'px');
   if(!S.reduce)setMotion(SP_WIDE);layout();
 }
-$('#barH').oninput=e=>{S.barH=+e.target.value;setHeights()};
-$('#islH').oninput=e=>{S.islH=+e.target.value;setHeights()};
+$('#barH').oninput=e=>{S.barH=+e.target.value;setHeights();if(!$('#setw').hidden&&setSec==='Appearance')renderSettings()};
+$('#islH').oninput=e=>{S.islH=+e.target.value;setHeights();if(!$('#setw').hidden&&setSec==='Appearance')renderSettings()};
 $('#opA').oninput=e=>{
   const v=+e.target.value;$('#opAv').textContent=v+'%';
   document.documentElement.style.setProperty('--bar-a',(v/100).toFixed(2));
