@@ -389,7 +389,8 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>Real pages replace their placeholders here as they are built (Media in Task 11, the rest in Phases 2–3).</summary>
-    private FrameworkElement CreatePage(IslandTab tab) => Placeholder(tab);
+    private FrameworkElement CreatePage(IslandTab tab) =>
+        tab.Page == IslandPage.Media ? new MediaPage(_island.Media) : Placeholder(tab);
 
     private static FrameworkElement Placeholder(IslandTab tab)
     {
