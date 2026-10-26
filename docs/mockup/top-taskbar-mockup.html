@@ -1,0 +1,2001 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TopBar Mockup</title>
+<style>
+:root{
+  --bar-rgb:22,22,24;--bar-a:.78;--bar-blur:30px;
+  --island:#000;--surface:#1c1c1e;--ctl:#2c2c2e;--ctl-h:#3a3a3c;--line:#3a3a3c;
+  --text:#f5f5f7;--text2:#8e8e93;--text3:#636366;
+  --accent:#30d158;--done:#0f2a17;--warn:#ffd60a;--danger:#ff453a;--orange:#ff9f0a;--blue:#0a84ff;--claude:#d97757;
+  --font:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+  --out:cubic-bezier(.16,1,.3,1);
+  --pop:cubic-bezier(.34,1.3,.64,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:#0b1020;color:var(--text);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(48,209,88,.32);color:#fff}
+input,textarea{caret-color:var(--accent)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;display:block}
+.num{font-variant-numeric:tabular-nums}
+.aic{width:16px;height:16px;display:block;flex-shrink:0}
+
+/* desktop */
+.desk{position:fixed;inset:0;overflow:hidden}
+.wall{position:absolute;inset:0;background:
+  radial-gradient(38% 70% at 18% 0%,#7c3aed 0%,transparent 72%),
+  radial-gradient(38% 70% at 82% 0%,#2563eb 0%,transparent 72%),
+  radial-gradient(55% 45% at 50% 100%,#3b5bff 0%,transparent 70%),
+  radial-gradient(35% 45% at 22% 85%,#8b5cf6 0%,transparent 70%),
+  linear-gradient(180deg,#141a3a 0%,#161b45 55%,#2738a8 100%)}
+.win{position:absolute;background:#202020;border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden;
+  box-shadow:0 24px 60px -10px rgba(0,0,0,.5);z-index:4;transition:top 300ms var(--out),height 300ms var(--out),border-radius 300ms}
+.win .tb{height:32px;display:flex;align-items:center;gap:8px;padding:0 0 0 12px;font-size:12px;color:#c7c7cc;background:#2b2b2b;user-select:none}
+.win .tb .wc{margin-left:auto;display:flex;height:100%}
+.win .tb .wc span{width:46px;display:grid;place-items:center;color:#c7c7cc}
+.win .tb .wc .ic{width:12px;height:12px;stroke-width:1.4}
+#winA{top:var(--bar-h,32px);left:0;width:100%;height:calc(100% - 48px - var(--bar-h,32px));border-radius:0}
+#winB{top:120px;left:52%;width:40%;height:52%}
+.yt{display:flex;gap:20px;padding:20px}
+.yt .vid{flex:0 0 58%;aspect-ratio:16/9;border-radius:12px;background:linear-gradient(135deg,#f97316,#9f1239);display:grid;place-items:center;color:#fff}
+.yt .vid .ic{width:48px;height:48px}
+.yt .ls{flex:1;display:flex;flex-direction:column;gap:12px}
+.yt .ls i{display:block;height:12px;border-radius:6px;background:#2f2f2f}
+.code{padding:14px 16px;font:12px/1.8 Consolas,"Cascadia Code",monospace;color:#9cdcfe;white-space:pre}
+.code .k{color:#c586c0}.code .c{color:#6a9955}.code .t{color:#4ec9b0}
+
+/* bar */
+.bar{position:absolute;top:0;left:0;right:0;height:var(--bar-h,32px);display:flex;align-items:center;justify-content:space-between;padding:0 10px;
+  font-size:12px;letter-spacing:.01em;z-index:20;
+  background:rgba(var(--bar-rgb),var(--bar-a));backdrop-filter:blur(var(--bar-blur)) saturate(170%);-webkit-backdrop-filter:blur(var(--bar-blur)) saturate(170%);
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.06);
+  transition:background-color 220ms ease,backdrop-filter 220ms ease,-webkit-backdrop-filter 220ms ease,box-shadow 220ms ease,opacity 200ms ease,transform 260ms var(--out)}
+/* While the island floats, only the bar's material goes away; its content stays unless the panel covers it. */
+.bar.focus,body.solid .bar.focus{background:rgba(var(--bar-rgb),0);backdrop-filter:blur(0px) saturate(100%);-webkit-backdrop-filter:blur(0px) saturate(100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,0)}
+.bar.focus .left,.bar.focus .right{text-shadow:0 1px 3px rgba(0,0,0,.55)}
+.under{opacity:0!important;pointer-events:none}
+.left,.right{display:flex;align-items:center;gap:12px;min-width:0}
+.launch{display:flex;gap:2px;flex-shrink:0}
+.launch button{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;color:#aeaeb2;transition:background 120ms,color 120ms,opacity 160ms ease}
+.launch button:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.launch button:active{background:rgba(255,255,255,.14)}
+.launch .lsh{width:auto;min-width:26px;padding:0 5px;display:flex;align-items:center;gap:4px}
+.launch .lsh .num{color:var(--text)}
+.launch .lsh .num:empty{display:none}
+/* Claude launcher: the glyph in Claude's color, with a status dot (yellow asks, green unseen finish) and a slow pulse while working. */
+.launch .lcl{position:relative;color:var(--claude)}
+.launch .lcl.work .ic{animation:clPulse .8s ease-in-out infinite alternate}
+.launch .lcl::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--sdot,transparent);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb));transform:scale(0);transition:transform 220ms var(--pop)}
+.launch .lcl.ask::after{--sdot:var(--warn);transform:scale(1)}
+.launch .lcl.seen::after{--sdot:var(--accent);transform:scale(1)}
+.lsep{width:1px;height:14px;background:rgba(255,255,255,.22);flex-shrink:0}
+/* Open apps: icon only, except the active one, whose name slides out beside its icon. */
+.apps{display:flex;align-items:center;gap:2px;min-width:0}
+.appi{height:24px;display:flex;align-items:center;gap:0;padding:0 5px;border-radius:6px;opacity:.7;flex-shrink:0;
+  transition:opacity 160ms ease,background 220ms ease,gap 300ms var(--out),padding 300ms var(--out)}
+.appi:hover{opacity:1;background:rgba(255,255,255,.08)}
+.appi.act{opacity:1;gap:7px;padding:0 9px 0 6px;background:rgba(255,255,255,.1)}
+.anm{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:max-width 300ms var(--out),opacity 160ms ease}
+.appi.act .anm{max-width:var(--anm-max,160px);opacity:1;transition:max-width 300ms var(--out),opacity 220ms ease 90ms}
+.amore{font-size:12px;color:var(--text2);padding:0 4px;flex-shrink:0}
+.k2{color:var(--text2)}
+.thumb{height:20px;width:36px;border-radius:4px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.16);display:block}
+.slot>*{animation:slotIn 180ms ease}
+@keyframes slotIn{from{opacity:0}to{opacity:1}}
+.right .mod{display:flex;align-items:center;gap:6px;white-space:nowrap;height:max(24px,calc(var(--bar-h,32px) - 6px));padding:0 6px;border-radius:6px;transition:background 120ms,opacity 160ms ease}
+.right button.mod:hover{background:rgba(255,255,255,.08)}
+.right button.mod:active{background:rgba(255,255,255,.14)}
+.mod[data-m="weather"]>.ic{color:#aeaeb2}
+/* Two-line modules (iStat Menus style): a small caps label over the value. */
+.tw{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:28px;line-height:1.08;text-align:left}
+.tw small{font-size:8.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa0}
+.tw b{font-size:11.5px;font-weight:600}
+/* Network: upload over download, fixed width so the bar doesn't shift as the numbers change. */
+.nt{display:flex;flex-direction:column;justify-content:center;min-width:58px;font-size:9.5px;line-height:1.2;color:#d1d1d6}
+.pwr{position:relative;display:flex}
+#mPower{position:relative}
+.udot{position:absolute;top:3px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb))}
+.pmenu{position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--surface);border-radius:12px;padding:4px;z-index:5;text-shadow:none;
+  box-shadow:0 16px 32px -10px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.07);animation:dropIn 160ms var(--out)}
+@keyframes dropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.pmenu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;font-size:13px;text-align:left;white-space:nowrap}
+.pmenu button:hover,.pmenu button:focus-visible{background:var(--ctl-h);outline:none}
+.pmenu .ic{width:15px;height:15px;color:#aeaeb2}
+.pmenu .udot{position:static;margin-left:auto;box-shadow:none}
+.psep{display:block;height:1px;background:rgba(255,255,255,.08);margin:4px 6px}
+.warn{color:var(--warn)}.danger{color:var(--danger)}
+
+/* island */
+.iw{position:absolute;left:50%;top:4px;width:180px;height:24px;transform:translateX(-50%);z-index:30;
+  transition:width var(--d,300ms) var(--e,ease),height var(--d,300ms) var(--e,ease),top var(--d,300ms) var(--e,ease),opacity 200ms}
+.island{position:absolute;inset:0;background:var(--island);border-radius:12px;overflow:hidden;
+  transition:border-radius var(--d,300ms) var(--e,ease),box-shadow 320ms ease}
+/* Ambient glow: a soft wash of the open page's colour behind the content (album art on Media, orange on Timer, Claude's
+   orange on Claude…). The colours are registered properties so a page change crossfades instead of jumping. */
+@property --g1{syntax:'<color>';inherits:false;initial-value:transparent}
+@property --g2{syntax:'<color>';inherits:false;initial-value:transparent}
+.glow{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(70% 130% at 0% 60%,var(--g1),transparent 62%),radial-gradient(75% 110% at 100% 100%,var(--g2),transparent 64%);
+  transition:opacity 400ms ease,--g1 600ms ease,--g2 600ms ease}
+.st-expanded .glow{opacity:1}
+body.noglow .glow{display:none}
+.iw.float .island{box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 22px 44px -14px rgba(0,0,0,.7),0 8px 18px -10px rgba(0,0,0,.5)}
+.layer{position:absolute;opacity:0;pointer-events:none;transition:opacity 90ms ease}
+.L-compact,.L-wide{inset:0;display:flex;align-items:center;justify-content:center}
+.lcI,.lwI{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;font-size:clamp(11px,calc(var(--isl-h,24px) * .5),15px);letter-spacing:.01em}
+.st-compact .L-compact,.st-wide .L-wide{opacity:1;pointer-events:auto;transition:opacity 180ms ease 90ms}
+.st-compact .island{cursor:pointer}
+.L-exp,.L-card,.L-drop{top:0;left:50%;transform:translate(-50%,-6px) scale(.98);filter:blur(6px);transform-origin:50% 0}
+.L-exp{width:680px;height:256px}
+.iw.tall .L-exp{width:960px;height:500px}
+.L-card{width:560px;height:104px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.L-drop{width:420px;height:140px}
+.st-expanded .L-exp,.st-card .L-card,.st-drop .L-drop{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:none;
+  transition:opacity 220ms ease 120ms,transform 380ms var(--out) 120ms,filter 260ms ease 120ms}
+.clk{display:inline-flex;gap:6px;align-items:baseline;font-weight:600}
+.clk .d{font-weight:400;color:var(--text2)}
+.slot{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;cursor:pointer;width:var(--slotw,auto);transition:width var(--d,300ms) var(--e,ease)}
+.slot>*{flex-shrink:0}
+.slot .ic{width:14px;height:14px}
+.slot .tt{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.mini{width:36px;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.mini i{display:block;height:100%;background:var(--text);transition:width 1s linear}
+.mini.xm{width:44px}
+.mini.xm i{transition:width 300ms linear}
+.xpct{min-width:30px;text-align:right}
+.pp{width:20px;height:20px;border-radius:10px;display:grid;place-items:center;transition:background 120ms}
+.pp:hover{background:var(--ctl)}
+.pp .ic{width:11px;height:11px}
+.viz{display:inline-flex;align-items:center;gap:2px;height:12px}
+.viz i{width:2.5px;height:12px;border-radius:2px;background:currentColor;animation:viz .7s ease-in-out infinite alternate}
+.viz i:nth-child(2){animation-delay:-.35s}.viz i:nth-child(3){animation-delay:-.55s}.viz i:nth-child(4){animation-delay:-.15s}
+@keyframes viz{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+.viz.off i{animation:none;transform:scaleY(.25)}
+.bubble{position:absolute;top:4px;width:24px;height:24px;border-radius:12px;background:var(--island);display:grid;place-items:center;z-index:29;
+  transform:scale(0);transition:transform 320ms var(--pop),left var(--d,300ms) var(--e,ease),opacity 200ms}
+.bubble.on{transform:scale(1)}
+.bubble .ic{width:13px;height:13px}
+.bubble.cdone{color:var(--accent);box-shadow:inset 0 0 0 1.5px rgba(48,209,88,.5)}
+.bubble .bn{position:absolute;top:-3px;right:-4px;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:var(--accent);color:#000;font-size:9px;font-weight:700;line-height:13px;text-align:center}
+/* Claude icon in the slot: pulses while working; a green dot means another session finished unseen. */
+.clp{display:grid;position:relative}
+.clp.work{color:var(--claude);animation:clPulse .8s ease-in-out infinite alternate}
+@keyframes clPulse{from{opacity:.55}to{opacity:1}}
+.clp.dot::after{content:"";position:absolute;top:-2px;right:-3px;width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 1.5px #000}
+.pc{position:absolute;top:12px;width:8px;height:8px;border-radius:50%;z-index:29;box-shadow:0 0 0 1.5px rgba(0,0,0,.35);
+  transform:scale(0);transition:transform 320ms var(--pop),left var(--d,300ms) var(--e,ease),top var(--d,300ms) var(--e,ease),opacity 200ms}
+.pc::before{content:"";position:absolute;inset:-6px}
+.pc.on{transform:scale(1)}
+.pc.cam{background:var(--accent)}.pc.mic{background:var(--orange)}
+
+/* expanded */
+/* Page menu: icon + name for all nine pages, spanning the island's full width. One highlight slides to the active tab;
+   its offset is a multiple of its own width, so it stays aligned while the island grows to the Notes size.
+   Corners are concentric with the island: 14 px inset + 18 px menu radius = 32 px island radius; 3 px inset + 15 px = 18 px for the highlight. */
+.xtabs{position:absolute;top:14px;left:14px;right:14px;height:36px;padding:3px;border-radius:18px;background:rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(9,1fr);gap:2px}
+.xind{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 22px) / 9);border-radius:15px;background:rgba(255,255,255,.14);
+  transform:translateX(calc(var(--i,0) * (100% + 2px)));transition:transform 320ms var(--out)}
+.xtab{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;border-radius:15px;font-size:12px;color:var(--text2);white-space:nowrap;transition:color 160ms}
+.xtab:hover{color:var(--text)}
+.xtab[aria-selected="true"]{color:var(--text);font-weight:600}
+.xtab .ic{width:15px;height:15px}
+.xtab[aria-selected="true"] .ic{color:var(--accent)}
+.xtab[data-i="7"] .ic{color:var(--claude)}
+/* While music plays, the Media tab's icon becomes the level meter. */
+.xtab .viz{display:none;height:13px}.xtab .viz i{height:13px}
+.xtab.playing .ic{display:none}.xtab.playing .viz{display:inline-flex;color:var(--accent)}
+@media (max-width:700px){.xtab:not([aria-selected="true"]) .tl{display:none}}
+.xp{position:absolute;top:58px;left:0;right:0;height:164px;overflow:hidden}
+.iw.tall .xp{height:408px}
+/* Clock while the island is open: a quiet line at the bottom centre, away from the menu. Click opens Calendar. */
+.xfoot{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);height:22px;padding:0 10px;border-radius:11px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);white-space:nowrap;transition:background 120ms}
+.xfoot:hover{background:var(--surface)}
+.xfoot .tm{color:var(--text);font-weight:600}
+.track{display:flex;height:100%;transition:transform 300ms var(--out)}
+.page{flex:0 0 100%;height:100%;padding:0 32px;display:flex;gap:24px;align-items:center}
+.pill{height:36px;padding:0 14px;border-radius:18px;background:var(--ctl);display:inline-flex;align-items:center;gap:8px;font-size:14px;white-space:nowrap;transition:background 120ms,transform 100ms}
+.pill:hover{background:var(--ctl-h)}
+.pill:active{transform:scale(.96)}
+.pill.pri{background:var(--text);color:#000}
+.pill.pri:hover{background:#d1d1d6}
+.pill .ic{width:18px;height:18px}
+.sub{font-size:13px;color:var(--text2)}
+.big{font-size:44px;font-weight:700;line-height:1.08;letter-spacing:-.02em}
+
+/* media */
+.pg-media .vid{display:none}
+.pg-media.is-video .mus{display:none}
+.pg-media.is-video .vid{display:flex}
+.mus{display:flex;align-items:center;gap:24px;width:100%}
+.cover{width:112px;height:112px;border-radius:16px;flex-shrink:0;display:grid;place-items:center;color:rgba(255,255,255,.85);transition:background 400ms}
+.cover .ic{width:38px;height:38px;stroke-width:1.6}
+.minfo{flex:1;min-width:0}
+.msrc{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.srcdot{width:8px;height:8px;border-radius:50%}
+.mtitle{font-size:22px;font-weight:700;letter-spacing:-.015em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.martist{font-size:14px;color:var(--text2)}
+.mprog{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:11px;color:var(--text2)}
+.bar2{flex:1;height:4px;border-radius:2px;background:var(--ctl);overflow:hidden;cursor:pointer}
+.bar2 i{display:block;height:100%;width:0;background:var(--text);transition:width 1s linear}
+.mctl{display:flex;align-items:center;gap:8px}
+.mctl button{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;transition:background 120ms,transform 100ms}
+.mctl button:hover{background:var(--ctl)}
+.mctl button:active{transform:scale(.9)}
+.mctl .main{width:52px;height:52px;border-radius:26px;background:var(--text);color:#000}
+.mctl .main:hover{background:#d1d1d6}
+.mctl .ic{width:20px;height:20px}
+.vid{flex-direction:column;justify-content:center;width:100%;max-width:520px;margin:0 auto}
+.vtitle{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vid .mprog{margin-top:18px}
+
+/* timer */
+.seg{display:inline-flex;background:var(--surface);border-radius:9px;padding:2px}
+.seg button{padding:4px 10px;border-radius:7px;font-size:12px;color:var(--text2);transition:background 150ms,color 150ms}
+.seg button.on{background:var(--ctl-h);color:var(--text)}
+.chips{display:flex;gap:6px;margin-top:10px}
+.chip{padding:4px 10px;border-radius:12px;background:var(--surface);font-size:12px;transition:background 120ms}
+.chip:hover{background:var(--ctl)}
+.tright{margin-left:auto;display:flex;align-items:center;gap:18px}
+.bring{width:104px;height:104px;transform:rotate(-90deg)}
+.bring circle{fill:none;stroke-width:8}
+.bring .bg{stroke:var(--surface)}.bring .fg{stroke:var(--orange);stroke-linecap:round;transition:stroke-dashoffset 120ms linear,stroke 200ms}
+.tbtns{display:flex;flex-direction:column;gap:8px}
+#tBig{margin-top:8px}
+
+/* alarms */
+.alist{margin-left:auto;width:300px;display:flex;flex-direction:column;gap:6px}
+.arow{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:12px;padding:7px 12px}
+.arow .t{font-size:17px;font-weight:600;width:52px}
+.arow .l{flex:1;font-size:12px;color:var(--text2);line-height:1.3}
+.sw{width:38px;height:22px;border-radius:11px;background:#48484a;position:relative;transition:background 200ms;flex-shrink:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform 260ms var(--pop)}
+.sw[aria-checked="true"]{background:var(--accent)}
+.sw[aria-checked="true"]::after{transform:translateX(16px)}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,30px);gap:2px;font-size:11px;text-align:center;flex-shrink:0}
+.cal .h{color:var(--text2);height:16px;line-height:16px}
+.cal .mh{grid-column:1/-1;text-align:left;font-size:13px;font-weight:600;height:20px;line-height:18px;padding-left:4px}
+.cal button{height:19px;border-radius:6px;position:relative;font-size:11px;transition:background 120ms}
+.cal button:hover{background:var(--surface)}
+.cal button.today{background:var(--accent);color:#000;font-weight:700}
+.cal button.sel:not(.today){background:var(--ctl-h)}
+.cal button.ev::after{content:"";position:absolute;bottom:1px;left:50%;width:3px;height:3px;margin-left:-1.5px;border-radius:50%;background:var(--orange)}
+.cal button.today.ev::after{background:#000}
+.cev{margin-left:auto;width:270px}
+.cev h4{margin:0 0 8px;font-size:14px;font-weight:600}
+.cev .e{background:var(--surface);border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:6px;animation:fadeUp 220ms var(--out);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cev .e.dn{text-decoration:line-through;color:var(--text2)}
+.cev .none{color:var(--text2);font-size:12px;margin-bottom:8px}
+.cadd{display:flex;gap:6px;animation:fadeUp 200ms var(--out)}
+.cadd .field{flex:1;min-width:0;height:32px}
+.pill.sm{height:30px;font-size:13px;padding:0 12px;gap:6px}
+.pill.sm .ic{width:14px;height:14px}
+.iconbtn{width:34px;height:34px;padding:0;justify-content:center;flex-shrink:0}
+.cadd .iconbtn{width:32px;height:32px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* todo */
+.tdl{width:250px;flex-shrink:0}
+.tdbig{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.tdsub{font-size:15px;color:var(--text2);margin-top:4px}
+.tdbtns{display:flex;gap:8px;margin-top:14px}
+.field{height:36px;border-radius:18px;border:0;background:var(--surface);color:var(--text);padding:0 14px;font:inherit;font-size:13px;outline:none;transition:box-shadow 150ms}
+.field:focus{box-shadow:inset 0 0 0 1px var(--text3)}
+.field::placeholder{color:var(--text3)}
+.tlist{list-style:none;margin:0 0 0 auto;padding:0 6px 0 0;width:270px;height:156px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;
+  scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.tlist li{display:flex;align-items:center;gap:10px;min-height:44px;flex-shrink:0;border-radius:12px;padding:0 12px;background:var(--surface);font-size:15px;transition:background 280ms}
+.tlist li span{transition:color 200ms}
+.tlist li.done{background:var(--done)}
+.tlist li.done span{text-decoration:line-through;color:#aeaeb2}
+.tlist li.new{animation:pop 420ms var(--pop)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.chk{width:24px;height:24px;border-radius:12px;border:2px solid var(--text3);display:grid;place-items:center;flex-shrink:0;transition:background 200ms,border-color 200ms,transform 200ms var(--pop)}
+.chk .ic{width:14px;height:14px;stroke-width:3.2;color:#000;opacity:0;transform:scale(.3);transition:opacity 150ms,transform 280ms var(--pop)}
+li.done .chk{background:var(--accent);border-color:var(--accent)}
+li.done .chk .ic{opacity:1;transform:none}
+.chk:active{transform:scale(.85)}
+
+/* notes */
+.page.pg-note{align-items:stretch;padding:2px 24px 4px}
+.nwrap{position:relative;flex:1;min-width:0}
+.nleft{position:absolute;left:0;top:0;bottom:0;width:100%;display:flex;flex-direction:column;gap:10px;transition:width 320ms var(--out)}
+.nwrap.editing .nleft{width:calc(100% - 376px)}
+.ntop{display:flex;gap:8px;flex-shrink:0}
+.ntop .field{flex:1;min-width:0;height:32px;border-radius:10px;padding:0 12px}
+.ngrid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.ngin{position:relative}
+.ncard{position:absolute;left:0;top:0;padding:10px 12px;border-radius:12px;background:var(--nc,var(--surface));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+  cursor:grab;user-select:none;touch-action:none;transition:transform 320ms var(--out),box-shadow 150ms,background 200ms,filter 150ms}
+.ncard:hover{filter:brightness(1.15)}
+.ncard.tinted .nb{color:rgba(255,255,255,.88)}
+.ncard.tinted .nm2{color:rgba(255,255,255,.72)}
+.nsw{display:flex;gap:7px;margin-top:8px;padding:0 2px}
+.nsw button{width:20px;height:20px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);transition:transform 150ms var(--pop),box-shadow 150ms}
+.nsw button:hover{transform:scale(1.12)}
+.nsw button[aria-pressed="true"]{box-shadow:0 0 0 2px #000,0 0 0 4px var(--text)}
+.ncard.on{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ncard .nt{font-size:13px;font-weight:600;margin-bottom:4px;overflow-wrap:anywhere}
+.ncard .nb{font-size:12px;line-height:1.45;color:#c7c7cc;white-space:pre-line;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
+.ncard .nm2{font-size:11px;color:var(--text2);margin-top:8px}
+.ncard.lift{z-index:3;cursor:grabbing;transition:box-shadow 150ms;box-shadow:0 16px 32px -10px rgba(0,0,0,.75),inset 0 0 0 1px rgba(255,255,255,.1)}
+.ncard.settle{z-index:3;transition:transform 340ms var(--pop),box-shadow 200ms}
+.ngin .none{font-size:12px;color:var(--text2);padding:8px 2px}
+.nnew{height:34px;border-radius:10px;background:var(--text);color:#000;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;transition:background 120ms,transform 100ms}
+.nnew:hover{background:#d1d1d6}
+.nnew:active{transform:scale(.97)}
+.nnew .ic{width:16px;height:16px;stroke-width:2.6}
+.ntop .nnew{height:32px;padding:0 12px}
+.ned{position:absolute;right:0;top:0;bottom:0;width:360px;display:flex;flex-direction:column;opacity:0;transform:translateX(24px);pointer-events:none;
+  transition:opacity 200ms ease,transform 320ms var(--out)}
+.nwrap.editing .ned{opacity:1;transform:none;pointer-events:auto}
+.nact{display:flex;align-items:center;gap:6px}
+.ned textarea{flex:1;resize:none;border:0;border-radius:14px;background:var(--nc,var(--surface));transition:background 200ms,box-shadow 150ms;color:var(--text);padding:12px 14px;font:inherit;font-size:14px;line-height:1.6;outline:none;
+  scrollbar-width:thin;scrollbar-color:#48484a transparent;transition:box-shadow 150ms}
+.ned textarea:focus{box-shadow:inset 0 0 0 1px var(--text3)}
+.ned textarea::placeholder{color:var(--text3)}
+.nfoot{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text2)}
+.nsave{display:flex;align-items:center;gap:6px}
+.nsave i{width:6px;height:6px;border-radius:50%;background:var(--accent);transition:background 150ms}
+.nsave.busy i{background:var(--orange);animation:blink .6s ease-in-out infinite alternate}
+@keyframes blink{from{opacity:1}to{opacity:.3}}
+.ndel{padding:4px 10px;border-radius:8px;color:var(--text2);transition:background 150ms,color 150ms}
+.ndel:hover{background:var(--surface);color:var(--danger)}
+.ndel.confirm{background:var(--danger);color:#fff}
+
+/* shelf */
+.shsum{width:150px;flex-shrink:0}
+.shbig{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.shsum .pill{margin-top:14px}
+.shgrid{flex:1;min-width:0;height:136px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,64px);gap:8px}
+.ftile{position:relative;min-width:0;border-radius:12px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px 8px;cursor:grab;transition:background 150ms,transform 120ms}
+.ftile:hover{background:var(--ctl)}
+.ftile:active{cursor:grabbing;transform:scale(.97)}
+.ftile.new{animation:pop 460ms var(--pop) both}
+.fi{position:relative;width:24px;height:28px;color:#d1d1d6;flex-shrink:0}
+.fi .ic{width:24px;height:28px;stroke-width:1.5}
+.fi b{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);font-size:8px;font-weight:700;letter-spacing:.03em;padding:0 3px;border-radius:3px;color:#000;background:var(--fc,#8e8e93);line-height:1.4}
+.fn{font-size:12px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frm{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:10px;background:var(--ctl-h);display:grid;place-items:center;opacity:0;transition:opacity 120ms,background 120ms}
+.frm .ic{width:11px;height:11px;stroke-width:2.6}
+.ftile:hover .frm,.frm:focus-visible{opacity:1}
+.frm:hover{background:var(--danger)}
+.shempty{grid-column:1/-1;grid-row:1/-1;align-self:center;display:flex;align-items:center;gap:14px;color:var(--text2);font-size:13px;line-height:1.5;max-width:340px}
+.shempty .ic{width:28px;height:28px;stroke-width:1.6;color:var(--text3)}
+
+/* drop zone */
+.dz{position:absolute;inset:10px;border:1.5px dashed #48484a;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:16px;padding:0 20px;
+  transition:border-color 160ms,background 160ms}
+.iw.hot:not(.full) .dz{border-color:var(--accent);background:rgba(48,209,88,.08)}
+.iw.full .dz{border-color:var(--warn)}
+.iw.full .dzi{color:var(--warn)}
+.dzi{width:48px;height:48px;border-radius:24px;background:var(--surface);display:grid;place-items:center;color:var(--text2);flex-shrink:0;transition:color 160ms,background 160ms,transform 260ms var(--pop)}
+.dzi .ic{width:24px;height:24px}
+.iw.hot:not(.full) .dzi{color:#000;background:var(--accent);transform:translateY(2px) scale(1.06)}
+
+/* system */
+.sys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.tile{background:var(--surface);border-radius:12px;padding:8px 12px;height:70px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .tl{display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
+.tile .tv{color:var(--text);font-weight:600;font-size:14px}
+.sp{width:100%;height:26px;display:block}
+.sp polyline{fill:none;stroke-width:1.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.dbar{height:6px;border-radius:3px;background:var(--ctl);overflow:hidden;margin-bottom:8px}
+.dbar i{display:block;height:100%;width:76%;background:var(--text2)}
+
+/* claude sessions */
+.clist{width:100%;height:156px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:6px;
+  scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.crow{display:flex;align-items:center;gap:12px;min-height:44px;flex-shrink:0;padding:6px 12px;border-radius:12px;background:var(--surface);text-align:left;transition:background 120ms}
+.crow:hover{background:var(--ctl)}
+.crow .cn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.crow .cn b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cn span{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cr{font-size:12px;color:var(--text2);white-space:nowrap}
+.crow.ask .cn span,.crow.ask .cr,.crow.ask .clp{color:var(--warn)}
+.crow.done .cr,.crow.done .clp{color:var(--accent)}
+.crow.idle{opacity:.55}
+.clempty{margin:auto;color:var(--text2);font-size:14px}
+
+/* cards */
+.cic{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);flex-shrink:0;position:relative}
+.cic .ic{width:22px;height:22px}
+.cic.pulse::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--c);animation:pulse 1.2s var(--out) infinite}
+@keyframes pulse{from{transform:scale(1);opacity:.8}to{transform:scale(1.65);opacity:0}}
+.cic.shake .ic{animation:shake .7s ease-in-out infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
+.ctx{flex:1;min-width:0}
+.ct{font-size:18px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs{font-size:13px;color:var(--text2);margin-top:2px}
+.cs.wrn{color:var(--warn);display:flex;align-items:center;gap:5px;margin-top:4px}
+.cs.wrn .ic{width:13px;height:13px}
+.cs.cq{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbt{display:flex;gap:8px}
+
+/* windows taskbar */
+.wtb{position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(28,28,30,.86);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;gap:4px;z-index:10;transition:transform 300ms var(--out)}
+.wtb .ap{width:40px;height:40px;border-radius:6px;display:grid;place-items:center;color:#e5e5e5;position:relative}
+.wtb .ap .ic,.wtb .ap .aic{width:22px;height:22px}
+.wtb .ap.open::after{content:"";position:absolute;bottom:2px;left:50%;width:6px;height:3px;margin-left:-3px;border-radius:2px;background:#8e8e93}
+.wtb .tray{position:absolute;right:12px;display:flex;align-items:center;gap:12px;font-size:11px;color:#e5e5e5}
+.wtb .tray .ic{width:15px;height:15px;stroke-width:1.8}
+.wtb .tray .tm{text-align:right;line-height:1.4}
+
+/* fullscreen, motion, transparency */
+.desk.fs #winA{top:0;height:100%;z-index:25}
+.desk.fs .bar{transform:translateY(-100%);opacity:0}
+.desk.fs .iw:not(.st-card){opacity:0;pointer-events:none}
+.desk.fs .bubble,.desk.fs .pc{opacity:0}
+.desk.fs .wtb{transform:translateY(100%)}
+body.reduce .iw,body.reduce .island,body.reduce .bubble,body.reduce .pc,body.reduce .track,body.reduce .bar,body.reduce .appi,body.reduce .anm{transition-duration:0ms!important}
+body.reduce .layer,body.reduce .glow{transition:opacity 100ms ease!important}
+body.reduce .L-exp,body.reduce .L-card,body.reduce .L-drop{transform:translate(-50%,0)!important;filter:none!important}
+body.reduce .viz i,body.reduce .cic::after,body.reduce .cic .ic,body.reduce .clp,body.reduce .lcl .ic{animation:none!important}
+body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-backdrop-filter:none}
+@media (prefers-reduced-transparency: reduce){.bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* control panel */
+.ctl{position:fixed;right:16px;bottom:64px;width:304px;max-height:calc(100vh - 120px);overflow:auto;background:rgba(18,18,20,.96);
+  border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px 12px 10px;z-index:50;font-size:12px;
+  box-shadow:0 20px 40px -12px rgba(0,0,0,.6);scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.ctl .ch{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ctl h2{font-size:15px;margin:0;font-weight:600;letter-spacing:-.01em}
+.ctl .ch button{color:var(--text2);padding:2px 6px;border-radius:6px}
+.ctl .ch button:hover{background:var(--ctl);color:var(--text)}
+.ctl h3{font-size:12px;color:var(--text2);font-weight:500;margin:14px 0 6px}
+.ctl .g{display:flex;flex-wrap:wrap;gap:6px}
+.ctl .g button{background:var(--ctl);border-radius:8px;padding:6px 9px;transition:background 120ms}
+.ctl .g button:hover{background:var(--ctl-h)}
+.ctl .g button[aria-pressed="true"]{background:#0060d0}
+.ctl .note{color:var(--text2);font-size:12px;line-height:1.5;margin:8px 0}
+.ctl .rng{display:flex;align-items:center;gap:10px;color:var(--text2)}
+.ctl .rng input{flex:1;accent-color:var(--accent)}
+.ctl .rng span{width:40px;text-align:right;color:var(--text)}
+.ctl .segc{display:flex;background:var(--surface);border-radius:8px;padding:2px;margin-top:8px}
+.ctl .segc button{flex:1;padding:5px 0;border-radius:6px;color:var(--text2)}
+.ctl .segc button.on{background:var(--ctl-h);color:var(--text)}
+.ctl.min{width:auto}
+.ctl.min .body{display:none}
+.hint{position:fixed;left:50%;bottom:64px;transform:translate(-50%,10px);background:rgba(28,28,30,.96);border:1px solid rgba(255,255,255,.09);
+  padding:8px 14px;border-radius:10px;font-size:12px;opacity:0;transition:opacity 200ms,transform 260ms var(--out);z-index:60;pointer-events:none}
+.hint.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M7 2v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V2M7 22v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></symbol>
+  <symbol id="i-files" viewBox="0 0 24 24"><path d="M15 2H9a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5"/><path d="M4 7v13a2 2 0 0 0 2 2h9"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2.5"/><path d="M7 3v18M17 3v18M2 12h20M2 7.5h5M2 16.5h5M17 7.5h5M17 16.5h5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5v14L8.5 12z" fill="currentColor" stroke="none"/><rect x="5" y="5" width="2.5" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5v14l10.5-7z" fill="currentColor" stroke="none"/><rect x="16.5" y="5" width="2.5" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+  <symbol id="i-bat" viewBox="0 0 24 24"><rect x="1.5" y="7" width="19" height="10" rx="2.5"/><path d="M23 11v2"/><rect x="3.5" y="9" width="9" height="6" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-caps" viewBox="0 0 24 24"><path d="M12 3l-8 8h4.5v5h7v-5H20z"/><path d="M8.5 20h7"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3"/></symbol>
+  <symbol id="i-stopwatch" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8"/><path d="M12 10v4M10 2h4M12 2v4"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.65A4 4 0 0 0 10.02 8.52"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/></symbol>
+  <symbol id="i-tray" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="i-traydown" viewBox="0 0 24 24"><path d="M22 13h-6l-2 3h-4l-2-3H2"/><path d="M2 13v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5"/><path d="M12 2v9M8 7.5l4 4 4-4"/></symbol>
+  <symbol id="i-claude" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></symbol>
+  <symbol id="a-claude" viewBox="0 0 24 24"><image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAOe0lEQVRo3r1a95cUZRZt1/193XNW/5RdI8hEFBGZqAIqKGGYgWGACUgYRFYxoh6zrrpGQNFVkTWHgxlFGJjuquo0oWd6cg49nd7e+6q76ekJDLsufbhUn6qvqu57775Q1eNwpH3E4bhI6uv/wO/e2uI/WbXFy43akoOumhKvWVM6YdaWygVCyKwt8Ri1pQeN6uIV5EJOh4qLL65P8JvyAXk9IIeKL7ZqS8tAvDWw81Zp27Us7t12My5ackHhu/tmadu5LE4OcGCAnL6qr/9jupNTn6RVJ7YVX+qqLT4SrF+GC5TGXdVFMbOmOALEzNpiuYCIA3pvciAXcnLVFh0lR3V0ve1wh4jjIm5Pbll6mbu25HgHFhrVRRHDJi/nAyMN5u8Io6YoRk7BXcvEXVdy3A2uNne5KKV9X13pBx27lHx4bkRLBDITo67U3mYYMBP+J0PAjRy920o+rE9IXj/euuKKILRGK+fqYVd1oTg3LRbnxkXi3LxkdiNwzLW18HcxSiMBru7a4nIl/1v9kku8dSU+3zYQqC6EbIpkJhgKkN9aICaSrPODl6Tro9fE91CluNSI4sSayeAxczs0vGUp7zHtGnOOIEdyBbwNdYv+7PDVFN0W2A4ZVBdETVx8OhjpIKGqG6X704MSHR0GhmTU1wiCtyYIFqWtLRZn5Q3S+vL9EupolY5/vajnGjVFk6+ZAfMcMLYWRNt2lIqvrniFw1tdeKB9B8okdlo4mIkpF9i6VKy7b5GxFrdMdLdLqL1JIkP90v7Go+LacJ1dRXQtPAaD3DBsrNmS6PiITHS2iueeVWIwIvRo8po1aRUosc+aBSac3b79ZvHWFr7l8FQXun28wJbCuAWdpsOcFvBe1RIZ/OVriQz0KqnIQI8Mn/lZjC0F9I4N5kjlIvE/XCWRwV6s6ZYxbyMMWg4Dlup19How1IUoucoXigv5pIZn8JjCa0tBrBUy8tQUnXK4txaMAzgwFWYKhWe/84Ybr5fAC3vVgHB3G9COKPRJy7P14qy4zpYCznEiIi1P75QojlFqQ799K65NN6ZdqxBRu15aX9gjAz9/IcEDT4pRuSgRaXvNDLzi3hoaU9DjwH9xazYDSIbaBtIvTG/1f/+xRIcHZKKrDQQHEZWvtCqlIlCxUNr++aCuiUFCvV+/L43r81I6d1bkS/urD6kEKTF1Agw+G4npeSXhri4QGABNTwNTASJVi1WvVl2Jet7YepNNDt+9961T8uG+Lon0dkoUUvHv36ye5znO8jwJvvOMRMdGgGEJHnpK95m19jF6ntGJ9HdLuDOgTug4/CzklCdWTWGCw/T8Eog7LHg2E0w+m/yN4t29CqE/JmN+Qzrf/4caRM0y8UiCZTQGguGeILw8Kv0/fWYbAA86y3Kl++M3JT4RUgk1PVGr3uVx/6ObJdzfZcsQxqsR2PruK4OMbrAjneBizQIYcJNkwiQQHnoiiOoSGexTTzPUAz9/Ke4dy1Uexmas33aLjLPKDA9KGMkcHRmUpsdqpBERasT5fceOiMRier5nz126z73rdhkPeHVtBNEjcUqs4/BzyImFtueTPBKwZoDDIokMmAR1D2/50aRYLrVkBpsQ8n5EwyVN+7cgAvnQdK60vb5fYhPj8GKPxMMTMnjiG2mEl9kDBk8cE35GrQY0tJu0ew+f/lFioXFEoFvlp5H77t92GU7ePwPWDIABSyQTZhKwkEYEXtwroYBPy+FEsEWJ0nOqaUSC+TDqPq2kmIjcNj1RB6lgv+eMGsDINay8Wnq+OCzxaESlw/LLZsg1lKRr4w0JwkumxXRcZzcgYYQLlcN7712aC9GRYei9w/ZcaEwGjn+pFYqyiUfCWnEoGa5lx2Wj46f9zcelGWU2Ho3CyAFEckBlR+37HijXfDLoMOTd72sAAU0yvC6Ev/P9l/SmTEpql5IJtTcjKbdI/w+fgHxUYjpiDEvL83vQ6AK6r/vjtzQPYqGQEqcU4xMT2sEb1+WkyLNLa8lO5cHSWY2AATdKOswZoBfedAMqSza6a6WMuE4oeSa4SgfyYjeOh0OakJTJAPoCpRJDFWK0uC6GcsrkZST6vj0qjegFBsgqeTQx9gbnumxEPVdc+M5CYrKUJ3hk8nVYODEdZgppEagi+cU2mIhsRljDaTTCJgVPMiLxSMQmioS2EdISqt+5H8nKkst9IYwgHPzO3DVPCwEjbCEPfPsqpPW53dKJitSHxtf20n12XiR4ZfKd0QCDTQsX1S2qSQoJI0yMBKzz/kc2Y8Zxqs7VwyBKgoxOCmlGsKFRUh2Hnxf3ztskgE7NXjF06nsZ54DY2abyogS1siHXPPW3Kw+V0BQDQCgdJgmCqHf3SvGjqXhQ89146uI8xCGOx1ysPIgCtdtw++VyZm22dL73ovaJJOF4ZEKTWrcZRjAKzI0wqhmN5nE9xggBlBiPj/qcel0lzxkqwS+d72QD6Hl43Vt/B5qTKWEk3QSqyHirW8bcDTICjQ+hrg/8+Jn0H/tQelESu468igrzmHZWJipllCIfjUw1IiExicfwLyaCXIiODKHHNGsO9X52SNpfe1j8D1RopzXgLLNycYr8FAPcSMxMWEA3RoRxNKzxJhNVxo+JM4hZp8+WCG88zScGsupRJZ1pQDICaGB9nZDdGelHErMK+R/coPJwrpkvjauuksY7rhAXvpsbkReIupXglEQ612kNMFENDFQADwY4X/1t4kMP8N9fJk0PbZRmDGstmGlan94hgefvkbZX9imJNjx19X3zgcTC4YSEwmeR4f3xNp/0fHJAz215ejuwQ5tlAH2iBR3ej77g37tap00DCW5VLZ7FAGg6E5YC4WJrhyEmmwwrBcvb2ix4ZwGQhXKXJWfuuFLhf3iTDDceP+v19ERW8rb3mcSUJdclP3EktU6sqGiM8gT6y0RHi4yaJ2HQVtsISibBLZ0rDFgkmbBSSA8dDOKUqLmCZMbQRYOo1cFfv4HnJ5QM5xs2rFRihsZT1Sk2Nqr7e/E87d1zp3RgFBlA8xtDsmpzpAEc8DBicLqNDPRp1/ffs1KdqDwyuDrcyPBMWDNADUBSuVbPF8/dt4LIIb0xPS7xOJL8JwkiofmEFoeUmJxaOhPVRZsYyyMM6nz7GTm94q/SiGjyOZcVL4jk7fvqPTTJX1FAAlpEBvHQ5MUzuInBUclncJ27AbDegGRMbDsOPimhNr+GPTY+pt22451nUW5vTvWE4YYfZPjkdzoXsWzaHXhYxwgtBKhWvZ+/jU6Lbot+YpTliAtNzbXmWnWU/97V0vxgBfbn2t6nIqbhOkcD0NBw4aZ95ToKs97bk+SQEqX3GldepY+UKiNULN/f12oFo6R6Pjloa5zzU183SvARnVoZuf5vP7KLBj3MWs/HSZbO9bZRKTknuPzXEeg88ARG6WZbmyiDrNsd2MdEb7ztb9L1wcv2zIOIBPCoyLJICU1AChwROJ1qTiAPelDrA8/vtuWHc4Yw0XK2NzBnmUmyGcRnNgAEpoNF0DPwfDvmkRifuPj829shg2hkPjQ7hpthb31quz20Qdu9X76LqnS5ND1SJXFIJdTq0XHcj+hxhOazBPOh5fFqRG6dSpGGUW5uvvBClVPiSQ5pmI4nDFgoM4HSMdctkJbHtsqI8xcZxmuR4Cv3q6cYXm69mGdIUh9MkHzs5o0rr9S3DXF0WyYkJ0vn6nnSc/R1zYcInoVD6AWscl6MKiPOXxGJcRlBGfbiRZixdoHtcXJIw3QcHW7obSZYCVCPbj7CcbhDBeKWVYHyGT55zH5mRt32712jN3etvlZ6MKBxXBj86XP1qrk+T0vxqHVKBzSe04/G50TX5bX7vnhXE33Mc1p8O1eISf3T8wkOM3GckwG2EXn29w3X24asIckD9isVeLT9pfvFueoau/lh7TA1D0n1ff6OGmQhOSm3Fjz46BuIjhbdtmF0dqIAGOgp7S/v030db+wXY9XVes45DIjTgPhcjUgawCgEcTO+leP7oJ6PXrXLH9/KwXNu1HVWoBiaUhdf6II4jxH83oMBMDLYow1vFEOih++AylF1YCiblofvoZIOm4WbhxHwVOSPA9gxPax08JUHegFvEsLsTin0fnoA+7K1VpvsztA667c+/KNUBl9/RFx3Xq3HOJYY63Ns6Z36TgsCH0tb8IRn4DwmL69vYo1NfkZOcf9GGpHf4/CW57ubNuTT4rib72xmgFVue4Teb8awRQMoD+aH3nCDbaCBaZKJri+rYGDg2V3iWnWlnYjJa2DS9O9ZBb2fkXG88NVRARG0nZRw1mxc1ufGApXXia8i75TDV5H/VrAKui7PjZ7TgASYYN5tpYkqlZ26Ibck0odZR0suekUrpkvjrmtsj6Ycka+exptxoMC+Rnn+pHvMziU3Ss6+DXlvOuD9Fe2bmHi5Mfc5Tkw3xA517qSb2hGaJ93vvaCPhZw6m/A2LuXdSWvzbekp+bw5k09EIGFA/gqHv3L+Jc3leb4m3qAsJ+ZmyTwHLEVeYpsGGoaS6UEX7v3kLUjpAV5z6rq09Zn7znlvcKTk/RV53uYy/MSkP/Ktz6norLqOByNzMcA9E6GEYYyOgcRV6cxmwHkQP4uccCcU4y3PLZ/0K72/IvfDzirodH12GIvkfGBNQZq0pj1+Fud1n7LscBcc7SvPPcKfhlO/Eeuv9HdcdamvIvc4F9BKW07nd4OZDTp/spOJ58RwPsgvFO/67OMnl19xWfqP9I7k3x4Ya+b9xVybfbRr00JpqsiNW+uyorA66gawjWMrFwLWumzcOzvmhqTJgVw6wQkcjpLjpD81yPxjD/5FiLVuQZm1NqslWInfByrz4q0b8sRnh/CCGOArz5EA7hncmB8PVuazMLSSE7lRMfWZ5Cf/uY190H/7/EusNVnLcfJBnNwA9HqQnO7/Mzxl2K7N6sH3Br13WdZyf+WSS5JKSckm8fkPXQ74YRkd2LMAAAAASUVORK5CYII=" width="24" height="24"/></symbol>
+  <symbol id="a-term" viewBox="0 0 24 24"><rect x="1.5" y="2.5" width="21" height="19" rx="4" fill="#2d2d30"/><path d="M6 9l3.5 3L6 15M11.5 15.5H17" fill="none" stroke="#e5e5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="a-chrome" viewBox="0 0 24 24"><path d="M12 12L2.47 6.5A11 11 0 0 1 21.53 6.5z" fill="#ea4335"/><path d="M12 12l9.53-5.5A11 11 0 0 1 12 23z" fill="#fbbc04"/><path d="M12 12v11A11 11 0 0 1 2.47 6.5z" fill="#34a853"/><circle cx="12" cy="12" r="5.4" fill="#fff"/><circle cx="12" cy="12" r="4.3" fill="#1a73e8"/></symbol>
+  <symbol id="a-code" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="21" height="21" rx="5" fill="#0a7ad1"/><path d="M15 7.5l4.5 4.5-4.5 4.5M9 7.5L4.5 12 9 16.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="a-explorer" viewBox="0 0 24 24"><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4h4.6l2.2 2.4h8.2A2.5 2.5 0 0 1 22 8.9V18a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18z" fill="#e0a82e"/><path d="M2 9.5A1.5 1.5 0 0 1 3.5 8h17A1.5 1.5 0 0 1 22 9.5V18a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18z" fill="#ffc83d"/></symbol>
+  <symbol id="a-spotify" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1db954"/><path d="M6.5 9.2c3.8-1.1 8-.8 11.2 1M7.2 12.4c3.1-.9 6.5-.6 9.2.9M7.9 15.4c2.4-.6 5-.4 7 .7" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M23 9l-6 6M17 9l6 6"/></symbol>
+  <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><path d="M12 2v10"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-restart" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-chevl" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-chevr" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-pluscircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M12 8v8M8 12h8" stroke="#000"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-min" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+  <symbol id="i-max" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-start" viewBox="0 0 24 24"><rect x="3" y="3" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="12.5" y="3" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="3" y="12.5" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/><rect x="12.5" y="12.5" width="8.5" height="8.5" rx="1" fill="#4cc2ff" stroke="none"/></symbol>
+</svg>
+
+<div class="desk" id="desk">
+  <div class="wall"></div>
+
+  <div class="win" id="winA" data-name="Chrome" data-icon="a-chrome">
+    <div class="tb"><svg class="aic" aria-hidden="true"><use href="#a-chrome"/></svg>YouTube Music · Google Chrome
+      <span class="wc"><span><svg class="ic" aria-hidden="true"><use href="#i-min"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-max"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span></span></div>
+    <div class="yt"><div class="vid"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></div>
+      <div class="ls"><i style="width:80%"></i><i style="width:60%"></i><i style="width:72%"></i><i style="width:50%"></i><i style="width:66%"></i><i style="width:40%"></i></div></div>
+  </div>
+  <div class="win" id="winB" data-name="Visual Studio Code" data-icon="a-code">
+    <div class="tb"><svg class="aic" aria-hidden="true"><use href="#a-code"/></svg>BarWindow.xaml.cs · TopBar · Visual Studio Code
+      <span class="wc"><span><svg class="ic" aria-hidden="true"><use href="#i-min"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-max"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span></span></div>
+<div class="code"><span class="c">// Register the bar as an AppBar on the top edge</span>
+<span class="k">var</span> data = <span class="k">new</span> <span class="t">APPBARDATA</span> { hWnd = handle };
+<span class="t">Shell32</span>.SHAppBarMessage(<span class="t">ABM</span>.NEW, <span class="k">ref</span> data);
+data.uEdge = <span class="t">ABE</span>.TOP;
+data.rc.bottom = <span class="t">DpiScale</span>(32);
+<span class="t">Shell32</span>.SHAppBarMessage(<span class="t">ABM</span>.SETPOS, <span class="k">ref</span> data);</div>
+  </div>
+
+  <header class="bar" id="bar">
+    <div class="left" id="left">
+      <div class="launch" id="launch">
+        <button data-tool="Timer" aria-label="Open Timer" title="Timer"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg></button>
+        <button data-tool="Todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
+        <button data-tool="Notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
+        <button class="lsh" id="mShelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
+        <button class="lcl" id="mClaude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
+      </div>
+      <span class="lsep" aria-hidden="true"></span>
+      <div class="apps" id="apps" role="toolbar" aria-label="Open apps"></div>
+    </div>
+    <div class="right" id="right">
+      <span class="mod" data-m="weather" title="Partly cloudy · 31° / 24° · Jakarta"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg><span class="tw"><small>Cloudy</small><b class="num">29°</b></span></span>
+      <span class="mod" data-m="net" title="Wi-Fi · today ↓1.8 GB ↑240 MB"><span class="nt num"><span id="mUp"></span><span id="mDown"></span></span></span>
+      <button class="mod" data-m="cpu" data-sys><span class="tw"><small>CPU</small><b class="num" id="mCpu"></b></span></button>
+      <button class="mod" data-m="ram" data-sys title="8.6 / 16 GB"><span class="tw"><small>RAM</small><b class="num" id="mRam"></b></span></button>
+      <button class="mod" data-m="gpu" data-sys><span class="tw"><small>GPU</small><b class="num" id="mGpu"></b></span></button>
+      <button class="mod" data-m="temp" data-sys><span class="tw"><small>Temp</small><b class="num" id="mTemp"></b></span></button>
+      <button class="mod" data-m="disk" data-sys title="Free space on C:"><span class="tw"><small>C: free</small><b class="num">120 GB</b></span></button>
+      <button class="mod" id="mMore" aria-label="More modules" hidden><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
+      <button class="mod" data-m="wifi" id="mWifi" title="Strong signal · Home_5G"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><span class="tw"><small>Strong</small><b>Home_5G</b></span></button>
+      <span class="pwr">
+        <button class="mod" id="mPower" aria-label="Power" aria-haspopup="menu" aria-expanded="false" title="Power"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg><i class="udot" id="uDot" hidden></i></button>
+        <span class="pmenu" id="pMenu" role="menu" hidden>
+          <button type="button" role="menuitem" data-pw="sleep"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
+          <span class="psep" role="separator"></span>
+          <button type="button" role="menuitem" data-pw="upd-shutdown" class="upd" hidden><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Update and shut down<i class="udot"></i></button>
+          <button type="button" role="menuitem" data-pw="shutdown"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Shut down</button>
+          <button type="button" role="menuitem" data-pw="upd-restart" class="upd" hidden><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Update and restart<i class="udot"></i></button>
+          <button type="button" role="menuitem" data-pw="restart"><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
+        </span>
+      </span>
+    </div>
+  </header>
+
+  <div class="iw" id="iw">
+    <div class="island" id="isl">
+      <div class="glow" id="glow" aria-hidden="true"></div>
+      <div class="layer L-compact" id="lc">
+        <span class="lcI" id="lcI">
+          <button class="clk num" id="clk" aria-label="Open calendar"><span id="clkT"></span><span class="d" id="clkD"></span></button>
+          <span class="slot" id="slot"></span>
+        </span>
+      </div>
+      <div class="layer L-wide"><span class="lwI" id="lwI"></span></div>
+      <div class="layer L-exp" id="lx">
+        <div class="xtabs" id="xtabs" role="tablist" aria-label="Island pages"><span class="xind" id="xind" aria-hidden="true"></span></div>
+        <div class="xp" id="xp">
+          <div class="track" id="track">
+            <section class="page pg-media" id="pgMedia" aria-label="Media">
+              <div class="mus">
+                <div class="cover" id="cover"><svg class="ic" aria-hidden="true"><use href="#i-music"/></svg></div>
+                <div class="minfo">
+                  <div class="msrc" id="mSrc"></div>
+                  <div class="mtitle" id="mTitle"></div>
+                  <div class="martist" id="mArtist"></div>
+                  <div class="mprog num"><span id="mCur"></span><div class="bar2" id="mBar"><i id="mFill"></i></div><span id="mDur"></span></div>
+                </div>
+                <div class="mctl">
+                  <button id="mPrev" aria-label="Previous track"><svg class="ic" aria-hidden="true"><use href="#i-prev"/></svg></button>
+                  <button class="main" id="mPlay" aria-label="Pause"></button>
+                  <button id="mNext" aria-label="Next track"><svg class="ic" aria-hidden="true"><use href="#i-next"/></svg></button>
+                </div>
+              </div>
+              <div class="vid">
+                <div class="msrc" id="vSrc"></div>
+                <div class="vtitle" id="vTitle"></div>
+                <div class="mprog num"><span id="vCur"></span><div class="bar2"><i id="vFill"></i></div><span id="vLeft"></span></div>
+              </div>
+            </section>
+            <section class="page" aria-label="Timer">
+              <div>
+                <div class="seg" id="seg"><button data-m="timer">Timer</button><button data-m="sw">Stopwatch</button><button data-m="pomo">Pomodoro</button></div>
+                <div class="big num" id="tBig"></div>
+                <div class="sub" id="tSub"></div>
+                <div class="chips" id="chips"><button class="chip" data-s="10">10 s</button><button class="chip" data-s="300">5 min</button><button class="chip" data-s="600">10 min</button><button class="chip" data-s="1500">25 min</button></div>
+              </div>
+              <div class="tright">
+                <svg class="bring" viewBox="0 0 104 104" aria-hidden="true"><circle class="bg" cx="52" cy="52" r="44"/><circle class="fg" id="bigFg" cx="52" cy="52" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg>
+                <div class="tbtns"><button class="pill pri" id="tStart">Start</button><button class="pill" id="tReset">Reset</button></div>
+              </div>
+            </section>
+            <section class="page" aria-label="Alarms">
+              <div><div class="sub">Next alarm</div><div class="big num">05:30</div><div class="sub">Tomorrow · Wake up</div></div>
+              <div class="alist">
+                <div class="arow"><span class="t num">05:30</span><span class="l">Wake up<br>Mon–Fri · Radar</span><button class="sw" role="switch" aria-checked="true" aria-label="Alarm 05:30"></button></div>
+                <div class="arow"><span class="t num">14:30</span><span class="l">Take medicine<br>Every day · <span id="alSnd">Radar</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Alarm 14:30"></button></div>
+                <div class="arow"><span class="t num">21:00</span><span class="l">Pack the bag<br>Once · Soft</span><button class="sw" role="switch" aria-checked="false" aria-label="Alarm 21:00"></button></div>
+              </div>
+            </section>
+            <section class="page" aria-label="Calendar">
+              <div class="cal" id="cal"></div>
+              <div class="cev" id="cev"></div>
+            </section>
+            <section class="page" aria-label="Todo">
+              <div class="tdl">
+                <div class="tdbig num"><span id="tdDone"></span>/<span id="tdTot"></span></div>
+                <div class="tdsub">Tasks done today</div>
+                <div class="tdbtns">
+                  <button class="pill" id="tdCal"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg>Add in Calendar</button>
+                  <button class="pill" id="tdEdit"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Edit</button>
+                </div>
+              </div>
+              <ul class="tlist" id="tlist"></ul>
+            </section>
+            <section class="page pg-note" aria-label="Notes">
+              <div class="nwrap" id="nWrap">
+                <div class="nleft">
+                  <div class="ntop">
+                    <input class="field" id="nSearch" placeholder="Search notes" aria-label="Search notes">
+                    <button class="nnew" id="nNew"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>New note</button>
+                  </div>
+                  <div class="ngrid" id="nGrid"><div class="ngin" id="nGridIn" aria-label="Notes. Drag a note, or press Alt and an arrow key, to reorder."></div></div>
+                </div>
+                <div class="ned" id="nEdPanel">
+                  <textarea id="nEd" placeholder="Write something. The first line becomes the title." aria-label="Note text"></textarea>
+                  <div class="nsw" id="nSw" role="group" aria-label="Note color"></div>
+                  <div class="nfoot"><span class="nsave" id="nSave"><i></i><span id="nSaveT">Saved</span></span>
+                    <span class="nact"><button class="ndel" id="nDel">Delete</button><button class="pill pri sm" id="nDone">Done</button></span></div>
+                </div>
+              </div>
+            </section>
+            <section class="page" aria-label="Shelf">
+              <div class="shsum">
+                <div class="shbig num" id="shCount">0</div>
+                <div class="tdsub" id="shSub">files on the shelf</div>
+                <button class="pill" id="shClear">Clear all</button>
+              </div>
+              <div class="shgrid" id="shGrid"></div>
+            </section>
+            <section class="page" aria-label="Claude">
+              <div class="clist" id="clist"></div>
+            </section>
+            <section class="page" aria-label="System">
+              <div class="sys">
+                <div class="tile"><div class="tl">CPU<span class="tv num" id="sCpu"></span></div><svg class="sp" viewBox="0 0 100 26" preserveAspectRatio="none"><polyline id="pCpu" stroke="#0a84ff"/></svg></div>
+                <div class="tile"><div class="tl">RAM<span class="tv num" id="sRam"></span></div><svg class="sp" viewBox="0 0 100 26" preserveAspectRatio="none"><polyline id="pRam" stroke="#bf5af2"/></svg></div>
+                <div class="tile"><div class="tl">GPU<span class="tv num" id="sGpu"></span></div><svg class="sp" viewBox="0 0 100 26" preserveAspectRatio="none"><polyline id="pGpu" stroke="#30d158"/></svg></div>
+                <div class="tile"><div class="tl">Download<span class="tv num" id="sDown"></span></div><svg class="sp" viewBox="0 0 100 26" preserveAspectRatio="none"><polyline id="pDown" stroke="#64d2ff"/></svg></div>
+                <div class="tile"><div class="tl">CPU temp<span class="tv num" id="sTemp"></span></div><svg class="sp" viewBox="0 0 100 26" preserveAspectRatio="none"><polyline id="pTemp" stroke="#ff9f0a"/></svg></div>
+                <div class="tile"><div class="tl">Disk C:<span class="tv num">120 GB free</span></div><div class="dbar"><i></i></div></div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <button class="xfoot" id="xClk" aria-label="Open Calendar"><span class="tm num" id="xTime"></span><span id="xDate"></span></button>
+      </div>
+      <div class="layer L-card" id="lcard"></div>
+      <div class="layer L-drop">
+        <div class="dz"><span class="dzi"><svg class="ic" aria-hidden="true"><use href="#i-traydown"/></svg></span>
+          <div><div class="ct" id="dzT">Drop to keep on the Shelf</div><div class="cs" id="dzS">Files stay where they are until you drag them out</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="bubble" id="bubble"></div>
+  <button class="bubble cdone" id="cbub" tabindex="-1"></button>
+  <span class="pc cam" id="pCam" role="img" aria-label="Camera in use: Zoom" title="Camera in use: Zoom"></span>
+  <span class="pc mic" id="pMic" role="img" aria-label="Microphone in use: Discord" title="Microphone in use: Discord"></span>
+
+  <div class="wtb">
+    <span class="ap"><svg class="ic" aria-hidden="true"><use href="#i-start"/></svg></span>
+    <span class="ap"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></span>
+    <span class="ap" data-name="File Explorer" data-icon="a-explorer"><svg class="aic" aria-hidden="true"><use href="#a-explorer"/></svg></span>
+    <span class="ap open" data-name="Chrome" data-icon="a-chrome"><svg class="aic" aria-hidden="true"><use href="#a-chrome"/></svg></span>
+    <span class="ap open" data-name="Visual Studio Code" data-icon="a-code"><svg class="aic" aria-hidden="true"><use href="#a-code"/></svg></span>
+    <span class="ap open" data-name="Spotify" data-icon="a-spotify"><svg class="aic" aria-hidden="true"><use href="#a-spotify"/></svg></span>
+    <span class="ap open" data-name="Claude" data-icon="a-claude"><svg class="aic" aria-hidden="true"><use href="#a-claude"/></svg></span>
+    <span class="ap open" data-name="wmux" data-icon="a-term"><svg class="aic" aria-hidden="true"><use href="#a-term"/></svg></span>
+    <span class="tray"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg><svg class="ic" aria-hidden="true" style="width:18px"><use href="#i-bat"/></svg><span class="tm num" id="tray"></span></span>
+  </div>
+</div>
+
+<aside class="ctl" id="ctl" aria-label="Mockup controls">
+  <div class="ch"><h2>Mockup controls</h2><button id="ctlMin" aria-expanded="true">Hide</button></div>
+  <div class="body">
+    <p class="note">Click the island, the clock, the Notes icon, or CPU in the bar. Drag a real file from your desktop onto the island. Swipe the island with a touchpad or use the arrow keys; Esc closes it.</p>
+    <div class="g"><button data-act="demo" aria-pressed="false">Play the demo</button></div>
+    <h3>Island</h3>
+    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Shelf</button><button data-page="7">Claude</button><button data-page="8">System</button><button data-act="note">New note (Ctrl+Alt+N)</button></div>
+    <h3>Live activities</h3>
+    <div class="g"><button data-act="idle">No activity (idle)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <h3>Quick events</h3>
+    <div class="g"><button data-act="caps">Caps Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat80">80% reached</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
+    <h3>Left side</h3>
+    <div class="g"><button data-act="copyText">Copy text</button><button data-act="copyImg">Copy image</button><button data-act="copyFile">Copy files</button><button data-act="cutFile">Cut files</button><button data-act="copySecret">Copy a password</button></div>
+    <h3>Explorer file operations</h3>
+    <div class="g"><button data-act="explorer">Copy</button><button data-act="xmove">Move</button><button data-act="xdel">Delete</button><button data-act="xconflict">File conflict</button><button data-act="xcancel">Cancel</button></div>
+    <h3>Privacy</h3>
+    <div class="g"><button data-act="cam" aria-pressed="false">Camera in use</button><button data-act="mic" aria-pressed="false">Microphone in use</button></div>
+    <h3>Shelf</h3>
+    <div class="g"><button data-act="drop">Simulate a file drop</button></div>
+    <h3>Alerts</h3>
+    <div class="g"><button data-act="alarm">Alarm</button><button data-act="timerDone">Timer done</button><button data-act="todoRem">Todo reminder</button></div>
+    <h3>Claude sessions</h3>
+    <div class="g"><button data-act="clWork">Start working</button><button data-act="clAsk">Ask a question</button><button data-act="clPerm">Ask permission</button><button data-act="clPlan">Plan ready</button><button data-act="clAnswer">Answer in Claude</button><button data-act="clDone">Finish</button><button data-act="clEsc">Stop with Esc</button><button data-act="clTwo">Second session</button><button data-act="clTerm">Terminal session</button><button data-act="clFocus">Switch to Claude</button></div>
+    <p class="note">The first buttons drive one Claude Desktop session. Finish while another app is in front to see the green bubble; switch to Claude (or click its taskbar icon) to clear it.</p>
+    <h3>Sound</h3>
+    <div class="g"><button data-act="snd" aria-pressed="true">Mockup sound</button><button data-act="ramp" aria-pressed="true">Gradually increase</button><button data-act="winmute" aria-pressed="false">Windows muted</button></div>
+    <div class="segc" id="sndSeg" role="group" aria-label="Alarm sound"><button data-snd="radar" class="on">Radar</button><button data-snd="chime">Chime</button><button data-snd="bell">Bell</button><button data-snd="soft">Soft</button></div>
+    <label class="rng" style="margin-top:8px">Volume <input type="range" id="sVol" min="0" max="100" step="1" value="80" aria-label="Alert volume"><span class="num" id="sVolV">80%</span></label>
+    <p class="note">Pick an alarm sound to hear it. The browser plays sound only after you've clicked somewhere on the page.</p>
+    <h3>Bar appearance</h3>
+    <label class="rng">Opacity <input type="range" id="opA" min="40" max="100" step="1" value="78" aria-label="Bar opacity"><span class="num" id="opAv">78%</span></label>
+    <label class="rng">Bar height <input type="range" id="barH" min="28" max="44" step="1" value="32" aria-label="Bar height"><span class="num" id="barHv">32px</span></label>
+    <label class="rng">Island height <input type="range" id="islH" min="20" max="28" step="1" value="24" aria-label="Island height"><span class="num" id="islHv">24px</span></label>
+    <div class="segc" id="glass" role="group" aria-label="Glass"><button data-g="0">Off</button><button data-g="12">Light</button><button data-g="30" class="on">Strong</button></div>
+    <div class="g" style="margin-top:8px"><button data-act="extra" aria-pressed="false">Show GPU, temp, disk</button><button data-act="glow" aria-pressed="true">Ambient glow</button></div>
+    <h3>Other</h3>
+    <div class="g"><button data-act="updates" aria-pressed="false">Windows updates pending</button><button data-act="fs" aria-pressed="false">Fullscreen app</button><button data-act="reduce" aria-pressed="false">Reduce motion</button></div>
+  </div>
+</aside>
+<div class="hint" id="hint" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const icon=id=>`<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const pad=n=>String(n).padStart(2,'0');
+const mmss=s=>{s=Math.max(0,Math.ceil(s));return pad(Math.floor(s/60))+':'+pad(s%60)};
+const fmtDur=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return(h?h+':'+pad(m):m)+':'+pad(s%60)};
+const trunc=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtSize=b=>b>=1e9?(b/1e9).toFixed(1)+' GB':b>=1e6?(b/1e6).toFixed(1)+' MB':Math.max(1,Math.round(b/1e3))+' KB';
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const nowHM=()=>{const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())};
+
+// Springs described the way Apple does: damping ratio + response (seconds).
+// Simulated once and handed to CSS as a linear() easing when the browser supports it.
+function spring(zeta,response){
+  const w=2*Math.PI/response,k=w*w,c=2*zeta*w,dt=1/240;
+  let x=0,v=0;const s=[0];
+  for(let i=0;i<1200;i++){const a=-k*(x-1)-c*v;v+=a*dt;x+=v*dt;s.push(x)}
+  let end=s.length-1;
+  for(let i=s.length-1;i>0;i--){if(Math.abs(s[i]-1)>0.003){end=i+1;break}}
+  const n=48,out=[];
+  for(let j=0;j<=n;j++)out.push(+s[Math.round(j/n*end)].toFixed(4));
+  out[n]=1;
+  return{dur:Math.round(end*dt*1000),ease:`linear(${out.join(', ')})`};
+}
+const LIN=CSS.supports('transition-timing-function','linear(0, 1)');
+const SP_OPEN=LIN?spring(.82,.42):{dur:520,ease:'cubic-bezier(.34,1.32,.64,1)'};
+const SP_CLOSE=LIN?spring(1,.32):{dur:380,ease:'cubic-bezier(.16,1,.3,1)'};
+const SP_WIDE=LIN?spring(.85,.30):{dur:340,ease:'cubic-bezier(.34,1.2,.64,1)'};
+const SP_HOVER=LIN?spring(.8,.30):{dur:320,ease:'cubic-bezier(.34,1.3,.64,1)'};
+const HOVER_GROW=16;
+
+const MEDIA=[
+  {kind:'music',t:'Evaluasi',a:'Hindia',d:238,src:'Spotify',c:['#f97316','#9f1239']},
+  {kind:'music',t:'Rumah ke Rumah',a:'Hindia',d:261,src:'Spotify',c:['#0ea5e9','#1e3a8a']},
+  {kind:'video',t:'Lecture 07 – Linear Algebra.mp4',d:3125,src:'VLC media player',c:['#ff9f0a','#ff9f0a']},
+  {kind:'music',t:'Lofi beats to study to',a:'Lofi Girl',d:3600,src:'YouTube · Chrome',c:['#22c55e','#0f766e']},
+];
+const S={
+  state:'compact',page:4,lastPage:4,cardReturn:'compact',dropReturn:'compact',card:null,
+  media:{active:true,playing:true,i:0,pos:72},
+  timer:{mode:'timer',total:600,left:600,running:false},
+  sw:{running:false,acc:0,start:0},
+  pomo:{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false},
+  charging:false,battery:64,caps:false,barH:32,islH:24,
+  cpu:12,gpu:4,ram:54,temp:62,down:2100,up:300,
+  hist:{cpu:[],ram:[],gpu:[],down:[],temp:[]},
+  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,temp:0,disk:0,wifi:1},
+  cam:false,mic:false,fs:false,xop:null,leftMax:400,
+  reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
+  wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
+  todos:[{t:'Revise the report',d:1},{t:'Reply to Dina',d:1},{t:'Post weekly update',d:1},{t:'Pay electricity bill',d:1},{t:'Prepare meeting slides',d:0}],
+  notes:[
+    {id:1,b:'TopBar ideas\n- drag the island down\n- custom accent color\n- hover to stretch',t:'19:20',c:3},
+    {id:2,b:'Groceries\neggs, coffee, dish soap',t:'Yesterday',c:4},
+    {id:3,b:'Monday meeting\nQ4 budget and release dates. Ask Dina about the vendor contract before Friday.',t:'Mon'},
+    {id:4,b:'Books to read\nLaut Bercerita\nCantik Itu Luka\nBumi Manusia',t:'12 Oct',c:7},
+    {id:5,b:'Guest Wi-Fi password is on the fridge',t:'10 Oct'},
+    {id:6,b:'Gift ideas\nRani: watercolor set\nDad: running shoes\nMom: herb garden kit',t:'8 Oct',c:2},
+    {id:7,b:'Car service\nOil change at 45,000 km',t:'2 Oct'},
+  ],
+  noteSel:1,editing:false,nextId:10,shelf:[],
+  // Claude Code sessions as the hooks report them: idle, work, ask (needs input), done.
+  cl:[
+    {id:1,name:'Add Claude status to the island',dir:'top-taskbar',app:'claude',st:'idle',at:Date.now()-18*60e3},
+    {id:2,name:'Wedding site stats widget',dir:'mci-v3',app:'claude',st:'idle',at:Date.now()-52*60e3},
+    {id:3,name:'',dir:'api-server',app:'wmux',st:'idle',at:Date.now()-6*60e3},
+  ],
+  clEnd:null,fgName:'Chrome',
+  apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
+};
+const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,notes:5,shelf:6,claude:7,system:8};
+const LAST=8,GAP=24;
+const HIDE_ORDER=['weather','net','disk','temp','gpu','ram','cpu'];
+
+const iw=$('#iw'),isl=$('#isl'),bar=$('#bar'),bubble=$('#bubble'),cbub=$('#cbub'),lcI=$('#lcI'),lwI=$('#lwI'),lcard=$('#lcard');
+const slot=$('#slot'),track=$('#track');
+const pCam=$('#pCam'),pMic=$('#pMic');
+const nEd=$('#nEd'),nIn=$('#nGridIn'),nWrap=$('#nWrap');
+const BC=276.46;
+
+/* ---------- island sizing and states ---------- */
+const FLOAT=['expanded','card','drop'];
+function activities(){
+  const a=[];
+  if(S.clip)a.push('clip');
+  // Claude is one activity: high while it waits for an answer or just finished, lower while it works.
+  if(clBy('ask').length||S.clEnd)a.push('cl');
+  if(S.xop||S.xopEnd)a.push('xop');
+  if(S.pomo.running)a.push('pomo');else if(S.timer.running)a.push('timer');
+  if(S.sw.running)a.push('sw');
+  if(!a.includes('cl')&&clBy('work').length)a.push('cl');
+  if(S.media.active)a.push('media');
+  if(S.charging)a.push('charge');
+  return a;
+}
+// Natural width: the clock when idle, otherwise the activity's own pieces (measured one by one so the
+// stretched slot width never feeds back into the measurement).
+function naturalWidth(){
+  const r=e=>e.getBoundingClientRect().width;
+  if(!slot.dataset.k)return Math.ceil(r($('#clk')))+28;
+  const kids=[...slot.children];
+  return Math.ceil(kids.reduce((a,e)=>a+r(e),0)+6*Math.max(0,kids.length-1))+28;
+}
+// The island fits what it shows, but is never narrower than the charging notice (MIN_COMPACT).
+const MIN_COMPACT=200;
+function compactWidth(){return Math.max(naturalWidth(),MIN_COMPACT)}
+function layout(){
+  const s=S.state,cw=compactWidth();
+  let W,H,T,R;
+  // Compact and wide sit vertically centred in the bar; both heights come from Settings.
+  const ih=S.islH,ct=(S.barH-ih)/2;
+  if(s==='compact'){W=cw+(S.hover?HOVER_GROW:0);H=ih;T=ct;R=ih/2+'px'}
+  else if(s==='wide'){W=Math.max(MIN_COMPACT,Math.ceil(lwI.getBoundingClientRect().width)+32);H=ih;T=ct;R=ih/2+'px'}
+  else if(s==='expanded'){const nt=S.page===PAGE.notes;W=Math.min(nt?960:680,innerWidth-24);H=nt?500:256;T=8;R='32px'}
+  else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;T=8;R='28px'}
+  else{W=Math.min(420,innerWidth-24);H=140;T=8;R='30px'}
+  iw.style.width=W+'px';iw.style.height=H+'px';iw.style.top=T+'px';isl.style.borderRadius=R;
+  slot.style.setProperty('--slotw',slot.dataset.k&&s==='compact'?(W-28)+'px':'auto');
+  iw.classList.toggle('tall',s==='expanded'&&S.page===PAGE.notes);
+  if(s==='expanded'&&S.page===PAGE.notes)layoutNotes(true);
+  iw.classList.toggle('float',FLOAT.includes(s));
+  const bOn=s==='compact'&&activities().length>1,cOn=s==='compact'&&cbubOn();
+  bubble.classList.toggle('on',bOn);
+  for(const b of[bubble,cbub]){b.style.top=ct+'px';b.style.width=b.style.height=ih+'px'}
+  bubble.style.left=(innerWidth/2+W/2+6)+'px';
+  // The "finished, not seen yet" bubble always sits rightmost.
+  cbub.classList.toggle('on',cOn);cbub.tabIndex=cOn?0:-1;
+  cbub.style.left=(innerWidth/2+W/2+6+(bOn?ih+6:0))+'px';
+  // Privacy dots: a row left of the island in the bar (camera closest); stacked down its left edge when it floats.
+  const fl=FLOAT.includes(s),edge=innerWidth/2-W/2-14;let k=0;
+  for(const[el,on]of[[pCam,S.cam],[pMic,S.mic]]){
+    el.classList.toggle('on',on&&!S.fs);
+    el.style.left=(fl?edge:edge-k*13)+'px';el.style.top=(fl?T+20+k*13:ct+ih/2-4)+'px';
+    if(on)k++;
+  }
+  fitBar(cw);markCovered(W,fl);
+}
+// While the island floats, fade out only the bar items it would cover (with 8 px of breathing room).
+function markCovered(W,floating){
+  const L=innerWidth/2-W/2-8,R=innerWidth/2+W/2+8;
+  $$('#launch button,#apps .appi,#right .mod').forEach(el=>{
+    if(!floating){el.classList.remove('under');return}
+    const r=el.getBoundingClientRect();
+    el.classList.toggle('under',r.width>0&&r.right>L&&r.left<R);
+  });
+}
+// Keep the left and right sections at least GAP px away from the island and whatever sits beside it; overflow right modules into "…".
+function fitBar(cw){
+  const priv=((S.cam?1:0)+(S.mic?1:0))*13,bub=(activities().length>1?S.islH+6:0)+(cbubOn()?S.islH+6:0);
+  // Reserve the hover growth too, so modules don't shift when the pointer rests on the island.
+  const half=cw/2+HOVER_GROW/2;
+  const rightSide=innerWidth/2-Math.max(half+bub,150)-GAP-10;
+  const leftSide=innerWidth/2-Math.max(half+priv,150)-GAP-10;
+  const right=$('#right'),more=$('#mMore');
+  $$('#right [data-m]').forEach(m=>m.hidden=!S.mods[m.dataset.m]);
+  more.hidden=true;const hidden=[];
+  for(const k of HIDE_ORDER){
+    if(right.offsetWidth<=rightSide)break;
+    if(!S.mods[k])continue;
+    right.querySelector(`[data-m="${k}"]`).hidden=true;hidden.push(k);more.hidden=false;
+  }
+  S.overflow=hidden;S.leftMax=leftSide;fitApps();
+}
+// Inactive icons drop off the end into "+N" when space runs out; the active app always stays and its name truncates last.
+function fitApps(){
+  const avail=S.leftMax-$('#launch').offsetWidth-26,items=$$('#apps .appi'),more=$('#aMore');
+  if(!more)return;
+  items.forEach(b=>b.hidden=false);more.hidden=true;
+  const ICON=28,ACT=36,MORE=26;let hid=0;
+  const need=()=>(items.length-hid-1)*ICON+ACT+(hid?MORE:0);
+  for(let k=items.length-1;k>=0&&avail-need()<60;k--){if(items[k].classList.contains('act'))continue;items[k].hidden=true;hid++}
+  if(hid){more.hidden=false;more.textContent='+'+hid;more.title=items.filter(b=>b.hidden).map(b=>b.title).join(', ')}
+  $('#apps').style.setProperty('--anm-max',Math.max(0,Math.min(160,avail-need()))+'px');
+}
+function setMotion(m){for(const el of[iw,bubble,cbub,pCam,pMic]){el.style.setProperty('--d',m.dur+'ms');el.style.setProperty('--e',m.ease)}}
+function setState(next,instant){
+  const prev=S.state;S.state=next;
+  if(instant||S.reduce)setMotion({dur:0,ease:'linear'});
+  else if(FLOAT.includes(next))setMotion(SP_OPEN);
+  else if(next==='wide'||prev==='wide')setMotion(SP_WIDE);
+  else setMotion(SP_CLOSE);
+  iw.className='iw st-'+next;
+  bar.classList.toggle('focus',FLOAT.includes(next));
+  if(FLOAT.includes(next))powerMenu(false);
+  if(next!=='wide'){clearTimeout(S.wideT);S.wideKey=null}
+  if(next!=='expanded')clearTimeout(S.leaveT);
+  layout();
+}
+function showWide(key,html,ms,update){
+  if(FLOAT.includes(S.state)||S.fs)return;
+  if(S.state==='wide'&&S.wideKey===key&&update)update();else lwI.innerHTML=html;
+  if(S.state!=='wide')setState('wide');else layout();
+  S.wideKey=key;
+  clearTimeout(S.wideT);
+  S.wideT=setTimeout(()=>{if(S.state==='wide')setState('compact')},ms);
+}
+function pageFor(k){
+  if(k==='media')return PAGE.media;
+  if(k==='timer'||k==='pomo'||k==='sw'){S.timer.mode=k;return PAGE.timer}
+  if(k==='cl')return PAGE.claude;
+  return S.lastPage;
+}
+function openExpanded(p){
+  if(S.state==='card'||S.fs)return;
+  if(p==null)p=pageFor(activities()[0]);
+  goPage(p,true);setState('expanded');
+}
+// Bar icons open their island page; clicking the icon of the page that is already open closes the island.
+function openFromBar(p){
+  if(S.state!=='expanded')openExpanded(p);
+  else if(S.page===p)closeExpanded();
+  else goPage(p);
+}
+function closeExpanded(){
+  if(S.state!=='expanded')return;
+  if(document.activeElement&&iw.contains(document.activeElement))document.activeElement.blur();
+  flushNote();setState('compact');
+}
+
+/* ---------- sound: synthesized with Web Audio so the mockup ships no audio files ---------- */
+const Sound={ctx:null,on:true,vol:.8,ramp:true,alarm:'radar',cur:null};
+function audio(){
+  if(!Sound.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;Sound.ctx=new C()}
+  if(Sound.ctx.state==='suspended')Sound.ctx.resume();
+  return Sound.ctx;
+}
+addEventListener('pointerdown',audio,{capture:true});
+addEventListener('keydown',audio,{capture:true});
+function tone(out,t,freq,dur,type,gain){
+  const c=Sound.ctx,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(out);o.start(t);o.stop(t+dur+.05);
+}
+const VOICES={
+  radar:{every:1.2,play:(o,t)=>[0,.14,.28].forEach((d,i)=>tone(o,t+d,i===2?1568:1318.5,.11,'triangle',.22))},
+  chime:{every:2,play:(o,t)=>{tone(o,t,1046.5,1.4,'sine',.26);tone(o,t+.18,1318.5,1.6,'sine',.22);tone(o,t,2093,.6,'sine',.05)}},
+  bell:{every:2.5,play:(o,t)=>[[1,.3],[2.76,.12],[5.4,.06],[8.93,.03]].forEach(([r,g])=>tone(o,t,523.25*r,2.2/Math.pow(r,.3),'sine',g))},
+  soft:{every:2,play:(o,t)=>[659.25,783.99,987.77].forEach((f,i)=>tone(o,t+i*.22,f,.9,'sine',.16))},
+  ping:{every:2,play:(o,t)=>{tone(o,t,1760,.5,'sine',.2);tone(o,t+.09,2637,.35,'sine',.08)}},
+};
+// Loops until stopped or for 5 minutes; with ramp, starts at 30% of the alert volume and reaches 100% after 30 s.
+function ring(name,ramp){
+  stopSound();
+  const c=Sound.on&&!S.winMuted&&audio();if(!c)return;
+  const g=c.createGain(),t=c.currentTime,v=VOICES[name];g.connect(c.destination);
+  if(ramp){g.gain.setValueAtTime(Sound.vol*.3,t);g.gain.linearRampToValueAtTime(Sound.vol,t+30)}else g.gain.setValueAtTime(Sound.vol,t);
+  v.play(g,t+.02);
+  Sound.cur={g,iv:setInterval(()=>v.play(g,c.currentTime+.02),v.every*1000),to:setTimeout(stopSound,300000)};
+}
+function chimeOnce(name){
+  const c=Sound.on&&!S.winMuted&&audio();if(!c)return;
+  const g=c.createGain();g.gain.value=Sound.vol;g.connect(c.destination);
+  VOICES[name].play(g,c.currentTime+.02);setTimeout(()=>g.disconnect(),3000);
+}
+function stopSound(){
+  const h=Sound.cur;if(!h)return;Sound.cur=null;
+  clearInterval(h.iv);clearTimeout(h.to);
+  const t=Sound.ctx.currentTime;h.g.gain.cancelScheduledValues(t);h.g.gain.setValueAtTime(h.g.gain.value,t);h.g.gain.linearRampToValueAtTime(0,t+.1);
+  setTimeout(()=>h.g.disconnect(),300);
+}
+
+/* ---------- alert cards ---------- */
+const CARDS={
+  alarm:{c:'var(--orange)',i:'alarm',cls:'pulse shake',t:'Alarm 14:30',s:'Take medicine',b:[['Snooze 5m','snooze'],['Stop','dismiss',1]],ring:'loop',snd:()=>Sound.alarm,ramp:true},
+  timer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`Timer ${mmss(S.timer.total)} done`,s:'Bring in the laundry',b:[['Repeat','repeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
+  todo:{c:'var(--accent)',i:'todo',cls:'',t:'Prepare meeting slides',s:'Due 15:00 today',b:[['Snooze 10m','snooze'],['Done','done',1]],ring:'once',snd:'ping'},
+  pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`5-minute break · session ${S.pomo.round} of 4`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
+  conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
+  claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
+  pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${Math.min(4,S.pomo.round+1)} of 4 ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
+};
+const val=v=>typeof v==='function'?v():v;
+function showCard(k){
+  const c=CARDS[k];
+  if(S.state!=='card')S.cardReturn=S.state==='expanded'?'expanded':'compact';
+  const muted=S.winMuted&&c.ring==='loop';
+  const btns=(muted?[['Unmute','unmute']]:[]).concat(c.b);
+  lcard.innerHTML=`<div class="cic ${c.cls}" style="--c:${c.c}">${icon(c.i)}</div>
+    <div class="ctx"><div class="ct">${val(c.t)}</div><div class="cs">${val(c.s)}</div>${c.q?`<div class="cs cq">${esc(c.q)}</div>`:''}${muted?`<div class="cs wrn">${icon('mute')}Sound is off · Windows volume is muted</div>`:''}</div>
+    <div class="cbt">${btns.map(([l,a,p])=>`<button class="pill ${p?'pri':''}" data-card="${a}">${l}</button>`).join('')}</div>`;
+  S.card=k;clearTimeout(S.cardT);
+  if(k==='todo')S.cardT=setTimeout(closeCard,10000);
+  else if(k==='claude')S.cardT=setTimeout(()=>{closeCard();renderSlot()},8000);
+  setState('card');
+  if(c.ring==='loop')ring(val(c.snd),c.ramp&&Sound.ramp);
+  else if(c.ring==='once'&&!(k==='todo'&&S.pomo.running&&S.pomo.phase==='focus')){stopSound();chimeOnce(val(c.snd))}
+}
+function closeCard(){clearTimeout(S.cardT);stopSound();S.card=null;setState(S.cardReturn)}
+lcard.addEventListener('click',e=>{
+  const b=e.target.closest('[data-card]');if(!b)return;
+  const a=b.dataset.card;
+  if(a==='unmute'){S.winMuted=false;setPressed('winmute',false);showCard(S.card);return}
+  if(a==='xskip'||a==='xreplace')resolveConflict(a);
+  if(a==='clopen')clFocus(clById(S.clCard));
+  if(a==='snooze')hint(S.card==='todo'?'Reminder snoozed for 10 minutes':'Alarm snoozed for 5 minutes');
+  if(a==='repeat')Object.assign(S.timer,{left:S.timer.total,running:true});
+  if(a==='done'){const t=S.todos.find(x=>x.t==='Prepare meeting slides');if(t)t.d=1;renderTodos()}
+  if(a==='break'){Object.assign(S.pomo,{phase:'break',left:300,len:300,running:true});setTimeout(clHeld,600)}
+  if(a==='focus')Object.assign(S.pomo,{phase:'focus',left:1500,len:1500,running:true,round:Math.min(4,S.pomo.round+1)});
+  if(a==='stop')Object.assign(S.pomo,{running:false,phase:'focus',left:1500,len:1500,round:1,fast:false});
+  closeCard();renderSlot();renderTimerPage();
+});
+
+/* ---------- compact: clock and activity slot ---------- */
+let slotSig='';
+const ACT_ICON={timer:['hourglass','var(--orange)'],pomo:['hourglass','var(--danger)'],sw:['stopwatch','var(--orange)'],charge:['bolt','var(--accent)']};
+const cur=()=>MEDIA[S.media.i];
+const pct=()=>Math.min(100,S.media.pos/cur().d*100);
+function swMs(){return S.sw.acc+(S.sw.running?Date.now()-S.sw.start:0)}
+function swText(tenths){const ms=swMs();return mmss(Math.floor(ms/1000))+(tenths?'.'+Math.floor(ms%1000/100):'')}
+function slotValue(k){
+  if(k==='timer')return mmss(S.timer.left);
+  if(k==='pomo')return mmss(S.pomo.left);
+  if(k==='sw')return swText(false);
+  if(k==='charge')return Math.round(S.battery)+'%';
+  if(k==='cl'){const w=clBy('work');return w.length===1?fmtDur((Date.now()-w[0].t0)/1000):''}
+  return '';
+}
+function slotHTML(k){
+  if(k==='clip')return S.clip.html;
+  if(k==='cl')return clSlotHTML();
+  if(k==='xop'){
+    const x=S.xop,o=XOPS[(x||S.xopEnd).kind];
+    const nm=`<span class="tt">${esc(trunc(o.name,28))}</span>`;
+    if(x&&x.paused)return `<span style="color:var(--warn)">${icon('alert')}</span>${nm}<span style="color:var(--warn)">Needs attention</span>`;
+    if(x)return `<span style="color:${o.c}">${icon(o.ic)}</span>${nm}<span class="mini xm"><i class="sv" style="width:${x.p}%;background:${o.c}"></i></span><span class="num xpct">${Math.floor(x.p)}%</span>`;
+    return S.xopEnd.status==='done'?`<span style="color:${o.c}">${icon('check')}</span>${nm}<span class="k2">${o.doneShort}</span>`:`<span class="k2">${icon('x')}</span>${nm}<span class="k2">Cancelled</span>`;
+  }
+  if(ACT_ICON[k]){const[i,c]=ACT_ICON[k];return `<span style="color:${c}">${icon(i)}</span><span class="num sv">${slotValue(k)}</span>`}
+  const m=cur();
+  if(m.kind==='video')return `<span style="color:var(--orange)">${icon('film')}</span><span class="tt">${esc(trunc(m.t,32))}</span><span class="mini"><i class="sv" style="width:${pct()}%"></i></span>`;
+  return `<span class="viz ${S.media.playing?'':'off'}" style="color:${m.c[0]}"><i></i><i></i><i></i><i></i></span><span class="tt">${esc(trunc(m.t+' – '+m.a,36))}</span><button class="pp" data-pp aria-label="${S.media.playing?'Pause':'Play'}">${icon(S.media.playing?'pause':'play')}</button>`;
+}
+function renderSlot(){
+  const a=activities(),k=a[0];
+  const xs=k==='xop'?(S.xop?(S.xop.paused?'p':'r')+S.xop.kind:S.xopEnd.status+S.xopEnd.kind):'';
+  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing:'')+'|'+(a[1]||'')+'|'+clSig();
+  if(sig!==slotSig){
+    slotSig=sig;
+    // Clock and date only show while the island has nothing else to say.
+    $('#clk').hidden=!!k;slot.innerHTML=k?slotHTML(k):'';slot.dataset.k=k||'';
+    slot.title=k==='xop'?XOPS[(S.xop||S.xopEnd).kind].run:k==='clip'?S.clip.tip:k==='cl'?clTip():'';
+    if(S.state==='compact'&&!S.reduce)setMotion(SP_WIDE);
+    if(a[1]==='cl')bubble.innerHTML=clIcon();
+    else if(a[1]){
+      const xo=a[1]==='xop'&&XOPS[(S.xop||S.xopEnd).kind];
+      const[i,c]=a[1]==='media'?[cur().kind==='video'?'film':'music','var(--text)']:xo?[xo.ic,xo.c]:ACT_ICON[a[1]];
+      bubble.innerHTML=`<span style="color:${c}">${icon(i)}</span>`;
+    }
+    bubble.dataset.k=a[1]||'';
+    renderCbub();layout();
+  }else if(k==='xop'){
+    if(S.xop&&!S.xop.paused){slot.querySelector('.sv').style.width=S.xop.p+'%';slot.querySelector('.xpct').textContent=Math.floor(S.xop.p)+'%'}
+  }else if(k){
+    const sv=slot.querySelector('.sv');if(!sv)return;
+    if(k==='media')sv.style.width=pct()+'%';else sv.textContent=slotValue(k);
+  }
+}
+function renderClock(){
+  const n=new Date(),t=pad(n.getHours())+':'+pad(n.getMinutes());
+  const d=`${DAYS[n.getDay()]} ${n.getDate()} ${MONTHS[n.getMonth()]}`;
+  if($('#clkT').textContent!==t||$('#clkD').textContent!==d){
+    $('#clkT').textContent=t;$('#clkD').textContent=d;$('#xTime').textContent=t;$('#xDate').textContent=d;
+    $('#tray').innerHTML=`${t}<br>${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()}`;
+    layout();
+  }
+}
+$('#lc').addEventListener('click',e=>{
+  if(e.target.closest('[data-pp]')){toggleMedia();return}
+  if(e.target.closest('#clk')){openExpanded(PAGE.calendar);return}
+  if(e.target.closest('.slot')){
+    const k=slot.dataset.k;
+    if(k==='xop'){xopClick();return}
+    if(k==='cl'){clClick();return}
+    if(k==='clip'){hint('Opening clipboard history in Tools');return}
+    openExpanded(pageFor(k));return;
+  }
+  openExpanded();
+});
+bubble.addEventListener('click',()=>{const k=bubble.dataset.k;k==='xop'?xopClick():k==='cl'?clClick():openExpanded(pageFor(k))});
+cbub.addEventListener('click',()=>{const u=clUnseen();u.length===1?clFocus(u[0]):openExpanded(PAGE.claude)});
+
+/* ---------- expanded: pages ---------- */
+// Page menu: every page by icon and name, so any page is one click away.
+const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calendar','cal'],['Todo','todo'],['Notes','note'],['Shelf','tray'],['Claude','claude'],['System','cpu']];
+const xtabs=$('#xtabs'),xind=$('#xind');
+xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" role="tab" data-i="${i}" aria-selected="false" aria-controls="xp">${icon(ic)}${i===PAGE.media?'<span class="viz" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':''}<span class="tl">${n}</span></button>`).join(''));
+xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
+$('#xClk').onclick=()=>goPage(PAGE.calendar);
+function goPage(i,instant){
+  i=Math.max(0,Math.min(LAST,i));
+  const wasTall=S.page===PAGE.notes;S.page=i;S.lastPage=i;
+  if(instant||S.reduce){
+    for(const el of[track,xind])el.style.transition='none';
+    track.style.transform=`translateX(${-i*100}%)`;xind.style.setProperty('--i',i);track.offsetWidth;
+    for(const el of[track,xind])el.style.transition='';
+  }else{track.style.transform=`translateX(${-i*100}%)`;xind.style.setProperty('--i',i)}
+  $$('#xtabs .xtab').forEach((t,k)=>t.setAttribute('aria-selected',k===i));
+  $$('.page').forEach((p,k)=>p.inert=k!==i);
+  if(i===PAGE.calendar)renderCev();
+  if(wasTall&&i!==PAGE.notes)flushNote();
+  if(S.state==='expanded'&&wasTall!==(i===PAGE.notes)){if(!S.reduce)setMotion(SP_OPEN);layout()}
+  renderTimerPage();renderSys();renderClPage();renderGlow();
+}
+// Ambient glow colours per page. Media takes the cover's two colours (dimmer while paused); Timer follows the mode and pomodoro phase.
+const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.notes]:'#ffd60a',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2'};
+const tint=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
+function renderGlow(){
+  const g=$('#glow');let c1,c2,k=1;
+  if(S.page===PAGE.media){const m=cur();c1=m.c[0];c2=m.c[1];if(!S.media.playing)k=.5}
+  else if(S.page===PAGE.timer){const m=S.timer.mode;c1=c2=m==='sw'?'#64d2ff':m==='pomo'?(S.pomo.phase==='focus'?'#ff453a':'#30d158'):'#ff9f0a'}
+  else c1=c2=GLOW[S.page];
+  g.style.setProperty('--g1',tint(c1,.3*k));g.style.setProperty('--g2',tint(c2,(c1===c2?.16:.26)*k));
+}
+let wheelAcc=0,wheelLock=0;
+$('#xp').addEventListener('wheel',e=>{
+  const horiz=Math.abs(e.deltaX)>Math.abs(e.deltaY);
+  // Vertical wheel over scrollable content scrolls it; on Notes it never changes page.
+  if(e.target.closest('.tlist,.clist,.pg-note,textarea')&&!horiz)return;
+  e.preventDefault();
+  if(Date.now()<wheelLock)return;
+  wheelAcc+=horiz?e.deltaX:e.deltaY;
+  if(Math.abs(wheelAcc)>40){goPage(S.page+(wheelAcc>0?1:-1));wheelAcc=0;wheelLock=Date.now()+380}
+},{passive:false});
+// Hovering the compact island stretches it a little: a hint that it opens.
+function setHover(on){
+  if(S.hover===on)return;S.hover=on;
+  if(S.state!=='compact')return;
+  setMotion(S.reduce?{dur:0,ease:'linear'}:SP_HOVER);layout();
+}
+iw.addEventListener('pointerenter',()=>{clearTimeout(S.leaveT);setHover(true)});
+iw.addEventListener('pointerleave',()=>{
+  setHover(false);
+  if(S.state!=='expanded'||noteDrag)return;
+  clearTimeout(S.leaveT);
+  S.leaveT=setTimeout(()=>{const a=document.activeElement;if(!(a&&iw.contains(a)&&/INPUT|TEXTAREA/.test(a.tagName)))closeExpanded()},3000);
+});
+document.addEventListener('pointerdown',e=>{
+  // Bar icons that open island pages handle the click themselves (switch page or close).
+  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys]'))closeExpanded();
+});
+
+/* media */
+function srcHTML(m){return `<span class="srcdot" style="background:${m.c[0]}"></span>${m.src}`}
+function renderMedia(){
+  const m=cur(),video=m.kind==='video';
+  $('#pgMedia').classList.toggle('is-video',video);
+  if(video){
+    $('#vSrc').innerHTML=srcHTML(m);$('#vTitle').textContent=m.t;
+    $('#vCur').textContent=fmtDur(S.media.pos);$('#vLeft').textContent='-'+fmtDur(m.d-S.media.pos);$('#vFill').style.width=pct()+'%';
+  }else{
+    $('#mTitle').textContent=m.t;$('#mArtist').textContent=m.a;$('#mSrc').innerHTML=srcHTML(m);
+    $('#cover').style.background=`linear-gradient(135deg,${m.c[0]},${m.c[1]})`;
+    $('#mCur').textContent=fmtDur(S.media.pos);$('#mDur').textContent=fmtDur(m.d);$('#mFill').style.width=pct()+'%';
+    const p=$('#mPlay');p.innerHTML=icon(S.media.playing?'pause':'play');p.setAttribute('aria-label',S.media.playing?'Pause':'Play');
+  }
+  $(`.xtab[data-i="${PAGE.media}"]`).classList.toggle('playing',S.media.playing&&!video);
+  if(S.page===PAGE.media)renderGlow();
+}
+function toggleMedia(){S.media.active=true;S.media.playing=!S.media.playing;renderMedia();renderSlot();setPressed('music',S.media.playing)}
+function nextSong(n){
+  let i=S.media.i;
+  do{i=(i+n+MEDIA.length)%MEDIA.length}while(MEDIA[i].kind!=='music');
+  Object.assign(S.media,{i,pos:0,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);
+}
+$('#mPlay').onclick=toggleMedia;
+$('#mPrev').onclick=()=>nextSong(-1);
+$('#mNext').onclick=()=>nextSong(1);
+$('#mBar').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();S.media.pos=(e.clientX-r.left)/r.width*cur().d;renderMedia()};
+
+/* timer, stopwatch, pomodoro */
+function renderTimerPage(){
+  const m=S.timer.mode;let big,sub,frac,btn;
+  if(m==='timer'){
+    const paused=S.timer.left>0&&S.timer.left<S.timer.total;
+    big=mmss(S.timer.left);sub=S.timer.running?'Running':paused?'Paused':'Pick a duration';
+    frac=S.timer.left/S.timer.total;btn=S.timer.running?'Pause':paused?'Resume':'Start';
+  }else if(m==='sw'){
+    big=swText(true);sub=S.sw.running?'Running':'Stopwatch';frac=(swMs()/1000%60)/60;
+    btn=S.sw.running?'Pause':swMs()>0?'Resume':'Start';
+  }else{
+    big=mmss(S.pomo.left);sub=`${S.pomo.phase==='focus'?'Focus':'Break'} · session ${S.pomo.round} of 4`;
+    frac=S.pomo.left/S.pomo.len;btn=S.pomo.running?'Pause':'Start';
+  }
+  $('#tBig').textContent=big;$('#tSub').textContent=sub;$('#tStart').textContent=btn;
+  const fg=$('#bigFg');fg.style.strokeDashoffset=BC*(1-frac);fg.style.stroke=m==='pomo'?'var(--danger)':'var(--orange)';
+  $('#chips').style.visibility=m==='timer'?'visible':'hidden';
+  $$('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  if(S.page===PAGE.timer)renderGlow();
+}
+function toggleSw(){
+  if(S.sw.running){S.sw.acc+=Date.now()-S.sw.start;S.sw.running=false}else{S.sw.start=Date.now();S.sw.running=true}
+  setPressed('sw',S.sw.running);renderSlot();renderTimerPage();
+}
+$('#seg').onclick=e=>{const b=e.target.closest('button');if(b){S.timer.mode=b.dataset.m;renderTimerPage()}};
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(b){Object.assign(S.timer,{total:+b.dataset.s,left:+b.dataset.s,running:false});renderTimerPage();renderSlot()}};
+$('#tStart').onclick=()=>{
+  const m=S.timer.mode;
+  if(m==='timer'){if(S.timer.left<=0)S.timer.left=S.timer.total;S.timer.running=!S.timer.running}
+  else if(m==='sw'){toggleSw();return}
+  else S.pomo.running=!S.pomo.running;
+  renderTimerPage();renderSlot();
+};
+$('#tReset').onclick=()=>{
+  const m=S.timer.mode;
+  if(m==='timer')Object.assign(S.timer,{left:S.timer.total,running:false});
+  else if(m==='sw'){Object.assign(S.sw,{running:false,acc:0});setPressed('sw',false)}
+  else Object.assign(S.pomo,{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false});
+  renderTimerPage();renderSlot();
+};
+$$('.sw').forEach(s=>s.onclick=()=>s.setAttribute('aria-checked',s.getAttribute('aria-checked')!=='true'));
+
+/* calendar */
+const dkey=d=>`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const EV={};
+(()=>{const add=(n,items)=>{const d=new Date();d.setDate(d.getDate()+n);EV[dkey(d)]=items};
+  add(0,['15:00 · Prepare meeting slides','14:30 · Alarm: take medicine']);add(2,['Send client invoice']);add(5,["Rani's birthday"]);add(-3,['Motorbike service'])})();
+const todayKey=()=>dkey(new Date());
+const dayKey=d=>{const n=new Date();return dkey(new Date(n.getFullYear(),n.getMonth(),d))};
+function fmtDay(key){const[y,m,d]=key.split('-').map(Number),dt=new Date(y,m,d);return `${DAYS[dt.getDay()]} ${d} ${MONTHS[m]}`}
+function dayItems(key){
+  return (EV[key]||[]).map(t=>({text:t})).concat(S.todos.filter(t=>t.due===key).map(t=>({text:'Task · '+t.t,done:!!t.d})));
+}
+function buildCal(){
+  const n=new Date(),y=n.getFullYear(),m=n.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+  let h=`<span class="mh">${MONTHS_FULL[m]} ${y}</span>`+['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>`<span class="h">${d}</span>`).join('');
+  for(let i=0;i<off;i++)h+='<span></span>';
+  for(let d=1;d<=days;d++)h+=`<button data-d="${d}" class="${d===n.getDate()?'today':''}" aria-label="${d} ${MONTHS_FULL[m]}">${d}</button>`;
+  $('#cal').innerHTML=h;refreshCalDots();selectDate(n.getDate());
+}
+function refreshCalDots(){$$('#cal button').forEach(b=>b.classList.toggle('ev',dayItems(dayKey(+b.dataset.d)).length>0))}
+function selectDate(d){S.calSel=d;S.calAdding=false;$$('#cal button').forEach(b=>b.classList.toggle('sel',+b.dataset.d===d));renderCev()}
+// Right-hand panel: the selected day's items and the Add task control (the only place todos are created).
+function renderCev(){
+  const cev=$('#cev');
+  const key=dayKey(S.calSel||new Date().getDate()),items=dayItems(key);
+  const shown=items.length>2?items.slice(0,1):items;
+  cev.innerHTML=`<h4>${key===todayKey()?'Today':fmtDay(key)}</h4>`+
+    (shown.length?shown.map(it=>`<div class="e ${it.done?'dn':''}">${esc(it.text)}</div>`).join(''):'<div class="none">Nothing scheduled.</div>')+
+    (items.length>2?`<div class="none">+${items.length-1} more</div>`:'')+
+    (S.calAdding?`<form class="cadd" id="cAdd"><input class="field" id="cAddIn" placeholder="Add a task for this day" maxlength="60" aria-label="New task for ${fmtDay(key)}"><button class="pill pri iconbtn" aria-label="Add task">${icon('check')}</button></form>`
+      :`<button class="pill sm" id="cAddBtn">${icon('plus')}Add task</button>`);
+}
+function addTodo(text,key){
+  S.todos.push({t:text,d:0,due:key});
+  const today=key===todayKey();
+  renderTodos(today?S.todos.length-1:undefined);refreshCalDots();
+  if(today){const l=$('#tlist');l.scrollTop=l.scrollHeight}else hint('Added to '+fmtDay(key));
+}
+$('#cal').onclick=e=>{
+  const b=e.target.closest('button');if(b)selectDate(+b.dataset.d);
+};
+$('#cev').addEventListener('click',e=>{
+  if(e.target.closest('#cAddBtn')){S.calAdding=true;renderCev();$('#cAddIn').focus()}
+});
+$('#cev').addEventListener('submit',e=>{
+  e.preventDefault();const inp=$('#cAddIn'),v=inp.value.trim();
+  if(!v){inp.focus();return}
+  addTodo(v,dayKey(S.calSel));S.calAdding=false;renderCev();
+});
+$('#cev').addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target.id==='cAddIn'){e.stopPropagation();S.calAdding=false;renderCev()}});
+
+/* todo */
+// Today's list: undated tasks plus tasks due today; tasks for other days live on the Calendar page.
+const isToday=t=>!t.due||t.due===todayKey();
+function renderTodos(newIdx){
+  $('#tlist').innerHTML=S.todos.map((t,i)=>({t,i})).filter(({t})=>isToday(t)).map(({t,i})=>`<li class="${t.d?'done':''} ${i===newIdx?'new':''}" data-i="${i}"><button class="chk" role="checkbox" aria-checked="${!!t.d}" aria-label="${esc(t.t)}">${icon('check')}</button><span>${esc(t.t)}</span></li>`).join('');
+  renderTodoCount();
+}
+function renderTodoCount(){
+  const list=S.todos.filter(isToday),d=list.filter(t=>t.d).length,n=list.length;
+  $('#tdDone').textContent=d;$('#tdTot').textContent=n;
+}
+$('#tlist').onclick=e=>{
+  const b=e.target.closest('.chk');if(!b)return;
+  const li=b.closest('li'),t=S.todos[+li.dataset.i];t.d=t.d?0:1;
+  li.classList.toggle('done',!!t.d);b.setAttribute('aria-checked',!!t.d);renderTodoCount();
+};
+// Todos are only created on the Calendar page; this button jumps there with today selected and the field open.
+$('#tdCal').onclick=()=>{
+  goPage(PAGE.calendar);selectDate(new Date().getDate());S.calAdding=true;renderCev();
+  setTimeout(()=>$('#cAddIn').focus(),S.reduce?0:320);
+};
+$('#tdEdit').onclick=()=>hint('Opening Tools · Todo tab');
+
+/* notes: Keep-style masonry grid in the user's order; the editor slides in only while adding or editing */
+let saveT=0,delT=0,noteDrag=null;
+const NGAP=8,NMIN=140,EDW=376;
+// Dark tints so white text keeps at least 4.5:1 contrast on every color.
+const NOTE_COLORS=[['Default','#1c1c1e'],['Red','#5c1f26'],['Orange','#643013'],['Yellow','#5c470c'],['Green','#1d4a31'],['Teal','#0f4c4b'],['Blue','#1c3c61'],['Purple','#42265a']];
+const noteColor=n=>NOTE_COLORS[n.c||0][1];
+$('#nSw').innerHTML=NOTE_COLORS.map(([name,v],i)=>`<button type="button" data-c="${i}" style="--sw:${v}" aria-label="Color: ${name}" title="${name}" aria-pressed="false"></button>`).join('');
+function renderSwatches(){const n=noteById(S.noteSel);$$('#nSw button').forEach(b=>b.setAttribute('aria-pressed',!!n&&+b.dataset.c===(n.c||0)));nEd.style.setProperty('--nc',n?noteColor(n):'')}
+$('#nSw').onclick=e=>{
+  const b=e.target.closest('[data-c]');if(!b)return;
+  const n=noteById(S.noteSel);if(!n)return;
+  n.c=+b.dataset.c;renderSwatches();
+  const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c){c.style.setProperty('--nc',noteColor(n));c.classList.toggle('tinted',n.c>0)}
+};
+const noteById=id=>S.notes.find(n=>n.id===id);
+const noteTitle=n=>n.b.split('\n')[0].trim();
+const noteBody=n=>n.b.split('\n').slice(1).join('\n').trim();
+const visibleNotes=()=>{const q=$('#nSearch').value.trim().toLowerCase();return S.notes.filter(n=>!q||n.b.toLowerCase().includes(q))};
+function cardInner(n){
+  const t=noteTitle(n),b=noteBody(n);
+  return (t?`<div class="nt">${esc(t)}</div>`:'')+(b?`<div class="nb">${esc(b)}</div>`:'')+(!t&&!b?'<div class="nb">Empty note</div>':'')+`<div class="nm2">${esc(n.t)}</div>`;
+}
+function renderNotes(){
+  const list=visibleNotes();
+  nIn.innerHTML=list.length?list.map(n=>`<div class="ncard ${S.editing&&n.id===S.noteSel?'on':''} ${n.c?'tinted':''}" style="--nc:${noteColor(n)}" tabindex="0" role="button" data-id="${n.id}" aria-label="${esc(noteTitle(n)||'Untitled note')}">${cardInner(n)}</div>`).join('')
+    :'<div class="none">No notes match.</div>';
+  layoutNotes(true);
+}
+// Masonry: each card goes into the shortest column, in the user's order. Positions are transforms, so reorders animate.
+function layoutNotes(instant){
+  const W=nWrap.clientWidth-(S.editing?EDW:0),cols=Math.max(1,Math.floor((W+NGAP)/(NMIN+NGAP))),cw=(W-(cols-1)*NGAP)/cols,h=Array(cols).fill(0);
+  for(const n of visibleNotes()){
+    const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(!c)continue;
+    c.style.width=cw+'px';
+    const i=h.indexOf(Math.min(...h)),x=i*(cw+NGAP),y=h[i];
+    c.dataset.x=x;c.dataset.y=y;h[i]+=c.offsetHeight+NGAP;
+    if(noteDrag&&noteDrag.moved&&noteDrag.card===c)continue;
+    if(instant||S.reduce){c.style.transition='none';c.style.transform=`translate(${x}px,${y}px)`;c.offsetWidth;c.style.transition=''}
+    else c.style.transform=`translate(${x}px,${y}px)`;
+  }
+  nIn.style.height=Math.max(0,...h)+'px';
+}
+// Keep DOM order equal to note order (tab order), once cards have finished moving.
+function syncNoteDom(){for(const n of visibleNotes()){const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c)nIn.appendChild(c)}}
+function setSaved(busy){$('#nSave').classList.toggle('busy',busy);$('#nSaveT').textContent=busy?'Saving…':'Saved · '+nowHM()}
+function resetDel(){const b=$('#nDel');b.classList.remove('confirm');b.textContent='Delete';clearTimeout(delT)}
+function markEditing(){nIn.querySelectorAll('.ncard').forEach(c=>c.classList.toggle('on',S.editing&&+c.dataset.id===S.noteSel))}
+function openEditor(id){
+  flushNote();
+  const n=noteById(id);if(!n)return;
+  S.noteSel=id;S.editing=true;nEd.value=n.b;resetDel();renderSwatches();
+  $('#nSave').classList.remove('busy');$('#nSaveT').textContent='Saved';
+  nWrap.classList.add('editing');markEditing();layoutNotes();
+}
+// Closing an empty note discards it, like Keep.
+function closeEditor(){
+  if(!S.editing)return;
+  flushNote();S.editing=false;nWrap.classList.remove('editing');
+  const n=noteById(S.noteSel);
+  if(n&&!n.b.trim()){S.notes=S.notes.filter(x=>x!==n);renderNotes();return}
+  markEditing();layoutNotes();
+}
+function newNote(){
+  $('#nSearch').value='';
+  const top=S.notes[0];
+  if(top&&!top.b.trim()){renderNotes();openEditor(top.id);return}
+  const n={id:S.nextId++,b:'',t:nowHM()};S.notes.unshift(n);renderNotes();openEditor(n.id);
+}
+function flushNote(){if(saveT){clearTimeout(saveT);saveT=0;setSaved(false)}}
+nEd.addEventListener('input',()=>{
+  const n=noteById(S.noteSel);n.b=nEd.value;n.t=nowHM();
+  const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c){c.innerHTML=cardInner(n);layoutNotes()}
+  setSaved(true);clearTimeout(saveT);saveT=setTimeout(()=>{saveT=0;setSaved(false)},500);
+});
+nEd.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();const id=S.noteSel;closeEditor();const c=nIn.querySelector(`.ncard[data-id="${id}"]`);if(c)c.focus()}});
+function moveNote(from,to){
+  if(from===to||to<0||to>=S.notes.length)return;
+  const[m]=S.notes.splice(from,1);S.notes.splice(to,0,m);layoutNotes();
+  setTimeout(syncNoteDom,S.reduce?0:340);
+}
+nIn.addEventListener('pointerdown',e=>{
+  const c=e.target.closest('.ncard');if(!c||e.button!==0)return;
+  const r=c.getBoundingClientRect();
+  noteDrag={card:c,id:+c.dataset.id,x0:e.clientX,y0:e.clientY,gx:e.clientX-r.left,gy:e.clientY-r.top,pid:e.pointerId,moved:false,lock:0};
+});
+addEventListener('pointermove',e=>{
+  const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
+  if(!d.moved){
+    if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<6)return;
+    if($('#nSearch').value.trim()){noteDrag=null;hint('Clear the search to reorder notes');return}
+    d.moved=true;try{d.card.setPointerCapture(e.pointerId)}catch{}d.card.classList.add('lift');
+  }
+  // 1:1 with the pointer, from where the card was grabbed
+  const g=nIn.getBoundingClientRect(),px=e.clientX-g.left,py=e.clientY-g.top;
+  d.card.style.transform=`translate(${px-d.gx}px,${py-d.gy}px) scale(1.03)`;
+  if(Date.now()<d.lock)return;
+  const over=[...nIn.querySelectorAll('.ncard')].find(c=>c!==d.card&&px>=+c.dataset.x&&px<=+c.dataset.x+c.offsetWidth&&py>=+c.dataset.y&&py<=+c.dataset.y+c.offsetHeight);
+  if(over){
+    const from=S.notes.findIndex(n=>n.id===d.id),to=S.notes.findIndex(n=>n.id===+over.dataset.id);
+    if(from!==to){const[m]=S.notes.splice(from,1);S.notes.splice(to,0,m);layoutNotes();d.lock=Date.now()+260}
+  }
+});
+function endNoteDrag(e){
+  const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
+  noteDrag=null;
+  if(!d.moved){openEditor(d.id);return}
+  d.card.classList.remove('lift');d.card.classList.add('settle');layoutNotes();
+  setTimeout(()=>{d.card.classList.remove('settle');syncNoteDom()},S.reduce?0:340);
+}
+addEventListener('pointerup',endNoteDrag);
+addEventListener('pointercancel',endNoteDrag);
+nIn.addEventListener('keydown',e=>{
+  const c=e.target.closest('.ncard');if(!c)return;
+  const id=+c.dataset.id,i=S.notes.findIndex(n=>n.id===id);
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();openEditor(id);nEd.focus();return}
+  if(e.altKey&&/^Arrow/.test(e.key)){
+    e.preventDefault();e.stopPropagation();
+    moveNote(i,i+(e.key==='ArrowUp'||e.key==='ArrowLeft'?-1:1));
+    setTimeout(()=>{const k=nIn.querySelector(`.ncard[data-id="${id}"]`);if(k)k.focus()},S.reduce?0:360);
+  }
+});
+$('#nNew').onclick=()=>{newNote();nEd.focus()};
+$('#nDone').onclick=()=>closeEditor();
+$('#nSearch').oninput=()=>{if(S.editing)closeEditor();renderNotes()};
+$('#nDel').onclick=e=>{
+  const b=e.currentTarget;
+  if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Click again to delete';delT=setTimeout(resetDel,3000);return}
+  S.notes=S.notes.filter(n=>n.id!==S.noteSel);S.editing=false;nWrap.classList.remove('editing');
+  renderNotes();hint('Note deleted');
+};
+function openNote(fresh){
+  if(fresh)newNote();
+  if(S.state==='expanded')goPage(PAGE.notes);else openExpanded(PAGE.notes);
+  if(fresh)setTimeout(()=>nEd.focus(),S.reduce?0:260);
+}
+function typeNote(text){
+  openNote(true);let i=0;
+  const t=setInterval(()=>{
+    nEd.value+=text[i++];nEd.dispatchEvent(new Event('input'));nEd.scrollTop=nEd.scrollHeight;
+    if(i>=text.length)clearInterval(t);
+  },45);
+}
+
+/* shelf */
+const FILE_COLORS={pdf:'#ff6961',jpg:'#bf5af2',png:'#bf5af2',zip:'#ffd60a',docx:'#64d2ff',xlsx:'#30d158',mp4:'#ff9f0a',mkv:'#ff9f0a'};
+// One drop is one item: a single file, or a bundle when several files land together. Eight items fill the 4 × 2 grid.
+const SHELF_MAX=8;
+function addFiles(files){
+  if(!files.length||S.shelf.length>=SHELF_MAX){if(files.length)hint('Shelf is full · drag something out first');leaveDrop();return}
+  S.shelf.push({id:S.nextId++,files:files.map(f=>({name:f.name,size:f.size||0}))});
+  renderShelf(S.shelf.length-1);renderSlot();
+  if(!S.reduce)$('#mShelf').animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)'});
+  setState('compact',true);openExpanded(PAGE.shelf);
+}
+function renderShelf(newIdx){
+  const files=S.shelf.flatMap(it=>it.files),n=files.length,total=files.reduce((a,f)=>a+f.size,0);
+  $('#shCount').textContent=n;$('#shSub').textContent=n?`${n===1?'file':'files'} · ${fmtSize(total)}`:'files on the shelf';
+  $('#mShelfN').textContent=n||'';$('#mShelf').title=n?`Shelf · ${n} ${n===1?'file':'files'}`:'Shelf';
+  $('#shClear').hidden=!n;
+  $('#shGrid').innerHTML=S.shelf.length?S.shelf.map((it,i)=>{
+    const one=it.files.length===1,f=it.files[0],ext=(f.name.split('.').pop()||'').toLowerCase();
+    const name=one?f.name:`${it.files.length} files`,tip=it.files.map(x=>`${x.name} · ${fmtSize(x.size)}`).join('\n');
+    return `<div class="ftile ${i===newIdx?'new':''}" draggable="true" data-id="${it.id}" title="${esc(tip)}">
+      <span class="fi" style="--fc:${one?(FILE_COLORS[ext]||'#8e8e93'):'#d1d1d6'}">${icon(one?'file':'files')}<b>${one?esc(ext.slice(0,4).toUpperCase()||'FILE'):it.files.length}</b></span>
+      <span class="fn">${esc(name)}</span>
+      <button class="frm" data-rm="${it.id}" aria-label="Remove ${esc(name)}">${icon('x')}</button></div>`}).join('')
+    :`<div class="shempty">${icon('tray')}<span>Drag files onto the island to hold them here while you find where they go.</span></div>`;
+}
+$('#shGrid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-rm]');if(!b)return;
+  S.shelf=S.shelf.filter(f=>f.id!==+b.dataset.rm);renderShelf();renderSlot();
+});
+$('#shGrid').addEventListener('dragstart',e=>{
+  const t=e.target.closest('.ftile');if(!t)return;
+  e.dataTransfer.effectAllowed='copyMove';e.dataTransfer.setData('text/plain',t.title);
+  hint('Drop it in a folder to move or copy the file');
+});
+$('#shClear').onclick=()=>{S.shelf=[];renderShelf();renderSlot();hint('Shelf cleared')};
+const hasFiles=e=>[...(e.dataTransfer?.types||[])].includes('Files');
+let dragDepth=0;
+function enterDrop(){
+  if(S.state==='card'||S.fs)return;
+  if(S.state!=='drop')S.dropReturn=S.state==='expanded'?'expanded':'compact';
+  const full=S.shelf.length>=SHELF_MAX;
+  iw.classList.toggle('full',full);
+  $('#dzT').textContent=full?'Shelf is full':'Drop to keep on the Shelf';
+  $('#dzS').textContent=full?'Drag something out first':'Files stay where they are until you drag them out';
+  setState('drop');iw.classList.toggle('full',full);
+}
+function leaveDrop(){iw.classList.remove('hot');if(S.state==='drop')setState(S.dropReturn)}
+addEventListener('dragenter',e=>{if(!hasFiles(e))return;e.preventDefault();if(++dragDepth===1)enterDrop()});
+addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect=iw.contains(e.target)?'copy':'none';iw.classList.toggle('hot',iw.contains(e.target))});
+addEventListener('dragleave',e=>{if(!hasFiles(e))return;if(--dragDepth<=0){dragDepth=0;leaveDrop()}});
+addEventListener('drop',e=>{
+  if(!hasFiles(e))return;e.preventDefault();dragDepth=0;iw.classList.remove('hot');
+  if(iw.contains(e.target)&&S.state==='drop')addFiles([...e.dataTransfer.files]);else leaveDrop();
+});
+
+/* system and right modules */
+const rw=(v,min,max,step)=>Math.min(max,Math.max(min,v+(Math.random()*2-1)*step));
+const fmtNet=kb=>kb>=1000?(kb/1024).toFixed(1)+' MB/s':Math.round(kb)+' KB/s';
+function sparkPts(arr,max){const n=arr.length;return arr.map((v,i)=>`${100-(n-1-i)*(100/59)},${25-Math.min(1,v/max)*23}`).join(' ')}
+function renderSys(){
+  if(S.page!==PAGE.system)return;
+  $('#sCpu').textContent=Math.round(S.cpu)+'%';$('#sRam').textContent=Math.round(S.ram)+'%';$('#sGpu').textContent=Math.round(S.gpu)+'%';
+  $('#sDown').textContent=fmtNet(S.down);$('#sTemp').textContent=Math.round(S.temp)+'°C';
+  $('#pCpu').setAttribute('points',sparkPts(S.hist.cpu,100));$('#pRam').setAttribute('points',sparkPts(S.hist.ram,100));
+  $('#pGpu').setAttribute('points',sparkPts(S.hist.gpu,100));$('#pDown').setAttribute('points',sparkPts(S.hist.down,9000));
+  $('#pTemp').setAttribute('points',sparkPts(S.hist.temp,100));
+}
+function renderRight(){
+  $('#mCpu').textContent=Math.round(S.cpu)+'%';$('#mGpu').textContent=Math.round(S.gpu)+'%';$('#mRam').textContent=Math.round(S.ram)+'%';
+  const t=Math.round(S.temp),te=$('#mTemp');te.textContent=t+'°C';te.classList.toggle('warn',t>=80&&t<90);te.classList.toggle('danger',t>=90);
+  $('#mUp').textContent='↑ '+fmtNet(S.up);$('#mDown').textContent='↓ '+fmtNet(S.down);
+}
+$$('[data-sys]').forEach(b=>b.onclick=()=>openFromBar(PAGE.system));
+$('#mMore').onclick=()=>{const names={weather:'weather',net:'network',disk:'disk',temp:'CPU temp',gpu:'GPU',ram:'RAM',cpu:'CPU'};hint('Hidden to keep space around the island: '+S.overflow.map(k=>names[k]).join(', '))};
+$('#mWifi').onclick=()=>hint('Opening the Windows network list');
+
+/* power menu: the update variants only appear when Windows has updates waiting, like the Start menu */
+function powerMenu(open){
+  $('#pMenu').hidden=!open;$('#mPower').setAttribute('aria-expanded',open);
+  if(open)$('#pMenu button:not([hidden])').focus();
+}
+function renderUpdates(){
+  $('#uDot').hidden=!S.updates;$$('#pMenu .upd').forEach(b=>b.hidden=!S.updates);
+  $('#mPower').title=S.updates?'Power · updates are ready to install':'Power';
+}
+$('#mPower').onclick=()=>powerMenu($('#pMenu').hidden);
+$('#pMenu').onclick=e=>{
+  const b=e.target.closest('[data-pw]');if(!b)return;
+  powerMenu(false);
+  hint({sleep:'Going to sleep',shutdown:'Shutting down',restart:'Restarting','upd-shutdown':'Installing updates, then shutting down','upd-restart':'Installing updates, then restarting'}[b.dataset.pw]+' (mockup only)');
+};
+$('#pMenu').onkeydown=e=>{
+  const items=[...$('#pMenu').querySelectorAll('button:not([hidden])')],i=items.indexOf(document.activeElement);
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();items[(i+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus()}
+  if(e.key==='Escape'){e.stopPropagation();powerMenu(false);$('#mPower').focus()}
+};
+document.addEventListener('pointerdown',e=>{if(!$('#pMenu').hidden&&!e.target.closest('.pwr'))powerMenu(false)});
+$('#mShelf').onclick=()=>openFromBar(PAGE.shelf);
+
+/* quick events */
+function showCaps(){showWide('caps'+S.caps,`${icon('caps')}<span>Caps Lock <b>${S.caps?'on':'off'}</b></span>`,1500)}
+function toggleCharge(){
+  S.charging=!S.charging;setPressed('charge',S.charging);
+  const b=Math.round(S.battery);
+  if(S.charging)showWide('chg1',`<span style="color:var(--accent)">${icon('bolt')}</span><span>Charging · <b class="num">${b}%</b></span>`,3000);
+  else showWide('chg0',`<span>${icon('bolt')}</span><span>On battery · <b class="num">${b}%</b></span>`,2000);
+  renderSlot();
+}
+
+/* left side */
+const SHOT=(()=>{
+  const c=document.createElement('canvas');c.width=192;c.height=108;const g=c.getContext('2d');
+  const gr=g.createLinearGradient(0,0,192,108);gr.addColorStop(0,'#fbbf24');gr.addColorStop(1,'#0e7490');g.fillStyle=gr;g.fillRect(0,0,192,108);
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(24,16,144,78);
+  g.fillStyle='rgba(255,255,255,.92)';g.fillRect(34,28,70,7);
+  g.fillStyle='rgba(255,255,255,.45)';g.fillRect(34,42,112,4);g.fillRect(34,50,96,4);g.fillRect(34,58,104,4);
+  g.fillStyle='#30d158';g.fillRect(34,72,38,11);
+  return c.toDataURL();
+})();
+// Open apps in the order they were first opened. The real app reads them from the windows Windows shows on the
+// taskbar and extracts each app's own icon; the mockup uses drawn stand-ins.
+function appButton(a){
+  const b=document.createElement('button');
+  b.className='appi';b.dataset.name=a.n;b.title=a.n;b.setAttribute('aria-label',a.n);
+  b.innerHTML=`<svg class="aic" aria-hidden="true"><use href="#${a.i}"/></svg><span class="anm">${esc(a.n)}</span>`;
+  return b;
+}
+function renderApps(){
+  const box=$('#apps');box.innerHTML='';
+  for(const a of S.apps)box.appendChild(appButton(a));
+  box.insertAdjacentHTML('beforeend','<span class="amore" id="aMore" hidden></span>');
+}
+function setApp(name,ic){
+  if(!S.apps.some(a=>a.n===name)){
+    // A newly opened app pops in at the end of the strip.
+    S.apps.push({n:name,i:ic});const b=appButton({n:name,i:ic});$('#apps').insertBefore(b,$('#aMore'));
+    if(!S.reduce)b.animate([{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.34,1.3,.64,1)'});
+  }
+  $$('#apps .appi').forEach(b=>{const on=b.dataset.name===name;b.classList.toggle('act',on);b.setAttribute('aria-current',on?'true':'false')});
+  fitApps();S.fgName=name;clSeen();
+}
+$('#apps').addEventListener('click',e=>{
+  const b=e.target.closest('.appi');if(!b)return;
+  const w=$$('.win').find(x=>x.dataset.name===b.dataset.name);
+  if(w){$$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5}
+  setApp(b.dataset.name);
+});
+// Clipboard snippets take the island's slot for 3 s; a new copy replaces the snippet and restarts the timer.
+function showClip(html,tip){
+  S.clip={html,tip,n:(S.clip?S.clip.n:0)+1};renderSlot();
+  clearTimeout(S.clipT);S.clipT=setTimeout(()=>{S.clip=null;renderSlot()},3000);
+}
+// Explorer file operations live in the island's activity slot: the island only stretches to fit them, never opens.
+const XOPS={
+  copy:{ic:'folder',c:'var(--accent)',name:'Project-Final.zip',run:'Copying Project-Final.zip · 4.2 GB',doneShort:'Copied',step:6},
+  move:{ic:'scissors',c:'var(--blue)',name:'Photos 2025',run:'Moving Photos 2025 → D:\\Backup',doneShort:'Moved',step:7},
+  del:{ic:'trash',c:'var(--danger)',name:'1,204 items',run:'Deleting 1,204 items (to Recycle Bin)',doneShort:'Deleted',step:10},
+};
+function explorerOp(kind){
+  if(S.xop)return;
+  const o=XOPS[kind];clearTimeout(S.xopEndT);S.xopEnd=null;
+  S.xop={kind,p:0,paused:false};renderSlot();
+  S.xop.t=setInterval(()=>{
+    const x=S.xop;if(!x||x.paused)return;
+    x.p=Math.min(100,x.p+Math.random()*o.step+2);renderSlot();
+    if(x.p>=100)endXop('done');
+  },300);
+}
+function endXop(status){
+  const x=S.xop;if(!x)return;
+  clearInterval(x.t);S.xop=null;S.xopEnd={kind:x.kind,status};renderSlot();
+  clearTimeout(S.xopEndT);S.xopEndT=setTimeout(()=>{S.xopEnd=null;renderSlot()},2000);
+}
+function cancelXop(){endXop('cancelled')}
+// When Explorer stops to ask, the question comes to the island as a card; the answer is passed back to Explorer's dialog.
+const XCONF={
+  copy:{t:'Replace or skip files',s:'Project-Final.zip already exists in D:\\Backup',b:[['Skip','xskip'],['Replace','xreplace',1]]},
+  move:{t:'Replace or skip files',s:'IMG_2041.jpg already exists in D:\\Backup',b:[['Skip','xskip'],['Replace','xreplace',1]]},
+  del:{t:'File in use',s:'budget.xlsx is open in Excel',b:[['Skip','xskip'],['Try again','xreplace',1]]},
+};
+function conflictXop(){
+  if(!S.xop){explorerOp('copy');setTimeout(conflictXop,900);return}
+  if(S.xop.paused)return;
+  S.xop.paused=true;renderSlot();
+  Object.assign(CARDS.conflict,XCONF[S.xop.kind]);showCard('conflict');
+}
+function resolveConflict(a){
+  if(!S.xop)return;
+  S.xop.paused=false;renderSlot();
+  hint(a==='xskip'?'Skipped · Explorer continues':S.xop.kind==='del'?'Trying again':'Replacing · Explorer continues');
+}
+function xopClick(){
+  if(S.xop&&S.xop.paused){showCard('conflict');return}
+  hint('Explorer progress window brought to front');
+}
+// Claude Code sessions reach the island through hooks: one Claude activity in the slot, a card while a session waits
+// for an answer, and a green bubble for a session that finished while its window was in the background.
+const CL_APP={claude:['Claude','a-claude','Open Claude','Claude Desktop'],wmux:['wmux','a-term','Open terminal','wmux']};
+const CL_ASK={
+  ask:['Claude needs your input','Which island layout do you prefer for the session list?'],
+  perm:['Claude needs permission','Claude needs your permission to use Bash'],
+  plan:['Plan ready for review',''],
+};
+const CL_ORDER={ask:0,work:1,done:2,idle:3};
+const clById=id=>S.cl.find(s=>s.id===id);
+const clBy=st=>S.cl.filter(s=>s.st===st);
+const clName=s=>s.name||s.dir;
+const clUnseen=()=>S.cl.filter(s=>s.unseen&&S.clEnd!==s.id);
+const cbubOn=()=>clUnseen().length>0&&!activities().includes('cl')&&!S.fs;
+const focusOn=()=>S.pomo.running&&S.pomo.phase==='focus';
+const hm=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())};
+const durTxt=ms=>{const s=Math.max(1,Math.round(ms/1000)),m=Math.floor(s/60);return m>=60?`${Math.floor(m/60)}h ${m%60}m`:m?`${m}m ${s%60}s`:s+'s'};
+function clSig(){return S.cl.map(s=>s.st[0]+(s.unseen?'u':'')).join('')+(S.clEnd||'')}
+function clUpdate(){renderSlot();renderClPage();renderClLauncher()}
+function renderClLauncher(){
+  const b=$('#mClaude'),ask=clBy('ask').length,work=clBy('work').length,unseen=clUnseen().length;
+  b.classList.toggle('ask',ask>0);b.classList.toggle('work',!ask&&work>0);b.classList.toggle('seen',!ask&&unseen>0);
+  b.title=ask?`Claude · ${ask} need${ask>1?'':'s'} input`:work?`Claude · ${work} working`:unseen?`Claude · ${unseen} finished`:'Claude sessions';
+}
+$('#mClaude').onclick=()=>openFromBar(PAGE.claude);
+// While Claude shows anywhere, an unseen finished session is a green dot on its icon instead of a second bubble.
+function clIcon(){
+  const dot=clUnseen().length?' dot':'';
+  if(clBy('ask').length)return `<span class="clp${dot}" style="color:var(--warn)">${icon('claude')}</span>`;
+  if(S.clEnd)return `<span class="clp${dot}" style="color:var(--accent)">${icon('check')}</span>`;
+  return `<span class="clp work${dot}">${icon('claude')}</span>`;
+}
+function clSlotHTML(){
+  const ask=clBy('ask'),work=clBy('work'),end=S.clEnd&&clById(S.clEnd);
+  const nm=s=>`<span class="tt">${esc(trunc(clName(s),28))}</span>`;
+  if(ask.length)return clIcon()+(ask.length>1?`<span>${ask.length} sessions need input</span>`:nm(ask[0])+'<span style="color:var(--warn)">Needs input</span>');
+  if(end)return clIcon()+nm(end)+`<span class="k2">Done · ${durTxt(end.dur)}</span>`;
+  return clIcon()+(work.length>1?`<span>${work.length} sessions working</span>`:nm(work[0])+`<span class="num sv k2">${slotValue('cl')}</span>`);
+}
+function clTip(){
+  const ask=clBy('ask'),s=ask[0]||(S.clEnd&&clById(S.clEnd))||clBy('work')[0];
+  return s?`${clName(s)}\n${s.dir} · ${CL_APP[s.app][3]}`+(ask.length&&s.q?`\n${s.q}`:''):'';
+}
+function renderCbub(){
+  const u=clUnseen();
+  cbub.innerHTML=icon('claude')+(u.length>1?`<span class="bn num">${u.length}</span>`:'');
+  cbub.title=u.map(clName).join('\n');
+  cbub.setAttribute('aria-label',u.length>1?`${u.length} Claude sessions finished`:`Claude finished: ${u.length?clName(u[0]):''}`);
+}
+function clRight(s){
+  if(s.st==='ask')return 'Needs input';
+  if(s.st==='work')return 'Working · '+fmtDur((Date.now()-s.t0)/1000);
+  if(s.st==='done')return 'Done · '+durTxt(s.dur);
+  return 'Idle since '+hm(s.at);
+}
+function renderClPage(){
+  if(S.page!==PAGE.claude)return;
+  const list=[...S.cl].sort((a,b)=>CL_ORDER[a.st]-CL_ORDER[b.st]);
+  $('#clist').innerHTML=list.length?list.map(s=>{
+    const sub=s.st==='ask'?esc(s.kind==='ask'?`"${s.q}"`:s.q||CL_ASK[s.kind][0]):`${esc(s.dir)} · ${CL_APP[s.app][3]}`;
+    return `<button class="crow ${s.st}" data-cl="${s.id}"><span class="clp${s.st==='work'?' work':''}">${icon(s.st==='done'?'check':'claude')}</span>
+      <span class="cn"><b>${esc(clName(s))}</b><span>${sub}</span></span><span class="cr num">${clRight(s)}</span></button>`;
+  }).join(''):'<div class="clempty">No Claude sessions</div>';
+}
+function clTick(){$$('#clist .crow.work').forEach(r=>{r.querySelector('.cr').textContent=clRight(clById(+r.dataset.cl))})}
+$('#clist').addEventListener('click',e=>{const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl))});
+function clWork(s){
+  Object.assign(s,{st:'work',t0:Date.now(),unseen:false,q:''});
+  if(S.clEnd===s.id){clearTimeout(S.clEndT);S.clEnd=null}
+  clUpdate();
+}
+function clAsk(s,kind){
+  if(s.st!=='work')clWork(s);
+  Object.assign(s,{st:'ask',kind,q:CL_ASK[kind][1],carded:false});clUpdate();
+  // Held during a focus phase, in fullscreen (no toast either), or behind another card; the yellow slot still shows.
+  if(focusOn()||S.fs||(S.state==='card'&&S.card!=='claude'))return;
+  clCardFor(s);
+}
+function clCardFor(s){
+  Object.assign(CARDS.claude,{t:CL_ASK[s.kind][0],s:esc(clName(s)),q:s.q,b:[['Later','cllater'],[CL_APP[s.app][2],'clopen',1]]});
+  S.clCard=s.id;s.carded=true;showCard('claude');
+}
+// A question that was held during focus gets its card when the break starts.
+function clHeld(){const s=clBy('ask').find(x=>!x.carded);if(s&&!focusOn()&&!S.fs&&S.state!=='card')clCardFor(s)}
+function clCloseCard(s){if(S.state==='card'&&S.card==='claude'&&S.clCard===s.id)closeCard()}
+function clAnswer(s){
+  if(s.st!=='ask')return;
+  Object.assign(s,{st:'work',q:''});clCloseCard(s);clUpdate();
+}
+function clDone(s){
+  clCloseCard(s);
+  Object.assign(s,{st:'done',dur:Date.now()-s.t0,q:'',unseen:CL_APP[s.app][0]!==S.fgName,at:Date.now()});
+  S.clEnd=s.id;clearTimeout(S.clEndT);
+  S.clEndT=setTimeout(()=>{S.clEnd=null;S.cl.forEach(x=>{if(x.st==='done'&&!x.unseen)x.st='idle'});clUpdate()},4000);
+  clUpdate();
+}
+// Esc in Claude never fires the Stop hook; the session file going idle is what brings the session back to Idle.
+function clEsc(s){
+  if(s.st!=='work'&&s.st!=='ask')return;
+  clCloseCard(s);Object.assign(s,{st:'idle',q:'',at:Date.now()});clUpdate();
+}
+function clSeen(){
+  let ch=false;
+  for(const s of S.cl)if(s.unseen&&CL_APP[s.app][0]===S.fgName){s.unseen=false;if(S.clEnd!==s.id)s.st='idle';ch=true}
+  if(ch)clUpdate();
+}
+function clFocus(s){
+  if(!s)return;
+  const[n,ic,,full]=CL_APP[s.app];
+  setApp(n,ic);hint(full+' brought to front');
+}
+function clClick(){
+  const ask=clBy('ask'),end=S.clEnd&&clById(S.clEnd),inv=ask.length?ask:end?[end]:clBy('work');
+  inv.length===1?clFocus(inv[0]):openExpanded(PAGE.claude);
+}
+const TOOL_PAGE={Timer:PAGE.timer,Todo:PAGE.todo,Notes:PAGE.notes};
+$$('#launch button[data-tool]').forEach(b=>b.onclick=()=>openFromBar(TOOL_PAGE[b.dataset.tool]));
+$$('.win').forEach(w=>w.addEventListener('pointerdown',()=>{
+  $$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5;setApp(w.dataset.name,w.dataset.icon);
+}));
+$$('.wtb .ap[data-name]').forEach(a=>a.addEventListener('click',()=>setApp(a.dataset.name,a.dataset.icon)));
+
+/* mockup controls */
+const SAMPLE_DROPS=[
+  [{name:'Invoice-October.pdf',size:240e3}],
+  [{name:'Bali-01.jpg',size:3.2e6},{name:'Bali-02.jpg',size:2.9e6},{name:'Bali-03.jpg',size:3.4e6}],
+  [{name:'Project-Final.zip',size:4.2e9}],
+  [{name:'Meeting notes.docx',size:86e3}],
+];
+let dropN=0;
+function hint(m){const h=$('#hint');h.textContent=m;h.classList.add('on');clearTimeout(hint.t);hint.t=setTimeout(()=>h.classList.remove('on'),2400)}
+function setPressed(act,on){const b=$(`[data-act="${act}"]`);if(b)b.setAttribute('aria-pressed',on)}
+const ACT={
+  expand:()=>S.state==='expanded'?closeExpanded():openExpanded(),
+  music:toggleMedia,
+  // Stops every live activity so the island falls back to clock + date.
+  idle:()=>{
+    Object.assign(S.media,{active:false,playing:false});setPressed('music',false);
+    Object.assign(S.timer,{running:false,left:S.timer.total});
+    Object.assign(S.pomo,{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false});
+    if(S.sw.running)toggleSw();
+    if(S.charging){S.charging=false;setPressed('charge',false)}
+    if(S.xop){clearInterval(S.xop.t);S.xop=null}
+    clearTimeout(S.xopEndT);S.xopEnd=null;clearTimeout(S.clipT);S.clip=null;
+    S.cl.forEach(s=>{if(s.st!=='idle')Object.assign(s,{st:'idle',at:Date.now()});Object.assign(s,{unseen:false,q:''})});
+    clearTimeout(S.clEndT);S.clEnd=null;if(S.card==='claude')closeCard();renderClPage();
+    S.shelf=[];renderShelf();
+    renderMedia();renderTimerPage();renderSlot();
+    hint('No activity: the island shows the clock and date');
+  },
+  song:()=>nextSong(1),
+  video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true)},
+  timer10:()=>{Object.assign(S.timer,{mode:'timer',total:10,left:10,running:true});renderTimerPage();renderSlot()},
+  pomo:()=>{Object.assign(S.pomo,{running:true,left:1500,len:1500,phase:'focus',round:1,fast:true});S.timer.mode='pomo';renderTimerPage();renderSlot()},
+  sw:toggleSw,
+  charge:toggleCharge,
+  caps:()=>{S.caps=!S.caps;showCaps()},
+  bat20:()=>{if(S.charging)toggleCharge();S.battery=20;
+    showWide('b20',`<span style="color:var(--warn)">${icon('bolt')}</span><span>Battery <b>20%</b> · plug in</span>`,5000)},
+  bat80:()=>{if(!S.charging){S.charging=true;setPressed('charge',true)}S.battery=80;renderSlot();
+    showWide('b80',`<span style="color:var(--accent)">${icon('bolt')}</span><span><b>80%</b> reached · unplug</span>`,5000)},
+  copyText:()=>{const t='Meeting at 3 in the Merapi room, bring a charger';showClip(`${icon('clip')}<span class="tt">"${esc(trunc(t,40))}"</span>`,'Copied: '+t)},
+  copyImg:()=>showClip(`<img class="thumb" src="${SHOT}" width="36" height="20" alt="Copied image"><span class="tt">bali-sunset.jpg</span><span class="k2 num">1920 × 1080</span>`,'Image copied · bali-sunset.jpg · 1920 × 1080'),
+  copyFile:()=>showClip(`${icon('file')}<span>3 files</span>`,'Copied: report.pdf, budget.xlsx, logo.png'),
+  cutFile:()=>showClip(`<span style="color:var(--blue)">${icon('scissors')}</span><span>3 files</span>`,'Cut: report.pdf, budget.xlsx, logo.png'),
+  copySecret:()=>showClip(`${icon('lock')}<span>Copied (hidden)</span>`,'Hidden because the app marked it as sensitive'),
+  explorer:()=>explorerOp('copy'),
+  xmove:()=>explorerOp('move'),
+  xdel:()=>explorerOp('del'),
+  xcancel:cancelXop,
+  xconflict:conflictXop,
+  cam:()=>{S.cam=!S.cam;setPressed('cam',S.cam);layout()},
+  mic:()=>{S.mic=!S.mic;setPressed('mic',S.mic);layout()},
+  drop:()=>{enterDrop();setTimeout(()=>iw.classList.add('hot'),500);
+    setTimeout(()=>{iw.classList.remove('hot');addFiles(SAMPLE_DROPS[dropN++%SAMPLE_DROPS.length])},1400)},
+  alarm:()=>showCard('alarm'),
+  timerDone:()=>{S.timer.total=600;showCard('timer')},
+  todoRem:()=>showCard('todo'),
+  clWork:()=>clWork(S.cl[0]),
+  clAsk:()=>clAsk(S.cl[0],'ask'),
+  clPerm:()=>clAsk(S.cl[0],'perm'),
+  clPlan:()=>clAsk(S.cl[0],'plan'),
+  clAnswer:()=>S.cl[0].st==='ask'?clAnswer(S.cl[0]):hint('No question is waiting'),
+  // Finishing an idle session starts it first, so one click shows the whole run.
+  clDone:()=>{const s=S.cl[0];if(s.st==='work'||s.st==='ask')clDone(s);else{clWork(s);setTimeout(()=>clDone(s),2500)}},
+  clEsc:()=>clEsc(S.cl[0]),
+  clTwo:()=>{const s=S.cl[1];s.st==='work'||s.st==='ask'?clDone(s):clWork(s)},
+  clTerm:()=>{const s=S.cl[2];s.st==='work'||s.st==='ask'?clDone(s):clWork(s)},
+  clFocus:()=>clFocus(S.cl[0]),
+  note:()=>openNote(true),
+  updates:()=>{S.updates=!S.updates;setPressed('updates',S.updates);renderUpdates()},
+  // Bluetooth audio devices announce themselves briefly; battery shows only when the device reports it.
+  bt:()=>showWide('bt',`<span style="color:var(--blue)">${icon('headphones')}</span><span>Galaxy Buds2 Pro</span><span class="k2">Connected</span><span class="num">80%</span>`,4000),
+  btOff:()=>showWide('bt0',`<span class="k2">${icon('headphones')}</span><span>Galaxy Buds2 Pro</span><span class="k2">Disconnected</span>`,2000),
+  snd:()=>{Sound.on=!Sound.on;setPressed('snd',Sound.on);if(!Sound.on)stopSound()},
+  ramp:()=>{Sound.ramp=!Sound.ramp;setPressed('ramp',Sound.ramp)},
+  winmute:()=>{S.winMuted=!S.winMuted;setPressed('winmute',S.winMuted);if(S.winMuted)stopSound();
+    if(S.state==='card'&&CARDS[S.card].ring==='loop')showCard(S.card)},
+  glow:()=>{const off=document.body.classList.toggle('noglow');setPressed('glow',!off)},
+  extra:()=>{const on=!S.mods.gpu;S.mods.gpu=S.mods.temp=S.mods.disk=on?1:0;setPressed('extra',on);layout()},
+  fs:()=>{closeExpanded();if(S.state==='wide')setState('compact');S.fs=!S.fs;$('#desk').classList.toggle('fs',S.fs);setPressed('fs',S.fs);
+    hint(S.fs?'Fullscreen: the bar hides; only alarms and timers still appear':'Bar is back')},
+  reduce:()=>{S.reduce=!S.reduce;document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce)},
+  demo:toggleDemo,
+};
+const DEMO=[
+  [300,()=>ACT.copyText()],[3400,()=>ACT.copyImg()],[3600,()=>ACT.charge()],
+  [3600,()=>openExpanded(PAGE.media)],[2400,()=>goPage(PAGE.timer)],[1500,()=>goPage(PAGE.calendar)],[1500,()=>goPage(PAGE.todo)],
+  [1300,()=>{const b=$('#tlist li:last-child .chk');if(b)b.click()}],
+  [1600,()=>typeNote('Idea: focus mode\n- remaining time in the island\n- hold other alerts')],
+  [5200,()=>moveNote(3,1)],
+  [2000,()=>ACT.drop()],
+  [4200,()=>closeExpanded()],
+  [1400,()=>ACT.alarm()],[3600,()=>closeCard()],
+  [1200,()=>ACT.explorer()],[7400,()=>ACT.caps()],
+  [2000,()=>ACT.video()],[2600,()=>openExpanded(PAGE.media)],[3200,()=>closeExpanded()],
+  [1400,()=>ACT.clWork()],[3200,()=>ACT.clAsk()],[4600,()=>ACT.clAnswer()],[2600,()=>ACT.clDone()],[6400,()=>ACT.clFocus()],
+  [1200,()=>ACT.pomo()],
+];
+let demoT=[];
+function toggleDemo(){
+  if(demoT.length){demoT.forEach(clearTimeout);demoT=[];setPressed('demo',false);return}
+  let t=0;DEMO.forEach(([d,f])=>{t+=d;demoT.push(setTimeout(f,t))});
+  demoT.push(setTimeout(()=>{demoT=[];setPressed('demo',false)},t+500));setPressed('demo',true);
+}
+$('#ctl').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.act)ACT[b.dataset.act]();
+  else if(b.dataset.page!=null){const p=+b.dataset.page;S.state==='expanded'?goPage(p):openExpanded(p)}
+  else if(b.dataset.snd){
+    $$('#sndSeg button').forEach(x=>x.classList.toggle('on',x===b));
+    Sound.alarm=b.dataset.snd;$('#alSnd').textContent=b.textContent;chimeOnce(Sound.alarm);
+  }
+  else if(b.dataset.g!=null){
+    $$('#glass button').forEach(x=>x.classList.toggle('on',x===b));
+    document.documentElement.style.setProperty('--bar-blur',b.dataset.g+'px');
+    document.body.classList.toggle('solid',b.dataset.g==='0'&&+$('#opA').value===100);
+  }
+});
+// The island always leaves at least 2 px above and below it inside the bar.
+function setHeights(){
+  const max=S.barH-4;S.islH=Math.min(S.islH,max);
+  $('#islH').max=max;$('#islH').value=S.islH;
+  $('#barHv').textContent=S.barH+'px';$('#islHv').textContent=S.islH+'px';
+  document.documentElement.style.setProperty('--bar-h',S.barH+'px');
+  document.documentElement.style.setProperty('--isl-h',S.islH+'px');
+  if(!S.reduce)setMotion(SP_WIDE);layout();
+}
+$('#barH').oninput=e=>{S.barH=+e.target.value;setHeights()};
+$('#islH').oninput=e=>{S.islH=+e.target.value;setHeights()};
+$('#opA').oninput=e=>{
+  const v=+e.target.value;$('#opAv').textContent=v+'%';
+  document.documentElement.style.setProperty('--bar-a',(v/100).toFixed(2));
+};
+$('#sVol').oninput=e=>{const v=+e.target.value;$('#sVolV').textContent=v+'%';Sound.vol=v/100};
+$('#ctlMin').onclick=e=>{const c=$('#ctl');c.classList.toggle('min');const min=c.classList.contains('min');e.currentTarget.textContent=min?'Show':'Hide';e.currentTarget.setAttribute('aria-expanded',!min)};
+
+/* keyboard */
+document.addEventListener('keyup',e=>{if(e.key==='CapsLock'){S.caps=e.getModifierState('CapsLock');showCaps()}});
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.altKey&&e.code==='Space'){e.preventDefault();ACT.expand();return}
+  if(e.ctrlKey&&e.altKey&&e.code==='KeyN'){e.preventDefault();openNote(true);return}
+  if(S.state==='drop'&&e.key==='Escape'){leaveDrop();return}
+  if(S.state!=='expanded')return;
+  const typing=/INPUT|TEXTAREA/.test(e.target.tagName);
+  if(e.key==='Escape')closeExpanded();
+  else if(!typing&&!e.altKey&&e.key==='ArrowRight')goPage(S.page+1);
+  else if(!typing&&!e.altKey&&e.key==='ArrowLeft')goPage(S.page-1);
+});
+
+/* clock and simulated data */
+function tick100(){
+  let ch=false;
+  if(S.timer.running){S.timer.left-=0.1;ch=true;if(S.timer.left<=0){S.timer.left=0;S.timer.running=false;showCard('timer')}}
+  if(S.pomo.running){S.pomo.left-=S.pomo.fast?15:0.1;ch=true;
+    if(S.pomo.left<=0){S.pomo.left=0;S.pomo.running=false;showCard(S.pomo.phase==='focus'?'pomo':'pomo2')}}
+  if(S.sw.running)ch=true;
+  if(ch){renderSlot();if(S.page===PAGE.timer)renderTimerPage()}
+}
+function sample(){
+  S.cpu=rw(S.cpu,3,78,7);S.gpu=rw(S.gpu,0,45,5);S.ram=rw(S.ram,45,72,1.5);S.temp=rw(S.temp,48,86,2.5);
+  S.down=Math.random()<.08?4000+Math.random()*4500:rw(S.down,40,3200,500);S.up=rw(S.up,10,1200,160);
+  for(const k of['cpu','ram','gpu','down','temp']){S.hist[k].push(S[k]);if(S.hist[k].length>60)S.hist[k].shift()}
+}
+function tick1s(){
+  renderClock();sample();
+  if(S.media.playing){
+    S.media.pos+=1;
+    if(S.media.pos>=cur().d){if(cur().kind==='music')nextSong(1);else{S.media.pos=cur().d;S.media.playing=false;renderMedia();renderSlot()}}
+    else renderMedia();
+  }
+  S.battery=S.charging?Math.min(100,S.battery+0.1):Math.max(1,S.battery-1/30);
+  renderRight();renderSys();renderSlot();fitBar(compactWidth());
+  if(S.state==='expanded'&&S.page===PAGE.claude)clTick();
+}
+
+/* start */
+document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce);
+for(let i=0;i<60;i++)sample();
+renderApps();setApp('Chrome','a-chrome');renderClLauncher();
+renderClock();renderMedia();renderTodos();buildCal();renderNotes();renderShelf();renderRight();renderTimerPage();
+renderSlot();goPage(PAGE.todo,true);setState('compact',true);
+if(document.fonts)document.fonts.ready.then(layout);
+addEventListener('resize',layout);
+new ResizeObserver(()=>layout()).observe(document.documentElement);
+setInterval(tick100,100);setInterval(tick1s,1000);
+</script>
+</body>
+</html>
