@@ -283,6 +283,7 @@ body.reduce .geyes.blink i,body.reduce .geyes.blink2 i{animation:gfade 200ms lin
 .geyes.x-enjoy i{transform-origin:50% 100%;scale:1 .5}
 .geyes.x-focus i{scale:1 .7}
 .geyes.x-surprise i{scale:1.3;border-radius:50%}
+.geyes.x-wide i{scale:1.3}
 .geyes.x-happy i{transform-origin:50% 100%;scale:1 .42;border-radius:50% 50% 1px 1px}
 .geyes.x-sleep i{scale:1 .16;translate:0 1px;border-radius:2px;transition-duration:900ms}
 /* Music: the eyes rock gently on the beat, a tilt every 0.48 s that rests between beats */
@@ -1223,14 +1224,16 @@ function gBlink(){
   setTimeout(gBlink,3000+Math.random()*3000+(two?350:0));
 }
 /* Gili's expressions (PRD 6.3 "Ekspresi Gili"): one at a time, the highest that applies.
-   1 startled by an alarm, timer or reminder card · 2 happy for 0.9 s when a note comes home · 3 asleep after 5 minutes
-   without input · 4 focused on a running timer, stopwatch or focus session · 5 enjoying music · neutral otherwise.
+   1 startled by an alarm, timer or reminder card · 2 happy for 0.9 s when a note comes home · 3 eyes wide while something
+   is dragged with the mouse · 4 asleep after 5 minutes without input · 5 focused on a running timer, stopwatch or focus
+   session · 6 enjoying music · neutral otherwise. Every click anywhere is also a blink.
    The gaze is separate: a note on the move or the timer's digits at each new minute take it over from the pointer. */
 const STARTLE=['alarm','timer','todo','pomo','pomo2'],SLEEP_MS=5*60e3;
 const GX={mood:'',asleep:false,input:Date.now(),happyUntil:0,watchEl:null,watchUntil:0,glanceUntil:0,glanceAt:0,min:null};
 function gMood(){
   if(S.state==='card'&&STARTLE.includes(S.card))return'surprise';
   if(Date.now()<GX.happyUntil)return'happy';
+  if(GD.drag)return'wide';
   if(GX.asleep)return'sleep';
   const k=activities()[0];
   if(k==='timer'||k==='sw'||k==='pomo'&&S.pomo.phase==='focus')return'focus';
@@ -1239,7 +1242,7 @@ function gMood(){
 }
 function gExpr(){
   const m=gMood();if(m===GX.mood)return;GX.mood=m;
-  gEyes.forEach(e=>{e.classList.remove('x-enjoy','x-focus','x-surprise','x-happy','x-sleep','x-sway');if(m)e.classList.add('x-'+m,...(m==='enjoy'?['x-sway']:[]))});
+  gEyes.forEach(e=>{e.classList.remove('x-enjoy','x-focus','x-surprise','x-happy','x-wide','x-sleep','x-sway');if(m)e.classList.add('x-'+m,...(m==='enjoy'?['x-sway']:[]))});
   // Asleep, the eyes settle in the middle and stop following.
   if(m==='sleep'){G.tx=G.ty=0;if(!G.raf&&!S.reduce)G.raf=requestAnimationFrame(gStep)}
 }
@@ -1267,6 +1270,29 @@ function gWake(){
 }
 addEventListener('pointermove',gWake,{passive:true});
 addEventListener('keydown',gWake,{capture:true});
+// Clicks and drags anywhere on the screen. The app reads the mouse buttons in the same 30 Hz cursor poll (no hook).
+// A left or right click blinks once; holding the left button and moving 6 px is a drag, and the eyes go wide until release.
+const GD={x:0,y:0,down:false,drag:false};
+function gClickBlink(){
+  if(['sleep','surprise','happy','wide'].includes(GX.mood))return;
+  gEyes.forEach(e=>{e.classList.remove('blink','blink2');void e.offsetWidth;e.classList.add('blink')});
+}
+function gDrag(on){if(GD.drag===on)return;GD.drag=on;gExpr()}
+addEventListener('pointerdown',e=>{
+  if(e.button!==0&&e.button!==2)return;
+  if(GX.asleep){gWake();return}
+  gWake();GD.down=e.button===0;GD.x=e.clientX;GD.y=e.clientY;gClickBlink();
+},{capture:true,passive:true});
+addEventListener('pointermove',e=>{
+  if(GD.down&&!GD.drag&&e.buttons&1&&Math.hypot(e.clientX-GD.x,e.clientY-GD.y)>=6)gDrag(true);
+},{capture:true,passive:true});
+const gUp=()=>{GD.down=false;gDrag(false)};
+addEventListener('pointerup',gUp,{capture:true});
+addEventListener('pointercancel',e=>{if(!GD.native)gUp()},{capture:true});
+// Native drags (a file, a selection) stop pointer events, so they are followed by their own start and end.
+addEventListener('dragstart',()=>{GD.native=true;gDrag(true)},{capture:true});
+addEventListener('dragend',()=>{GD.native=false;gUp()},{capture:true});
+addEventListener('drop',()=>{GD.native=false;gUp()},{capture:true});
 // Once a second: fall asleep after 5 minutes without input, and glance at the digits whenever a running timer reaches a new minute.
 setInterval(()=>{
   if(!GX.asleep&&Date.now()-GX.input>=SLEEP_MS){GX.asleep=true;gExpr()}
