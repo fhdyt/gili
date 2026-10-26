@@ -493,7 +493,7 @@ Suara tiap kartu diatur di 6.6. Kalau alarm atau timer tidak ditanggapi dalam 5 
 - Jaringan memakai dua baris nilai tanpa label: upload di atas, download di bawah (9.5 px), lebar minimum 58 px supaya bar tidak bergeser saat angkanya berubah.
 - Ikon (cuaca, Wi‑Fi) berada di kiri blok dua baris; ikon power berdiri sendiri.
 - Tinggi area klik modul = tinggi bar − 6 px (minimal 24 px). Di tinggi bar terkecil (28 px) dua baris tetap muat.
-- Jarak antar-modul rapat dan rata, seperti deretan ikon toolbar: 16 px dari isi satu modul ke isi modul berikutnya (padding area klik 6 px di tiap sisi + celah 4 px).
+- Jarak antar-modul rapat dan rata, seperti deretan ikon toolbar: 10 px dari isi satu modul ke isi modul berikutnya (padding area klik 4 px di tiap sisi + celah 2 px; dirapatkan user 2026-10-26). Area klik modul ikon minimal 24 px lebar.
 
 Urutan default dari kiri ke kanan:
 

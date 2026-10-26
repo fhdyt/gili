@@ -60,8 +60,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .bar.focus .left,.bar.focus .right{text-shadow:0 1px 3px rgba(0,0,0,.55)}
 .under{opacity:0!important;pointer-events:none}
 .left,.right{display:flex;align-items:center;gap:12px;min-width:0}
-/* With each module's 6 px padding this leaves 16 px between modules. */
-.right{gap:4px}
+/* With each module's 4 px padding this leaves 10 px between modules. */
+.right{gap:2px}
 .launch{display:flex;gap:2px;flex-shrink:0}
 .launch button{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;color:#aeaeb2;transition:background 120ms,color 120ms,opacity 160ms ease}
 .launch button:hover{background:rgba(255,255,255,.08);color:var(--text)}
@@ -97,7 +97,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .thumb{height:20px;width:36px;border-radius:4px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.16);display:block}
 .slot>*{animation:slotIn 180ms ease}
 @keyframes slotIn{from{opacity:0}to{opacity:1}}
-.right .mod{display:flex;align-items:center;gap:6px;white-space:nowrap;height:max(24px,calc(var(--bar-h,32px) - 6px));padding:0 6px;border-radius:6px;transition:background 120ms,opacity 160ms ease}
+.right .mod{display:flex;align-items:center;gap:6px;white-space:nowrap;height:max(24px,calc(var(--bar-h,32px) - 6px));min-width:24px;justify-content:center;padding:0 4px;border-radius:6px;transition:background 120ms,opacity 160ms ease}
 .right button.mod:hover{background:rgba(255,255,255,.08)}
 .right button.mod:active{background:rgba(255,255,255,.14)}
 .mod[data-m="weather"]>.ic{color:#aeaeb2}
