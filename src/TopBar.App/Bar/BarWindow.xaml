@@ -1,0 +1,61 @@
+<Window x:Class="TopBar.App.Bar.BarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TopBar" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Left="0" Top="0" Width="800" Height="32" UseLayoutRounding="True"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
+    <Window.Resources>
+        <Style x:Key="BarMenu" TargetType="ContextMenu">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="#1C1C1E" CornerRadius="12" Padding="4" BorderBrush="#12FFFFFF" BorderThickness="1">
+                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="BarMenuItem" TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#F5F5F7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Bg" MinWidth="180" Padding="10,7" CornerRadius="8" Background="Transparent">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#3A3A3C" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="BarMenuSeparator" TargetType="Separator">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Margin="6,4" Background="#14FFFFFF" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">
+        <Border.ContextMenu>
+            <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
+                <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Grid Margin="10,0" />
+    </Border>
+</Window>

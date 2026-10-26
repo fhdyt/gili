@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/TopBar.App/TopBar.App.csproj" />
     <Project Path="src/TopBar.Core/TopBar.Core.csproj" />
     <Project Path="src/TopBar.Data/TopBar.Data.csproj" />
     <Project Path="src/TopBar.Platform/TopBar.Platform.csproj" />
