@@ -31,7 +31,7 @@
         <Style x:Key="TabButton" TargetType="Button">
             <Setter Property="OverridesDefaultStyle" Value="True" />
             <Setter Property="Foreground" Value="#8E8E93" />
-            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -41,38 +41,20 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Foreground" Value="#F5F5F7" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="FooterButton" TargetType="Button">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="Foreground" Value="#8E8E93" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Height="22" Padding="10,0" CornerRadius="11" Background="Transparent">
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#1C1C1E" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
     </Window.Resources>
 
     <Canvas>
-        <!-- The floating shadow sits on its own plate so the island's text is never rendered through an effect. -->
+        <!-- The floating shadows sit on their own plates so the island's text is never rendered through an effect. The
+             mockup's two shadows (0 22 44 -14 black 70%, 0 8 18 -10 black 50%) become plates inset by their spread. -->
         <Border x:Name="ShadowPlate" Background="#000000" Opacity="0" IsHitTestVisible="False">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="44" ShadowDepth="12" Direction="270" Opacity="0.7" Color="Black" />
+                <DropShadowEffect BlurRadius="44" ShadowDepth="22" Direction="270" Opacity="0.7" Color="Black" />
+            </Border.Effect>
+        </Border>
+        <Border x:Name="ShadowPlateNear" Background="#000000" Opacity="0" IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="8" Direction="270" Opacity="0.5" Color="Black" />
             </Border.Effect>
         </Border>
 
@@ -162,38 +144,34 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- The open island (PRD 6.3): page menu, the page itself, and a quiet clock line at the bottom. -->
-                <Grid x:Name="ExpandedLayer" Width="680" Height="256" HorizontalAlignment="Center" VerticalAlignment="Top"
-                      Opacity="0" IsHitTestVisible="False">
-                    <!-- 14 px inset + 18 px radius = the island's 32 px, so the menu's curve follows the island's. -->
-                    <Border Margin="14,14,14,0" Height="36" VerticalAlignment="Top" CornerRadius="18" Background="#1C1C1E" Padding="3">
+                <!-- The open island (PRD 6.3): Gili, the icon tab menu, and the page. Width and height come from code. -->
+                <Grid x:Name="ExpandedLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False">
+                    <!-- Gili beside the menu: 14 px inset + 18 px radius = the island's 32 px, like the menu. -->
+                    <Border x:Name="MenuGili" Width="36" Height="36" CornerRadius="18" Background="#1AFFFFFF"
+                            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,14,0,0">
+                        <m:GiliEyes x:Name="MenuGiliEyes" Form="{x:Static gm:GiliForm.Menu}" />
+                    </Border>
+                    <Border x:Name="Menu" Margin="56,14,14,0" Height="36" VerticalAlignment="Top" CornerRadius="18" Background="#1AFFFFFF" Padding="3"
+                            MouseMove="OnMenuMouseMove" MouseLeave="OnMenuMouseLeave">
                         <Grid>
                             <!-- 3 px inset + 15 px radius = the menu's 18 px. -->
-                            <Border x:Name="TabHighlight" HorizontalAlignment="Left" CornerRadius="15" Background="#3A3A3C">
+                            <Border x:Name="TabHighlight" HorizontalAlignment="Left" CornerRadius="15" Background="#24FFFFFF">
                                 <Border.RenderTransform>
                                     <TranslateTransform x:Name="TabHighlightShift" />
                                 </Border.RenderTransform>
                             </Border>
-                            <UniformGrid x:Name="TabStrip" Rows="1" />
+                            <StackPanel x:Name="TabStrip" Orientation="Horizontal" />
                         </Grid>
                     </Border>
 
-                    <Canvas Margin="0,58,0,0" Height="164" VerticalAlignment="Top" ClipToBounds="True" Background="Transparent"
+                    <Canvas x:Name="PageArea" Margin="0,58,0,0" VerticalAlignment="Top" ClipToBounds="True" Background="Transparent"
                             MouseWheel="OnPagesWheel">
-                        <StackPanel x:Name="PageTrack" Orientation="Horizontal" Height="164">
+                        <StackPanel x:Name="PageTrack" Orientation="Horizontal">
                             <StackPanel.RenderTransform>
                                 <TranslateTransform x:Name="PageShift" />
                             </StackPanel.RenderTransform>
                         </StackPanel>
                     </Canvas>
-
-                    <Button Style="{StaticResource FooterButton}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                            Margin="0,0,0,8" Click="OnFooterClick" AutomationProperties.Name="Open calendar">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Time}" Foreground="#F5F5F7" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
-                            <TextBlock Text="{Binding Date}" Margin="6,0,0,0" />
-                        </StackPanel>
-                    </Button>
                 </Grid>
             </Grid>
         </Border>

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
@@ -27,7 +28,7 @@ public partial class IslandWindow : Window
 {
     private const double CompactEnvelopeWidth = 760;
     private const double FloatingEnvelopeWidth = 1040;
-    private const double FloatingEnvelopeHeight = 600;
+    private const double ShadowRoom = 64;
 
     private readonly IslandController _island;
     private readonly IslandViewModel _vm;
@@ -60,7 +61,12 @@ public partial class IslandWindow : Window
     private static readonly Brush TextBrush = Frozen(0xF5, 0xF5, 0xF7);
     private static readonly Brush SecondaryBrush = Frozen(0x8E, 0x8E, 0x93);
     private static readonly Brush AccentBrush = Frozen(0x30, 0xD1, 0x58);
-    private readonly List<(Button Button, IconView Icon, TextBlock Label, LevelMeter? Meter)> _tabs = [];
+    private readonly List<(Button Button, IconView Icon, Border Name, LevelMeter? Meter)> _tabs = [];
+    private TabName[] _names = [];
+    private int _hoveredTab = -1;
+    private Point _lastMenuPoint;
+    private bool _tight;
+    private double _pageHeight;
     private int _wheel;
     private DateTime _wheelPausedUntil;
 
@@ -79,16 +85,16 @@ public partial class IslandWindow : Window
         GiliCircle.RenderTransform = _giliCircleScale;
         gili.Register(GiliInside);
         gili.Register(GiliCircleEyes);
-        ExpandedLayer.Width = Math.Min(680, SystemParameters.PrimaryScreenWidth - IslandLayout.ScreenMargin);
+        gili.Register(MenuGiliEyes);
         BuildTabs();
         BuildPages();
-        ShowPage(animate: false);
+        SizeExpanded();
         vm.PropertyChanged += OnViewModelChanged;
-        TabStrip.SizeChanged += (_, _) => UpdateTabs(animate: false);
         island.ViewChanged += OnViewChanged;
         settings.Changed += _ =>
         {
             if (!_floatingEnvelope) SetEnvelope(false);
+            SizeExpanded();
             Relayout();
             UpdateGili();
         };
@@ -96,7 +102,9 @@ public partial class IslandWindow : Window
         WideContent.SizeChanged += (_, _) => Relayout();
         SystemParameters.StaticPropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(SystemParameters.PrimaryScreenWidth)) SetEnvelope(_floatingEnvelope);
+            if (e.PropertyName != nameof(SystemParameters.PrimaryScreenWidth)) return;
+            SizeExpanded();
+            SetEnvelope(_floatingEnvelope);
         };
         _awayTimer.Tick += (_, _) =>
         {
@@ -150,7 +158,7 @@ public partial class IslandWindow : Window
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
         UpdateGili();
         var width = Floats(view.Mode)
-            ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, 178).Width
+            ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, _pageHeight).Width
             : 0;
         FloatingChanged?.Invoke(Floats(view.Mode), width);
     }
@@ -160,7 +168,9 @@ public partial class IslandWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
         var content = _mode == IslandMode.Wide ? WideContent.ActualWidth : CompactContent.ActualWidth;
-        var target = IslandLayout.For(_mode, Screen(), content, _hovered, ExpandedLayer.Width, 178);
+        var target = IslandLayout.For(_mode, Screen(), content, _hovered, ExpandedLayer.Width, _pageHeight);
+        if (_mode == IslandMode.Expanded) SizePages(target.Height);
+        if (_floatingEnvelope) GrowEnvelope(target.Top + target.Height);
         var spring = parameters ?? (Floats(_mode) ? null : SpringParameters.Resize);
         var instant = snap || !SystemParameters.ClientAreaAnimation;
         Retarget(_width, target.Width, spring, instant);
@@ -213,10 +223,17 @@ public partial class IslandWindow : Window
         _floatingEnvelope = floating;
         var screen = SystemParameters.PrimaryScreenWidth;
         Width = Math.Min(screen, floating ? FloatingEnvelopeWidth : CompactEnvelopeWidth);
-        Height = floating ? FloatingEnvelopeHeight : _settings.Current.BarHeight;
+        Height = floating ? Math.Min(SystemParameters.PrimaryScreenHeight, IslandLayout.ExpandedMinHeight + ShadowRoom) : _settings.Current.BarHeight;
         Left = (screen - Width) / 2;
         Top = 0;
         Apply();
+    }
+
+    /// <summary>A tall page makes the floating window taller, never more than it needs, since a layered window costs per pixel.</summary>
+    private void GrowEnvelope(double bottom)
+    {
+        var needed = Math.Min(SystemParameters.PrimaryScreenHeight, bottom + ShadowRoom);
+        if (Height < needed) Height = needed;
     }
 
     private void Apply()
@@ -225,19 +242,20 @@ public partial class IslandWindow : Window
         var h = _height.Value;
         var r = Math.Max(0, _radius.Value);
         var left = (Width - w) / 2;
-        foreach (var plate in new[] { Body, ShadowPlate })
+        foreach (var (plate, inset) in new[] { (Body, 0.0), (ShadowPlate, 14.0), (ShadowPlateNear, 10.0) })
         {
-            Canvas.SetLeft(plate, left);
-            Canvas.SetTop(plate, _top.Value);
-            plate.Width = w;
-            plate.Height = h;
-            plate.CornerRadius = new CornerRadius(r);
+            Canvas.SetLeft(plate, left + inset);
+            Canvas.SetTop(plate, _top.Value + inset);
+            plate.Width = Math.Max(0, w - 2 * inset);
+            plate.Height = Math.Max(0, h - 2 * inset);
+            plate.CornerRadius = new CornerRadius(Math.Max(0, r - inset));
         }
         _clip.Rect = new Rect(0, 0, w, h);
         _clip.RadiusX = r;
         _clip.RadiusY = r;
         var floating = Math.Clamp(_float.Value, 0, 1);
         ShadowPlate.Opacity = floating;
+        ShadowPlateNear.Opacity = floating;
         TopHighlight.CornerRadius = new CornerRadius(r);
         TopHighlight.Opacity = floating;
 
@@ -275,6 +293,7 @@ public partial class IslandWindow : Window
         var show = _settings.Current.ShowGili && _mode != IslandMode.Hidden;
         var insideOn = show && _mode == IslandMode.Compact && !_vm.HasActivity;
         var circleOn = show && ((_mode == IslandMode.Compact && _vm.HasActivity) || _mode == IslandMode.Wide);
+        var menuOn = show && _mode == IslandMode.Expanded;
         var instant = !SystemParameters.ClientAreaAnimation;
         if (insideOn != _giliInsideOn)
         {
@@ -295,8 +314,8 @@ public partial class IslandWindow : Window
         }
         if (instant) Apply();
         else StartAnimating();
-        _gili.SetActiveForm(circleOn ? GiliForm.Circle : GiliForm.InIsland);
-        _gili.SetVisible(insideOn || circleOn);
+        _gili.SetActiveForm(menuOn ? GiliForm.Menu : circleOn ? GiliForm.Circle : GiliForm.InIsland);
+        _gili.SetVisible(insideOn || circleOn || menuOn);
         _gili.SetMusicPlayingInSlot(_vm.ShowMediaSlot && _vm.MusicPlaying);
     }
 
@@ -320,7 +339,10 @@ public partial class IslandWindow : Window
         layer.BeginAnimation(OpacityProperty, fade);
     }
 
-    /// <summary>The open island's content arrives 120 ms after the panel starts growing: opacity, blur 6 → 0 and scale 0.98 → 1 over 220 ms.</summary>
+    /// <summary>
+    /// The open island's content arrives 120 ms after the panel starts growing (mockup .L-exp): opacity over 220 ms,
+    /// down 6 px and scale 0.98 → 1 over 380 ms on the out curve, and blur 6 → 0 over 260 ms.
+    /// </summary>
     private static void Reveal(FrameworkElement layer, bool show)
     {
         if (layer.IsHitTestVisible == show) return;
@@ -332,25 +354,28 @@ public partial class IslandWindow : Window
             layer.BeginAnimation(OpacityProperty, new DoubleAnimation(show ? 1 : 0, TimeSpan.FromMilliseconds(animated ? 90 : 100)));
             return;
         }
-        var delay = TimeSpan.FromMilliseconds(120);
-        var duration = TimeSpan.FromMilliseconds(220);
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         var blur = new BlurEffect { Radius = 6 };
         var scale = new ScaleTransform(0.98, 0.98);
+        var drop = new TranslateTransform(0, -6);
         layer.Effect = blur;
         layer.RenderTransformOrigin = new Point(0.5, 0);
-        layer.RenderTransform = scale;
-        layer.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, duration) { BeginTime = delay, EasingFunction = ease });
-        var sharpen = new DoubleAnimation(6, 0, duration) { BeginTime = delay, EasingFunction = ease };
+        layer.RenderTransform = new TransformGroup { Children = { scale, drop } };
+        layer.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220))
+        {
+            BeginTime = TimeSpan.FromMilliseconds(120),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+        });
+        var sharpen = new DoubleAnimation(6, 0, TimeSpan.FromMilliseconds(260)) { BeginTime = TimeSpan.FromMilliseconds(120) };
         // An effect costs work on every frame; drop it once the content is sharp.
         sharpen.Completed += (_, _) =>
         {
             if (ReferenceEquals(layer.Effect, blur)) layer.Effect = null;
         };
         blur.BeginAnimation(BlurEffect.RadiusProperty, sharpen);
-        var grow = new DoubleAnimation(0.98, 1, duration) { BeginTime = delay, EasingFunction = ease };
+        var grow = BezierEase.To(1, 380, BezierEase.Out, 120);
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        drop.BeginAnimation(TranslateTransform.YProperty, BezierEase.To(0, 380, BezierEase.Out, 120));
     }
 
     /// <summary>The open island takes focus so Esc and the arrow keys reach it; the previous window gets it back on close.</summary>
@@ -427,33 +452,96 @@ public partial class IslandWindow : Window
         return brush;
     }
 
+    /// <summary>Each tab is an icon with its name beside it, clipped to nothing until the tab is active or hovered.</summary>
     private void BuildTabs()
     {
-        foreach (var tab in _vm.Tabs)
+        _names = MeasureNames();
+        for (var i = 0; i < _vm.Tabs.Count; i++)
         {
+            var tab = _vm.Tabs[i];
+            var index = i;
             var icon = new IconView { Glyph = tab.Glyph, Width = 15, Height = 15 };
-            var meter = tab.Page == IslandPage.Media ? new LevelMeter { BarBrush = AccentBrush, Visibility = Visibility.Collapsed } : null;
-            var glyph = new Grid { MinWidth = 15, Height = 15, VerticalAlignment = VerticalAlignment.Center };
+            var meter = tab.Page == IslandPage.Media
+                ? new LevelMeter { BarBrush = AccentBrush, Visibility = Visibility.Collapsed, Width = 15, Height = 13 }
+                : null;
+            var glyph = new Grid { Width = 15, Height = 15, VerticalAlignment = VerticalAlignment.Center };
             glyph.Children.Add(icon);
             if (meter is not null) glyph.Children.Add(meter);
-            var label = new TextBlock { Text = tab.Name, FontSize = 12, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            var content = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+            var text = new TextBlock { Text = tab.Name, FontSize = 12, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            var name = new Border { Width = 0, Opacity = 0, ClipToBounds = true, Child = text, VerticalAlignment = VerticalAlignment.Center };
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
             content.Children.Add(glyph);
-            content.Children.Add(label);
-            var button = new Button { Style = (Style)FindResource("TabButton"), Content = content };
+            content.Children.Add(name);
+            var button = new Button
+            {
+                Style = (Style)FindResource("TabButton"),
+                Content = content,
+                Width = TabMenuLayout.IconTab,
+                Margin = new Thickness(i == 0 ? 0 : TabMenuLayout.Gap, 0, 0, 0),
+            };
             AutomationProperties.SetName(button, tab.Name);
             button.Click += (_, _) => _island.Open(tab.Page);
+            // Keyboard focus opens the name like hover does.
+            button.GotKeyboardFocus += (_, _) => HoverTab(index);
+            button.LostKeyboardFocus += (_, _) => HoverTab(-1);
             TabStrip.Children.Add(button);
-            _tabs.Add((button, icon, label, meter));
+            _tabs.Add((button, icon, name, meter));
         }
+    }
+
+    /// <summary>Every tab name measured once at 12 px, regular for hover and semibold for the active tab.</summary>
+    private TabName[] MeasureNames()
+    {
+        var family = new FontFamily("Segoe UI Variable Text, Segoe UI");
+        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        double Measure(string name, FontWeight weight) => new FormattedText(name, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+            new Typeface(family, FontStyles.Normal, weight, FontStretches.Normal), 12, Brushes.White, dpi).WidthIncludingTrailingWhitespace;
+        return [.. _vm.Tabs.Select(t => new TabName(Math.Ceiling(Measure(t.Name, FontWeights.Normal)), Math.Ceiling(Measure(t.Name, FontWeights.SemiBold))))];
+    }
+
+    /// <summary>The open island is as wide as its menu needs, never under 560 px or over the screen less 24 (PRD 6.3).</summary>
+    private void SizeExpanded()
+    {
+        var showGili = _settings.Current.ShowGili;
+        var need = TabMenuLayout.Need(_tabs.Count, showGili, _names.Max(n => n.Bold));
+        var width = TabMenuLayout.IslandWidth(need, SystemParameters.PrimaryScreenWidth);
+        _tight = TabMenuLayout.IsTight(need, width);
+        ExpandedLayer.Width = width;
+        MenuGili.Visibility = showGili ? Visibility.Visible : Visibility.Collapsed;
+        Menu.Margin = new Thickness(showGili ? 56 : 14, 14, 14, 0);
+        Menu.Width = width - Menu.Margin.Left - 14;
+        // Too narrow for a hovered name: it shows as a tooltip instead.
+        foreach (var (button, _, _, _) in _tabs) button.ToolTip = _tight ? AutomationProperties.GetName(button) : null;
+        foreach (Border page in PageTrack.Children) page.Width = width;
+        _pageHeight = PageHeight();
+        ShowPage(animate: false);
+        UpdateTabs(animate: false);
     }
 
     private void BuildPages()
     {
         foreach (var tab in _vm.Tabs)
         {
-            PageTrack.Children.Add(new Border { Width = ExpandedLayer.Width, Height = 164, Child = CreatePage(tab) });
+            PageTrack.Children.Add(new Border { Child = CreatePage(tab) });
         }
+    }
+
+    /// <summary>The open page's full content height, so the island grows to show it without scrolling (PRD 6.3).</summary>
+    private double PageHeight()
+    {
+        if (PageTrack.Children[_vm.SelectedTab] is not Border { Child: FrameworkElement page }) return 0;
+        page.Measure(new Size(ExpandedLayer.Width, double.PositiveInfinity));
+        return page.DesiredSize.Height;
+    }
+
+    /// <summary>The page area fills the island below the menu; each page centres its content in it.</summary>
+    private void SizePages(double islandHeight)
+    {
+        ExpandedLayer.Height = islandHeight;
+        var area = Math.Max(0, islandHeight - IslandLayout.PageTop - IslandLayout.PageBottom);
+        PageArea.Width = ExpandedLayer.Width;
+        PageArea.Height = area;
+        foreach (Border page in PageTrack.Children) page.Height = area;
     }
 
     /// <summary>Real pages replace their placeholders here as they are built (Media in Task 11, the rest in Phases 2–3).</summary>
@@ -476,38 +564,82 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>
-    /// One highlight slides to the open page's tab (320 ms); that tab's text turns white and semibold and its icon
-    /// green. While music plays, the Media icon becomes the level meter. On a narrow screen only the open tab keeps its name.
+    /// The active tab and the hovered one show their names: the name slides out of the icon over 300 ms on the out curve
+    /// and fades in (160 ms; the active tab 220 ms after 90 ms), the other tabs give way, and the highlight moves to where
+    /// the active tab will end up with the same curve, so it stays on it the whole way (mockup <c>placeInd()</c>).
     /// </summary>
     private void UpdateTabs(bool animate)
     {
-        if (_tabs.Count == 0 || TabStrip.ActualWidth <= 0) return;
+        if (_tabs.Count == 0) return;
         var selected = _vm.SelectedTab;
-        var narrow = ExpandedLayer.Width < 680;
+        var widths = TabMenuLayout.TabWidths(Menu.Width, _names, selected, _hoveredTab, _tight);
+        animate &= SystemParameters.ClientAreaAnimation;
         for (var i = 0; i < _tabs.Count; i++)
         {
-            var (button, icon, label, meter) = _tabs[i];
+            var (button, icon, name, meter) = _tabs[i];
             var active = i == selected;
-            if (active) button.Foreground = TextBrush;
+            var open = active || (i == _hoveredTab && !_tight);
+            if (active || i == _hoveredTab) button.Foreground = TextBrush;
             else button.ClearValue(ForegroundProperty);
             if (active) icon.Foreground = AccentBrush;
             else icon.ClearValue(IconView.ForegroundProperty);
-            label.FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal;
-            label.Visibility = active || !narrow ? Visibility.Visible : Visibility.Collapsed;
+            ((TextBlock)name.Child).FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal;
+            To(name, WidthProperty, open ? 5 + (active ? _names[i].Bold : _names[i].Regular) : 0, animate);
+            name.BeginAnimation(OpacityProperty, animate
+                ? new DoubleAnimation(open ? 1 : 0, TimeSpan.FromMilliseconds(active ? 220 : 160)) { BeginTime = TimeSpan.FromMilliseconds(active ? 90 : 0) }
+                : null);
+            if (!animate) name.Opacity = open ? 1 : 0;
+            To(button, WidthProperty, widths[i], animate);
             var playing = meter is not null && _vm.MusicPlaying;
             icon.Visibility = playing ? Visibility.Collapsed : Visibility.Visible;
             if (meter is null) continue;
             meter.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
             meter.IsPlaying = playing;
         }
-        var cell = TabStrip.ActualWidth / _tabs.Count;
-        TabHighlight.Width = cell - 2;
-        Slide(TabHighlightShift, selected * cell + 1, 320, animate, new CubicEase { EasingMode = EasingMode.EaseOut });
+        var (x, width) = TabMenuLayout.Highlight(widths, selected);
+        // Highlight measures X from the menu's outer edge; the strip already sits inside the 3 px padding.
+        To(TabHighlightShift, TranslateTransform.XProperty, x - TabMenuLayout.Padding, animate);
+        To(TabHighlight, WidthProperty, width, animate);
+    }
+
+    private static void To(IAnimatable target, DependencyProperty property, double value, bool animate)
+    {
+        if (!animate)
+        {
+            target.BeginAnimation(property, null);
+            ((DependencyObject)target).SetValue(property, value);
+            return;
+        }
+        target.BeginAnimation(property, BezierEase.To(value, 300, BezierEase.Out));
+    }
+
+    /// <summary>
+    /// Only a pointer that really moves picks the hovered tab, so tabs sliding under a resting pointer don't set off a
+    /// chain of openings (PRD 6.3).
+    /// </summary>
+    private void OnMenuMouseMove(object sender, MouseEventArgs e)
+    {
+        var at = PointToScreen(e.GetPosition(this));
+        if (at == _lastMenuPoint) return;
+        _lastMenuPoint = at;
+        HoverTab(_tabs.FindIndex(t => t.Button.IsMouseOver));
+    }
+
+    private void OnMenuMouseLeave(object sender, MouseEventArgs e)
+    {
+        _lastMenuPoint = default;
+        HoverTab(-1);
+    }
+
+    private void HoverTab(int index)
+    {
+        if (index == _hoveredTab) return;
+        _hoveredTab = index;
+        UpdateTabs(animate: _mode == IslandMode.Expanded);
     }
 
     private void ShowPage(bool animate) =>
-        Slide(PageShift, -_vm.SelectedTab * ExpandedLayer.Width, 300, animate,
-            new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 7 });
+        Slide(PageShift, -_vm.SelectedTab * ExpandedLayer.Width, 300, animate, BezierEase.Out);
 
     private static void Slide(TranslateTransform shift, double x, int milliseconds, bool animate, IEasingFunction ease)
     {
@@ -525,10 +657,12 @@ public partial class IslandWindow : Window
         switch (e.PropertyName)
         {
             case nameof(IslandViewModel.SelectedTab):
-                // Opening the island lands on its page; only switching while open slides.
+                // Opening the island lands on its page; only switching while open slides, and the height follows.
                 var animate = _mode == IslandMode.Expanded;
                 UpdateTabs(animate);
                 ShowPage(animate);
+                _pageHeight = PageHeight();
+                if (animate) Relayout(SpringParameters.Open);
                 break;
             case nameof(IslandViewModel.MusicPlaying):
                 UpdateTabs(animate: false);
@@ -568,7 +702,7 @@ public partial class IslandWindow : Window
         if (Math.Abs(_wheel) < 120) return;
         StepPage(Math.Sign(_wheel));
         _wheel = 0;
-        _wheelPausedUntil = DateTime.UtcNow.AddMilliseconds(300);
+        _wheelPausedUntil = DateTime.UtcNow.AddMilliseconds(380);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -581,6 +715,4 @@ public partial class IslandWindow : Window
         }
         return IntPtr.Zero;
     }
-
-    private void OnFooterClick(object sender, RoutedEventArgs e) => _island.Open(IslandPage.Calendar);
 }
