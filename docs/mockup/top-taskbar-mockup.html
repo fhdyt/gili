@@ -178,6 +178,8 @@ button.qi:hover{background:var(--ctl)}
 /* Control islands (PRD 6.4): one control per island, no page menu, sized to the control. */
 .iw.ctlm .xtabs{display:none}
 .iw.ctlm .xp{top:0}
+/* The other pages are wider than a control island; let them shrink so the track still lands on Controls. */
+.iw.ctlm .page{min-width:0;overflow:hidden}
 .pg-ctl{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:16px;gap:0}
 .cv{display:none;flex-direction:column;gap:12px}
 .cv.on{display:flex;animation:fadeUp 180ms var(--out)}
