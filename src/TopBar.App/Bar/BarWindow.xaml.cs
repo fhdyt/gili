@@ -4,6 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
+using TopBar.Core.Island;
 using TopBar.Core.Settings;
 using TopBar.Platform.Interop;
 using TopBar.Platform.Shell;
@@ -12,6 +16,8 @@ namespace TopBar.App.Bar;
 
 public partial class BarWindow : Window
 {
+    private static readonly DropShadowEffect TextShadow = CreateTextShadow();
+
     private readonly SettingsHub _settings;
     private readonly TransparencyWatcher _transparency;
     private readonly StatsService _stats;
@@ -21,6 +27,8 @@ public partial class BarWindow : Window
     private bool _quitting;
     private bool _hidden;
     private bool _suspended;
+    private bool _floating;
+    private bool _glassOff;
 
     public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats)
     {
@@ -43,9 +51,42 @@ public partial class BarWindow : Window
 
     public event Action? SettingsRequested;
 
+    /// <summary>The system clock or time zone changed, or the laptop woke up.</summary>
+    public event Action? TimeChanged;
+
+    public event Action<bool>? FullscreenChanged;
+
     public void ReleaseAppBar() => _appBar?.Unregister();
 
     public void Reassert() => _appBar?.Reposition();
+
+    /// <summary>
+    /// While the island floats only the bar's backdrop goes away (PRD 6.3): the tint fades in 220 ms, then the glass is
+    /// switched off because the accent policy cannot fade. Content stays with a text shadow, except what the panel covers.
+    /// </summary>
+    public void SetIslandFloating(bool floating, double islandWidth)
+    {
+        UpdateCovered(floating ? islandWidth : 0);
+        if (floating == _floating) return;
+        _floating = floating;
+        BarContent.Effect = floating ? TextShadow : null;
+        var fade = new DoubleAnimation(floating ? 0 : 1, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 100));
+        if (floating)
+        {
+            fade.Completed += (_, _) =>
+            {
+                if (!_floating) return;
+                _glassOff = true;
+                ApplyAppearance();
+            };
+        }
+        else
+        {
+            _glassOff = false;
+            ApplyAppearance();
+        }
+        Backdrop.BeginAnimation(OpacityProperty, fade);
+    }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -70,6 +111,28 @@ public partial class BarWindow : Window
         base.OnClosing(e);
     }
 
+    private static DropShadowEffect CreateTextShadow()
+    {
+        var shadow = new DropShadowEffect { Color = Colors.Black, Opacity = 0.55, BlurRadius = 3, ShadowDepth = 1, Direction = 270 };
+        shadow.Freeze();
+        return shadow;
+    }
+
+    /// <summary>Each element under the floating panel (+8 px each side) fades in 160 ms and stops taking clicks.</summary>
+    private void UpdateCovered(double islandWidth)
+    {
+        var left = ActualWidth / 2 - islandWidth / 2;
+        var right = ActualWidth / 2 + islandWidth / 2;
+        foreach (var element in RightModules.Children.OfType<FrameworkElement>())
+        {
+            var x = element.TranslatePoint(new Point(0, 0), this).X;
+            var covered = islandWidth > 0 && IslandLayout.Covers(left, right, x, x + element.ActualWidth);
+            if (element.IsHitTestVisible == !covered) continue;
+            element.IsHitTestVisible = !covered;
+            element.BeginAnimation(OpacityProperty, new DoubleAnimation(covered ? 0 : 1, TimeSpan.FromMilliseconds(160)));
+        }
+    }
+
     private void OnSettingsChanged(AppSettings settings)
     {
         _appBar?.SetHeight(settings.BarHeight);
@@ -79,7 +142,7 @@ public partial class BarWindow : Window
     private void ApplyAppearance()
     {
         var look = BarAppearance.Resolve(_settings.Current, _transparency.Enabled);
-        BarMaterial.Apply(_hwnd, look.Glass);
+        BarMaterial.Apply(_hwnd, _glassOff ? GlassLevel.Off : look.Glass);
         _vm.ApplySettings(_settings.Current, look);
     }
 
@@ -87,6 +150,7 @@ public partial class BarWindow : Window
     {
         _hidden = fullscreen;
         UpdatePolling();
+        FullscreenChanged?.Invoke(fullscreen);
         if (fullscreen)
         {
             Hide();
@@ -110,7 +174,7 @@ public partial class BarWindow : Window
             case WindowMessages.WM_TIMECHANGE:
                 // Also sent when the time zone changes; DateTime.Now caches the zone.
                 TimeZoneInfo.ClearCachedData();
-                _vm.RefreshClock();
+                TimeChanged?.Invoke();
                 break;
             case WindowMessages.WM_POWERBROADCAST when wParam == WindowMessages.PBT_APMSUSPEND:
                 _suspended = true;
@@ -119,7 +183,7 @@ public partial class BarWindow : Window
             case WindowMessages.WM_POWERBROADCAST when wParam == WindowMessages.PBT_APMRESUMEAUTOMATIC:
                 _suspended = false;
                 UpdatePolling();
-                _vm.RefreshClock();
+                TimeChanged?.Invoke();
                 break;
         }
         return IntPtr.Zero;

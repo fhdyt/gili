@@ -4,6 +4,7 @@ using System.Security;
 using System.Windows;
 using System.Windows.Markup;
 using TopBar.App.Bar;
+using TopBar.App.Island;
 using TopBar.App.Settings;
 using TopBar.Core;
 using TopBar.Core.Diagnostics;
@@ -24,6 +25,10 @@ public partial class App : Application
     private SettingsHub? _settings;
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
+    private ClockService? _clock;
+    private MediaService? _media;
+    private IslandController? _islandController;
+    private IslandWindow? _islandWindow;
     private BarWindow? _bar;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
@@ -67,16 +72,33 @@ public partial class App : Application
         var network = new NetworkSampler();
         _stats = new StatsService(Dispatcher, cpu.Sample, memory.Sample, network.Sample);
 
+        _clock = new ClockService();
+        _media = new MediaService(Dispatcher, _log);
+        _islandController = new IslandController(Dispatcher, _media);
+
         _bar = new BarWindow(_settings, _transparency, _stats);
         _bar.SettingsRequested += ShowSettings;
         _bar.QuitRequested += Quit;
+        _bar.TimeChanged += _clock.Refresh;
+        _bar.FullscreenChanged += _islandController.SetFullscreen;
         _bar.Show();
+
+        // Owned by the bar, so the island stays above it whenever the bar re-asserts its topmost place.
+        _islandWindow = new IslandWindow(_islandController, new IslandViewModel(_islandController, _clock, _settings), _settings)
+        {
+            Owner = _bar,
+        };
+        _islandWindow.FloatingChanged += _bar.SetIslandFloating;
+        _islandWindow.Show();
         _stats.Start();
+        _ = _media.StartAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _stats?.Dispose();
+        _islandController?.Dispose();
+        _media?.Dispose();
         _bar?.ReleaseAppBar();
         _settings?.Flush();
         _transparency?.Dispose();

@@ -92,32 +92,25 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">
-        <Border.ContextMenu>
+    <Grid>
+        <Grid.ContextMenu>
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
                 <MenuItem Header="Settings" Style="{StaticResource BarMenuItem}" Click="OnSettings" />
                 <Separator Style="{StaticResource BarMenuSeparator}" />
                 <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
             </ContextMenu>
-        </Border.ContextMenu>
-        <Grid Margin="10,0">
+        </Grid.ContextMenu>
+        <!-- The backdrop fades on its own while the island floats; the content above it stays (PRD 6.3). -->
+        <Border x:Name="Backdrop" Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1" />
+        <Grid x:Name="BarContent" Margin="10,0">
             <Grid.ColumnDefinitions>
-                <!-- Equal star columns keep the island centred on the screen whatever the sides hold. -->
+                <!-- Equal star columns keep the middle centred on the screen, under the island in IslandWindow. -->
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="1" Background="#000000" MinWidth="200" Padding="12,0" VerticalAlignment="Center"
-                    Height="{Binding IslandHeight}" CornerRadius="{Binding IslandCornerRadius}">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Time}" FontSize="{Binding IslandFontSize}" FontWeight="SemiBold"
-                               Typography.NumeralAlignment="Tabular" />
-                    <TextBlock Text="{Binding Date}" FontSize="{Binding IslandFontSize}" Foreground="#8E8E93" Margin="6,0,0,0" />
-                </StackPanel>
-            </Border>
-
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <StackPanel x:Name="RightModules" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Border Style="{StaticResource Module}" ToolTip="{Binding NetTooltip}">
                     <StackPanel VerticalAlignment="Center" MinWidth="58">
                         <TextBlock Text="{Binding UpText}" Style="{StaticResource NetLine}" />
@@ -138,5 +131,5 @@
                 </Border>
             </StackPanel>
         </Grid>
-    </Border>
+    </Grid>
 </Window>
