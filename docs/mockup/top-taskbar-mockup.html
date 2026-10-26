@@ -1038,12 +1038,13 @@ const SP_GILI=LIN?spring(.8,.45):{dur:480,ease:'cubic-bezier(.34,1.3,.64,1)'};
 for(const el of[$('#gIn'),gCirc]){el.style.setProperty('--gd',SP_GILI.dur+'ms');el.style.setProperty('--ge',SP_GILI.ease)}
 addEventListener('pointermove',e=>{G.px=e.clientX;G.py=e.clientY;G.still=Date.now();gAim()},{passive:true});
 // Aim from whichever eyes are showing. In the idle island the eyes travel end to end: the pointer 40% of the screen
-// width to either side puts them at that end. In the circle they lean 2 × 1.5 px once the pointer is 400 px away.
+// width to either side puts them at that end. In the circle they lean 2 px once the pointer is 400 px away.
+// Up and down follow the pointer's height on the screen (top = up, middle = level, bottom = down), so the eyes look up too.
 function gAim(){
   if(G.px<0||S.reduce)return;
   const r=(gCirc.classList.contains('on')?gCirc:$('#gIn')).getBoundingClientRect();
   const span=gCirc.classList.contains('on')?400:innerWidth*.4;
-  G.tx=Math.max(-1,Math.min(1,(G.px-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(G.py-(r.top+r.height/2))/400));
+  G.tx=Math.max(-1,Math.min(1,(G.px-(r.left+r.width/2))/span));G.ty=Math.max(-1,Math.min(1,(G.py-innerHeight/2)/(innerHeight*.4)));
   if(!G.raf)G.raf=requestAnimationFrame(gStep);
 }
 // Spring toward the target (damping .8, response .25 s). It stops once settled, so nothing runs while the pointer rests.
@@ -1053,8 +1054,8 @@ function gStep(t){
   // Small fixed steps keep the spring stable when frames arrive late.
   for(let n=Math.ceil(dt*240),h=dt/n;n>0;n--)for(const a of['x','y']){const v='v'+a;G[v]+=(-k*(G[a]-G['t'+a])-c*G[v])*h;G[a]+=G[v]*h}
   const room=Math.max(0,(iw.offsetWidth-18-gEyes[0].offsetWidth)/2);
-  gEyes[0].style.setProperty('--ex',(G.x*room).toFixed(2)+'px');gEyes[0].style.setProperty('--ey',(G.y*2).toFixed(2)+'px');
-  gEyes[1].style.setProperty('--ex',(G.x*2).toFixed(2)+'px');gEyes[1].style.setProperty('--ey',(G.y*1.5).toFixed(2)+'px');
+  gEyes[0].style.setProperty('--ex',(G.x*room).toFixed(2)+'px');gEyes[0].style.setProperty('--ey',(G.y*Math.max(0,(iw.offsetHeight-gEyes[0].offsetHeight)/2-3)).toFixed(2)+'px');
+  gEyes[1].style.setProperty('--ex',(G.x*2).toFixed(2)+'px');gEyes[1].style.setProperty('--ey',(G.y*2).toFixed(2)+'px');
   if(Math.abs(G.x-G.tx)+Math.abs(G.y-G.ty)+Math.abs(G.vx)+Math.abs(G.vy)<.003){G.raf=0;G.last=0;return}
   G.raf=requestAnimationFrame(gStep);
 }
