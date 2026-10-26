@@ -1,8 +1,8 @@
-# PRD: TopBar, top taskbar bergaya Dynamic Island untuk Windows
+# PRD: Gili, top taskbar bergaya Dynamic Island untuk Windows
 
 | | |
 |---|---|
-| Tanggal | 26 Oktober 2026 (revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi) |
+| Tanggal | 26 Oktober 2026 (revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi; nama aplikasi TopBar diganti Gili) |
 | Status | Disetujui saat brainstorming, menunggu review dokumen |
 | Platform | Windows 11 (laptop), monitor utama |
 | Pengguna | Pribadi (satu pengguna) |
@@ -14,7 +14,7 @@ Catatan: dokumen ini berbahasa Indonesia, tetapi semua teks yang tampil di aplik
 
 ## 1. Ringkasan
 
-TopBar adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon Bluetooth, volume, dan brightness (masing-masing membuka pulau kontrolnya sendiri), ikon tray, jam dan tanggal, Settings, dan power.
+Gili adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon Bluetooth, volume, dan brightness (masing-masing membuka pulau kontrolnya sendiri), ikon tray, jam dan tanggal, Settings, dan power.
 
 Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor dan berkedip. Saat ada aktivitas, Gili berpindah ke kiri pulau sebagai lingkaran kecil, dan pulau menampilkan aktivitasnya.
 
@@ -45,7 +45,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 8. Setiap bagian bar dan setiap halaman pulau bisa ditampilkan atau disembunyikan di Settings.
 
 **Bukan tujuan**
-- Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. TopBar membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power; sisanya tetap di Windows.
+- Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. Gili membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power; sisanya tetap di Windows.
 - Lebih dari satu monitor.
 - Sinkronisasi cloud, aplikasi mobile, atau akun pengguna.
 - Distribusi publik: Microsoft Store, auto-update, code signing.
@@ -75,7 +75,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 | Maskot | Gili: dua mata putih di pulau saat tidak ada aktivitas, lingkaran kecil di kiri pulau saat ada aktivitas. Mata mengikuti kursor dan berkedip |
 | Material pulau | Hitam pekat di semua keadaan |
 | Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh, 8 px di bawah tepi atas. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
-| Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; TopBar lalu menyediakan tombol Start, ikon tray, dan pulau kontrol (Wi‑Fi, Bluetooth, volume, brightness, power). Taskbar Windows dipulihkan di semua jalur keluar |
+| Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; Gili lalu menyediakan tombol Start, ikon tray, dan pulau kontrol (Wi‑Fi, Bluetooth, volume, brightness, power). Taskbar Windows dipulihkan di semua jalur keluar |
 | Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan (termasuk Wi‑Fi, Bluetooth, Volume, Brightness), tray, dan jam bisa dinyalakan/dimatikan di Settings |
 | Monitor | Monitor utama saja |
 | Aksi cepat vs pengelolaan | Aksi cepat, menulis note, dan Shelf ada di pulau; daftar alarm, edit todo, riwayat clipboard, dan Settings ada di jendela Tools |
@@ -83,7 +83,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 | Integrasi Claude | Status sesi Claude Code (tab Code di Claude Desktop dan CLI di terminal) dibaca lewat hook Claude Code dan helper kecil; opt-in di Settings. Tab Chat Claude Desktop tidak didukung |
 | Bahasa UI | Inggris saja, tanpa pilihan bahasa |
 | Teknologi | C# WPF di .NET 10 LTS (.NET 8 habis dukungan 10 Nov 2026) |
-| Penyimpanan | SQLite + `settings.json` di `%LOCALAPPDATA%\TopBar\` |
+| Penyimpanan | SQLite + `settings.json` di `%LOCALAPPDATA%\Gili\` |
 
 ## 6. Tata letak dan perilaku
 
@@ -112,7 +112,7 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 
 **Menyembunyikan taskbar Windows** (Settings → General → **Hide Windows taskbar**, default mati)
 - Saat nyala: taskbar Windows (`Shell_TrayWnd`) diubah ke auto-hide lalu disembunyikan, jadi ruangnya kembali ke jendela lain dan tidak muncul saat kursor menyentuh tepi bawah. Tombol Windows di keyboard tetap membuka Start menu.
-- Status asli taskbar (auto-hide atau tidak) disimpan sebelum diubah dan dikembalikan saat saklar dimatikan, saat Quit, saat crash (handler exception), dan saat TopBar mulai lagi setelah mati paksa.
+- Status asli taskbar (auto-hide atau tidak) disimpan sebelum diubah dan dikembalikan saat saklar dimatikan, saat Quit, saat crash (handler exception), dan saat Gili mulai lagi setelah mati paksa.
 - Saat Explorer restart (`TaskbarCreated`), taskbar disembunyikan lagi.
 - Toast Windows tetap muncul di pojok kanan bawah seperti biasa. Jarak ini dihitung dari ukuran pulau saat di-hover (6.3), supaya isi kiri dan kanan tidak bergeser ketika kursor berada di atas pulau. Modul kanan yang tidak muat pindah ke menu "…" (6.4); di kiri, ikon aplikasi yang tidak aktif pindah ke `+N` lalu nama aplikasi aktif dipotong dengan "…" (6.2).
 
@@ -180,7 +180,7 @@ Keadaan mengambang memakai bayangan lembut dan garis cahaya tipis di tepi atas, 
 
 #### Maskot Gili
 
-Gili adalah maskot TopBar: sepasang mata putih yang hidup di pulau (sketsa pengguna: `MASKOT GILI.jpg`, gerak mata: `PERGERAKAN MATA GILI.jpg`). Gili punya dua bentuk.
+Maskot ini memakai nama aplikasinya, Gili: sepasang mata putih yang hidup di pulau (sketsa pengguna: `MASKOT GILI.jpg`, gerak mata: `PERGERAKAN MATA GILI.jpg`). Gili punya dua bentuk.
 
 | Bentuk | Kapan | Rupa |
 |---|---|---|
@@ -245,7 +245,7 @@ Saat Explorer menyalin, memindahkan, atau menghapus file, progresnya tampil seba
 
 #### Sesi Claude
 
-TopBar menampilkan status sesi Claude Code: tab **Code** di Claude Desktop dan `claude` di terminal (termasuk wmux). Tab Chat Claude Desktop tidak didukung karena tidak mengirim sinyal apa pun ke luar aplikasinya. Integrasi ini mati secara default dan dinyalakan di Settings (F-CLD-01); sumber datanya di 9.2.
+Gili menampilkan status sesi Claude Code: tab **Code** di Claude Desktop dan `claude` di terminal (termasuk wmux). Tab Chat Claude Desktop tidak didukung karena tidak mengirim sinyal apa pun ke luar aplikasinya. Integrasi ini mati secara default dan dinyalakan di Settings (F-CLD-01); sumber datanya di 9.2.
 
 **Status tiap sesi**
 
@@ -288,21 +288,21 @@ Saat sebuah sesi mulai menunggu, pulau membuka kartu (prioritas 2, seperti pengi
 - Tanpa ditanggapi, kartu mengecil ke slot kuning setelah 8 detik. Slot kuning bertahan sampai pertanyaan dijawab di Claude. Kartu tidak muncul lagi untuk pertanyaan yang sama.
 - Pertanyaan baru dari sesi lain saat kartu masih terbuka mengganti isi kartu dan menghitung ulang 8 detik; slot tetap menghitung semua sesi yang menunggu.
 - Selama fase fokus pomodoro, kartu dan Ping ditahan (F-TOOL-04) dan hanya slot kuning yang tampil. Kalau sesi masih menunggu saat istirahat dimulai, kartu muncul saat itu.
-- TopBar **tidak mengirim toast** untuk kejadian Claude, supaya tidak dobel dengan notifikasi Claude Desktop sendiri. Karena itu saat aplikasi fullscreen aktif, kartu Claude dilewati.
+- Gili **tidak mengirim toast** untuk kejadian Claude, supaya tidak dobel dengan notifikasi Claude Desktop sendiri. Karena itu saat aplikasi fullscreen aktif, kartu Claude dilewati.
 
 **Setelah selesai**
 - Kalau jendela sesi itu sedang aktif saat Claude selesai, cukup tampilan `Done` 4 detik.
 - Kalau tidak, setelah 4 detik muncul **gelembung hijau** berikon Claude di kanan pulau, paling kanan dari semua gelembung (kecuali aktivitas Claude sedang tampil; lihat titik hijau di atas). Gelembung ini bukan aktivitas, jadi Gili tetap di dalam pulau.
 - Gelembung hilang saat jendela sesi itu menjadi aktif, saat gelembung diklik (membawa jendela itu ke depan), atau saat prompt baru dikirim di sesi itu. Kalau lebih dari satu sesi selesai dan belum dilihat, gelembung diberi angka (`2`) dan klik membuka halaman Claude.
-- Untuk sesi Claude Desktop, "jendela aktif" berarti jendela Claude Desktop di depan, karena TopBar tidak tahu percakapan mana yang sedang dilihat di dalamnya.
+- Untuk sesi Claude Desktop, "jendela aktif" berarti jendela Claude Desktop di depan, karena Gili tidak tahu percakapan mana yang sedang dilihat di dalamnya.
 - Selesai tidak berbunyi.
 
 #### Batas pemakaian Claude (jendela 5 jam)
 
-Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat pesan pertama dikirim. TopBar menghitung mundur jendela itu dan memberi tahu saat jendela berakhir, supaya pengguna tahu kapan bisa lanjut bekerja penuh. Fitur ini bagian dari integrasi Claude (mati bila integrasi mati) dan punya saklar sendiri: Settings → Claude → **Show 5-hour usage timer** (default nyala).
+Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat pesan pertama dikirim. Gili menghitung mundur jendela itu dan memberi tahu saat jendela berakhir, supaya pengguna tahu kapan bisa lanjut bekerja penuh. Fitur ini bagian dari integrasi Claude (mati bila integrasi mati) dan punya saklar sendiri: Settings → Claude → **Show 5-hour usage timer** (default nyala).
 
 **Sumber waktu** (urutan dipakai; diverifikasi di awal Fase 3, lihat bagian 12):
-1. Waktu reset resmi dari Claude Code bila tersedia di data yang bisa dibaca TopBar (misalnya field `rate_limits.five_hour.resets_at` dan `used_percentage`, atau pesan batas di file sesi yang memuat waktu reset). Dengan sumber ini, persentase terpakai ikut ditampilkan.
+1. Waktu reset resmi dari Claude Code bila tersedia di data yang bisa dibaca Gili (misalnya field `rate_limits.five_hour.resets_at` dan `used_percentage`, atau pesan batas di file sesi yang memuat waktu reset). Dengan sumber ini, persentase terpakai ikut ditampilkan.
 2. Perkiraan dari hook: jendela dimulai pada `UserPromptSubmit` pertama dari sesi mana pun ketika tidak ada jendela yang berjalan, dibulatkan ke bawah ke jam penuh, dan berakhir 5 jam kemudian. Tooltip menambahkan `Estimated`.
 
 **Di slot pulau**
@@ -323,7 +323,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 - Selama fase fokus pomodoro kartu ditahan sampai istirahat, seperti kartu prioritas 2; toast tetap dikirim.
 - Jendela baru tidak dimulai otomatis; baru dimulai saat prompt berikutnya dikirim.
 
-**Jendela sesi**: TopBar menelusuri proses induk dari proses `claude` sebuah sesi sampai menemukan jendela pertama yang terlihat: Claude Desktop untuk sesi Desktop, atau jendela terminal (wmux, Windows Terminal) untuk sesi CLI. Membawa ke depan berarti memulihkan jendela kalau diminimize, lalu memfokuskannya. Membuka percakapan tertentu di dalam Claude Desktop di luar cakupan.
+**Jendela sesi**: Gili menelusuri proses induk dari proses `claude` sebuah sesi sampai menemukan jendela pertama yang terlihat: Claude Desktop untuk sesi Desktop, atau jendela terminal (wmux, Windows Terminal) untuk sesi CLI. Membawa ke depan berarti memulihkan jendela kalau diminimize, lalu memfokuskannya. Membuka percakapan tertentu di dalam Claude Desktop di luar cakupan.
 
 #### Indikator kamera dan mikrofon
 
@@ -348,7 +348,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 
 Perubahan volume dan brightness tidak ditampilkan di pulau; flyout bawaan Windows sudah menanganinya. Mengatur keduanya bisa lewat pulau Volume dan Brightness (6.4).
 
-**Bluetooth**: berlaku untuk perangkat audio (TWS, headphone, speaker), mouse, keyboard, controller, dan ponsel, dengan ikon sesuai jenisnya. Hanya kejadian sambung/putus yang ditampilkan, bukan perangkat yang sudah tersambung saat TopBar mulai. Kalau perangkat yang sama tersambung-putus berulang dalam 10 detik, hanya kejadian terakhir yang ditampilkan.
+**Bluetooth**: berlaku untuk perangkat audio (TWS, headphone, speaker), mouse, keyboard, controller, dan ponsel, dengan ikon sesuai jenisnya. Hanya kejadian sambung/putus yang ditampilkan, bukan perangkat yang sudah tersambung saat Gili mulai. Kalau perangkat yang sama tersambung-putus berulang dalam 10 detik, hanya kejadian terakhir yang ditampilkan.
 
 #### Prioritas tampilan
 
@@ -541,7 +541,7 @@ Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau se
 |---|---|---|
 | Volume | 360 px, tinggi ikut isi (± 112 px) | Baris judul: ikon speaker (klik = mute/unmute), `Volume`, persen di kanan. Slider 0–100. Baris perangkat output (`Speakers (Realtek(R) Audio)` + `›`); klik membuka daftar perangkat output di dalam pulau (centang di perangkat aktif, klik = jadikan default), pulau memanjang mengikutinya |
 | Brightness | 360 px, ± 88 px | Baris judul: ikon matahari, `Brightness`, persen. Slider 0–100 |
-| Wi‑Fi | 400 px, tinggi ikut daftar (maks. 6 jaringan, sisanya di-scroll) | Baris judul: ikon Wi‑Fi, `Wi‑Fi`, saklar. Baris **Airplane mode** dengan saklar (nyala mematikan Wi‑Fi dan Bluetooth). Daftar jaringan dari sinyal terkuat: tersambung paling atas dengan `Connected`, lalu `Saved` atau `Secured`. Klik jaringan tersimpan langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena TopBar tidak menangani password. Baris terakhir **More Wi‑Fi settings** (`ms-settings:network-wifi`). Saat Wi‑Fi mati, daftar diganti `Wi‑Fi is off` |
+| Wi‑Fi | 400 px, tinggi ikut daftar (maks. 6 jaringan, sisanya di-scroll) | Baris judul: ikon Wi‑Fi, `Wi‑Fi`, saklar. Baris **Airplane mode** dengan saklar (nyala mematikan Wi‑Fi dan Bluetooth). Daftar jaringan dari sinyal terkuat: tersambung paling atas dengan `Connected`, lalu `Saved` atau `Secured`. Klik jaringan tersimpan langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena Gili tidak menangani password. Baris terakhir **More Wi‑Fi settings** (`ms-settings:network-wifi`). Saat Wi‑Fi mati, daftar diganti `Wi‑Fi is off` |
 | Bluetooth | 400 px, tinggi ikut daftar (maks. 6 perangkat) | Baris judul: ikon Bluetooth, `Bluetooth`, saklar. Daftar perangkat ter-pair dengan ikon jenisnya dan status `Connected` / `Paired` (plus baterai bila dilaporkan); klik menyambung/memutus. Baris terakhir **Add device** (`ms-settings:bluetooth`). Saat Bluetooth mati: `Bluetooth is off` |
 | Power | 360 px, tinggi ikut isi | Tombol berurutan seperti Start menu Windows 11 (tabel di bawah), lalu baris bawah: baterai (`64% · 2 h 10 min`, `Charging · 64%`, atau kosong tanpa baterai), tombol **Windows Quick Settings** (panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility), dan **All settings** (`ms-settings:`) |
 
@@ -559,7 +559,7 @@ Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau se
 
 ### 6.5 Settings
 
-Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan bar, atau dengan menjalankan TopBar saat sudah berjalan. Jendela gelap biasa dengan bagian di kiri. Semua perubahan berlaku langsung tanpa tombol Save.
+Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan bar, atau dengan menjalankan Gili saat sudah berjalan. Jendela gelap biasa dengan bagian di kiri. Semua perubahan berlaku langsung tanpa tombol Save.
 
 | Bagian | Isi |
 |---|---|
@@ -600,19 +600,19 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Kejadian lain (wide, Shelf, clipboard, charger, Claude bekerja atau selesai) | — | Tanpa suara |
 
 **Volume**
-- Suara TopBar mengikuti volume Windows. Settings punya **Alert volume** (0–100%, default 80%) yang hanya mengatur volume sesi audio TopBar, bukan volume sistem.
+- Suara Gili mengikuti volume Windows. Settings punya **Alert volume** (0–100%, default 80%) yang hanya mengatur volume sesi audio Gili, bukan volume sistem.
 - **Gradually increase** (default nyala): alarm mulai di 30% dari Alert volume, lalu naik linear ke 100% dalam 30 detik. Tidak berlaku untuk timer.
 - Tombol apa pun di kartu (Snooze, Stop, Repeat, Close, Done, Skip) menghentikan suara seketika dengan fade 100 ms.
 - Settings dan editor alarm di Tools punya tombol putar untuk mendengar contoh tiap suara.
 
 **Windows di-mute atau volumenya terlalu kecil**
-- Sebelum berbunyi, TopBar memeriksa perangkat output default. Kalau di-mute atau volumenya di bawah 5%, kartu menampilkan baris peringatan kuning `Sound is off · Windows volume is muted` dan tombol tambahan **Unmute**.
-- TopBar **tidak pernah** mengubah volume atau mute Windows tanpa tindakan pengguna. Unmute hanya terjadi saat pengguna menekan tombol itu, lalu suara alarm langsung mulai.
+- Sebelum berbunyi, Gili memeriksa perangkat output default. Kalau di-mute atau volumenya di bawah 5%, kartu menampilkan baris peringatan kuning `Sound is off · Windows volume is muted` dan tombol tambahan **Unmute**.
+- Gili **tidak pernah** mengubah volume atau mute Windows tanpa tindakan pengguna. Unmute hanya terjadi saat pengguna menekan tombol itu, lalu suara alarm langsung mulai.
 - Animasi kartu (pulse/shake) tetap jalan, jadi alarm tetap terlihat walaupun tanpa suara.
 
 **Perangkat dan keadaan lain**
 - Suara keluar di perangkat output default Windows. Kalau perangkat berganti saat berbunyi (misalnya headset dicabut), suara pindah ke perangkat default yang baru tanpa berhenti.
-- Do Not Disturb Windows tidak membisukan alarm dan timer (seperti alarm di ponsel), karena suaranya diputar TopBar sendiri, bukan lewat toast.
+- Do Not Disturb Windows tidak membisukan alarm dan timer (seperti alarm di ponsel), karena suaranya diputar Gili sendiri, bukan lewat toast.
 - Saat aplikasi fullscreen aktif, alarm dan timer tetap berbunyi (prioritas 1).
 - Kalau tidak ada perangkat audio sama sekali, kartu tetap muncul dan toast dikirim **dengan** suara notifikasi Windows sebagai cadangan.
 
@@ -718,7 +718,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | F-SND-01 | Suara bawaan | Lima suara (Radar, Chime, Bell, Soft, Ping) ada di dalam aplikasi tanpa file eksternal; semuanya bisa didengar contohnya di Settings | 2 |
 | F-SND-02 | Suara alarm dan timer | Alarm memakai suara pilihan per alarm, timer memakai suara di Settings; berulang sampai ditanggapi; berhenti otomatis setelah 5 menit | 2 |
 | F-SND-03 | Bunyi sekali | Fase pomodoro selesai berbunyi Bell sekali; pengingat todo berbunyi Ping sekali, kecuali selama fase fokus | 2 |
-| F-SND-04 | Volume | Alert volume hanya mengubah volume sesi TopBar; Gradually increase menaikkan alarm dari 30% ke 100% dalam 30 detik (±1 detik); tombol kartu menghentikan suara ≤ 150 ms | 2 |
+| F-SND-04 | Volume | Alert volume hanya mengubah volume sesi Gili; Gradually increase menaikkan alarm dari 30% ke 100% dalam 30 detik (±1 detik); tombol kartu menghentikan suara ≤ 150 ms | 2 |
 | F-SND-05 | Peringatan mute | Saat Windows di-mute atau volume < 5%, kartu alarm/timer menampilkan peringatan dan tombol Unmute; volume sistem tidak berubah tanpa klik pengguna | 2 |
 | F-SND-06 | Ganti perangkat | Mencabut headset saat alarm berbunyi memindahkan suara ke speaker dalam ≤ 1 detik tanpa menghentikan alarm | 2 |
 
@@ -726,14 +726,14 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
-| F-CLD-01 | Pasang dan lepas hook | Saklar `Show Claude Code sessions` di Settings (default mati) menambahkan hook TopBar ke `~/.claude/settings.json` setelah membuat cadangan `settings.json.topbar-backup`; hook lain (misalnya wmux) tetap utuh; memasang dua kali tidak menggandakan entri; mematikan saklar hanya menghapus entri TopBar; file yang bukan JSON valid tidak diubah; baris status di Settings sesuai bagian 11 | 3 |
+| F-CLD-01 | Pasang dan lepas hook | Saklar `Show Claude Code sessions` di Settings (default mati) menambahkan hook Gili ke `~/.claude/settings.json` setelah membuat cadangan `settings.json.gili-backup`; hook lain (misalnya wmux) tetap utuh; memasang dua kali tidak menggandakan entri; mematikan saklar hanya menghapus entri Gili; file yang bukan JSON valid tidak diubah; baris status di Settings sesuai bagian 11 | 3 |
 | F-CLD-02 | Status di slot | Working, Needs input, dan Done tampil sesuai "Sesi Claude" di 6.3 ≤ 1 detik setelah kejadiannya; beberapa sesi digabung jadi satu aktivitas; Esc di Claude mengembalikan sesi ke Idle tanpa Done; sesi yang prosesnya mati hilang ≤ 5 detik | 3 |
 | F-CLD-03 | Kartu Needs input | Pertanyaan, persetujuan rencana, dan permintaan izin (bila hook-nya terpicu, lihat bagian 12) membuka kartu dengan Ping sekali; kartu mengecil ke slot kuning setelah 8 detik; slot kembali ke Working ≤ 1 detik setelah dijawab; kartu dan Ping ditahan selama fase fokus; tanpa toast | 3 |
 | F-CLD-04 | Selesai dan belum dilihat | Done tampil 4 detik; gelembung hijau muncul hanya bila jendela sesi tidak aktif saat selesai, dan hilang saat jendela itu aktif, gelembung diklik, atau prompt baru dikirim di sesi itu | 3 |
 | F-CLD-05 | Halaman Claude | Halaman 8 mendaftar semua sesi yang hidup dengan urutan dan isi sesuai 6.3; klik baris membawa jendela sesi ke depan | 3 |
 | F-CLD-06 | Membawa jendela sesi ke depan | Sesi Claude Desktop membuka jendela Claude Desktop; sesi CLI di wmux dan Windows Terminal membuka jendela terminalnya; jendela yang diminimize dipulihkan | 3 |
-| F-CLD-08 | Timer jendela 5 jam | Jendela dimulai dari prompt pertama dan dihitung mundur di slot sesuai "Batas pemakaian Claude" di 6.3; batas tercapai mengubah slot ke kuning; saat jendela berakhir kartu `Claude usage reset` muncul dengan suara timer dan toast; waktu reset tetap benar setelah TopBar atau laptop restart; tooltip menandai `Estimated` bila waktu resmi tidak tersedia | 3 |
-| F-CLD-07 | Hook tidak memperlambat Claude | `TopBar.ClaudeHook` selesai ≤ 50 ms (p95) saat TopBar jalan dan ≤ 100 ms saat TopBar mati; tidak pernah menulis ke stdout; selalu keluar dengan kode 0 | 3 |
+| F-CLD-08 | Timer jendela 5 jam | Jendela dimulai dari prompt pertama dan dihitung mundur di slot sesuai "Batas pemakaian Claude" di 6.3; batas tercapai mengubah slot ke kuning; saat jendela berakhir kartu `Claude usage reset` muncul dengan suara timer dan toast; waktu reset tetap benar setelah Gili atau laptop restart; tooltip menandai `Estimated` bila waktu resmi tidak tersedia | 3 |
+| F-CLD-07 | Hook tidak memperlambat Claude | `Gili.ClaudeHook` selesai ≤ 50 ms (p95) saat Gili jalan dan ≤ 100 ms saat Gili mati; tidak pernah menulis ke stdout; selalu keluar dengan kode 0 | 3 |
 
 ## 8. Kebutuhan non-fungsional
 
@@ -744,7 +744,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 - Bar muncul ≤ 2 detik setelah login.
 - Helper hook Claude selesai ≤ 50 ms (p95), jadi Claude tidak terasa lebih lambat walau hook dipanggil di setiap tool.
 
-**Aturan ringan** (pengguna meminta TopBar tetap sangat ringan dan minta diingatkan bila fitur berat):
+**Aturan ringan** (pengguna meminta Gili tetap sangat ringan dan minta diingatkan bila fitur berat):
 - Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik) dan detik di jam (satu teks per detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
 - Panel tray dan jendela Settings dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup.
 - Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
@@ -766,7 +766,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 - Gagalnya satu provider tidak mematikan bar (bagian 11).
 - Semua data disimpan lokal. Satu-satunya akses internet adalah API cuaca Open-Meteo (tanpa API key; hanya mengirim koordinat kota).
 - Isi clipboard sensitif tidak ditampilkan dan tidak disimpan (6.3). Thumbnail gambar clipboard hanya di memori, tidak ditulis ke disk.
-- Data sesi Claude (nama sesi, folder, cuplikan pertanyaan) hanya ada di memori, tidak ditulis ke database atau log. Teks prompt pengguna tidak dikirim ke TopBar. TopBar hanya mengubah `~/.claude/settings.json` saat pengguna menyalakan atau mematikan integrasi.
+- Data sesi Claude (nama sesi, folder, cuplikan pertanyaan) hanya ada di memori, tidak ditulis ke database atau log. Teks prompt pengguna tidak dikirim ke Gili. Gili hanya mengubah `~/.claude/settings.json` saat pengguna menyalakan atau mematikan integrasi.
 
 ### 8.3 Visual dan gerak
 
@@ -837,13 +837,13 @@ Semua transisi pulau bisa disela: keadaan baru mulai dari ukuran yang sedang tam
 
 | Proyek | Isi | Bergantung pada |
 |---|---|---|
-| `TopBar.App` | WPF + CommunityToolkit.Mvvm: `BarWindow` (AppBar), `IslandWindow` (jendela transparan topmost untuk keadaan mengambang), `ToolsWindow`, `SettingsWindow`, ViewModel | Core, Platform, Data |
-| `TopBar.Core` | `IslandCoordinator`, `Scheduler`, `ShelfService`, model, format angka/tanggal. Tanpa WPF dan Win32 | — |
-| `TopBar.Platform` | Provider Windows (9.2), `AppBarService`, `BarMaterial`, `HotkeyService`, `NotificationService`, helper drag-and-drop | Core |
-| `TopBar.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Core |
-| `TopBar.SensorHelper` | Proses kecil dengan hak admin; membaca suhu CPU via LibreHardwareMonitorLib, kirim lewat named pipe tiap 2 detik | — |
-| `TopBar.ClaudeHook` | Console app kecil (NativeAOT, mulai ≤ 20 ms, tanpa hak admin) yang dipanggil hook Claude Code: membaca JSON hook dari stdin, mengambil field yang dibutuhkan, mengirimnya ke named pipe `TopBar.Claude` dengan timeout 100 ms, lalu keluar. Tidak pernah menulis ke stdout | — |
-| `TopBar.Core.Tests` | Unit test xUnit | Core, Data |
+| `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow` (AppBar), `IslandWindow` (jendela transparan topmost untuk keadaan mengambang), `ToolsWindow`, `SettingsWindow`, ViewModel | Core, Platform, Data |
+| `Gili.Core` | `IslandCoordinator`, `Scheduler`, `ShelfService`, model, format angka/tanggal. Tanpa WPF dan Win32 | — |
+| `Gili.Platform` | Provider Windows (9.2), `AppBarService`, `BarMaterial`, `HotkeyService`, `NotificationService`, helper drag-and-drop | Core |
+| `Gili.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Core |
+| `Gili.SensorHelper` | Proses kecil dengan hak admin; membaca suhu CPU via LibreHardwareMonitorLib, kirim lewat named pipe tiap 2 detik | — |
+| `Gili.ClaudeHook` | Console app kecil (NativeAOT, mulai ≤ 20 ms, tanpa hak admin) yang dipanggil hook Claude Code: membaca JSON hook dari stdin, mengambil field yang dibutuhkan, mengirimnya ke named pipe `Gili.Claude` dengan timeout 100 ms, lalu keluar. Tidak pernah menulis ke stdout | — |
+| `Gili.Core.Tests` | Unit test xUnit | Core, Data |
 
 `IslandWindow` terpisah dari `BarWindow` supaya pulau mengambang tidak mengubah ruang AppBar dan jendela lain tidak bergeser saat pulau terbuka.
 
@@ -867,7 +867,7 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Jaringan | `NetworkInterface.GetIPv4Statistics` (selisih byte) | Tiap 1 detik |
 | Wi‑Fi | Native WLAN API (`WlanQueryInterface`) | Tiap 10 detik + event koneksi |
 | Kamera/mic | Registry `...\CapabilityAccessManager\ConsentStore\{webcam,microphone}` (`LastUsedTimeStop = 0` berarti sedang dipakai) | Tiap 2 detik |
-| Suhu CPU | Named pipe dari `TopBar.SensorHelper` | Tiap 2 detik |
+| Suhu CPU | Named pipe dari `Gili.SensorHelper` | Tiap 2 detik |
 | Cuaca | Open-Meteo forecast + geocoding API (HTTP) | Tiap 30 menit, di-cache |
 | Shelf | OLE drag-and-drop di `BarWindow` dan `IslandWindow` (`DataFormats.FileDrop` masuk, `DoDragDrop` dengan Copy dan Move keluar); cek keberadaan file | Event + tiap 60 detik |
 | Hotkey | `RegisterHotKey` | Event |
@@ -879,16 +879,16 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Kursor (Gili) | `GetCursorPos` dari `DispatcherTimer` 30 Hz, aktif hanya selama Gili tampil dan bar terlihat | 30×/detik saat aktif |
 | Start | Membuka Start menu seperti tombol Windows: `SendInput` VK_LWIN, atau pesan Start ke `Shell_TrayWnd` bila taskbar disembunyikan (diverifikasi Fase 3) | Saat diklik |
 | Taskbar Windows | `SHAppBarMessage(ABM_GETSTATE/ABM_SETSTATE)` untuk auto-hide, `ShowWindow(SW_HIDE/SW_SHOW)` pada `Shell_TrayWnd` dan `Shell_SecondaryTrayWnd`; status asli disimpan di `settings.json` | Saat saklar berubah + `TaskbarCreated` |
-| Notification area (tray) | ManagedShell (MIT, dipakai RetroBar) `NotificationArea`: menjadi host tray tambahan sehingga aplikasi mengirim ikonnya (`Shell_NotifyIcon`) juga ke TopBar, sementara Explorer tetap menerima salinannya. Klik diteruskan ke aplikasi lewat pesan callback ikon (`uCallbackMessage`) | Event |
+| Notification area (tray) | ManagedShell (MIT, dipakai RetroBar) `NotificationArea`: menjadi host tray tambahan sehingga aplikasi mengirim ikonnya (`Shell_NotifyIcon`) juga ke Gili, sementara Explorer tetap menerima salinannya. Klik diteruskan ke aplikasi lewat pesan callback ikon (`uCallbackMessage`) | Event |
 | Pulau kontrol | Radio Wi‑Fi/Bluetooth/airplane: `Windows.Devices.Radios`; daftar dan sambung Wi‑Fi: Native WLAN API (`WlanScan`, `WlanGetAvailableNetworkList`, `WlanConnect` dengan profil tersimpan); Bluetooth ter-pair: `DeviceInformation` + `BluetoothDevice`; volume dan perangkat output: Core Audio (`IAudioEndpointVolume`, `IPolicyConfig` untuk ganti perangkat default); brightness: WMI `WmiMonitorBrightness` / `WmiMonitorBrightnessMethods` | Saat pulaunya terbuka; ikon bar dari event (`IAudioEndpointVolumeCallback`, `Radio.StateChanged`, `DeviceWatcher`) |
 | Jendela Claude 5 jam | Waktu `UserPromptSubmit` dari hook (sudah ada) untuk perkiraan; waktu reset resmi dari data Claude Code bila tersedia (diverifikasi Fase 3). Waktu akhir jendela disimpan sebagai UTC lewat `Scheduler`, jadi tahan restart | Event + jadwal |
-| Sesi Claude | Hook Claude Code → `TopBar.ClaudeHook` → named pipe `\\.\pipe\TopBar.Claude` (tabel di bawah). Pelengkap: file `~/.claude/sessions/<pid>.json` (judul sesi, status `busy`/`idle`, PID) dipantau dengan `FileSystemWatcher`. Jendela sesi dicari dari rantai proses induk (Toolhelp snapshot) lalu dipulihkan dan difokuskan (`ShowWindow` + `SetForegroundWindow`). Pembaruan UI digabung, maksimal 4 kali per detik | Event + cek proses hidup tiap 5 detik selama ada sesi |
+| Sesi Claude | Hook Claude Code → `Gili.ClaudeHook` → named pipe `\\.\pipe\Gili.Claude` (tabel di bawah). Pelengkap: file `~/.claude/sessions/<pid>.json` (judul sesi, status `busy`/`idle`, PID) dipantau dengan `FileSystemWatcher`. Jendela sesi dicari dari rantai proses induk (Toolhelp snapshot) lalu dipulihkan dan difokuskan (`ShowWindow` + `SetForegroundWindow`). Pembaruan UI digabung, maksimal 4 kali per detik | Event + cek proses hidup tiap 5 detik selama ada sesi |
 
 **Hook Claude Code**
 
-Semua hook memanggil `"<folder instalasi>/TopBar.ClaudeHook.exe" <NamaEvent>` dengan timeout 2 detik. Path ditulis dengan garis miring maju, seperti hook wmux yang sudah ada, supaya aman di shell yang dipakai Claude Code untuk menjalankan hook di Windows.
+Semua hook memanggil `"<folder instalasi>/Gili.ClaudeHook.exe" <NamaEvent>` dengan timeout 2 detik. Path ditulis dengan garis miring maju, seperti hook wmux yang sudah ada, supaya aman di shell yang dipakai Claude Code untuk menjalankan hook di Windows.
 
-| Hook | Matcher | Dikirim ke TopBar | Efek |
+| Hook | Matcher | Dikirim ke Gili | Efek |
 |---|---|---|---|
 | `SessionStart` | — | `session_id`, `cwd` | Sesi masuk daftar sebagai Idle |
 | `UserPromptSubmit` | — | `session_id`, waktu (teks prompt tidak dikirim) | Working; waktu mulai dicatat; gelembung "belum dilihat" sesi itu hilang |
@@ -899,7 +899,7 @@ Semua hook memanggil `"<folder instalasi>/TopBar.ClaudeHook.exe" <NamaEvent>` de
 | `SessionEnd` | — | `session_id` | Sesi dihapus dari daftar |
 
 - Izin yang ditolak tidak memicu `PostToolUse`; status kembali ke Working saat tool berikutnya selesai, atau langsung Done saat Claude berhenti.
-- Esc di Claude tidak memicu `Stop`. Kalau file sesi berubah ke `idle` sementara TopBar masih mencatat Working atau Needs input, sesi menjadi Idle tanpa Done.
+- Esc di Claude tidak memicu `Stop`. Kalau file sesi berubah ke `idle` sementara Gili masih mencatat Working atau Needs input, sesi menjadi Idle tanpa Done.
 - Sesi yang prosesnya sudah tidak ada dihapus walau `SessionEnd` tidak terkirim (misalnya Claude Desktop ditutup paksa).
 
 ### 9.3 Alur data
@@ -908,15 +908,15 @@ Provider mengirim snapshot ke state di Core. `IslandCoordinator` menentukan apa 
 
 ### 9.4 Instalasi dan autostart
 
-- Build `dotnet publish` framework-dependent (.NET 10 Desktop Runtime terpasang), disalin ke `%LOCALAPPDATA%\Programs\TopBar\`.
+- Build `dotnet publish` framework-dependent (.NET 10 Desktop Runtime terpasang), disalin ke `%LOCALAPPDATA%\Programs\Gili\`.
 - Run pertama: membuat shortcut Start Menu (untuk toast) dan entri autostart di `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
-- Menyalakan suhu CPU di Settings: satu prompt UAC untuk mendaftarkan `TopBar.SensorHelper` di Task Scheduler (jalan saat login, "highest privileges").
-- Menyalakan `Show Claude Code sessions` di Settings: TopBar menulis hook ke `~/.claude/settings.json` dengan path absolut `TopBar.ClaudeHook.exe` di folder instalasi; tanpa UAC. Hook berlaku untuk sesi Claude yang dimulai sesudahnya, dan Settings menuliskan `Applies to Claude sessions started from now on`.
+- Menyalakan suhu CPU di Settings: satu prompt UAC untuk mendaftarkan `Gili.SensorHelper` di Task Scheduler (jalan saat login, "highest privileges").
+- Menyalakan `Show Claude Code sessions` di Settings: Gili menulis hook ke `~/.claude/settings.json` dengan path absolut `Gili.ClaudeHook.exe` di folder instalasi; tanpa UAC. Hook berlaku untuk sesi Claude yang dimulai sesudahnya, dan Settings menuliskan `Applies to Claude sessions started from now on`.
 - Baris status integrasi di Settings: `Waiting for the first Claude session`, `Connected · last event 2 min ago`, atau salah satu pesan error di bagian 11.
 
 ## 10. Data dan penyimpanan
 
-Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `settings.json`, `backups\`, `logs\`.
+Lokasi: `%LOCALAPPDATA%\Gili\` berisi `gili.db` (SQLite, mode WAL), `settings.json`, `backups\`, `logs\`.
 
 | Tabel | Kolom utama |
 |---|---|
@@ -950,10 +950,10 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 | File dilepas dari jendela admin | Windows memblokirnya; drop zone menampilkan "Can't take files from an admin window" selama 2 detik |
 | Tidak ada perangkat audio atau suara gagal diputar | Kartu tetap tampil; toast dikirim dengan suara notifikasi Windows sebagai cadangan; dicatat di log |
 | `~/.claude/settings.json` bukan JSON valid | File tidak diubah sama sekali; Settings menampilkan `Can't read Claude settings` dan tombol untuk membuka file itu |
-| TopBar tidak berjalan saat hook dipanggil | Helper tidak menemukan pipe dan keluar dalam ≤ 100 ms tanpa efek; Claude bekerja seperti biasa |
-| Helper tidak ada di path hook (TopBar dipindah atau dihapus) | Hook gagal tanpa menghentikan Claude; Settings menampilkan `Hook helper not found · Reinstall` |
-| Hook TopBar dihapus dari luar TopBar | Settings menampilkan `Hooks removed outside TopBar · Reinstall` |
-| TopBar mati paksa saat taskbar Windows disembunyikan | Taskbar tetap tersembunyi sampai TopBar jalan lagi; saat start, TopBar membaca status asli dari `settings.json` dan memulihkannya bila saklar sudah mati. `TopBar.exe --quit` dan `--restore-taskbar` memulihkannya dari luar |
+| Gili tidak berjalan saat hook dipanggil | Helper tidak menemukan pipe dan keluar dalam ≤ 100 ms tanpa efek; Claude bekerja seperti biasa |
+| Helper tidak ada di path hook (Gili dipindah atau dihapus) | Hook gagal tanpa menghentikan Claude; Settings menampilkan `Hook helper not found · Reinstall` |
+| Hook Gili dihapus dari luar Gili | Settings menampilkan `Hooks removed outside Gili · Reinstall` |
+| Gili mati paksa saat taskbar Windows disembunyikan | Taskbar tetap tersembunyi sampai Gili jalan lagi; saat start, Gili membaca status asli dari `settings.json` dan memulihkannya bila saklar sudah mati. `Gili.exe --quit` dan `--restore-taskbar` memulihkannya dari luar |
 | Ikon tray tidak bisa dibaca (host tray gagal) | Tombol Tray menampilkan panel dengan `Can't show tray icons` dan tombol `Show Windows taskbar`; dicoba lagi sesuai aturan provider |
 | Radio, Wi‑Fi, atau brightness tidak bisa diubah | Kontrolnya dinonaktifkan dengan alasan di tooltip; panel lain tetap jalan |
 | Format file sesi Claude tidak dikenali | Nama sesi diganti nama folder, status hanya dari hook, deteksi Esc tidak jalan; dicatat sekali di log |
@@ -973,12 +973,12 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 | Drag-and-drop dari aplikasi admin diblokir (UIPI) | File dari jendela admin tidak bisa masuk Shelf | Pesan jelas di drop zone; app utama tetap non-admin supaya drag biasa jalan |
 | App crash meninggalkan ruang AppBar kosong | Ruang 32 px tidak terpakai | Lepas AppBar di semua jalur keluar dan di handler exception; restart otomatis mendaftar ulang |
 | Browser hanya mengirim satu sesi media | Hanya satu sumber terlihat | Pakai sesi yang sedang diputar; kalau beberapa diputar, pilih yang terakhir berubah |
-| Windows di-mute atau volume 0 saat alarm | Alarm tidak terdengar | Peringatan dan tombol Unmute di kartu; animasi kartu tetap jalan; TopBar tidak mengubah volume sistem diam-diam |
+| Windows di-mute atau volume 0 saat alarm | Alarm tidak terdengar | Peringatan dan tombol Unmute di kartu; animasi kartu tetap jalan; Gili tidak mengubah volume sistem diam-diam |
 | Deteksi update yang menunggu tidak selalu sama dengan Start menu | Item "Update and …" tidak muncul padahal ada update, atau sebaliknya | Item hanya ditampilkan bila deteksi yakin; perilaku `SHUTDOWN_INSTALL_UPDATES` dan sumber deteksi diverifikasi di laptop pengguna saat Fase 3. Kalau tidak cocok, menu menampilkan `Open Windows Update` sebagai ganti item update |
 | Sleep lewat `SetSuspendState` berbeda di laptop Modern Standby | Laptop tidak tidur, atau masuk hibernate | Diuji di laptop pengguna saat Fase 3; kalau berbeda, Sleep memakai jalur lain yang ditentukan saat implementasi |
 | Prompt izin di Claude Desktop tidak memicu hook `Notification` (Desktop menangani izin sendiri) | Menunggu izin tampil sebagai Working, bukan Needs input | Diverifikasi di awal Fase 3. Kalau tidak terpicu, Needs input hanya untuk pertanyaan dan rencana; kalau file sesi ternyata punya status menunggu izin, status itu dipakai sebagai gantinya |
 | Format `~/.claude/sessions/*.json` tidak resmi dan bisa berubah setelah update Claude | Nama sesi dan deteksi Esc hilang | File itu hanya pelengkap; cadangan di bagian 11 |
-| Claude Code tidak menyediakan waktu reset jendela 5 jam yang bisa dibaca TopBar | Timer hanya perkiraan; bisa meleset bila jendela dimulai dari perangkat lain (claude.ai, ponsel) | Diverifikasi di awal Fase 3. Tanpa sumber resmi, timer memakai perkiraan dari prompt pertama dan tooltip menulis `Estimated`; batas tercapai dideteksi dari pesan batas di file sesi bila ada |
+| Claude Code tidak menyediakan waktu reset jendela 5 jam yang bisa dibaca Gili | Timer hanya perkiraan; bisa meleset bila jendela dimulai dari perangkat lain (claude.ai, ponsel) | Diverifikasi di awal Fase 3. Tanpa sumber resmi, timer memakai perkiraan dari prompt pertama dan tooltip menulis `Estimated`; batas tercapai dideteksi dari pesan batas di file sesi bila ada |
 | Host tray tambahan (ManagedShell) tidak menerima semua ikon di Windows 11 versi pengguna | Sebagian ikon tray tidak tampil | Diuji di laptop pengguna di awal Fase 3 sebelum tray dibangun; kalau gagal, tombol Tray membuka overflow tray Windows sebagai cadangan |
 | Menyembunyikan `Shell_TrayWnd` tidak didukung resmi dan bisa berubah setelah update Windows | Taskbar muncul lagi atau ruangnya tertinggal | Pakai auto-hide resmi sebagai dasar, sembunyikan jendela hanya sebagai tambahan; periksa ulang tiap `TaskbarCreated` dan saat bangun dari sleep |
 | Animasi terus-menerus di jendela WPF transparan dirender di CPU | Ambient motion atau mata Gili melewati anggaran CPU | Anggaran dan cadangan di 8.1; diukur di Fase 1 sebelum fitur dianggap selesai |
@@ -989,10 +989,10 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 - **Unit test (xUnit) untuk Core**: `Scheduler` (alarm berulang, snooze, terlewat saat sleep, restart di tengah timer, perubahan zona waktu), `IslandCoordinator` (semua aturan prioritas di 6.3, termasuk fullscreen dan drop zone), `ShelfService` (batas 8 item, bundel, pembersihan file hilang termasuk sebagian isi bundel, hasil Move vs Copy), format angka/satuan/tanggal, definisi "todo hari ini", pengubahan urutan note, kurva volume naik bertahap, aturan kapan suara dibisukan (fase fokus, mute).
 - **Unit test revisi 4 (Core)**: aturan bentuk Gili (di pulau ↔ lingkaran, tersembunyi saat mengambang), pemetaan posisi kursor ke posisi mata (ujung kiri, tengah, ujung kanan pulau; naik/turun mengikuti tinggi kursor di layar; lirikan 2 × 2 px di lingkaran), jadwal kedip acak dengan seed tetap, perhitungan tinggi pulau terbuka (minimal, maksimal, posisi bawah), jendela Claude 5 jam (mulai dari prompt pertama, pembulatan jam, restart di tengah jendela, batas tercapai, kartu saat berakhir, ditahan saat fokus), halaman tersembunyi dan tab sementara, aturan posisi bawah hanya saat taskbar Windows tersembunyi.
 - **Unit test sesi Claude (Core)**: perpindahan status (prompt → Working → Needs input → Working → Done; Esc → Idle; proses mati → dihapus; izin ditolak), penggabungan beberapa sesi jadi satu aktivitas, aturan gelembung "belum dilihat", posisi di `IslandCoordinator` termasuk saat fase fokus dan fullscreen.
-- **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri TopBar, JSON rusak tidak disentuh, cadangan dibuat.
+- **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri Gili, JSON rusak tidak disentuh, cadangan dibuat.
 - **Test repository** pada file SQLite sementara: simpan/muat, migrasi, batas baris (50 riwayat clipboard, 8 item Shelf).
 - **Mode demo** untuk memeriksa tampilan dan gerak semua keadaan tanpa kejadian nyata.
-- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat TopBar mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
+- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, pulau Power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat Gili mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), pulau kontrol Wi‑Fi, Bluetooth, Volume, Brightness, dan Power (masing-masing tanpa menu tab, ganti isi saat ikon lain diklik), 15 aplikasi terbuka sekaligus di 1366 px dan 1920 px (`+N` dan daftarnya), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
 - **Pengukuran performa**: catat RAM dan CPU dari Task Manager setelah 8 jam pemakaian normal.
 
 ## 14. Fase rilis
@@ -1009,7 +1009,7 @@ Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari ke
 ## 15. Di luar cakupan
 
 - Lebih dari satu monitor.
-- Membuat ulang Start menu, Quick Settings, atau Notification Center Windows (TopBar hanya membukanya, menampilkan ikon tray, dan punya pulau kontrol).
+- Membuat ulang Start menu, Quick Settings, atau Notification Center Windows (Gili hanya membukanya, menampilkan ikon tray, dan punya pulau kontrol).
 - Memasukkan password Wi‑Fi baru dari pulau Wi‑Fi (diserahkan ke daftar jaringan Windows).
 - Ekspresi atau suasana hati maskot selain mengikuti kursor dan berkedip.
 - Bahasa UI selain Inggris.

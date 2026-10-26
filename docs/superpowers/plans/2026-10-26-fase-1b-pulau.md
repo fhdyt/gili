@@ -4,17 +4,17 @@
 
 **Goal:** Pulau hidup di jendelanya sendiri dengan animasi pegas: compact (jam atau aktivitas + gelembung), wide (kejadian singkat), dan expanded (panel mengambang dengan menu tab, halaman Media, jam di bawah). Pulau diatur oleh `IslandCoordinator` sesuai prioritas PRD, menampilkan musik/video dari media session Windows, dan menampilkan status ngecas.
 
-**Architecture:** Aturan prioritas, pegas, geometri, dan aturan media/daya ada di `TopBar.Core` dan dites unit. `TopBar.Platform` membaca media session (GSMTC), judul jendela VLC, dan `PowerManager`. Di `TopBar.App`, `IslandController` menghubungkan provider ke coordinator, `IslandViewModel` menyiapkan data tampilan, dan `IslandWindow` (jendela transparan topmost milik `BarWindow`) menggambar pulau. Ukuran pulau digerakkan pegas per frame lewat `CompositionTarget.Rendering`, hanya selama ada pegas yang bergerak.
+**Architecture:** Aturan prioritas, pegas, geometri, dan aturan media/daya ada di `Gili.Core` dan dites unit. `Gili.Platform` membaca media session (GSMTC), judul jendela VLC, dan `PowerManager`. Di `Gili.App`, `IslandController` menghubungkan provider ke coordinator, `IslandViewModel` menyiapkan data tampilan, dan `IslandWindow` (jendela transparan topmost milik `BarWindow`) menggambar pulau. Ukuran pulau digerakkan pegas per frame lewat `CompositionTarget.Rendering`, hanya selama ada pegas yang bergerak.
 
 **Tech Stack:** .NET 10, C# WPF, CommunityToolkit.Mvvm, WinRT `Windows.Media.Control` dan `Windows.System.Power`, xUnit.
 
 **Spec:** [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](../specs/2026-10-25-top-taskbar-prd.md) (6.3, 8.3, 9.2, F-ISL-02..07). Lanjutan dari [rencana 1a](2026-10-26-fase-1a-bar-dasar.md).
 
-**Nama:** rencana ini ditulis dengan nama `TopBar` yang dipakai kode saat ini. Pengguna sudah memutuskan rename penuh ke **Gili** (`Gili.*`, `Gili.slnx`, `Gili.exe`, `%LOCALAPPDATA%\Gili`). Kalau rename sudah dijalankan sebelum eksekusi, baca setiap `TopBar` di rencana ini sebagai `Gili`; teks UI yang menyebut nama aplikasi (misalnya judul jendela `TopBar Island`) ikut berganti.
+**Nama:** rencana ini ditulis dan dieksekusi dengan nama lama `TopBar`. Setelah eksekusi, semua rujukan di sini diganti ke **Gili** agar cocok dengan kode; commit 1b di riwayat git masih memakai path `src/TopBar.*`.
 
 ## Global Constraints
 
-- Semua teks UI bahasa Inggris; angka dan waktu memakai format invariant/`en-US`. `TopBar.Core` tanpa WPF/WinRT/P/Invoke.
+- Semua teks UI bahasa Inggris; angka dan waktu memakai format invariant/`en-US`. `Gili.Core` tanpa WPF/WinRT/P/Invoke.
 - Pulau `#000000` di semua keadaan. Compact: tinggi = setting Island height, di tengah tinggi bar, radius = setengah tinggi, lebar = isi + 28 px dengan minimum 200 px, +16 px saat hover. Wide: lebar = isi + 32 px, minimum 200 px.
 - Mengambang (8 px dari tepi atas, lebar maksimum = lebar layar − 24 px): expanded 680 × 256 radius 32, kartu 560 × 104 radius 28, drop zone 420 × 140 radius 30.
 - Pegas (damping ratio / response): buka 0,82 / 0,42 dtk; tutup 1,0 / 0,32 dtk; compact ↔ wide, isi slot berganti, dan perubahan tinggi 0,85 / 0,30 dtk; hover 0,8 / 0,30 dtk; gelembung muncul/hilang 320 ms dengan sedikit memantul. Transisi bisa disela: keadaan baru mulai dari ukuran yang tampil di layar.
@@ -31,7 +31,7 @@
 
 PRD tidak mengatur hal-hal berikut secara eksplisit, jadi rencana ini memutuskannya. Konfirmasikan ke pengguna sebelum eksekusi kalau ada yang ragu.
 
-1. **Media yang di-pause** tetap memegang slot selama 2 menit setelah sebelumnya diputar, supaya bisa dilanjutkan dari pulau. Setelah itu jam kembali. Session yang ditemukan dalam keadaan pause saat TopBar mulai tidak memegang slot.
+1. **Media yang di-pause** tetap memegang slot selama 2 menit setelah sebelumnya diputar, supaya bisa dilanjutkan dari pulau. Setelah itu jam kembali. Session yang ditemukan dalam keadaan pause saat Gili mulai tidak memegang slot.
 2. **Tab yang halamannya belum dibangun** tetap tampil (supaya kerangka menu bisa diuji) dan berisi nama halaman + `Coming in Phase 2` atau `Coming in Phase 3`. Tab Claude disembunyikan karena integrasi Claude baru ada di Fase 3 (default mati), jadi menu berisi 8 tab.
 3. **Kartu dan drop zone**: `IslandCoordinator` dan `IslandLayout` sudah mendukung keduanya (aturan prioritas dan ukuran), tetapi isinya baru dibuat bersama fiturnya (mode demo di 1c, kartu di Fase 2, Shelf di Fase 3).
 4. **Pulau selalu digambar di `IslandWindow`**, juga saat compact. `BarWindow` mengosongkan bagian tengah. `IslandWindow` dimiliki (`Owner`) oleh `BarWindow` supaya selalu di atas bar walaupun bar menegaskan ulang posisi topmost-nya.
@@ -48,7 +48,7 @@ PRD tidak mengatur hal-hal berikut secara eksplisit, jadi rencana ini memutuskan
 ## Struktur file
 
 ```
-src/TopBar.Core/
+src/Gili.Core/
   Motion/Spring.cs                     pegas + preset PRD 8.3
   Island/IslandModels.cs               mode, halaman, jenis aktivitas, wide, kartu, IslandView
   Island/IslandCoordinator.cs          aturan prioritas dan antrean (F-ISL-03)
@@ -56,14 +56,14 @@ src/TopBar.Core/
   Media/MediaState.cs                  MediaState, MediaKind, PlaybackType
   Media/MediaRules.cs                  klasifikasi musik/video, nama aplikasi, judul VLC, teks slot/waktu, MediaPresence
   Power/PowerRules.cs                  PowerSnapshot, kejadian wide charger
-src/TopBar.Platform/
+src/Gili.Platform/
   Media/MediaSessionMonitor.cs         GSMTC: pilih session, baca properti/timeline/cover, perintah
   Media/VlcWindow.cs                   judul jendela vlc.exe
   Power/PowerMonitor.cs                Windows.System.Power.PowerManager
   Shell/WindowStyles.cs                (+ SetNoActivate)
   Shell/ForegroundWindow.cs            ambil/kembalikan jendela foreground
   Interop/Win32.cs, WindowMessages.cs  (+ SetForegroundWindow, WM_MOUSEHWHEEL)
-src/TopBar.App/
+src/Gili.App/
   ClockService.cs                      detak tiap pergantian menit (dipindah dari BarViewModel)
   Resources/Icons.xaml                 geometri ikon 24 × 24 dari mockup
   Controls/IconView.cs                 menggambar ikon garis/isi
@@ -75,34 +75,34 @@ src/TopBar.App/
   Island/MediaPage.xaml(.cs)           halaman Media (musik dan video)
   Bar/BarWindow.xaml(.cs), BarViewModel.cs   tanpa pulau; latar memudar, elemen tertimpa
   App.xaml(.cs)                        komposisi
-tests/TopBar.Core.Tests/
+tests/Gili.Core.Tests/
   Motion/SpringTests.cs
   Island/IslandCoordinatorTests.cs, IslandLayoutTests.cs
   Media/MediaRulesTests.cs, MediaPresenceTests.cs
   Power/PowerRulesTests.cs
 ```
 
-Pesan commit diakhiri dengan `-m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"`. Sebelum `dotnet build` aplikasi, tutup TopBar yang sedang jalan dengan `TopBar.exe --quit` (exe terkunci selama jalan). Jangan menjalankan `scripts/publish.ps1`: pengguna ingin TopBar baru dipasang setelah semua fase selesai, jadi pemeriksaan memakai build dev.
+Pesan commit diakhiri dengan `-m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"`. Sebelum `dotnet build` aplikasi, tutup Gili yang sedang jalan dengan `Gili.exe --quit` (exe terkunci selama jalan). Jangan menjalankan `scripts/publish.ps1`: pengguna ingin Gili baru dipasang setelah semua fase selesai, jadi pemeriksaan memakai build dev.
 
 ---
 
 ### Task 1: Pegas
 
 **Files:**
-- Create: `src/TopBar.Core/Motion/Spring.cs`
-- Test: `tests/TopBar.Core.Tests/Motion/SpringTests.cs`
+- Create: `src/Gili.Core/Motion/Spring.cs`
+- Test: `tests/Gili.Core.Tests/Motion/SpringTests.cs`
 
 **Interfaces:**
-- Produces: `readonly record struct SpringParameters(double DampingRatio, double Response)` dengan preset `Open`, `Close`, `Resize`, `Hover`, `Pop`; `sealed class Spring(double value)` dengan `double Value`, `double Velocity`, `double Target { get; set; }`, `SpringParameters Parameters { get; set; }`, `bool IsAtRest`, `void Step(double seconds)`, `void SnapTo(double value)`. Namespace `TopBar.Core.Motion`.
+- Produces: `readonly record struct SpringParameters(double DampingRatio, double Response)` dengan preset `Open`, `Close`, `Resize`, `Hover`, `Pop`; `sealed class Spring(double value)` dengan `double Value`, `double Velocity`, `double Target { get; set; }`, `SpringParameters Parameters { get; set; }`, `bool IsAtRest`, `void Step(double seconds)`, `void SnapTo(double value)`. Namespace `Gili.Core.Motion`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Motion/SpringTests.cs`:
+`tests/Gili.Core.Tests/Motion/SpringTests.cs`:
 
 ```csharp
-using TopBar.Core.Motion;
+using Gili.Core.Motion;
 
-namespace TopBar.Core.Tests.Motion;
+namespace Gili.Core.Tests.Motion;
 
 public class SpringTests
 {
@@ -188,15 +188,15 @@ public class SpringTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~SpringTests"`
-Expected: build gagal, namespace `TopBar.Core.Motion` tidak ada.
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~SpringTests"`
+Expected: build gagal, namespace `Gili.Core.Motion` tidak ada.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Motion/Spring.cs`:
+`src/Gili.Core/Motion/Spring.cs`:
 
 ```csharp
-namespace TopBar.Core.Motion;
+namespace Gili.Core.Motion;
 
 /// <summary>A spring as Apple's motion guidelines describe it (PRD 8.3): damping ratio (1 = no bounce) and response in seconds.</summary>
 public readonly record struct SpringParameters(double DampingRatio, double Response)
@@ -263,13 +263,13 @@ public sealed class Spring(double value)
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~SpringTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~SpringTests"`
 Expected: PASS, 7 test.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core/Motion tests/TopBar.Core.Tests/Motion
+git add src/Gili.Core/Motion tests/Gili.Core.Tests/Motion
 git commit -m "feat(core): interruptible spring with PRD motion presets" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -277,11 +277,11 @@ git commit -m "feat(core): interruptible spring with PRD motion presets" -m "Co-
 ### Task 2: Model pulau dan `IslandCoordinator`
 
 **Files:**
-- Create: `src/TopBar.Core/Island/IslandModels.cs`, `src/TopBar.Core/Island/IslandCoordinator.cs`
-- Test: `tests/TopBar.Core.Tests/Island/IslandCoordinatorTests.cs`
+- Create: `src/Gili.Core/Island/IslandModels.cs`, `src/Gili.Core/Island/IslandCoordinator.cs`
+- Test: `tests/Gili.Core.Tests/Island/IslandCoordinatorTests.cs`
 
 **Interfaces:**
-- Produces (namespace `TopBar.Core.Island`):
+- Produces (namespace `Gili.Core.Island`):
   - `enum IslandMode { Hidden, Compact, Wide, Expanded, Card, DropZone }`
   - `enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, System }`
   - `enum ActivityKind { ClipboardSnippet, ClaudeAttention, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging }` (urutan = peringkat)
@@ -292,12 +292,12 @@ git commit -m "feat(core): interruptible spring with PRD motion presets" -m "Co-
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Island/IslandCoordinatorTests.cs`:
+`tests/Gili.Core.Tests/Island/IslandCoordinatorTests.cs`:
 
 ```csharp
-using TopBar.Core.Island;
+using Gili.Core.Island;
 
-namespace TopBar.Core.Tests.Island;
+namespace Gili.Core.Tests.Island;
 
 public class IslandCoordinatorTests
 {
@@ -556,15 +556,15 @@ public class IslandCoordinatorTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~IslandCoordinatorTests"`
-Expected: build gagal, namespace `TopBar.Core.Island` tidak ada.
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~IslandCoordinatorTests"`
+Expected: build gagal, namespace `Gili.Core.Island` tidak ada.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Island/IslandModels.cs`:
+`src/Gili.Core/Island/IslandModels.cs`:
 
 ```csharp
-namespace TopBar.Core.Island;
+namespace Gili.Core.Island;
 
 public enum IslandMode { Hidden, Compact, Wide, Expanded, Card, DropZone }
 
@@ -597,10 +597,10 @@ public sealed record IslandView(
 }
 ```
 
-`src/TopBar.Core/Island/IslandCoordinator.cs`:
+`src/Gili.Core/Island/IslandCoordinator.cs`:
 
 ```csharp
-namespace TopBar.Core.Island;
+namespace Gili.Core.Island;
 
 /// <summary>
 /// Decides what the island shows (PRD 6.3 "Prioritas tampilan"): cards, then the drop zone, then the page the user
@@ -796,13 +796,13 @@ public sealed class IslandCoordinator
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~IslandCoordinatorTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~IslandCoordinatorTests"`
 Expected: PASS, 19 test.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core/Island tests/TopBar.Core.Tests/Island
+git add src/Gili.Core/Island tests/Gili.Core.Tests/Island
 git commit -m "feat(core): island coordinator with display priorities and queues (F-ISL-03)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -811,8 +811,8 @@ git commit -m "feat(core): island coordinator with display priorities and queues
 ### Task 3: Geometri pulau dan elemen tertimpa
 
 **Files:**
-- Create: `src/TopBar.Core/Island/IslandLayout.cs`
-- Test: `tests/TopBar.Core.Tests/Island/IslandLayoutTests.cs`
+- Create: `src/Gili.Core/Island/IslandLayout.cs`
+- Test: `tests/Gili.Core.Tests/Island/IslandLayoutTests.cs`
 
 **Interfaces:**
 - Consumes: `IslandMode`, `IslandPage` (Task 2).
@@ -820,12 +820,12 @@ git commit -m "feat(core): island coordinator with display priorities and queues
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Island/IslandLayoutTests.cs`:
+`tests/Gili.Core.Tests/Island/IslandLayoutTests.cs`:
 
 ```csharp
-using TopBar.Core.Island;
+using Gili.Core.Island;
 
-namespace TopBar.Core.Tests.Island;
+namespace Gili.Core.Tests.Island;
 
 public class IslandLayoutTests
 {
@@ -885,15 +885,15 @@ public class IslandLayoutTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~IslandLayoutTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~IslandLayoutTests"`
 Expected: build gagal, `IslandLayout` tidak ditemukan.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Island/IslandLayout.cs`:
+`src/Gili.Core/Island/IslandLayout.cs`:
 
 ```csharp
-namespace TopBar.Core.Island;
+namespace Gili.Core.Island;
 
 public readonly record struct IslandGeometry(double Width, double Height, double Top, double CornerRadius);
 
@@ -936,13 +936,13 @@ public static class IslandLayout
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~IslandLayoutTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~IslandLayoutTests"`
 Expected: PASS, 14 test.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core/Island tests/TopBar.Core.Tests/Island
+git add src/Gili.Core/Island tests/Gili.Core.Tests/Island
 git commit -m "feat(core): island geometry per mode and covered-element rule (F-ISL-02)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -951,11 +951,11 @@ git commit -m "feat(core): island geometry per mode and covered-element rule (F-
 ### Task 4: Model dan aturan media
 
 **Files:**
-- Create: `src/TopBar.Core/Media/MediaState.cs`, `src/TopBar.Core/Media/MediaRules.cs`, `src/TopBar.Core/Media/MediaPresence.cs`
-- Test: `tests/TopBar.Core.Tests/Media/MediaRulesTests.cs`, `tests/TopBar.Core.Tests/Media/MediaPresenceTests.cs`
+- Create: `src/Gili.Core/Media/MediaState.cs`, `src/Gili.Core/Media/MediaRules.cs`, `src/Gili.Core/Media/MediaPresence.cs`
+- Test: `tests/Gili.Core.Tests/Media/MediaRulesTests.cs`, `tests/Gili.Core.Tests/Media/MediaPresenceTests.cs`
 
 **Interfaces:**
-- Produces (namespace `TopBar.Core.Media`):
+- Produces (namespace `Gili.Core.Media`):
   - `enum MediaKind { Music, Video }`, `enum PlaybackType { Unknown, Music, Video, Image }`
   - `sealed record MediaState(string Title, string Artist, string AppId, MediaKind Kind, bool IsPlaying, TimeSpan Position, TimeSpan Duration, DateTimeOffset PositionUpdatedAt, bool CanSeek, bool CanSkip, byte[]? Cover)` dengan `TimeSpan PositionAt(DateTimeOffset now)` dan `bool HasTimeline`
   - `static class MediaRules`: `MediaKind Classify(PlaybackType type, string appId)`, `string AppName(string appId)`, `string LevelColor(string appId)`, `string? VlcTitle(string windowTitle)`, `string SlotTitle(MediaState media)`, `string Truncate(string text, int max)`, `string Time(TimeSpan time)`, `string Remaining(TimeSpan position, TimeSpan duration)`, `double Progress(TimeSpan position, TimeSpan duration)`
@@ -963,12 +963,12 @@ git commit -m "feat(core): island geometry per mode and covered-element rule (F-
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Media/MediaRulesTests.cs`:
+`tests/Gili.Core.Tests/Media/MediaRulesTests.cs`:
 
 ```csharp
-using TopBar.Core.Media;
+using Gili.Core.Media;
 
-namespace TopBar.Core.Tests.Media;
+namespace Gili.Core.Tests.Media;
 
 public class MediaRulesTests
 {
@@ -1069,12 +1069,12 @@ public class MediaRulesTests
 }
 ```
 
-`tests/TopBar.Core.Tests/Media/MediaPresenceTests.cs`:
+`tests/Gili.Core.Tests/Media/MediaPresenceTests.cs`:
 
 ```csharp
-using TopBar.Core.Media;
+using Gili.Core.Media;
 
-namespace TopBar.Core.Tests.Media;
+namespace Gili.Core.Tests.Media;
 
 public class MediaPresenceTests
 {
@@ -1121,15 +1121,15 @@ public class MediaPresenceTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~TopBar.Core.Tests.Media"`
-Expected: build gagal, namespace `TopBar.Core.Media` tidak ada.
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~Gili.Core.Tests.Media"`
+Expected: build gagal, namespace `Gili.Core.Media` tidak ada.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Media/MediaState.cs`:
+`src/Gili.Core/Media/MediaState.cs`:
 
 ```csharp
-namespace TopBar.Core.Media;
+namespace Gili.Core.Media;
 
 public enum MediaKind { Music, Video }
 
@@ -1161,12 +1161,12 @@ public sealed record MediaState(
 }
 ```
 
-`src/TopBar.Core/Media/MediaRules.cs`:
+`src/Gili.Core/Media/MediaRules.cs`:
 
 ```csharp
 using System.Globalization;
 
-namespace TopBar.Core.Media;
+namespace Gili.Core.Media;
 
 public static class MediaRules
 {
@@ -1237,10 +1237,10 @@ public static class MediaRules
 }
 ```
 
-`src/TopBar.Core/Media/MediaPresence.cs`:
+`src/Gili.Core/Media/MediaPresence.cs`:
 
 ```csharp
-namespace TopBar.Core.Media;
+namespace Gili.Core.Media;
 
 /// <summary>
 /// Whether media holds the compact slot. Playing media always does. Media paused after playing keeps it for two
@@ -1276,13 +1276,13 @@ public sealed class MediaPresence
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~TopBar.Core.Tests.Media"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~Gili.Core.Tests.Media"`
 Expected: PASS semua.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core/Media tests/TopBar.Core.Tests/Media
+git add src/Gili.Core/Media tests/Gili.Core.Tests/Media
 git commit -m "feat(core): media state, slot text, app names and paused grace (F-ISL-04, F-ISL-05)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1291,22 +1291,22 @@ git commit -m "feat(core): media state, slot text, app names and paused grace (F
 ### Task 5: Aturan daya
 
 **Files:**
-- Create: `src/TopBar.Core/Power/PowerRules.cs`
-- Test: `tests/TopBar.Core.Tests/Power/PowerRulesTests.cs`
+- Create: `src/Gili.Core/Power/PowerRules.cs`
+- Test: `tests/Gili.Core.Tests/Power/PowerRulesTests.cs`
 
 **Interfaces:**
 - Consumes: `WideEvent`, `WideIcon` (Task 2).
-- Produces (namespace `TopBar.Core.Power`): `sealed record PowerSnapshot(bool HasBattery, bool PluggedIn, bool Charging, int Percent)`; `static class PowerRules` dengan `WideEvent? WideFor(PowerSnapshot? previous, PowerSnapshot current)` dan `bool IsCharging(PowerSnapshot power)`.
+- Produces (namespace `Gili.Core.Power`): `sealed record PowerSnapshot(bool HasBattery, bool PluggedIn, bool Charging, int Percent)`; `static class PowerRules` dengan `WideEvent? WideFor(PowerSnapshot? previous, PowerSnapshot current)` dan `bool IsCharging(PowerSnapshot power)`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Power/PowerRulesTests.cs`:
+`tests/Gili.Core.Tests/Power/PowerRulesTests.cs`:
 
 ```csharp
-using TopBar.Core.Island;
-using TopBar.Core.Power;
+using Gili.Core.Island;
+using Gili.Core.Power;
 
-namespace TopBar.Core.Tests.Power;
+namespace Gili.Core.Tests.Power;
 
 public class PowerRulesTests
 {
@@ -1351,18 +1351,18 @@ public class PowerRulesTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~PowerRulesTests"`
-Expected: build gagal, namespace `TopBar.Core.Power` tidak ada.
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~PowerRulesTests"`
+Expected: build gagal, namespace `Gili.Core.Power` tidak ada.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Power/PowerRules.cs`:
+`src/Gili.Core/Power/PowerRules.cs`:
 
 ```csharp
 using System.Globalization;
-using TopBar.Core.Island;
+using Gili.Core.Island;
 
-namespace TopBar.Core.Power;
+namespace Gili.Core.Power;
 
 public sealed record PowerSnapshot(bool HasBattery, bool PluggedIn, bool Charging, int Percent);
 
@@ -1385,13 +1385,13 @@ public static class PowerRules
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: PASS semua.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core/Power tests/TopBar.Core.Tests/Power
+git add src/Gili.Core/Power tests/Gili.Core.Tests/Power
 git commit -m "feat(core): charger notices and charging activity rule (F-ISL-06)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1402,21 +1402,21 @@ git commit -m "feat(core): charger notices and charging activity rule (F-ISL-06)
 Kode Windows tanpa unit test; diperiksa di Task 9–11 saat pulau sudah menampilkannya.
 
 **Files:**
-- Create: `src/TopBar.Platform/Media/MediaSessionMonitor.cs`, `src/TopBar.Platform/Media/VlcWindow.cs`, `src/TopBar.Platform/Power/PowerMonitor.cs`, `src/TopBar.Platform/Shell/ForegroundWindow.cs`
-- Modify: `src/TopBar.Platform/Interop/Win32.cs`, `src/TopBar.Platform/Interop/WindowMessages.cs`, `src/TopBar.Platform/Shell/WindowStyles.cs`
+- Create: `src/Gili.Platform/Media/MediaSessionMonitor.cs`, `src/Gili.Platform/Media/VlcWindow.cs`, `src/Gili.Platform/Power/PowerMonitor.cs`, `src/Gili.Platform/Shell/ForegroundWindow.cs`
+- Modify: `src/Gili.Platform/Interop/Win32.cs`, `src/Gili.Platform/Interop/WindowMessages.cs`, `src/Gili.Platform/Shell/WindowStyles.cs`
 
 **Interfaces:**
 - Consumes: `MediaState`, `MediaRules`, `PlaybackType` (Task 4); `PowerSnapshot` (Task 5).
 - Produces:
-  - `TopBar.Platform.Media.MediaSessionMonitor : IDisposable`: `Task StartAsync()`, `event Action<MediaState?>? Changed` dan `event Action<Exception>? Failed` (keduanya di thread latar), `Task TogglePlayPauseAsync()`, `Task NextAsync()`, `Task PreviousAsync()`, `Task SeekAsync(TimeSpan position)`.
-  - `TopBar.Platform.Media.VlcWindow.ReadTitle()` → `string?`.
-  - `TopBar.Platform.Power.PowerMonitor : IDisposable`: `static PowerSnapshot Read()`, `event Action<PowerSnapshot>? Changed` (thread latar).
-  - `TopBar.Platform.Shell.ForegroundWindow`: `static IntPtr Get()`, `static void Restore(IntPtr hwnd)`.
+  - `Gili.Platform.Media.MediaSessionMonitor : IDisposable`: `Task StartAsync()`, `event Action<MediaState?>? Changed` dan `event Action<Exception>? Failed` (keduanya di thread latar), `Task TogglePlayPauseAsync()`, `Task NextAsync()`, `Task PreviousAsync()`, `Task SeekAsync(TimeSpan position)`.
+  - `Gili.Platform.Media.VlcWindow.ReadTitle()` → `string?`.
+  - `Gili.Platform.Power.PowerMonitor : IDisposable`: `static PowerSnapshot Read()`, `event Action<PowerSnapshot>? Changed` (thread latar).
+  - `Gili.Platform.Shell.ForegroundWindow`: `static IntPtr Get()`, `static void Restore(IntPtr hwnd)`.
   - `WindowStyles.SetNoActivate(IntPtr hwnd, bool noActivate)`; `WindowMessages.WM_MOUSEHWHEEL`.
 
 - [ ] **Step 1: Interop dan gaya jendela**
 
-Di `src/TopBar.Platform/Interop/Win32.cs`, tambahkan di bawah deklarasi `GetForegroundWindow`:
+Di `src/Gili.Platform/Interop/Win32.cs`, tambahkan di bawah deklarasi `GetForegroundWindow`:
 
 ```csharp
     [DllImport("user32.dll")]
@@ -1424,13 +1424,13 @@ Di `src/TopBar.Platform/Interop/Win32.cs`, tambahkan di bawah deklarasi `GetFore
     public static extern bool SetForegroundWindow(IntPtr hwnd);
 ```
 
-Di `src/TopBar.Platform/Interop/WindowMessages.cs`, tambahkan di bawah `WM_POWERBROADCAST`:
+Di `src/Gili.Platform/Interop/WindowMessages.cs`, tambahkan di bawah `WM_POWERBROADCAST`:
 
 ```csharp
     public const int WM_MOUSEHWHEEL = 0x020E;
 ```
 
-Di `src/TopBar.Platform/Shell/WindowStyles.cs`, tambahkan method:
+Di `src/Gili.Platform/Shell/WindowStyles.cs`, tambahkan method:
 
 ```csharp
     /// <summary>The island takes focus only while it is open, so Esc and the arrow keys reach it.</summary>
@@ -1442,12 +1442,12 @@ Di `src/TopBar.Platform/Shell/WindowStyles.cs`, tambahkan method:
     }
 ```
 
-`src/TopBar.Platform/Shell/ForegroundWindow.cs`:
+`src/Gili.Platform/Shell/ForegroundWindow.cs`:
 
 ```csharp
-using TopBar.Platform.Interop;
+using Gili.Platform.Interop;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 /// <summary>Remembers which window had focus before the island opened, and gives it back when the island closes.</summary>
 public static class ForegroundWindow
@@ -1463,13 +1463,13 @@ public static class ForegroundWindow
 
 - [ ] **Step 2: `PowerMonitor`**
 
-`src/TopBar.Platform/Power/PowerMonitor.cs`:
+`src/Gili.Platform/Power/PowerMonitor.cs`:
 
 ```csharp
-using TopBar.Core.Power;
+using Gili.Core.Power;
 using Windows.System.Power;
 
-namespace TopBar.Platform.Power;
+namespace Gili.Platform.Power;
 
 /// <summary>Battery and charger state from PowerManager (PRD 9.2).</summary>
 public sealed class PowerMonitor : IDisposable
@@ -1503,16 +1503,16 @@ public sealed class PowerMonitor : IDisposable
 
 - [ ] **Step 3: `MediaSessionMonitor` dan `VlcWindow`**
 
-`src/TopBar.Platform/Media/MediaSessionMonitor.cs`:
+`src/Gili.Platform/Media/MediaSessionMonitor.cs`:
 
 ```csharp
-using TopBar.Core.Media;
+using Gili.Core.Media;
 using Windows.Media;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
 using Session = Windows.Media.Control.GlobalSystemMediaTransportControlsSession;
 
-namespace TopBar.Platform.Media;
+namespace Gili.Platform.Media;
 
 /// <summary>
 /// Follows Windows' media sessions (Spotify, browsers, Media Player…) and reports the one to show (PRD 9.2, 12):
@@ -1667,13 +1667,13 @@ public sealed class MediaSessionMonitor : IDisposable
 }
 ```
 
-`src/TopBar.Platform/Media/VlcWindow.cs`:
+`src/Gili.Platform/Media/VlcWindow.cs`:
 
 ```csharp
 using System.Diagnostics;
-using TopBar.Core.Media;
+using Gili.Core.Media;
 
-namespace TopBar.Platform.Media;
+namespace Gili.Platform.Media;
 
 public static class VlcWindow
 {
@@ -1695,13 +1695,13 @@ public static class VlcWindow
 
 - [ ] **Step 4: Build**
 
-Run: `dotnet build TopBar.slnx`
+Run: `dotnet build Gili.slnx`
 Expected: Build succeeded, 0 error.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Platform
+git add src/Gili.Platform
 git commit -m "feat(platform): media sessions, VLC title, power state and focus helpers (F-ISL-04..06)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1710,26 +1710,26 @@ git commit -m "feat(platform): media sessions, VLC title, power state and focus 
 ### Task 7: Komponen dasar App: jam, ikon, bar level
 
 **Files:**
-- Create: `src/TopBar.App/ClockService.cs`, `src/TopBar.App/Resources/Icons.xaml`, `src/TopBar.App/Controls/IconView.cs`, `src/TopBar.App/Controls/LevelMeter.cs`
-- Modify: `src/TopBar.App/App.xaml` (gabungkan `Icons.xaml`)
+- Create: `src/Gili.App/ClockService.cs`, `src/Gili.App/Resources/Icons.xaml`, `src/Gili.App/Controls/IconView.cs`, `src/Gili.App/Controls/LevelMeter.cs`
+- Modify: `src/Gili.App/App.xaml` (gabungkan `Icons.xaml`)
 
 **Interfaces:**
 - Consumes: `ClockText` (1a).
 - Produces:
-  - `TopBar.App.ClockService`: `DateTime Now`, `event Action? Ticked`, `void Refresh()`.
+  - `Gili.App.ClockService`: `DateTime Now`, `event Action? Ticked`, `void Refresh()`.
   - Resource kunci `Icon.Music`, `Icon.Hourglass`, `Icon.Alarm`, `Icon.Calendar`, `Icon.Todo`, `Icon.Note`, `Icon.Tray`, `Icon.Cpu`, `Icon.Film` (garis) dan `Icon.Play`, `Icon.Pause`, `Icon.Prev`, `Icon.Next`, `Icon.Bolt` (isi), semua `PathGeometry` 24 × 24.
-  - `TopBar.App.Controls.IconView`: `Geometry? Glyph`, `bool Filled`, `Brush Foreground` (mewarisi `TextElement.Foreground`).
-  - `TopBar.App.Controls.LevelMeter`: `bool IsPlaying`, `Brush BarBrush`.
+  - `Gili.App.Controls.IconView`: `Geometry? Glyph`, `bool Filled`, `Brush Foreground` (mewarisi `TextElement.Foreground`).
+  - `Gili.App.Controls.LevelMeter`: `bool IsPlaying`, `Brush BarBrush`.
 
 - [ ] **Step 1: `ClockService`**
 
-`src/TopBar.App/ClockService.cs`:
+`src/Gili.App/ClockService.cs`:
 
 ```csharp
 using System.Windows.Threading;
-using TopBar.Core.Formatting;
+using Gili.Core.Formatting;
 
-namespace TopBar.App;
+namespace Gili.App;
 
 /// <summary>Ticks exactly when the minute changes (F-ISL-01). Call Refresh after a clock, time zone or resume change.</summary>
 public sealed class ClockService
@@ -1761,7 +1761,7 @@ public sealed class ClockService
 
 Diambil dari simbol SVG di mockup (`i-music`, `i-hourglass`, …); lingkaran dan persegi membulat ditulis ulang sebagai path.
 
-`src/TopBar.App/Resources/Icons.xaml`:
+`src/Gili.App/Resources/Icons.xaml`:
 
 ```xml
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -1786,7 +1786,7 @@ Diambil dari simbol SVG di mockup (`i-music`, `i-hourglass`, …); lingkaran dan
 </ResourceDictionary>
 ```
 
-Ganti `<Application.Resources />` di `src/TopBar.App/App.xaml` dengan:
+Ganti `<Application.Resources />` di `src/Gili.App/App.xaml` dengan:
 
 ```xml
     <Application.Resources>
@@ -1796,14 +1796,14 @@ Ganti `<Application.Resources />` di `src/TopBar.App/App.xaml` dengan:
 
 - [ ] **Step 3: `IconView` dan `LevelMeter`**
 
-`src/TopBar.App/Controls/IconView.cs`:
+`src/Gili.App/Controls/IconView.cs`:
 
 ```csharp
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace TopBar.App.Controls;
+namespace Gili.App.Controls;
 
 /// <summary>Draws a 24 × 24 icon geometry at any size: stroked with a 2-unit round pen like the mockup's SVGs, or filled.</summary>
 public sealed class IconView : FrameworkElement
@@ -1859,7 +1859,7 @@ public sealed class IconView : FrameworkElement
 }
 ```
 
-`src/TopBar.App/Controls/LevelMeter.cs`:
+`src/Gili.App/Controls/LevelMeter.cs`:
 
 ```csharp
 using System.Windows;
@@ -1868,7 +1868,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
-namespace TopBar.App.Controls;
+namespace Gili.App.Controls;
 
 /// <summary>
 /// Four bars that bounce while music plays and rest low while it is paused (PRD 6.3). Each bar has its own period so
@@ -1953,13 +1953,13 @@ public sealed class LevelMeter : StackPanel
 
 - [ ] **Step 4: Build**
 
-Run: `dotnet build TopBar.slnx`
+Run: `dotnet build Gili.slnx`
 Expected: Build succeeded, 0 error. (Komponen ini dipakai mulai Task 9; geometri ikon diperiksa saat pertama tampil di layar karena WPF mem-parse path saat runtime.)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.App
+git add src/Gili.App
 git commit -m "feat(app): minute clock service, icon geometries, icon view and level meter" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1970,11 +1970,11 @@ git commit -m "feat(app): minute clock service, icon geometries, icon view and l
 Lapisan perekat tanpa UI. Diperiksa lewat build; perilakunya terlihat mulai Task 9.
 
 **Files:**
-- Create: `src/TopBar.App/Island/MediaService.cs`, `src/TopBar.App/Island/IslandController.cs`, `src/TopBar.App/Island/IslandViewModel.cs`
+- Create: `src/Gili.App/Island/MediaService.cs`, `src/Gili.App/Island/IslandController.cs`, `src/Gili.App/Island/IslandViewModel.cs`
 
 **Interfaces:**
 - Consumes: Task 2–7; `SettingsHub`, `FileLog` (1a).
-- Produces (namespace `TopBar.App.Island`):
+- Produces (namespace `Gili.App.Island`):
   - `MediaService(Dispatcher dispatcher, FileLog log) : IDisposable`: `MediaState? Current`, `bool IsActive`, `event Action? Updated` (thread UI; saat media berubah dan tiap detik selama ada media), `Task StartAsync()`, `TogglePlayPauseAsync()`, `NextAsync()`, `PreviousAsync()`, `SeekAsync(TimeSpan)`.
   - `IslandController(Dispatcher dispatcher, MediaService media) : IDisposable`: `IslandView View`, `MediaService Media`, `PowerSnapshot? Power`, `event Action<IslandView>? ViewChanged`, `event Action? PowerChanged`, `OpenFromIsland()`, `OpenBubble()`, `Open(IslandPage)`, `Toggle(IslandPage)`, `Close()`, `SetFullscreen(bool)`.
   - `sealed record IslandTab(IslandPage Page, string Name, Geometry Glyph, string? Placeholder)`.
@@ -1982,15 +1982,15 @@ Lapisan perekat tanpa UI. Diperiksa lewat build; perilakunya terlihat mulai Task
 
 - [ ] **Step 1: `MediaService`**
 
-`src/TopBar.App/Island/MediaService.cs`:
+`src/Gili.App/Island/MediaService.cs`:
 
 ```csharp
 using System.Windows.Threading;
-using TopBar.Core.Diagnostics;
-using TopBar.Core.Media;
-using TopBar.Platform.Media;
+using Gili.Core.Diagnostics;
+using Gili.Core.Media;
+using Gili.Platform.Media;
 
-namespace TopBar.App.Island;
+namespace Gili.App.Island;
 
 /// <summary>
 /// The media the island shows: Windows' media session, or VLC's window title when no session exists (PRD 9.2).
@@ -2081,15 +2081,15 @@ public sealed class MediaService : IDisposable
 
 - [ ] **Step 2: `IslandController`**
 
-`src/TopBar.App/Island/IslandController.cs`:
+`src/Gili.App/Island/IslandController.cs`:
 
 ```csharp
 using System.Windows.Threading;
-using TopBar.Core.Island;
-using TopBar.Core.Power;
-using TopBar.Platform.Power;
+using Gili.Core.Island;
+using Gili.Core.Power;
+using Gili.Platform.Power;
 
-namespace TopBar.App.Island;
+namespace Gili.App.Island;
 
 /// <summary>Feeds the providers into the IslandCoordinator and runs its timers for wide notices and reminder cards.</summary>
 public sealed class IslandController : IDisposable
@@ -2167,7 +2167,7 @@ public sealed class IslandController : IDisposable
 
 - [ ] **Step 3: `IslandViewModel`**
 
-`src/TopBar.App/Island/IslandViewModel.cs`:
+`src/Gili.App/Island/IslandViewModel.cs`:
 
 ```csharp
 using System.Globalization;
@@ -2176,12 +2176,12 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using TopBar.Core.Formatting;
-using TopBar.Core.Island;
-using TopBar.Core.Layout;
-using TopBar.Core.Media;
+using Gili.Core.Formatting;
+using Gili.Core.Island;
+using Gili.Core.Layout;
+using Gili.Core.Media;
 
-namespace TopBar.App.Island;
+namespace Gili.App.Island;
 
 public sealed record IslandTab(IslandPage Page, string Name, Geometry Glyph, string? Placeholder);
 
@@ -2404,13 +2404,13 @@ public sealed partial class IslandViewModel : ObservableObject
 
 - [ ] **Step 4: Build**
 
-Run: `dotnet build TopBar.slnx`
+Run: `dotnet build Gili.slnx`
 Expected: Build succeeded, 0 error.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.App/Island
+git add src/Gili.App/Island
 git commit -m "feat(app): island controller, media service with VLC fallback and island view model" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -2419,9 +2419,9 @@ git commit -m "feat(app): island controller, media service with VLC fallback and
 ### Task 9: `IslandWindow` (compact, wide, gelembung, pegas) dan bar yang mengosongkan tengah
 
 **Files:**
-- Create: `src/TopBar.App/Controls/VisibleWhenFalse.cs`, `src/TopBar.App/Island/IslandWindow.xaml`, `src/TopBar.App/Island/IslandWindow.xaml.cs`
-- Modify (ganti seluruh isi): `src/TopBar.App/Bar/BarViewModel.cs`, `src/TopBar.App/Bar/BarWindow.xaml.cs`
-- Modify: `src/TopBar.App/Bar/BarWindow.xaml`, `src/TopBar.App/App.xaml.cs`
+- Create: `src/Gili.App/Controls/VisibleWhenFalse.cs`, `src/Gili.App/Island/IslandWindow.xaml`, `src/Gili.App/Island/IslandWindow.xaml.cs`
+- Modify (ganti seluruh isi): `src/Gili.App/Bar/BarViewModel.cs`, `src/Gili.App/Bar/BarWindow.xaml.cs`
+- Modify: `src/Gili.App/Bar/BarWindow.xaml`, `src/Gili.App/App.xaml.cs`
 
 **Interfaces:**
 - Consumes: Task 1–8.
@@ -2431,14 +2431,14 @@ git commit -m "feat(app): island controller, media service with VLC fallback and
 
 - [ ] **Step 1: Konverter visibilitas terbalik**
 
-`src/TopBar.App/Controls/VisibleWhenFalse.cs`:
+`src/Gili.App/Controls/VisibleWhenFalse.cs`:
 
 ```csharp
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace TopBar.App.Controls;
+namespace Gili.App.Controls;
 
 /// <summary>The inverse of BooleanToVisibilityConverter: visible when the value is false.</summary>
 public sealed class VisibleWhenFalse : IValueConverter
@@ -2453,14 +2453,14 @@ public sealed class VisibleWhenFalse : IValueConverter
 
 - [ ] **Step 2: `IslandWindow.xaml`**
 
-`src/TopBar.App/Island/IslandWindow.xaml`:
+`src/Gili.App/Island/IslandWindow.xaml`:
 
 ```xml
-<Window x:Class="TopBar.App.Island.IslandWindow"
+<Window x:Class="Gili.App.Island.IslandWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="clr-namespace:TopBar.App.Controls"
-        Title="TopBar Island" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        xmlns:c="clr-namespace:Gili.App.Controls"
+        Title="Gili Island" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True" UseLayoutRounding="True"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
     <Window.Resources>
@@ -2573,7 +2573,7 @@ public sealed class VisibleWhenFalse : IValueConverter
 
 - [ ] **Step 3: `IslandWindow.xaml.cs`**
 
-`src/TopBar.App/Island/IslandWindow.xaml.cs`:
+`src/Gili.App/Island/IslandWindow.xaml.cs`:
 
 ```csharp
 using System.Windows;
@@ -2583,11 +2583,11 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
-using TopBar.Core.Island;
-using TopBar.Core.Motion;
-using TopBar.Platform.Shell;
+using Gili.Core.Island;
+using Gili.Core.Motion;
+using Gili.Platform.Shell;
 
-namespace TopBar.App.Island;
+namespace Gili.App.Island;
 
 /// <summary>
 /// The island's own transparent topmost window (PRD 9.1), owned by the bar so it always stays above it. The window is
@@ -2903,16 +2903,16 @@ public partial class IslandWindow : Window
 
 - [ ] **Step 4: `BarViewModel` tanpa jam dan pulau**
 
-Ganti seluruh isi `src/TopBar.App/Bar/BarViewModel.cs`:
+Ganti seluruh isi `src/Gili.App/Bar/BarViewModel.cs`:
 
 ```csharp
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using TopBar.Core.Formatting;
-using TopBar.Core.Layout;
-using TopBar.Core.Settings;
+using Gili.Core.Formatting;
+using Gili.Core.Layout;
+using Gili.Core.Settings;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public sealed partial class BarViewModel : ObservableObject
 {
@@ -2954,7 +2954,7 @@ public sealed partial class BarViewModel : ObservableObject
 
 - [ ] **Step 5: `BarWindow.xaml`: latar terpisah, tengah kosong**
 
-Di `src/TopBar.App/Bar/BarWindow.xaml`, ganti bagian mulai `<Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">` sampai dan termasuk baris `<StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">` (menu klik kanan, definisi kolom, dan `Border` pulau beserta jamnya) dengan:
+Di `src/Gili.App/Bar/BarWindow.xaml`, ganti bagian mulai `<Border Background="{Binding Tint}" BorderBrush="#0FFFFFFF" BorderThickness="0,0,0,1">` sampai dan termasuk baris `<StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">` (menu klik kanan, definisi kolom, dan `Border` pulau beserta jamnya) dengan:
 
 ```xml
     <Grid>
@@ -2996,7 +2996,7 @@ dengan:
 
 - [ ] **Step 6: `BarWindow.xaml.cs`**
 
-Ganti seluruh isi `src/TopBar.App/Bar/BarWindow.xaml.cs`:
+Ganti seluruh isi `src/Gili.App/Bar/BarWindow.xaml.cs`:
 
 ```csharp
 using System.ComponentModel;
@@ -3008,12 +3008,12 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
-using TopBar.Core.Island;
-using TopBar.Core.Settings;
-using TopBar.Platform.Interop;
-using TopBar.Platform.Shell;
+using Gili.Core.Island;
+using Gili.Core.Settings;
+using Gili.Platform.Interop;
+using Gili.Platform.Shell;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public partial class BarWindow : Window
 {
@@ -3215,8 +3215,8 @@ public partial class BarWindow : Window
 
 - [ ] **Step 7: Rakit di `App.xaml.cs`**
 
-Di `src/TopBar.App/App.xaml.cs`:
-- tambahkan `using TopBar.App.Island;` di bawah `using TopBar.App.Bar;`;
+Di `src/Gili.App/App.xaml.cs`:
+- tambahkan `using Gili.App.Island;` di bawah `using Gili.App.Bar;`;
 - tambahkan field di bawah `private StatsService? _stats;`:
 
 ```csharp
@@ -3271,12 +3271,12 @@ dengan
 
 - [ ] **Step 8: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 9: Periksa di laptop**
 
-`dotnet run --project src/TopBar.App`, lalu:
+`dotnet run --project src/Gili.App`, lalu:
 1. Pulau compact tampil seperti di 1a (jam + tanggal, minimal 200 px) dan bar tetap memesan ruang 32 px. Tepi atas bar tidak lagi punya pulau sendiri di bawah pulau baru.
 2. Hover pulau → melebar 16 px dengan pegas; mouse pergi → kembali.
 3. Putar musik di Spotify atau YouTube Music → slot: bar level + `Judul – Artis` + tombol pause; tombol menghentikan dan melanjutkan musik tanpa membuka pulau. Pause → slot bertahan 2 menit lalu jam kembali.
@@ -3290,7 +3290,7 @@ Expected: Build succeeded, semua test PASS.
 - [ ] **Step 10: Commit**
 
 ```bash
-git add src/TopBar.App
+git add src/Gili.App
 git commit -m "feat(app): island window with springs, compact and wide content, bubble, and bar backdrop fade (F-ISL-01, F-ISL-02, F-ISL-04..06)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -3299,7 +3299,7 @@ git commit -m "feat(app): island window with springs, compact and wide content, 
 ### Task 10: Pulau terbuka: menu tab, halaman, baris jam, navigasi
 
 **Files:**
-- Modify: `src/TopBar.App/Island/IslandWindow.xaml`, `src/TopBar.App/Island/IslandWindow.xaml.cs`
+- Modify: `src/Gili.App/Island/IslandWindow.xaml`, `src/Gili.App/Island/IslandWindow.xaml.cs`
 
 **Interfaces:**
 - Consumes: `IslandViewModel.Tabs`, `SelectedTab`, `MusicPlaying`, `Time`, `Date` (Task 8); `IslandController.Open` (Task 8); `IconView`, `LevelMeter` (Task 7); `WindowMessages.WM_MOUSEHWHEEL` (Task 6).
@@ -3307,7 +3307,7 @@ git commit -m "feat(app): island window with springs, compact and wide content, 
 
 - [ ] **Step 1: Gaya tombol tab dan baris jam**
 
-Di `src/TopBar.App/Island/IslandWindow.xaml`, tambahkan tepat sebelum `</Window.Resources>`:
+Di `src/Gili.App/Island/IslandWindow.xaml`, tambahkan tepat sebelum `</Window.Resources>`:
 
 ```xml
         <Style x:Key="TabButton" TargetType="Button">
@@ -3400,7 +3400,7 @@ dengan
 
 - [ ] **Step 3: Kode menu, halaman, dan navigasi**
 
-Di `src/TopBar.App/Island/IslandWindow.xaml.cs`:
+Di `src/Gili.App/Island/IslandWindow.xaml.cs`:
 
 1. Tambahkan using:
 
@@ -3408,8 +3408,8 @@ Di `src/TopBar.App/Island/IslandWindow.xaml.cs`:
 using System.ComponentModel;
 using System.Windows.Automation;
 using System.Windows.Controls;
-using TopBar.App.Controls;
-using TopBar.Platform.Interop;
+using Gili.App.Controls;
+using Gili.Platform.Interop;
 ```
 
    Karena `System.Windows.Controls` kini di-import, ganti setiap `System.Windows.Controls.Canvas.` di method `Apply` menjadi `Canvas.`.
@@ -3623,12 +3623,12 @@ using TopBar.Platform.Interop;
 
 - [ ] **Step 4: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 5: Periksa di laptop**
 
-`dotnet run --project src/TopBar.App`, klik pulau, lalu:
+`dotnet run --project src/Gili.App`, klik pulau, lalu:
 1. Menu kapsul selebar pulau berisi 8 tab (Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, System) dengan ikon + nama; tab Media aktif: sorotan abu-abu, teks putih semibold, ikon hijau. Di bawah tengah ada `19:38 Mon 26 Oct`.
 2. Klik tab Notes → sorotan bergeser 320 ms dan halaman bergeser 300 ms → `Notes` / `Coming in Phase 2`. Hover tab lain → teksnya memutih.
 3. ← dan → berpindah halaman; berhenti di ujung. Roda mouse di area halaman dan swipe horizontal touchpad juga berpindah halaman, satu halaman per gerakan.
@@ -3640,7 +3640,7 @@ Expected: Build succeeded, semua test PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/TopBar.App/Island
+git add src/Gili.App/Island
 git commit -m "feat(app): expanded island menu, sliding pages, clock line and page navigation (F-ISL-07)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -3649,8 +3649,8 @@ git commit -m "feat(app): expanded island menu, sliding pages, clock line and pa
 ### Task 11: Halaman Media
 
 **Files:**
-- Create: `src/TopBar.App/Island/MediaPage.xaml`, `src/TopBar.App/Island/MediaPage.xaml.cs`
-- Modify: `src/TopBar.App/Island/IslandWindow.xaml.cs` (`CreatePage`)
+- Create: `src/Gili.App/Island/MediaPage.xaml`, `src/Gili.App/Island/MediaPage.xaml.cs`
+- Modify: `src/Gili.App/Island/IslandWindow.xaml.cs` (`CreatePage`)
 
 **Interfaces:**
 - Consumes: properti media `IslandViewModel` (Task 8, mewarisi `DataContext` dari `IslandWindow`); `MediaService` (Task 8).
@@ -3658,13 +3658,13 @@ git commit -m "feat(app): expanded island menu, sliding pages, clock line and pa
 
 - [ ] **Step 1: `MediaPage.xaml`**
 
-`src/TopBar.App/Island/MediaPage.xaml`:
+`src/Gili.App/Island/MediaPage.xaml`:
 
 ```xml
-<UserControl x:Class="TopBar.App.Island.MediaPage"
+<UserControl x:Class="Gili.App.Island.MediaPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:c="clr-namespace:TopBar.App.Controls">
+             xmlns:c="clr-namespace:Gili.App.Controls">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleWhen" />
         <c:VisibleWhenFalse x:Key="VisibleWhenFalse" />
@@ -3809,14 +3809,14 @@ git commit -m "feat(app): expanded island menu, sliding pages, clock line and pa
 
 - [ ] **Step 2: `MediaPage.xaml.cs`**
 
-`src/TopBar.App/Island/MediaPage.xaml.cs`:
+`src/Gili.App/Island/MediaPage.xaml.cs`:
 
 ```csharp
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace TopBar.App.Island;
+namespace Gili.App.Island;
 
 public partial class MediaPage : UserControl
 {
@@ -3848,7 +3848,7 @@ public partial class MediaPage : UserControl
 
 - [ ] **Step 3: Pakai halaman Media**
 
-Di `src/TopBar.App/Island/IslandWindow.xaml.cs`, ganti
+Di `src/Gili.App/Island/IslandWindow.xaml.cs`, ganti
 
 ```csharp
     private FrameworkElement CreatePage(IslandTab tab) => Placeholder(tab);
@@ -3863,12 +3863,12 @@ dengan
 
 - [ ] **Step 4: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 5: Periksa di laptop**
 
-`dotnet run --project src/TopBar.App`, lalu:
+`dotnet run --project src/Gili.App`, lalu:
 1. Spotify memutar lagu → buka pulau → halaman Media: cover, `● Spotify`, judul 22 px tebal, artis, progres dengan waktu berjalan dan durasi, tombol ⏮ ⏯ ⏭ (tombol tengah putih).
 2. ⏯ menghentikan/melanjutkan; ⏭ ganti lagu → judul dan cover di slot dan halaman berganti ≤ 1 detik (F-ISL-04).
 3. Klik di tengah garis progres → lagu loncat ke sekitar pertengahan.
@@ -3879,7 +3879,7 @@ Expected: Build succeeded, semua test PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/TopBar.App/Island
+git add src/Gili.App/Island
 git commit -m "feat(app): media page with cover, controls and seek; video layout (F-ISL-04, F-ISL-05, F-ISL-07)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -3904,7 +3904,7 @@ Di bagian "Arsitektur" `CLAUDE.md`, tambahkan setelah butir **Dua jendela, bukan
 Di PRD 6.3, di bawah daftar "Urutan prioritas aktivitas", tambahkan butir:
 
 ```markdown
-- Media yang di-pause tetap memegang slot selama 2 menit setelah sebelumnya diputar, lalu jam kembali; session yang ditemukan dalam keadaan pause saat TopBar mulai tidak memegang slot.
+- Media yang di-pause tetap memegang slot selama 2 menit setelah sebelumnya diputar, lalu jam kembali; session yang ditemukan dalam keadaan pause saat Gili mulai tidak memegang slot.
 ```
 
 Di PRD 6.3 bagian "Halaman expanded", di bawah tabel halaman, tambahkan:
@@ -3918,20 +3918,20 @@ Tab untuk halaman yang belum dibangun tetap tampil dengan isi `Coming in Phase 2
 Run:
 
 ```bash
-dotnet build TopBar.slnx -c Release
-dotnet test tests/TopBar.Core.Tests
-dotnet format TopBar.slnx --verify-no-changes
+dotnet build Gili.slnx -c Release
+dotnet test tests/Gili.Core.Tests
+dotnet format Gili.slnx --verify-no-changes
 ```
 
-Expected: build sukses, semua test PASS, format tanpa perubahan (kalau ada, jalankan `dotnet format TopBar.slnx` lalu sertakan di commit).
+Expected: build sukses, semua test PASS, format tanpa perubahan (kalau ada, jalankan `dotnet format Gili.slnx` lalu sertakan di commit).
 
-Lalu dengan `dotnet run --project src/TopBar.App` (tanpa memasang ke Programs), jalankan checklist Fase 1b dari PRD 13:
+Lalu dengan `dotnet run --project src/Gili.App` (tanpa memasang ke Programs), jalankan checklist Fase 1b dari PRD 13:
 - Spotify dan YouTube di Chrome/Edge; video di Media Player dan VLC; tombol kontrol dan seek.
 - Colok/cabut charger; musik + ngecas bersamaan (gelembung).
 - Pulau terbuka/tertutup lewat klik, Esc, klik di luar, mouse pergi 3 detik; transisi bisa disela (klik pulau lalu Esc sebelum animasi selesai → menyusut dari ukuran saat itu).
 - Video fullscreen (YouTube, game); DPI 100/125/150%; lebar 1366 px (panel 680 px muat, modul kanan yang tertimpa memudar).
 - Animation effects mati; Transparency effects mati saat pulau terbuka.
-- Task Manager setelah 10 menit musik diputar: TopBar CPU < 5% saat animasi bar level, < 1% saat diam tanpa musik; RAM < 120 MB.
+- Task Manager setelah 10 menit musik diputar: Gili CPU < 5% saat animasi bar level, < 1% saat diam tanpa musik; RAM < 120 MB.
 
 - [ ] **Step 4: Commit**
 

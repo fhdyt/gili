@@ -4,17 +4,19 @@
 
 **Goal:** Bar kaca 32 px di tepi atas monitor utama yang memesan ruang AppBar, menampilkan jam + tanggal di pulau compact dan CPU/RAM/jaringan bergaya dua baris di kanan, dengan Settings untuk tampilan dan autostart, dan pulih sendiri dari crash.
 
-**Architecture:** Logika yang bisa dites (format jam dan angka, aturan settings, backoff provider, kebijakan crash) ada di `TopBar.Core` tanpa WPF/Win32 dan dites dengan xUnit. `TopBar.Data` menyimpan `settings.json`. `TopBar.Platform` membungkus Win32/WinRT (AppBar, kaca, transparansi, autostart, sampler CPU/RAM/jaringan). `TopBar.App` (WPF) menyusun semuanya: `BarWindow` + ViewModel, `SettingsWindow`, satu instance, dan penanganan crash.
+**Architecture:** Logika yang bisa dites (format jam dan angka, aturan settings, backoff provider, kebijakan crash) ada di `Gili.Core` tanpa WPF/Win32 dan dites dengan xUnit. `Gili.Data` menyimpan `settings.json`. `Gili.Platform` membungkus Win32/WinRT (AppBar, kaca, transparansi, autostart, sampler CPU/RAM/jaringan). `Gili.App` (WPF) menyusun semuanya: `BarWindow` + ViewModel, `SettingsWindow`, satu instance, dan penanganan crash.
 
 **Tech Stack:** .NET 10 (`net10.0`, `net10.0-windows10.0.19041.0`), C# WPF, CommunityToolkit.Mvvm, System.Diagnostics.PerformanceCounter, xUnit.
 
 **Spec:** [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](../specs/2026-10-25-top-taskbar-prd.md)
 
+**Nama:** rencana ini ditulis dan dieksekusi dengan nama lama `TopBar`. Setelah eksekusi, semua rujukan di sini diganti ke **Gili** agar cocok dengan kode; commit 1a di riwayat git masih memakai path `src/TopBar.*`.
+
 ## Global Constraints
 
 - Semua teks UI bahasa Inggris, persis seperti di PRD. Format angka dan tanggal selalu `en-US`/invariant, tidak pernah mengikuti locale Windows (misalnya `2.1 MB/s`, bukan `2,1 MB/s`).
-- `TopBar.Core` tidak boleh mereferensikan WPF, WinRT, atau P/Invoke.
-- App jalan tanpa hak admin. Data di `%LOCALAPPDATA%\TopBar\` (`settings.json`, `logs\`).
+- `Gili.Core` tidak boleh mereferensikan WPF, WinRT, atau P/Invoke.
+- App jalan tanpa hak admin. Data di `%LOCALAPPDATA%\Gili\` (`settings.json`, `logs\`).
 - Bar: tint `#161618`, opacity default 78% (40–100), kaca Off/Light/Strong (default Strong), garis bawah putih 6%. Tinggi bar 28–44 px (default 32). Tinggi pulau 20 px sampai tinggi bar − 4 (default 24).
 - Pulau: `#000000`, lebar minimal 200 px, radius = setengah tinggi pulau, ukuran teks = setengah tinggi pulau dibatasi 11–15 px. Jam semibold `#F5F5F7`, tanggal regular `#8E8E93`, jarak 6 px.
 - Modul kanan dua baris: label 8.5 px semibold kapital `#9A9AA0` di atas nilai 11.5 px semibold. Jaringan dua baris 9.5 px `#D1D1D6`, lebar minimal 58 px. Tinggi area klik = tinggi bar − 6 (minimal 24). Padding 0 6 px, radius 6, hover putih 8%, jarak antarmodul 12 px.
@@ -23,7 +25,7 @@
 
 ## Catatan eksekusi (26 Okt 2026)
 
-- Task 8: `taskkill` tanpa `/F` ternyata juga mengirim `WM_CLOSE` ke jendela tersembunyi WPF ("Hidden Window", "SystemResourceNotifyWindow", …), sehingga proses bisa tetap hidup tanpa bar. Sebagai gantinya ditambahkan `TopBar.exe --quit`: `SingleInstance.Acquire(wait, onActivateRequest, onQuitRequest)` mendengarkan named event `Local\TopBar.Quit`, dan `SingleInstance.RequestQuit()` memicunya. `App.OnStartup` menangani `--quit` sebelum hal lain. Skrip di Task 11 dan CLAUDE.md memakai `--quit`, bukan `taskkill`.
+- Task 8: `taskkill` tanpa `/F` ternyata juga mengirim `WM_CLOSE` ke jendela tersembunyi WPF ("Hidden Window", "SystemResourceNotifyWindow", …), sehingga proses bisa tetap hidup tanpa bar. Sebagai gantinya ditambahkan `Gili.exe --quit`: `SingleInstance.Acquire(wait, onActivateRequest, onQuitRequest)` mendengarkan named event `Local\Gili.Quit`, dan `SingleInstance.RequestQuit()` memicunya. `App.OnStartup` menangani `--quit` sebelum hal lain. Skrip di Task 11 dan CLAUDE.md memakai `--quit`, bukan `taskkill`.
 - Task 8: kaca lewat accent policy terbukti blur di jendela yang tidak aktif (Strong dan Light), jadi baris "Material bar" di PRD 9.2 sudah diperbarui.
 
 ## Di luar rencana ini (Fase 1 lanjutan)
@@ -35,27 +37,27 @@
 ## Struktur file
 
 ```
-TopBar.slnx
+Gili.slnx
 Directory.Build.props
 scripts/publish.ps1
-src/TopBar.Core/
+src/Gili.Core/
   AppPaths.cs
   Formatting/ClockText.cs, StatText.cs
   Settings/AppSettings.cs, BarAppearance.cs
   Layout/BarMetrics.cs
   Modules/ModuleSampler.cs, Readings.cs
   Diagnostics/FileLog.cs, CrashPolicy.cs
-src/TopBar.Data/
+src/Gili.Data/
   SettingsStore.cs
-src/TopBar.Platform/
+src/Gili.Platform/
   Interop/Win32.cs, WindowMessages.cs
   Shell/AppBarService.cs, BarMaterial.cs, TransparencyWatcher.cs, Autostart.cs, WindowStyles.cs
   Stats/CpuSampler.cs, MemorySampler.cs, NetworkSampler.cs
-src/TopBar.App/
+src/Gili.App/
   App.xaml(.cs), app.manifest, SingleInstance.cs, CrashHandler.cs, SettingsHub.cs
   Bar/BarWindow.xaml(.cs), BarViewModel.cs, StatsService.cs
   Settings/SettingsWindow.xaml(.cs), SettingsViewModel.cs
-tests/TopBar.Core.Tests/
+tests/Gili.Core.Tests/
   Formatting/, Settings/, Layout/, Modules/, Diagnostics/, Data/, AppPathsTests.cs
 ```
 
@@ -66,29 +68,29 @@ Pesan commit diakhiri dengan trailer `Co-Authored-By: Claude Opus 5.5 <noreply@a
 ### Task 1: Solusi, proyek Core + test, dan teks jam
 
 **Files:**
-- Create: `TopBar.slnx`, `Directory.Build.props`, `.gitignore`
-- Create: `src/TopBar.Core/TopBar.Core.csproj`, `src/TopBar.Core/Formatting/ClockText.cs`
-- Create: `tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj`, `tests/TopBar.Core.Tests/Formatting/ClockTextTests.cs`
+- Create: `Gili.slnx`, `Directory.Build.props`, `.gitignore`
+- Create: `src/Gili.Core/Gili.Core.csproj`, `src/Gili.Core/Formatting/ClockText.cs`
+- Create: `tests/Gili.Core.Tests/Gili.Core.Tests.csproj`, `tests/Gili.Core.Tests/Formatting/ClockTextTests.cs`
 
 **Interfaces:**
-- Produces: `TopBar.Core.Formatting.ClockText` dengan `static string Time(DateTime local, bool use24Hour)`, `static string Date(DateTime local)`, `static TimeSpan UntilNextMinute(DateTime now)`.
+- Produces: `Gili.Core.Formatting.ClockText` dengan `static string Time(DateTime local, bool use24Hour)`, `static string Date(DateTime local)`, `static TimeSpan UntilNextMinute(DateTime now)`.
 
 - [ ] **Step 1: Buat solusi dan proyek**
 
 ```bash
-dotnet new sln -n TopBar --format slnx
+dotnet new sln -n Gili --format slnx
 dotnet new gitignore
-dotnet new classlib -n TopBar.Core -o src/TopBar.Core -f net10.0
-dotnet new xunit -n TopBar.Core.Tests -o tests/TopBar.Core.Tests -f net10.0
-rm src/TopBar.Core/Class1.cs tests/TopBar.Core.Tests/UnitTest1.cs
-dotnet sln TopBar.slnx add src/TopBar.Core/TopBar.Core.csproj tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj
-dotnet add tests/TopBar.Core.Tests reference src/TopBar.Core
+dotnet new classlib -n Gili.Core -o src/Gili.Core -f net10.0
+dotnet new xunit -n Gili.Core.Tests -o tests/Gili.Core.Tests -f net10.0
+rm src/Gili.Core/Class1.cs tests/Gili.Core.Tests/UnitTest1.cs
+dotnet sln Gili.slnx add src/Gili.Core/Gili.Core.csproj tests/Gili.Core.Tests/Gili.Core.Tests.csproj
+dotnet add tests/Gili.Core.Tests reference src/Gili.Core
 echo ".claude/settings.local.json" >> .gitignore
 ```
 
-Pastikan `tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj` berisi `<Using Include="Xunit" />`; kalau tidak ada, tambahkan dalam `<ItemGroup>`.
+Pastikan `tests/Gili.Core.Tests/Gili.Core.Tests.csproj` berisi `<Using Include="Xunit" />`; kalau tidak ada, tambahkan dalam `<ItemGroup>`.
 
-- [ ] **Step 2: Tulis `Directory.Build.props` dan ganti isi `TopBar.Core.csproj`**
+- [ ] **Step 2: Tulis `Directory.Build.props` dan ganti isi `Gili.Core.csproj`**
 
 `Directory.Build.props`:
 
@@ -102,7 +104,7 @@ Pastikan `tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj` berisi `<Using Inclu
 </Project>
 ```
 
-`src/TopBar.Core/TopBar.Core.csproj`:
+`src/Gili.Core/Gili.Core.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -114,12 +116,12 @@ Pastikan `tests/TopBar.Core.Tests/TopBar.Core.Tests.csproj` berisi `<Using Inclu
 
 - [ ] **Step 3: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Formatting/ClockTextTests.cs`:
+`tests/Gili.Core.Tests/Formatting/ClockTextTests.cs`:
 
 ```csharp
-using TopBar.Core.Formatting;
+using Gili.Core.Formatting;
 
-namespace TopBar.Core.Tests.Formatting;
+namespace Gili.Core.Tests.Formatting;
 
 public class ClockTextTests
 {
@@ -159,17 +161,17 @@ public class ClockTextTests
 
 - [ ] **Step 4: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~ClockTextTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~ClockTextTests"`
 Expected: build gagal, `The name 'ClockText' does not exist`.
 
 - [ ] **Step 5: Implementasi**
 
-`src/TopBar.Core/Formatting/ClockText.cs`:
+`src/Gili.Core/Formatting/ClockText.cs`:
 
 ```csharp
 using System.Globalization;
 
-namespace TopBar.Core.Formatting;
+namespace Gili.Core.Formatting;
 
 /// <summary>Clock and date as the compact island shows them: "19:38" / "7:38 PM" and "Mon 26 Oct" (PRD 6.3).</summary>
 public static class ClockText
@@ -192,13 +194,13 @@ public static class ClockText
 
 - [ ] **Step 6: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~ClockTextTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~ClockTextTests"`
 Expected: PASS, 8 test.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add TopBar.slnx Directory.Build.props .gitignore src/TopBar.Core tests/TopBar.Core.Tests
+git add Gili.slnx Directory.Build.props .gitignore src/Gili.Core tests/Gili.Core.Tests
 git commit -m "feat(core): solution scaffold and clock text (F-ISL-01)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -207,24 +209,24 @@ git commit -m "feat(core): solution scaffold and clock text (F-ISL-01)" -m "Co-A
 ### Task 2: Settings, tampilan bar, ukuran, dan path
 
 **Files:**
-- Create: `src/TopBar.Core/Settings/AppSettings.cs`, `src/TopBar.Core/Settings/BarAppearance.cs`, `src/TopBar.Core/Layout/BarMetrics.cs`, `src/TopBar.Core/AppPaths.cs`
-- Test: `tests/TopBar.Core.Tests/Settings/AppSettingsTests.cs`, `tests/TopBar.Core.Tests/Settings/BarAppearanceTests.cs`, `tests/TopBar.Core.Tests/Layout/BarMetricsTests.cs`, `tests/TopBar.Core.Tests/AppPathsTests.cs`
+- Create: `src/Gili.Core/Settings/AppSettings.cs`, `src/Gili.Core/Settings/BarAppearance.cs`, `src/Gili.Core/Layout/BarMetrics.cs`, `src/Gili.Core/AppPaths.cs`
+- Test: `tests/Gili.Core.Tests/Settings/AppSettingsTests.cs`, `tests/Gili.Core.Tests/Settings/BarAppearanceTests.cs`, `tests/Gili.Core.Tests/Layout/BarMetricsTests.cs`, `tests/Gili.Core.Tests/AppPathsTests.cs`
 
 **Interfaces:**
 - Produces:
-  - `enum GlassLevel { Off, Light, Strong }` dan `sealed record AppSettings` (init properties `bool Use24HourClock = true`, `int BarOpacity = 78`, `GlassLevel Glass = Strong`, `int BarHeight = 32`, `int IslandHeight = 24`, `bool Autostart = true`), `AppSettings Normalize()`, `static int MaxIslandHeight(int barHeight)`. Namespace `TopBar.Core.Settings`.
+  - `enum GlassLevel { Off, Light, Strong }` dan `sealed record AppSettings` (init properties `bool Use24HourClock = true`, `int BarOpacity = 78`, `GlassLevel Glass = Strong`, `int BarHeight = 32`, `int IslandHeight = 24`, `bool Autostart = true`), `AppSettings Normalize()`, `static int MaxIslandHeight(int barHeight)`. Namespace `Gili.Core.Settings`.
   - `readonly record struct BarAppearance(GlassLevel Glass, double TintOpacity)` + `static BarAppearance Resolve(AppSettings settings, bool transparencyEffects)`.
-  - `TopBar.Core.Layout.BarMetrics`: `const double IslandMinWidth = 200`, `static double IslandFontSize(int islandHeight)`, `static double IslandCornerRadius(int islandHeight)`, `static double ModuleHitHeight(int barHeight)`.
-  - `TopBar.Core.AppPaths`: `Root`, `Logs`, `CrashMarker`, `InstallDirectory` (string), `static bool IsUnder(string path, string directory)`.
+  - `Gili.Core.Layout.BarMetrics`: `const double IslandMinWidth = 200`, `static double IslandFontSize(int islandHeight)`, `static double IslandCornerRadius(int islandHeight)`, `static double ModuleHitHeight(int barHeight)`.
+  - `Gili.Core.AppPaths`: `Root`, `Logs`, `CrashMarker`, `InstallDirectory` (string), `static bool IsUnder(string path, string directory)`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Settings/AppSettingsTests.cs`:
+`tests/Gili.Core.Tests/Settings/AppSettingsTests.cs`:
 
 ```csharp
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.Core.Tests.Settings;
+namespace Gili.Core.Tests.Settings;
 
 public class AppSettingsTests
 {
@@ -269,12 +271,12 @@ public class AppSettingsTests
 }
 ```
 
-`tests/TopBar.Core.Tests/Settings/BarAppearanceTests.cs`:
+`tests/Gili.Core.Tests/Settings/BarAppearanceTests.cs`:
 
 ```csharp
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.Core.Tests.Settings;
+namespace Gili.Core.Tests.Settings;
 
 public class BarAppearanceTests
 {
@@ -296,12 +298,12 @@ public class BarAppearanceTests
 }
 ```
 
-`tests/TopBar.Core.Tests/Layout/BarMetricsTests.cs`:
+`tests/Gili.Core.Tests/Layout/BarMetricsTests.cs`:
 
 ```csharp
-using TopBar.Core.Layout;
+using Gili.Core.Layout;
 
-namespace TopBar.Core.Tests.Layout;
+namespace Gili.Core.Tests.Layout;
 
 public class BarMetricsTests
 {
@@ -327,21 +329,21 @@ public class BarMetricsTests
 }
 ```
 
-`tests/TopBar.Core.Tests/AppPathsTests.cs`:
+`tests/Gili.Core.Tests/AppPathsTests.cs`:
 
 ```csharp
-namespace TopBar.Core.Tests;
+namespace Gili.Core.Tests;
 
 public class AppPathsTests
 {
-    private const string Install = @"C:\Users\a\AppData\Local\Programs\TopBar";
+    private const string Install = @"C:\Users\a\AppData\Local\Programs\Gili";
 
     [Theory]
-    [InlineData(@"C:\Users\a\AppData\Local\Programs\TopBar\TopBar.exe", Install, true)]
-    [InlineData(@"C:\Users\a\AppData\Local\Programs\TopBar\TopBar.exe", Install + @"\", true)]
-    [InlineData(@"c:\users\a\appdata\local\programs\topbar\TopBar.exe", Install, true)]
-    [InlineData(@"C:\Users\a\AppData\Local\Programs\TopBar2\TopBar.exe", Install, false)]
-    [InlineData(@"C:\src\top-taskbar\src\TopBar.App\bin\Debug\TopBar.exe", Install, false)]
+    [InlineData(@"C:\Users\a\AppData\Local\Programs\Gili\Gili.exe", Install, true)]
+    [InlineData(@"C:\Users\a\AppData\Local\Programs\Gili\Gili.exe", Install + @"\", true)]
+    [InlineData(@"c:\users\a\appdata\local\programs\gili\Gili.exe", Install, true)]
+    [InlineData(@"C:\Users\a\AppData\Local\Programs\Gili2\Gili.exe", Install, false)]
+    [InlineData(@"C:\src\top-taskbar\src\Gili.App\bin\Debug\Gili.exe", Install, false)]
     public void IsUnder_matches_whole_directory_names(string path, string directory, bool expected) =>
         Assert.Equal(expected, AppPaths.IsUnder(path, directory));
 }
@@ -349,15 +351,15 @@ public class AppPathsTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: build gagal, `AppSettings`, `BarAppearance`, `BarMetrics`, `AppPaths` tidak ditemukan.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Settings/AppSettings.cs`:
+`src/Gili.Core/Settings/AppSettings.cs`:
 
 ```csharp
-namespace TopBar.Core.Settings;
+namespace Gili.Core.Settings;
 
 public enum GlassLevel { Off, Light, Strong }
 
@@ -394,10 +396,10 @@ public sealed record AppSettings
 }
 ```
 
-`src/TopBar.Core/Settings/BarAppearance.cs`:
+`src/Gili.Core/Settings/BarAppearance.cs`:
 
 ```csharp
-namespace TopBar.Core.Settings;
+namespace Gili.Core.Settings;
 
 /// <summary>The material the bar actually draws: Windows' "Transparency effects" switch overrides the user's choice (F-BAR-06).</summary>
 public readonly record struct BarAppearance(GlassLevel Glass, double TintOpacity)
@@ -409,10 +411,10 @@ public readonly record struct BarAppearance(GlassLevel Glass, double TintOpacity
 }
 ```
 
-`src/TopBar.Core/Layout/BarMetrics.cs`:
+`src/Gili.Core/Layout/BarMetrics.cs`:
 
 ```csharp
-namespace TopBar.Core.Layout;
+namespace Gili.Core.Layout;
 
 /// <summary>Sizes derived from the bar and island heights (PRD 6.1, 6.4, 8.3).</summary>
 public static class BarMetrics
@@ -427,19 +429,19 @@ public static class BarMetrics
 }
 ```
 
-`src/TopBar.Core/AppPaths.cs`:
+`src/Gili.Core/AppPaths.cs`:
 
 ```csharp
-namespace TopBar.Core;
+namespace Gili.Core;
 
 public static class AppPaths
 {
     private static readonly string LocalAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-    public static string Root { get; } = Path.Combine(LocalAppData, "TopBar");
+    public static string Root { get; } = Path.Combine(LocalAppData, "Gili");
     public static string Logs { get; } = Path.Combine(Root, "logs");
     public static string CrashMarker { get; } = Path.Combine(Root, "last-crash.txt");
-    public static string InstallDirectory { get; } = Path.Combine(LocalAppData, "Programs", "TopBar");
+    public static string InstallDirectory { get; } = Path.Combine(LocalAppData, "Programs", "Gili");
 
     public static bool IsUnder(string path, string directory)
     {
@@ -451,13 +453,13 @@ public static class AppPaths
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: PASS semua.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core tests/TopBar.Core.Tests
+git add src/Gili.Core tests/Gili.Core.Tests
 git commit -m "feat(core): settings model, bar appearance and metrics (F-BAR-06, F-BAR-08)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -466,38 +468,38 @@ git commit -m "feat(core): settings model, bar appearance and metrics (F-BAR-06,
 ### Task 3: `SettingsStore` di proyek Data
 
 **Files:**
-- Create: `src/TopBar.Data/TopBar.Data.csproj`, `src/TopBar.Data/SettingsStore.cs`
-- Test: `tests/TopBar.Core.Tests/Data/SettingsStoreTests.cs`
+- Create: `src/Gili.Data/Gili.Data.csproj`, `src/Gili.Data/SettingsStore.cs`
+- Test: `tests/Gili.Core.Tests/Data/SettingsStoreTests.cs`
 
 **Interfaces:**
 - Consumes: `AppSettings`, `GlassLevel` (Task 2).
-- Produces: `TopBar.Data.SettingsStore(string directory)` dengan `string FilePath`, `SettingsLoadResult Load()`, `void Save(AppSettings settings)`; `sealed record SettingsLoadResult(AppSettings Settings, bool WasCorrupt)`.
+- Produces: `Gili.Data.SettingsStore(string directory)` dengan `string FilePath`, `SettingsLoadResult Load()`, `void Save(AppSettings settings)`; `sealed record SettingsLoadResult(AppSettings Settings, bool WasCorrupt)`.
 
 - [ ] **Step 1: Buat proyek**
 
 ```bash
-dotnet new classlib -n TopBar.Data -o src/TopBar.Data -f net10.0
-rm src/TopBar.Data/Class1.cs
-dotnet sln TopBar.slnx add src/TopBar.Data/TopBar.Data.csproj
-dotnet add src/TopBar.Data reference src/TopBar.Core
-dotnet add tests/TopBar.Core.Tests reference src/TopBar.Data
+dotnet new classlib -n Gili.Data -o src/Gili.Data -f net10.0
+rm src/Gili.Data/Class1.cs
+dotnet sln Gili.slnx add src/Gili.Data/Gili.Data.csproj
+dotnet add src/Gili.Data reference src/Gili.Core
+dotnet add tests/Gili.Core.Tests reference src/Gili.Data
 ```
 
-Hapus baris `<ImplicitUsings>` dan `<Nullable>` dari `src/TopBar.Data/TopBar.Data.csproj` (sudah ada di `Directory.Build.props`), sisakan `<TargetFramework>net10.0</TargetFramework>` dan referensi Core.
+Hapus baris `<ImplicitUsings>` dan `<Nullable>` dari `src/Gili.Data/Gili.Data.csproj` (sudah ada di `Directory.Build.props`), sisakan `<TargetFramework>net10.0</TargetFramework>` dan referensi Core.
 
 - [ ] **Step 2: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Data/SettingsStoreTests.cs`:
+`tests/Gili.Core.Tests/Data/SettingsStoreTests.cs`:
 
 ```csharp
-using TopBar.Core.Settings;
-using TopBar.Data;
+using Gili.Core.Settings;
+using Gili.Data;
 
-namespace TopBar.Core.Tests.Data;
+namespace Gili.Core.Tests.Data;
 
 public sealed class SettingsStoreTests : IDisposable
 {
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "topbar-tests", Guid.NewGuid().ToString("N"));
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "gili-tests", Guid.NewGuid().ToString("N"));
 
     private SettingsStore Store => new(_dir);
     private string SettingsFile => Path.Combine(_dir, "settings.json");
@@ -573,19 +575,19 @@ public sealed class SettingsStoreTests : IDisposable
 
 - [ ] **Step 3: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~SettingsStoreTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~SettingsStoreTests"`
 Expected: build gagal, `SettingsStore` tidak ditemukan.
 
 - [ ] **Step 4: Implementasi**
 
-`src/TopBar.Data/SettingsStore.cs`:
+`src/Gili.Data/SettingsStore.cs`:
 
 ```csharp
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.Data;
+namespace Gili.Data;
 
 public sealed record SettingsLoadResult(AppSettings Settings, bool WasCorrupt);
 
@@ -631,13 +633,13 @@ public sealed class SettingsStore(string directory)
 
 - [ ] **Step 5: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: PASS semua.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add TopBar.slnx src/TopBar.Data tests/TopBar.Core.Tests
+git add Gili.slnx src/Gili.Data tests/Gili.Core.Tests
 git commit -m "feat(data): settings.json store with corrupt-file fallback" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -645,25 +647,25 @@ git commit -m "feat(data): settings.json store with corrupt-file fallback" -m "C
 ### Task 4: Sampler modul dengan backoff, dan format angka
 
 **Files:**
-- Create: `src/TopBar.Core/Modules/ModuleSampler.cs`, `src/TopBar.Core/Modules/Readings.cs`, `src/TopBar.Core/Formatting/StatText.cs`
-- Test: `tests/TopBar.Core.Tests/Modules/ModuleSamplerTests.cs`, `tests/TopBar.Core.Tests/Formatting/StatTextTests.cs`
+- Create: `src/Gili.Core/Modules/ModuleSampler.cs`, `src/Gili.Core/Modules/Readings.cs`, `src/Gili.Core/Formatting/StatText.cs`
+- Test: `tests/Gili.Core.Tests/Modules/ModuleSamplerTests.cs`, `tests/Gili.Core.Tests/Formatting/StatTextTests.cs`
 
 **Interfaces:**
 - Produces:
   - `readonly record struct ModuleState<T>(T? Value, string? Error) where T : class`
   - `sealed class ModuleSampler<T>(Func<T> sample) where T : class` dengan `ModuleState<T> Tick(DateTimeOffset now)`
   - `static class RetryDelay` dengan `static TimeSpan After(int failures)`
-  - `sealed record CpuReading(double Percent)`, `sealed record MemoryReading(double Percent, ulong UsedBytes, ulong TotalBytes)`, `sealed record NetworkReading(double UpBytesPerSecond, double DownBytesPerSecond, string Adapters)`. Namespace `TopBar.Core.Modules`.
-  - `TopBar.Core.Formatting.StatText`: `static string Percent(double value)`, `static string Rate(double bytesPerSecond)`, `static string MemoryUsage(ulong usedBytes, ulong totalBytes)`.
+  - `sealed record CpuReading(double Percent)`, `sealed record MemoryReading(double Percent, ulong UsedBytes, ulong TotalBytes)`, `sealed record NetworkReading(double UpBytesPerSecond, double DownBytesPerSecond, string Adapters)`. Namespace `Gili.Core.Modules`.
+  - `Gili.Core.Formatting.StatText`: `static string Percent(double value)`, `static string Rate(double bytesPerSecond)`, `static string MemoryUsage(ulong usedBytes, ulong totalBytes)`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Modules/ModuleSamplerTests.cs`:
+`tests/Gili.Core.Tests/Modules/ModuleSamplerTests.cs`:
 
 ```csharp
-using TopBar.Core.Modules;
+using Gili.Core.Modules;
 
-namespace TopBar.Core.Tests.Modules;
+namespace Gili.Core.Tests.Modules;
 
 public class ModuleSamplerTests
 {
@@ -737,12 +739,12 @@ public class ModuleSamplerTests
 }
 ```
 
-`tests/TopBar.Core.Tests/Formatting/StatTextTests.cs`:
+`tests/Gili.Core.Tests/Formatting/StatTextTests.cs`:
 
 ```csharp
-using TopBar.Core.Formatting;
+using Gili.Core.Formatting;
 
-namespace TopBar.Core.Tests.Formatting;
+namespace Gili.Core.Tests.Formatting;
 
 public class StatTextTests
 {
@@ -781,15 +783,15 @@ public class StatTextTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~ModuleSamplerTests|FullyQualifiedName~StatTextTests"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~ModuleSamplerTests|FullyQualifiedName~StatTextTests"`
 Expected: build gagal, `ModuleSampler` dan `StatText` tidak ditemukan.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Modules/Readings.cs`:
+`src/Gili.Core/Modules/Readings.cs`:
 
 ```csharp
-namespace TopBar.Core.Modules;
+namespace Gili.Core.Modules;
 
 public sealed record CpuReading(double Percent);
 
@@ -799,10 +801,10 @@ public sealed record MemoryReading(double Percent, ulong UsedBytes, ulong TotalB
 public sealed record NetworkReading(double UpBytesPerSecond, double DownBytesPerSecond, string Adapters);
 ```
 
-`src/TopBar.Core/Modules/ModuleSampler.cs`:
+`src/Gili.Core/Modules/ModuleSampler.cs`:
 
 ```csharp
-namespace TopBar.Core.Modules;
+namespace Gili.Core.Modules;
 
 /// <summary>Latest reading of a bar module, or why there is none (the bar shows "—" with the reason as tooltip, PRD 11).</summary>
 public readonly record struct ModuleState<T>(T? Value, string? Error) where T : class;
@@ -847,12 +849,12 @@ public static class RetryDelay
 }
 ```
 
-`src/TopBar.Core/Formatting/StatText.cs`:
+`src/Gili.Core/Formatting/StatText.cs`:
 
 ```csharp
 using System.Globalization;
 
-namespace TopBar.Core.Formatting;
+namespace Gili.Core.Formatting;
 
 /// <summary>Numbers in the right-hand modules (PRD 6.4). Always invariant, never the Windows locale.</summary>
 public static class StatText
@@ -878,13 +880,13 @@ public static class StatText
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: PASS semua.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core tests/TopBar.Core.Tests
+git add src/Gili.Core tests/Gili.Core.Tests
 git commit -m "feat(core): module sampler with retry backoff and stat text (F-RIGHT-01)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -893,24 +895,24 @@ git commit -m "feat(core): module sampler with retry backoff and stat text (F-RI
 ### Task 5: Log harian dan kebijakan restart setelah crash
 
 **Files:**
-- Create: `src/TopBar.Core/Diagnostics/FileLog.cs`, `src/TopBar.Core/Diagnostics/CrashPolicy.cs`
-- Test: `tests/TopBar.Core.Tests/Diagnostics/FileLogTests.cs`, `tests/TopBar.Core.Tests/Diagnostics/CrashPolicyTests.cs`
+- Create: `src/Gili.Core/Diagnostics/FileLog.cs`, `src/Gili.Core/Diagnostics/CrashPolicy.cs`
+- Test: `tests/Gili.Core.Tests/Diagnostics/FileLogTests.cs`, `tests/Gili.Core.Tests/Diagnostics/CrashPolicyTests.cs`
 
 **Interfaces:**
-- Produces: `TopBar.Core.Diagnostics.FileLog(string directory)` dengan `void Write(string message, Exception? exception = null)` dan `void DeleteOlderThan(TimeSpan age, DateTime now)`; `static class CrashPolicy` dengan `static bool ShouldRestart(DateTimeOffset? previousCrash, DateTimeOffset now)`.
+- Produces: `Gili.Core.Diagnostics.FileLog(string directory)` dengan `void Write(string message, Exception? exception = null)` dan `void DeleteOlderThan(TimeSpan age, DateTime now)`; `static class CrashPolicy` dengan `static bool ShouldRestart(DateTimeOffset? previousCrash, DateTimeOffset now)`.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
-`tests/TopBar.Core.Tests/Diagnostics/FileLogTests.cs`:
+`tests/Gili.Core.Tests/Diagnostics/FileLogTests.cs`:
 
 ```csharp
-using TopBar.Core.Diagnostics;
+using Gili.Core.Diagnostics;
 
-namespace TopBar.Core.Tests.Diagnostics;
+namespace Gili.Core.Tests.Diagnostics;
 
 public sealed class FileLogTests : IDisposable
 {
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "topbar-tests", Guid.NewGuid().ToString("N"));
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "gili-tests", Guid.NewGuid().ToString("N"));
 
     public void Dispose()
     {
@@ -924,8 +926,8 @@ public sealed class FileLogTests : IDisposable
         log.Write("first");
         log.Write("second", new InvalidOperationException("boom"));
 
-        var file = Assert.Single(Directory.GetFiles(_dir, "topbar-*.log"));
-        Assert.Equal($"topbar-{DateTime.Now:yyyyMMdd}.log", Path.GetFileName(file));
+        var file = Assert.Single(Directory.GetFiles(_dir, "gili-*.log"));
+        Assert.Equal($"gili-{DateTime.Now:yyyyMMdd}.log", Path.GetFileName(file));
         var text = File.ReadAllText(file);
         Assert.Contains("first", text);
         Assert.Contains("second", text);
@@ -937,8 +939,8 @@ public sealed class FileLogTests : IDisposable
     {
         Directory.CreateDirectory(_dir);
         var now = new DateTime(2026, 10, 26, 12, 0, 0);
-        var old = Path.Combine(_dir, "topbar-20261001.log");
-        var recent = Path.Combine(_dir, "topbar-20261025.log");
+        var old = Path.Combine(_dir, "gili-20261001.log");
+        var recent = Path.Combine(_dir, "gili-20261025.log");
         var other = Path.Combine(_dir, "notes.txt");
         foreach (var f in new[] { old, recent, other }) File.WriteAllText(f, "x");
         File.SetLastWriteTime(old, now.AddDays(-8));
@@ -958,12 +960,12 @@ public sealed class FileLogTests : IDisposable
 }
 ```
 
-`tests/TopBar.Core.Tests/Diagnostics/CrashPolicyTests.cs`:
+`tests/Gili.Core.Tests/Diagnostics/CrashPolicyTests.cs`:
 
 ```csharp
-using TopBar.Core.Diagnostics;
+using Gili.Core.Diagnostics;
 
-namespace TopBar.Core.Tests.Diagnostics;
+namespace Gili.Core.Tests.Diagnostics;
 
 public class CrashPolicyTests
 {
@@ -984,19 +986,19 @@ public class CrashPolicyTests
 
 - [ ] **Step 2: Jalankan test, pastikan gagal**
 
-Run: `dotnet test tests/TopBar.Core.Tests --filter "FullyQualifiedName~Diagnostics"`
+Run: `dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~Diagnostics"`
 Expected: build gagal, `FileLog` dan `CrashPolicy` tidak ditemukan.
 
 - [ ] **Step 3: Implementasi**
 
-`src/TopBar.Core/Diagnostics/FileLog.cs`:
+`src/Gili.Core/Diagnostics/FileLog.cs`:
 
 ```csharp
 using System.Globalization;
 
-namespace TopBar.Core.Diagnostics;
+namespace Gili.Core.Diagnostics;
 
-/// <summary>Daily log files topbar-yyyyMMdd.log, kept for 7 days (PRD 11).</summary>
+/// <summary>Daily log files gili-yyyyMMdd.log, kept for 7 days (PRD 11).</summary>
 public sealed class FileLog(string directory)
 {
     private readonly Lock _gate = new();
@@ -1006,7 +1008,7 @@ public sealed class FileLog(string directory)
         var now = DateTime.Now;
         var entry = $"{now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} {message}{Environment.NewLine}";
         if (exception is not null) entry += exception + Environment.NewLine;
-        var file = Path.Combine(directory, $"topbar-{now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}.log");
+        var file = Path.Combine(directory, $"gili-{now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}.log");
         lock (_gate)
         {
             Directory.CreateDirectory(directory);
@@ -1017,7 +1019,7 @@ public sealed class FileLog(string directory)
     public void DeleteOlderThan(TimeSpan age, DateTime now)
     {
         if (!Directory.Exists(directory)) return;
-        foreach (var file in Directory.EnumerateFiles(directory, "topbar-*.log"))
+        foreach (var file in Directory.EnumerateFiles(directory, "gili-*.log"))
         {
             if (File.GetLastWriteTime(file) < now - age) File.Delete(file);
         }
@@ -1025,10 +1027,10 @@ public sealed class FileLog(string directory)
 }
 ```
 
-`src/TopBar.Core/Diagnostics/CrashPolicy.cs`:
+`src/Gili.Core/Diagnostics/CrashPolicy.cs`:
 
 ```csharp
-namespace TopBar.Core.Diagnostics;
+namespace Gili.Core.Diagnostics;
 
 /// <summary>PRD 11: restart once after a crash; a second crash within a minute stops the app.</summary>
 public static class CrashPolicy
@@ -1042,13 +1044,13 @@ public static class CrashPolicy
 
 - [ ] **Step 4: Jalankan test, pastikan lulus**
 
-Run: `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet test tests/Gili.Core.Tests`
 Expected: PASS semua.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/TopBar.Core tests/TopBar.Core.Tests
+git add src/Gili.Core tests/Gili.Core.Tests
 git commit -m "feat(core): daily file log and crash restart policy" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1059,31 +1061,31 @@ git commit -m "feat(core): daily file log and crash restart policy" -m "Co-Autho
 Kode di task ini memanggil Win32/WinRT dan tidak punya unit test. Pemeriksaannya ada di Task 8 dan Task 10, saat bar benar-benar jalan.
 
 **Files:**
-- Create: `src/TopBar.Platform/TopBar.Platform.csproj`
-- Create: `src/TopBar.Platform/Interop/Win32.cs`, `src/TopBar.Platform/Interop/WindowMessages.cs`
-- Create: `src/TopBar.Platform/Shell/AppBarService.cs`, `BarMaterial.cs`, `TransparencyWatcher.cs`, `Autostart.cs`, `WindowStyles.cs`
+- Create: `src/Gili.Platform/Gili.Platform.csproj`
+- Create: `src/Gili.Platform/Interop/Win32.cs`, `src/Gili.Platform/Interop/WindowMessages.cs`
+- Create: `src/Gili.Platform/Shell/AppBarService.cs`, `BarMaterial.cs`, `TransparencyWatcher.cs`, `Autostart.cs`, `WindowStyles.cs`
 
 **Interfaces:**
 - Consumes: `GlassLevel` (Task 2).
-- Produces (namespace `TopBar.Platform.Shell` kecuali disebut lain):
+- Produces (namespace `Gili.Platform.Shell` kecuali disebut lain):
   - `AppBarService(IntPtr hwnd)`: `event Action<bool>? FullscreenChanged`, `void Register(double heightDip)`, `void SetHeight(double heightDip)`, `void Reposition()`, `void Unregister()`, `bool HandleMessage(int msg, IntPtr wParam, IntPtr lParam)`.
   - `static BarMaterial.Apply(IntPtr hwnd, GlassLevel glass)`.
   - `TransparencyWatcher : IDisposable`: `bool Enabled`, `event Action<bool>? Changed` (dipanggil di thread latar).
   - `static Autostart.Apply(bool enabled, string exePath)`.
   - `static WindowStyles.MakeNonActivatingToolWindow(IntPtr hwnd)`.
-  - `TopBar.Platform.Interop.WindowMessages`: konstanta `WM_ACTIVATE`, `WM_TIMECHANGE`, `WM_WINDOWPOSCHANGED`, `WM_DISPLAYCHANGE`, `WM_POWERBROADCAST`, `WM_DPICHANGED` (`int`), `PBT_APMSUSPEND`, `PBT_APMRESUMEAUTOMATIC` (`nint`).
+  - `Gili.Platform.Interop.WindowMessages`: konstanta `WM_ACTIVATE`, `WM_TIMECHANGE`, `WM_WINDOWPOSCHANGED`, `WM_DISPLAYCHANGE`, `WM_POWERBROADCAST`, `WM_DPICHANGED` (`int`), `PBT_APMSUSPEND`, `PBT_APMRESUMEAUTOMATIC` (`nint`).
 
 Catatan desain: PRD 9.2 menyebut `DWMWA_SYSTEMBACKDROP_TYPE` untuk acrylic. Backdrop sistem itu berubah menjadi warna polos saat jendela tidak aktif, padahal bar tidak pernah aktif (`WS_EX_NOACTIVATE`). Karena itu kaca memakai `SetWindowCompositionAttribute` (accent policy), yang blurnya tetap ada di jendela tidak aktif. Kalau Task 8 membuktikannya, baris "Material bar" di PRD 9.2 diperbarui.
 
 - [ ] **Step 1: Buat proyek**
 
 ```bash
-dotnet new classlib -n TopBar.Platform -o src/TopBar.Platform -f net10.0
-rm src/TopBar.Platform/Class1.cs
-dotnet sln TopBar.slnx add src/TopBar.Platform/TopBar.Platform.csproj
+dotnet new classlib -n Gili.Platform -o src/Gili.Platform -f net10.0
+rm src/Gili.Platform/Class1.cs
+dotnet sln Gili.slnx add src/Gili.Platform/Gili.Platform.csproj
 ```
 
-Ganti isi `src/TopBar.Platform/TopBar.Platform.csproj`:
+Ganti isi `src/Gili.Platform/Gili.Platform.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1092,20 +1094,20 @@ Ganti isi `src/TopBar.Platform/TopBar.Platform.csproj`:
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TopBar.Core\TopBar.Core.csproj" />
+    <ProjectReference Include="..\Gili.Core\Gili.Core.csproj" />
   </ItemGroup>
 </Project>
 ```
 
 - [ ] **Step 2: Interop**
 
-`src/TopBar.Platform/Interop/Win32.cs`:
+`src/Gili.Platform/Interop/Win32.cs`:
 
 ```csharp
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace TopBar.Platform.Interop;
+namespace Gili.Platform.Interop;
 
 internal static class Win32
 {
@@ -1182,10 +1184,10 @@ internal static class Win32
 }
 ```
 
-`src/TopBar.Platform/Interop/WindowMessages.cs`:
+`src/Gili.Platform/Interop/WindowMessages.cs`:
 
 ```csharp
-namespace TopBar.Platform.Interop;
+namespace Gili.Platform.Interop;
 
 public static class WindowMessages
 {
@@ -1202,14 +1204,14 @@ public static class WindowMessages
 
 - [ ] **Step 3: `AppBarService`**
 
-`src/TopBar.Platform/Shell/AppBarService.cs`:
+`src/Gili.Platform/Shell/AppBarService.cs`:
 
 ```csharp
 using System.Runtime.InteropServices;
 using System.Text;
-using TopBar.Platform.Interop;
+using Gili.Platform.Interop;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 /// <summary>
 /// Reserves a strip at the top of the primary monitor so maximized windows start below the bar (F-BAR-01), and
@@ -1223,7 +1225,7 @@ public sealed class AppBarService(IntPtr hwnd)
     private const uint ABN_POSCHANGED = 0x1, ABN_FULLSCREENAPP = 0x2;
     private const uint ABE_TOP = 1;
 
-    private readonly uint _callbackMessage = Win32.RegisterWindowMessage("TopBar.AppBarNotify");
+    private readonly uint _callbackMessage = Win32.RegisterWindowMessage("Gili.AppBarNotify");
     private readonly uint _taskbarCreated = Win32.RegisterWindowMessage("TaskbarCreated");
     private readonly SynchronizationContext? _ui = SynchronizationContext.Current;
     private double _heightDip;
@@ -1357,13 +1359,13 @@ public sealed class AppBarService(IntPtr hwnd)
 
 - [ ] **Step 4: Kaca, transparansi, autostart, gaya jendela**
 
-`src/TopBar.Platform/Shell/BarMaterial.cs`:
+`src/Gili.Platform/Shell/BarMaterial.cs`:
 
 ```csharp
 using System.Runtime.InteropServices;
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 /// <summary>
 /// Glass behind the bar (F-BAR-06): Off draws only the WPF tint, Light is blur-behind, Strong is acrylic.
@@ -1426,12 +1428,12 @@ public static class BarMaterial
 }
 ```
 
-`src/TopBar.Platform/Shell/TransparencyWatcher.cs`:
+`src/Gili.Platform/Shell/TransparencyWatcher.cs`:
 
 ```csharp
 using Windows.UI.ViewManagement;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 /// <summary>Follows Windows' "Transparency effects" switch; when it is off the bar is drawn solid (F-BAR-06).</summary>
 public sealed class TransparencyWatcher : IDisposable
@@ -1451,18 +1453,18 @@ public sealed class TransparencyWatcher : IDisposable
 }
 ```
 
-`src/TopBar.Platform/Shell/Autostart.cs`:
+`src/Gili.Platform/Shell/Autostart.cs`:
 
 ```csharp
 using Microsoft.Win32;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 /// <summary>The start-with-Windows entry under HKCU\Software\Microsoft\Windows\CurrentVersion\Run (F-BAR-04).</summary>
 public static class Autostart
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "TopBar";
+    private const string ValueName = "Gili";
 
     public static void Apply(bool enabled, string exePath)
     {
@@ -1473,12 +1475,12 @@ public static class Autostart
 }
 ```
 
-`src/TopBar.Platform/Shell/WindowStyles.cs`:
+`src/Gili.Platform/Shell/WindowStyles.cs`:
 
 ```csharp
-using TopBar.Platform.Interop;
+using Gili.Platform.Interop;
 
-namespace TopBar.Platform.Shell;
+namespace Gili.Platform.Shell;
 
 public static class WindowStyles
 {
@@ -1493,13 +1495,13 @@ public static class WindowStyles
 
 - [ ] **Step 5: Build**
 
-Run: `dotnet build TopBar.slnx`
+Run: `dotnet build Gili.slnx`
 Expected: Build succeeded, 0 error.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add TopBar.slnx src/TopBar.Platform
+git add Gili.slnx src/Gili.Platform
 git commit -m "feat(platform): AppBar, glass material, transparency watcher and autostart (F-BAR-01..04, F-BAR-06)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1508,28 +1510,28 @@ git commit -m "feat(platform): AppBar, glass material, transparency watcher and 
 ### Task 7: Sampler CPU, RAM, dan jaringan
 
 **Files:**
-- Create: `src/TopBar.Platform/Stats/CpuSampler.cs`, `MemorySampler.cs`, `NetworkSampler.cs`
-- Modify: `src/TopBar.Platform/TopBar.Platform.csproj` (paket PerformanceCounter)
+- Create: `src/Gili.Platform/Stats/CpuSampler.cs`, `MemorySampler.cs`, `NetworkSampler.cs`
+- Modify: `src/Gili.Platform/Gili.Platform.csproj` (paket PerformanceCounter)
 
 **Interfaces:**
 - Consumes: `CpuReading`, `MemoryReading`, `NetworkReading` (Task 4).
-- Produces (namespace `TopBar.Platform.Stats`): `CpuSampler : IDisposable` dengan `CpuReading Sample()`; `MemorySampler` dengan `MemoryReading Sample()`; `NetworkSampler` dengan `NetworkReading Sample()`. Setiap `Sample()` boleh melempar exception; `ModuleSampler` yang menangkapnya.
+- Produces (namespace `Gili.Platform.Stats`): `CpuSampler : IDisposable` dengan `CpuReading Sample()`; `MemorySampler` dengan `MemoryReading Sample()`; `NetworkSampler` dengan `NetworkReading Sample()`. Setiap `Sample()` boleh melempar exception; `ModuleSampler` yang menangkapnya.
 
 - [ ] **Step 1: Tambah paket**
 
 ```bash
-dotnet add src/TopBar.Platform package System.Diagnostics.PerformanceCounter
+dotnet add src/Gili.Platform package System.Diagnostics.PerformanceCounter
 ```
 
 - [ ] **Step 2: Implementasi**
 
-`src/TopBar.Platform/Stats/CpuSampler.cs`:
+`src/Gili.Platform/Stats/CpuSampler.cs`:
 
 ```csharp
 using System.Diagnostics;
-using TopBar.Core.Modules;
+using Gili.Core.Modules;
 
-namespace TopBar.Platform.Stats;
+namespace Gili.Platform.Stats;
 
 /// <summary>
 /// "% Processor Utility" is the counter Task Manager shows (F-RIGHT-01 allows 5 points of difference);
@@ -1564,14 +1566,14 @@ public sealed class CpuSampler : IDisposable
 }
 ```
 
-`src/TopBar.Platform/Stats/MemorySampler.cs`:
+`src/Gili.Platform/Stats/MemorySampler.cs`:
 
 ```csharp
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using TopBar.Core.Modules;
+using Gili.Core.Modules;
 
-namespace TopBar.Platform.Stats;
+namespace Gili.Platform.Stats;
 
 public sealed class MemorySampler
 {
@@ -1603,14 +1605,14 @@ public sealed class MemorySampler
 }
 ```
 
-`src/TopBar.Platform/Stats/NetworkSampler.cs`:
+`src/Gili.Platform/Stats/NetworkSampler.cs`:
 
 ```csharp
 using System.Diagnostics;
 using System.Net.NetworkInformation;
-using TopBar.Core.Modules;
+using Gili.Core.Modules;
 
-namespace TopBar.Platform.Stats;
+namespace Gili.Platform.Stats;
 
 /// <summary>Upload and download speed from the byte counters of every adapter that is up (PRD 9.2).</summary>
 public sealed class NetworkSampler
@@ -1661,13 +1663,13 @@ public sealed class NetworkSampler
 
 - [ ] **Step 3: Build**
 
-Run: `dotnet build TopBar.slnx`
+Run: `dotnet build Gili.slnx`
 Expected: Build succeeded, 0 error.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/TopBar.Platform
+git add src/Gili.Platform
 git commit -m "feat(platform): CPU, memory and network samplers (F-RIGHT-01)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -1676,26 +1678,26 @@ git commit -m "feat(platform): CPU, memory and network samplers (F-RIGHT-01)" -m
 ### Task 8: Kerangka app: satu instance, crash, settings, bar kosong dengan AppBar dan kaca
 
 **Files:**
-- Create: `src/TopBar.App/TopBar.App.csproj`, `app.manifest`, `App.xaml`, `App.xaml.cs`, `SingleInstance.cs`, `CrashHandler.cs`, `SettingsHub.cs`
-- Create: `src/TopBar.App/Bar/BarWindow.xaml`, `Bar/BarWindow.xaml.cs`, `Bar/BarViewModel.cs`
-- Delete: `src/TopBar.App/MainWindow.xaml`, `MainWindow.xaml.cs` (dari template)
+- Create: `src/Gili.App/Gili.App.csproj`, `app.manifest`, `App.xaml`, `App.xaml.cs`, `SingleInstance.cs`, `CrashHandler.cs`, `SettingsHub.cs`
+- Create: `src/Gili.App/Bar/BarWindow.xaml`, `Bar/BarWindow.xaml.cs`, `Bar/BarViewModel.cs`
+- Delete: `src/Gili.App/MainWindow.xaml`, `MainWindow.xaml.cs` (dari template)
 
 **Interfaces:**
 - Consumes: semua dari Task 2–6.
 - Produces:
-  - `TopBar.App.SettingsHub(SettingsStore store, AppSettings initial, FileLog log)`: `AppSettings Current`, `event Action<AppSettings>? Changed`, `void Update(Func<AppSettings, AppSettings> change)`, `void Flush()`.
-  - `TopBar.App.Bar.BarWindow`: `event Action? QuitRequested`, `void ReleaseAppBar()`, `void Reassert()`.
-  - `TopBar.App.Bar.BarViewModel`: `Brush Tint`, `void ApplySettings(AppSettings settings, BarAppearance look)`.
+  - `Gili.App.SettingsHub(SettingsStore store, AppSettings initial, FileLog log)`: `AppSettings Current`, `event Action<AppSettings>? Changed`, `void Update(Func<AppSettings, AppSettings> change)`, `void Flush()`.
+  - `Gili.App.Bar.BarWindow`: `event Action? QuitRequested`, `void ReleaseAppBar()`, `void Reassert()`.
+  - `Gili.App.Bar.BarViewModel`: `Brush Tint`, `void ApplySettings(AppSettings settings, BarAppearance look)`.
 
 - [ ] **Step 1: Buat proyek**
 
 ```bash
-dotnet new wpf -n TopBar.App -o src/TopBar.App -f net10.0
-rm src/TopBar.App/MainWindow.xaml src/TopBar.App/MainWindow.xaml.cs
-dotnet sln TopBar.slnx add src/TopBar.App/TopBar.App.csproj
+dotnet new wpf -n Gili.App -o src/Gili.App -f net10.0
+rm src/Gili.App/MainWindow.xaml src/Gili.App/MainWindow.xaml.cs
+dotnet sln Gili.slnx add src/Gili.App/Gili.App.csproj
 ```
 
-Ganti isi `src/TopBar.App/TopBar.App.csproj`:
+Ganti isi `src/Gili.App/Gili.App.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -1704,30 +1706,30 @@ Ganti isi `src/TopBar.App/TopBar.App.csproj`:
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
-    <AssemblyName>TopBar</AssemblyName>
-    <RootNamespace>TopBar.App</RootNamespace>
+    <AssemblyName>Gili</AssemblyName>
+    <RootNamespace>Gili.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- WPF, not WinRT AOT: field-backed [ObservableProperty] is fine here. -->
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TopBar.Core\TopBar.Core.csproj" />
-    <ProjectReference Include="..\TopBar.Data\TopBar.Data.csproj" />
-    <ProjectReference Include="..\TopBar.Platform\TopBar.Platform.csproj" />
+    <ProjectReference Include="..\Gili.Core\Gili.Core.csproj" />
+    <ProjectReference Include="..\Gili.Data\Gili.Data.csproj" />
+    <ProjectReference Include="..\Gili.Platform\Gili.Platform.csproj" />
   </ItemGroup>
 </Project>
 ```
 
 ```bash
-dotnet add src/TopBar.App package CommunityToolkit.Mvvm
+dotnet add src/Gili.App package CommunityToolkit.Mvvm
 ```
 
-`src/TopBar.App/app.manifest` (DPI per monitor, supaya bar tajam di 100–200% dan tinggi AppBar dihitung dalam piksel fisik):
+`src/Gili.App/app.manifest` (DPI per monitor, supaya bar tajam di 100–200% dan tinggi AppBar dihitung dalam piksel fisik):
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="1.0.0.0" name="TopBar.app" />
+  <assemblyIdentity version="1.0.0.0" name="Gili.app" />
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
       <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
@@ -1744,16 +1746,16 @@ dotnet add src/TopBar.App package CommunityToolkit.Mvvm
 
 - [ ] **Step 2: `SingleInstance`, `CrashHandler`, `SettingsHub`**
 
-`src/TopBar.App/SingleInstance.cs`:
+`src/Gili.App/SingleInstance.cs`:
 
 ```csharp
-namespace TopBar.App;
+namespace Gili.App;
 
 /// <summary>F-BAR-05: a second launch tells the running instance to come forward, then exits.</summary>
 internal sealed class SingleInstance : IDisposable
 {
-    private const string MutexName = @"Local\TopBar.SingleInstance";
-    private const string SignalName = @"Local\TopBar.Activate";
+    private const string MutexName = @"Local\Gili.SingleInstance";
+    private const string SignalName = @"Local\Gili.Activate";
 
     private readonly Mutex _mutex;
     private readonly EventWaitHandle _signal;
@@ -1803,16 +1805,16 @@ internal sealed class SingleInstance : IDisposable
 }
 ```
 
-`src/TopBar.App/CrashHandler.cs`:
+`src/Gili.App/CrashHandler.cs`:
 
 ```csharp
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
-using TopBar.Core.Diagnostics;
+using Gili.Core.Diagnostics;
 
-namespace TopBar.App;
+namespace Gili.App;
 
 /// <summary>
 /// PRD 11: log the exception, release the AppBar strip, restart once. A second crash within a minute stays down.
@@ -1877,16 +1879,16 @@ internal sealed class CrashHandler(FileLog log, string markerPath, Action releas
 }
 ```
 
-`src/TopBar.App/SettingsHub.cs`:
+`src/Gili.App/SettingsHub.cs`:
 
 ```csharp
 using System.IO;
 using System.Windows.Threading;
-using TopBar.Core.Diagnostics;
-using TopBar.Core.Settings;
-using TopBar.Data;
+using Gili.Core.Diagnostics;
+using Gili.Core.Settings;
+using Gili.Data;
 
-namespace TopBar.App;
+namespace Gili.App;
 
 /// <summary>The live settings. Changes apply at once; writes to settings.json are coalesced 300 ms after the last change.</summary>
 public sealed class SettingsHub
@@ -1935,14 +1937,14 @@ public sealed class SettingsHub
 
 - [ ] **Step 3: `BarViewModel` dan `BarWindow`**
 
-`src/TopBar.App/Bar/BarViewModel.cs`:
+`src/Gili.App/Bar/BarViewModel.cs`:
 
 ```csharp
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public sealed partial class BarViewModel : ObservableObject
 {
@@ -1957,13 +1959,13 @@ public sealed partial class BarViewModel : ObservableObject
 }
 ```
 
-`src/TopBar.App/Bar/BarWindow.xaml`:
+`src/Gili.App/Bar/BarWindow.xaml`:
 
 ```xml
-<Window x:Class="TopBar.App.Bar.BarWindow"
+<Window x:Class="Gili.App.Bar.BarWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TopBar" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Title="Gili" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         Left="0" Top="0" Width="800" Height="32" UseLayoutRounding="True"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
@@ -2023,17 +2025,17 @@ public sealed partial class BarViewModel : ObservableObject
 </Window>
 ```
 
-`src/TopBar.App/Bar/BarWindow.xaml.cs`:
+`src/Gili.App/Bar/BarWindow.xaml.cs`:
 
 ```csharp
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
-using TopBar.Core.Settings;
-using TopBar.Platform.Shell;
+using Gili.Core.Settings;
+using Gili.Platform.Shell;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public partial class BarWindow : Window
 {
@@ -2128,10 +2130,10 @@ public partial class BarWindow : Window
 
 - [ ] **Step 4: `App`**
 
-`src/TopBar.App/App.xaml`:
+`src/Gili.App/App.xaml`:
 
 ```xml
-<Application x:Class="TopBar.App.App"
+<Application x:Class="Gili.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
@@ -2139,20 +2141,20 @@ public partial class BarWindow : Window
 </Application>
 ```
 
-`src/TopBar.App/App.xaml.cs`:
+`src/Gili.App/App.xaml.cs`:
 
 ```csharp
 using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Markup;
-using TopBar.App.Bar;
-using TopBar.Core;
-using TopBar.Core.Diagnostics;
-using TopBar.Data;
-using TopBar.Platform.Shell;
+using Gili.App.Bar;
+using Gili.Core;
+using Gili.Core.Diagnostics;
+using Gili.Data;
+using Gili.Platform.Shell;
 
-namespace TopBar.App;
+namespace Gili.App;
 
 public partial class App : Application
 {
@@ -2231,20 +2233,20 @@ public partial class App : Application
 
 - [ ] **Step 5: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 6: Periksa di laptop**
 
-Jalankan `dotnet run --project src/TopBar.App`, lalu periksa:
+Jalankan `dotnet run --project src/Gili.App`, lalu periksa:
 1. Bar 32 px muncul di tepi atas dengan kaca acrylic, garis bawah tipis.
 2. Jendela yang di-maximize mulai tepat di bawah bar. Work area bisa dicek dengan PowerShell: `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea` → `Y` = 32 × skala DPI.
 3. Menjalankan `dotnet run` kedua kali langsung keluar, bar tetap satu.
 4. `Stop-Process -Name explorer` (Explorer hidup lagi sendiri) → bar tetap di atas dan ruangnya tetap dipesan.
 5. Video YouTube fullscreen → bar hilang; keluar fullscreen → bar kembali ≤ 1 detik. Klik desktop tidak menyembunyikan bar.
-6. Tulis `%LOCALAPPDATA%\TopBar\settings.json` berisi `{ "glass": "light" }`, lalu `{ "glass": "off", "barOpacity": 100 }`, restart app di antaranya → blur lebih ringan, lalu tint polos.
+6. Tulis `%LOCALAPPDATA%\Gili\settings.json` berisi `{ "glass": "light" }`, lalu `{ "glass": "off", "barOpacity": 100 }`, restart app di antaranya → blur lebih ringan, lalu tint polos.
 7. Windows Settings › Personalization › Colors › Transparency effects mati → bar langsung pekat; nyalakan lagi → kaca kembali.
-8. Klik kanan bar → Simulate crash → app hidup lagi dan log berisi exception di `%LOCALAPPDATA%\TopBar\logs\`. Simulate crash lagi dalam 1 menit → app berhenti dan ruang AppBar dilepas.
+8. Klik kanan bar → Simulate crash → app hidup lagi dan log berisi exception di `%LOCALAPPDATA%\Gili\logs\`. Simulate crash lagi dalam 1 menit → app berhenti dan ruang AppBar dilepas.
 9. Klik kanan → Quit → ruang di atas dilepas.
 
 Kalau blur tidak muncul di langkah 1 (bar hanya tint), catat hasilnya. Cadangannya: `AllowsTransparency="False"` + `WindowChrome` dengan `GlassFrameThickness="-1"`. Kalau blur muncul, ubah baris "Material bar" di PRD 9.2 menjadi `SetWindowCompositionAttribute` (accent policy: blur-behind untuk Light, acrylic untuk Strong), karena backdrop DWM menjadi polos di jendela yang tidak aktif.
@@ -2252,7 +2254,7 @@ Kalau blur tidak muncul di langkah 1 (bar hanya tint), catat hasilnya. Cadangann
 - [ ] **Step 7: Commit**
 
 ```bash
-git add TopBar.slnx src/TopBar.App docs/superpowers/specs
+git add Gili.slnx src/Gili.App docs/superpowers/specs
 git commit -m "feat(app): bar window with AppBar, glass, single instance and crash restart (F-BAR-01..06)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -2261,8 +2263,8 @@ git commit -m "feat(app): bar window with AppBar, glass, single instance and cra
 ### Task 9: Jam di pulau compact dan modul CPU/RAM/jaringan
 
 **Files:**
-- Create: `src/TopBar.App/Bar/StatsService.cs`
-- Modify (ganti seluruh isi): `src/TopBar.App/Bar/BarViewModel.cs`, `Bar/BarWindow.xaml`, `Bar/BarWindow.xaml.cs`, `App.xaml.cs`
+- Create: `src/Gili.App/Bar/StatsService.cs`
+- Modify (ganti seluruh isi): `src/Gili.App/Bar/BarViewModel.cs`, `Bar/BarWindow.xaml`, `Bar/BarWindow.xaml.cs`, `App.xaml.cs`
 
 **Interfaces:**
 - Consumes: `ClockText`, `StatText`, `BarMetrics`, `ModuleSampler`, readings (Task 1–4); samplers (Task 7).
@@ -2274,13 +2276,13 @@ git commit -m "feat(app): bar window with AppBar, glass, single instance and cra
 
 - [ ] **Step 1: `StatsService`**
 
-`src/TopBar.App/Bar/StatsService.cs`:
+`src/Gili.App/Bar/StatsService.cs`:
 
 ```csharp
 using System.Windows.Threading;
-using TopBar.Core.Modules;
+using Gili.Core.Modules;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public sealed record StatsSnapshot(
     ModuleState<CpuReading> Cpu,
@@ -2347,18 +2349,18 @@ public sealed class StatsService : IDisposable
 
 - [ ] **Step 2: `BarViewModel` lengkap**
 
-`src/TopBar.App/Bar/BarViewModel.cs`:
+`src/Gili.App/Bar/BarViewModel.cs`:
 
 ```csharp
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using TopBar.Core.Formatting;
-using TopBar.Core.Layout;
-using TopBar.Core.Settings;
+using Gili.Core.Formatting;
+using Gili.Core.Layout;
+using Gili.Core.Settings;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public sealed partial class BarViewModel : ObservableObject
 {
@@ -2426,13 +2428,13 @@ public sealed partial class BarViewModel : ObservableObject
 
 - [ ] **Step 3: `BarWindow.xaml` lengkap**
 
-Ganti seluruh isi `src/TopBar.App/Bar/BarWindow.xaml`. Bagian `Window.Resources` yang lama (`BarMenu`, `BarMenuItem`, `BarMenuSeparator`) tetap dipakai persis, ditambah gaya modul:
+Ganti seluruh isi `src/Gili.App/Bar/BarWindow.xaml`. Bagian `Window.Resources` yang lama (`BarMenu`, `BarMenuItem`, `BarMenuSeparator`) tetap dipakai persis, ditambah gaya modul:
 
 ```xml
-<Window x:Class="TopBar.App.Bar.BarWindow"
+<Window x:Class="Gili.App.Bar.BarWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TopBar" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Title="Gili" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         Left="0" Top="0" Width="800" Height="32" UseLayoutRounding="True"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
@@ -2580,11 +2582,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using TopBar.Core.Settings;
-using TopBar.Platform.Interop;
-using TopBar.Platform.Shell;
+using Gili.Core.Settings;
+using Gili.Platform.Interop;
+using Gili.Platform.Shell;
 
-namespace TopBar.App.Bar;
+namespace Gili.App.Bar;
 
 public partial class BarWindow : Window
 {
@@ -2722,8 +2724,8 @@ public partial class BarWindow : Window
 
 - [ ] **Step 5: `App.xaml.cs` dengan stats**
 
-Di `src/TopBar.App/App.xaml.cs`:
-- tambahkan `using TopBar.Platform.Stats;` dan field `private StatsService? _stats;`
+Di `src/Gili.App/App.xaml.cs`:
+- tambahkan `using Gili.Platform.Stats;` dan field `private StatsService? _stats;`
 - ganti blok pembuatan bar di `OnStartup` (mulai `_bar = new BarWindow(...)`) dengan:
 
 ```csharp
@@ -2742,24 +2744,24 @@ Di `src/TopBar.App/App.xaml.cs`:
 
 - [ ] **Step 6: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 7: Periksa di laptop**
 
-`dotnet run --project src/TopBar.App`, lalu:
+`dotnet run --project src/Gili.App`, lalu:
 1. Pulau hitam di tengah, lebar minimal 200 px: `19:38` semibold + `Mon 26 Oct` abu-abu, berganti tepat di pergantian menit.
 2. Kanan: `↑ … / ↓ …`, `CPU / 12%`, `RAM / 54%` dalam gaya dua baris. CPU dan RAM berbeda ≤ 5 poin dari Task Manager (F-RIGHT-01). Unduh file besar → angka `↓` naik dalam MB/s.
 3. Hover RAM → `8.6 / 15.7 GB`; hover jaringan → nama adapter. Klik CPU → Task Manager terbuka.
 4. Digit tidak membuat bar bergoyang saat angka berubah.
 5. Set `{ "barHeight": 28, "islandHeight": 24 }` dan `{ "barHeight": 44, "islandHeight": 40 }` di settings.json (restart app) → dua baris tetap muat, pulau dan teks ikut membesar.
 6. Fullscreen YouTube 1 menit → setelah keluar, angka langsung jalan lagi.
-7. RAM proses TopBar di Task Manager < 120 MB, CPU saat diam < 1%.
+7. RAM proses Gili di Task Manager < 120 MB, CPU saat diam < 1%.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/TopBar.App
+git add src/Gili.App
 git commit -m "feat(app): clock island and two-line CPU, RAM and network modules (F-ISL-01, F-RIGHT-01)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -2768,8 +2770,8 @@ git commit -m "feat(app): clock island and two-line CPU, RAM and network modules
 ### Task 10: Jendela Settings dan autostart
 
 **Files:**
-- Create: `src/TopBar.App/Settings/SettingsWindow.xaml`, `Settings/SettingsWindow.xaml.cs`, `Settings/SettingsViewModel.cs`
-- Modify: `src/TopBar.App/TopBar.App.csproj` (NoWarn WPF0001), `Bar/BarWindow.xaml` (item Settings), `Bar/BarWindow.xaml.cs` (event Settings), `App.xaml.cs` (ganti seluruh isi)
+- Create: `src/Gili.App/Settings/SettingsWindow.xaml`, `Settings/SettingsWindow.xaml.cs`, `Settings/SettingsViewModel.cs`
+- Modify: `src/Gili.App/Gili.App.csproj` (NoWarn WPF0001), `Bar/BarWindow.xaml` (item Settings), `Bar/BarWindow.xaml.cs` (event Settings), `App.xaml.cs` (ganti seluruh isi)
 
 **Interfaces:**
 - Consumes: `SettingsHub` (Task 8), `Autostart`, `TransparencyWatcher` (Task 6), `AppPaths` (Task 2).
@@ -2777,13 +2779,13 @@ git commit -m "feat(app): clock island and two-line CPU, RAM and network modules
 
 - [ ] **Step 1: `SettingsViewModel`**
 
-`src/TopBar.App/Settings/SettingsViewModel.cs`:
+`src/Gili.App/Settings/SettingsViewModel.cs`:
 
 ```csharp
 using CommunityToolkit.Mvvm.ComponentModel;
-using TopBar.Core.Settings;
+using Gili.Core.Settings;
 
-namespace TopBar.App.Settings;
+namespace Gili.App.Settings;
 
 /// <summary>Phase 1 part of F-BAR-08: clock format, material, bar and island height, autostart. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
@@ -2851,19 +2853,19 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 - [ ] **Step 2: `SettingsWindow`**
 
-Tambahkan `WPF0001` ke `<NoWarn>` di `src/TopBar.App/TopBar.App.csproj` (`Window.ThemeMode` masih ditandai eksperimental):
+Tambahkan `WPF0001` ke `<NoWarn>` di `src/Gili.App/Gili.App.csproj` (`Window.ThemeMode` masih ditandai eksperimental):
 
 ```xml
     <NoWarn>$(NoWarn);MVVMTK0045;WPF0001</NoWarn>
 ```
 
-`src/TopBar.App/Settings/SettingsWindow.xaml`:
+`src/Gili.App/Settings/SettingsWindow.xaml`:
 
 ```xml
-<Window x:Class="TopBar.App.Settings.SettingsWindow"
+<Window x:Class="Gili.App.Settings.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="TopBar Settings" Width="440" SizeToContent="Height" ResizeMode="NoResize"
+        Title="Gili Settings" Width="440" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen" ThemeMode="Dark">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleWhen" />
@@ -2927,18 +2929,18 @@ Tambahkan `WPF0001` ke `<NoWarn>` di `src/TopBar.App/TopBar.App.csproj` (`Window
 
         <TextBlock Text="General" Style="{StaticResource Section}" />
         <CheckBox Content="Start with Windows" IsChecked="{Binding Autostart}" />
-        <TextBlock Style="{StaticResource Hint}" Text="Takes effect in the installed copy (%LOCALAPPDATA%\Programs\TopBar)."
+        <TextBlock Style="{StaticResource Hint}" Text="Takes effect in the installed copy (%LOCALAPPDATA%\Programs\Gili)."
                    Visibility="{Binding AutostartNeedsInstall, Converter={StaticResource VisibleWhen}}" />
     </StackPanel>
 </Window>
 ```
 
-`src/TopBar.App/Settings/SettingsWindow.xaml.cs`:
+`src/Gili.App/Settings/SettingsWindow.xaml.cs`:
 
 ```csharp
 using System.Windows;
 
-namespace TopBar.App.Settings;
+namespace Gili.App.Settings;
 
 public partial class SettingsWindow : Window
 {
@@ -2952,7 +2954,7 @@ public partial class SettingsWindow : Window
 
 - [ ] **Step 3: Item Settings di menu bar**
 
-Di `src/TopBar.App/Bar/BarWindow.xaml`, ganti isi `ContextMenu` menjadi:
+Di `src/Gili.App/Bar/BarWindow.xaml`, ganti isi `ContextMenu` menjadi:
 
 ```xml
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
@@ -2962,7 +2964,7 @@ Di `src/TopBar.App/Bar/BarWindow.xaml`, ganti isi `ContextMenu` menjadi:
             </ContextMenu>
 ```
 
-Di `src/TopBar.App/Bar/BarWindow.xaml.cs`, tambahkan di bawah `public event Action? QuitRequested;`:
+Di `src/Gili.App/Bar/BarWindow.xaml.cs`, tambahkan di bawah `public event Action? QuitRequested;`:
 
 ```csharp
     public event Action? SettingsRequested;
@@ -2976,7 +2978,7 @@ dan di atas `private void OnQuit(...)`:
 
 - [ ] **Step 4: `App.xaml.cs` lengkap**
 
-Ganti seluruh isi `src/TopBar.App/App.xaml.cs`:
+Ganti seluruh isi `src/Gili.App/App.xaml.cs`:
 
 ```csharp
 using System.Globalization;
@@ -2984,16 +2986,16 @@ using System.IO;
 using System.Security;
 using System.Windows;
 using System.Windows.Markup;
-using TopBar.App.Bar;
-using TopBar.App.Settings;
-using TopBar.Core;
-using TopBar.Core.Diagnostics;
-using TopBar.Core.Settings;
-using TopBar.Data;
-using TopBar.Platform.Shell;
-using TopBar.Platform.Stats;
+using Gili.App.Bar;
+using Gili.App.Settings;
+using Gili.Core;
+using Gili.Core.Diagnostics;
+using Gili.Core.Settings;
+using Gili.Data;
+using Gili.Platform.Shell;
+using Gili.Platform.Stats;
 
-namespace TopBar.App;
+namespace Gili.App;
 
 public partial class App : Application
 {
@@ -3118,24 +3120,24 @@ public partial class App : Application
 
 - [ ] **Step 5: Build dan test**
 
-Run: `dotnet build TopBar.slnx` lalu `dotnet test tests/TopBar.Core.Tests`
+Run: `dotnet build Gili.slnx` lalu `dotnet test tests/Gili.Core.Tests`
 Expected: Build succeeded, semua test PASS.
 
 - [ ] **Step 6: Periksa di laptop**
 
-`dotnet run --project src/TopBar.App`, lalu:
-1. Klik kanan bar → Settings → jendela gelap "TopBar Settings" terbuka.
+`dotnet run --project src/Gili.App`, lalu:
+1. Klik kanan bar → Settings → jendela gelap "Gili Settings" terbuka.
 2. Geser Bar opacity, ganti Glass, geser Bar height dan Island height → bar berubah langsung; jendela yang di-maximize ikut turun/naik saat tinggi bar berubah.
 3. Turunkan Bar height ke 28 saat Island height 30 → Island height ikut turun ke 24.
 4. Matikan 24-hour clock → jam jadi `7:38 PM`.
-5. Tutup Settings, buka `%LOCALAPPDATA%\TopBar\settings.json` → nilai baru tersimpan; restart app → nilai tetap.
+5. Tutup Settings, buka `%LOCALAPPDATA%\Gili\settings.json` → nilai baru tersimpan; restart app → nilai tetap.
 6. Jalankan `dotnet run` kedua kali → Settings dari instance pertama terbuka.
-7. Start with Windows di build dev menampilkan catatan "Takes effect in the installed copy …" dan tidak menulis registry (`reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v TopBar` → tidak ada).
+7. Start with Windows di build dev menampilkan catatan "Takes effect in the installed copy …" dan tidak menulis registry (`reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Gili` → tidak ada).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/TopBar.App
+git add src/Gili.App
 git commit -m "feat(app): settings window and autostart for the installed copy (F-BAR-04, F-BAR-08)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
@@ -3155,22 +3157,22 @@ git commit -m "feat(app): settings window and autostart for the installed copy (
 `scripts/publish.ps1`:
 
 ```powershell
-# Publishes TopBar framework-dependent to %LOCALAPPDATA%\Programs\TopBar (PRD 9.4) and starts it.
+# Publishes Gili framework-dependent to %LOCALAPPDATA%\Programs\Gili (PRD 9.4) and starts it.
 # A running copy is closed first; taskkill without /F lets it release its AppBar strip.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$target = Join-Path $env:LOCALAPPDATA 'Programs\TopBar'
+$target = Join-Path $env:LOCALAPPDATA 'Programs\Gili'
 
-$running = @(Get-Process -Name TopBar -ErrorAction SilentlyContinue)
+$running = @(Get-Process -Name Gili -ErrorAction SilentlyContinue)
 if ($running.Count -gt 0) {
-    taskkill /IM TopBar.exe | Out-Null
+    taskkill /IM Gili.exe | Out-Null
     foreach ($process in $running) {
-        if (-not $process.WaitForExit(5000)) { throw 'TopBar did not quit. Quit it from the bar menu and run this again.' }
+        if (-not $process.WaitForExit(5000)) { throw 'Gili did not quit. Quit it from the bar menu and run this again.' }
     }
 }
 
-dotnet publish (Join-Path $root 'src/TopBar.App/TopBar.App.csproj') -c Release -o $target --no-self-contained
-Start-Process (Join-Path $target 'TopBar.exe')
+dotnet publish (Join-Path $root 'src/Gili.App/Gili.App.csproj') -c Release -o $target --no-self-contained
+Start-Process (Join-Path $target 'Gili.exe')
 ```
 
 - [ ] **Step 2: Perbarui CLAUDE.md**
@@ -3178,23 +3180,23 @@ Start-Process (Join-Path $target 'TopBar.exe')
 Di bagian "Perintah" `CLAUDE.md`, tambahkan setelah blok perintah:
 
 ```markdown
-- Pasang build Release ke `%LOCALAPPDATA%\Programs\TopBar\` dan jalankan: `pwsh scripts/publish.ps1`. Hanya salinan terpasang yang menulis entri autostart; `dotnet run` tidak pernah mendaftarkan dirinya.
-- Menutup TopBar dari luar: `taskkill /IM TopBar.exe` tanpa `/F`, supaya ruang AppBar dilepas. Build Debug punya item "Simulate crash" di menu bar untuk menguji restart otomatis.
+- Pasang build Release ke `%LOCALAPPDATA%\Programs\Gili\` dan jalankan: `pwsh scripts/publish.ps1`. Hanya salinan terpasang yang menulis entri autostart; `dotnet run` tidak pernah mendaftarkan dirinya.
+- Menutup Gili dari luar: `taskkill /IM Gili.exe` tanpa `/F`, supaya ruang AppBar dilepas. Build Debug punya item "Simulate crash" di menu bar untuk menguji restart otomatis.
 ```
 
-dan hapus kalimat "Instalasi (PRD 9.4): …" yang lama kalau isinya sudah tercakup (sisakan catatan NativeAOT untuk `TopBar.ClaudeHook`).
+dan hapus kalimat "Instalasi (PRD 9.4): …" yang lama kalau isinya sudah tercakup (sisakan catatan NativeAOT untuk `Gili.ClaudeHook`).
 
 - [ ] **Step 3: Verifikasi lengkap**
 
 Run:
 
 ```bash
-dotnet build TopBar.slnx -c Release
-dotnet test tests/TopBar.Core.Tests
-dotnet format TopBar.slnx --verify-no-changes
+dotnet build Gili.slnx -c Release
+dotnet test tests/Gili.Core.Tests
+dotnet format Gili.slnx --verify-no-changes
 ```
 
-Expected: build sukses tanpa error, semua test PASS, format tanpa perubahan (kalau ada, jalankan `dotnet format TopBar.slnx` lalu commit).
+Expected: build sukses tanpa error, semua test PASS, format tanpa perubahan (kalau ada, jalankan `dotnet format Gili.slnx` lalu commit).
 
 Lalu `pwsh scripts/publish.ps1` dan jalankan checklist Fase 1a di laptop (PRD 13): ruang AppBar dan maximize, fullscreen YouTube dan game, restart Explorer, sleep/resume, DPI 100/125/150%, Transparency effects mati, ubah tinggi bar dan pulau, satu instance, crash dan restart, autostart setelah logout/login (bar muncul ≤ 2 detik), RAM < 120 MB dan CPU diam < 1%.
 
