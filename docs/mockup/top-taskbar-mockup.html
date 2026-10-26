@@ -526,7 +526,19 @@ li.done .chk .ic{opacity:1;transform:none}
 .ncard:hover{filter:brightness(1.15)}
 .ncard.tinted .nb{color:rgba(255,255,255,.88)}
 .ncard.tinted .nm2{color:rgba(255,255,255,.72)}
-.nsw{display:flex;gap:7px;margin-top:8px;padding:0 2px}
+.nrow{display:flex;align-items:center;gap:12px;margin-top:8px}
+.nsw{display:flex;gap:7px;padding:0 2px}
+/* Text size: four "A"s in a small segmented capsule at the end of the colour row (9 px radius, 7 px inside at 2 px). */
+.nfs{margin-left:auto;display:flex;padding:2px;border-radius:9px;background:rgba(255,255,255,.08);flex-shrink:0}
+.nfs button{width:26px;height:22px;border-radius:7px;display:grid;place-items:center;color:var(--text2);font-weight:600;line-height:1;transition:background 150ms,color 150ms}
+.nfs button:hover{color:var(--text)}
+.nfs button[aria-checked="true"]{background:rgba(255,255,255,.18);color:var(--text)}
+/* Note text sizes (PRD 6.3 "Ukuran teks note"): Medium is the default and matches the sizes above. */
+.ncard.fs0 .nt{font-size:12px}.ncard.fs0 .nb{font-size:11px}
+.ncard.fs1 .nt{font-size:12.5px}.ncard.fs1 .nb{font-size:11.5px}
+.ncard.fs3 .nt{font-size:14.5px}.ncard.fs3 .nb{font-size:13.5px}
+.ned.fs0 textarea{font-size:12px}.ned.fs1 textarea{font-size:13px}.ned.fs3 textarea{font-size:16px}
+.fnote.fs0 textarea{font-size:11px}.fnote.fs1 textarea{font-size:12px}.fnote.fs3 textarea{font-size:15px}
 .nsw button{width:20px;height:20px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);transition:transform 150ms var(--pop),box-shadow 150ms}
 .nsw button:hover{transform:scale(1.12)}
 .nsw button[aria-pressed="true"]{box-shadow:0 0 0 2px #000,0 0 0 4px var(--text)}
@@ -991,7 +1003,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 </div>
                 <div class="ned" id="nEdPanel" role="dialog" aria-label="Edit note"><div class="nedin" id="nEdIn">
                   <textarea id="nEd" placeholder="Write something. The first line becomes the title." aria-label="Note text"></textarea>
-                  <div class="nsw" id="nSw" role="group" aria-label="Note color"></div>
+                  <div class="nrow"><div class="nsw" id="nSw" role="group" aria-label="Note color"></div><div class="nfs" id="nFs" role="radiogroup" aria-label="Text size"></div></div>
                   <div class="nfoot"><span class="nsave" id="nSave"><i></i><span id="nSaveT">Saved</span></span>
                     <span class="nact"><button class="npop" id="nPop" aria-label="Float on top" title="Float on top"><svg class="ic" aria-hidden="true"><use href="#i-popout"/></svg></button><button class="ndel" id="nDel">Delete</button><button class="pill pri sm" id="nDone">Done</button></span></div>
                 </div></div>
@@ -2029,8 +2041,34 @@ const nGrid=$('#nGrid'),nPanel=$('#nEdPanel'),nEdIn=$('#nEdIn');
 // Dark tints so white text keeps at least 4.5:1 contrast on every color.
 const NOTE_COLORS=[['Default','#1c1c1e'],['Red','#5c1f26'],['Orange','#643013'],['Yellow','#5c470c'],['Green','#1d4a31'],['Teal','#0f4c4b'],['Blue','#1c3c61'],['Purple','#42265a']];
 const noteColor=n=>NOTE_COLORS[n.c||0][1];
+// Text size per note: Extra small, Small, Medium (default), Large. The editor shows 12/13/14/16 px, a floating note
+// 1 px less, a card's body 11/11.5/12/13.5 px with its title 1 px larger.
+const NOTE_SIZES=[['Extra small',10],['Small',11.5],['Medium',13],['Large',15]];
+const noteSize=n=>n.s??2;
+$('#nFs').innerHTML=NOTE_SIZES.map(([name,px],i)=>`<button type="button" role="radio" data-s="${i}" aria-label="${name}" title="${name}" aria-checked="false"><span style="font-size:${px}px">A</span></button>`).join('');
+function setNoteSize(n,v){
+  v=Math.max(0,Math.min(3,v));if(v===noteSize(n))return;n.s=v;renderSwatches();
+  const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c){for(let i=0;i<4;i++)c.classList.toggle('fs'+i,i===v);layoutNotes()}
+  const f=floatEl(n.id);if(f)for(let i=0;i<4;i++)f.classList.toggle('fs'+i,i===v);
+}
+$('#nFs').onclick=e=>{const b=e.target.closest('[data-s]');const n=noteById(S.noteSel);if(b&&n)setNoteSize(n,+b.dataset.s)};
+// Arrow keys move through the four sizes, like any radio group.
+$('#nFs').addEventListener('keydown',e=>{
+  const n=noteById(S.noteSel);if(!n||!/^Arrow/.test(e.key))return;e.preventDefault();e.stopPropagation();
+  setNoteSize(n,noteSize(n)+(e.key==='ArrowRight'||e.key==='ArrowDown'?1:-1));$(`#nFs [data-s="${noteSize(n)}"]`).focus();
+});
+// Ctrl + plus / minus while typing steps the size; Ctrl+0 goes back to Medium.
+function sizeKeys(e,n){
+  if(!e.ctrlKey||e.altKey)return false;
+  const d=e.key==='='||e.key==='+'?1:e.key==='-'?-1:e.key==='0'?0:null;if(d===null)return false;
+  e.preventDefault();setNoteSize(n,d?noteSize(n)+d:2);return true;
+}
 $('#nSw').innerHTML=NOTE_COLORS.map(([name,v],i)=>`<button type="button" data-c="${i}" style="--sw:${v}" aria-label="Color: ${name}" title="${name}" aria-pressed="false"></button>`).join('');
-function renderSwatches(){const n=noteById(S.noteSel);$$('#nSw button').forEach(b=>b.setAttribute('aria-pressed',!!n&&+b.dataset.c===(n.c||0)));nPanel.style.setProperty('--nc',n?noteColor(n):'')}
+function renderSwatches(){
+  const n=noteById(S.noteSel);$$('#nSw button').forEach(b=>b.setAttribute('aria-pressed',!!n&&+b.dataset.c===(n.c||0)));nPanel.style.setProperty('--nc',n?noteColor(n):'');
+  $$('#nFs button').forEach(b=>{const on=!!n&&+b.dataset.s===noteSize(n);b.setAttribute('aria-checked',on);b.tabIndex=on?0:-1});
+  for(let i=0;i<4;i++)nPanel.classList.toggle('fs'+i,!!n&&i===noteSize(n));
+}
 $('#nSw').onclick=e=>{
   const b=e.target.closest('[data-c]');if(!b)return;
   const n=noteById(S.noteSel);if(!n)return;
@@ -2049,7 +2087,7 @@ function cardInner(n){
 }
 function renderNotes(){
   const list=visibleNotes();
-  nIn.innerHTML=list.length?list.map(n=>`<div class="ncard ${S.editing&&n.id===S.noteSel?'src':''} ${n.c?'tinted':''}" style="--nc:${noteColor(n)}" tabindex="0" role="button" data-id="${n.id}" aria-label="${esc(noteTitle(n)||'Untitled note')}">${cardInner(n)}</div>`).join('')
+  nIn.innerHTML=list.length?list.map(n=>`<div class="ncard fs${noteSize(n)} ${S.editing&&n.id===S.noteSel?'src':''} ${n.c?'tinted':''}" style="--nc:${noteColor(n)}" tabindex="0" role="button" data-id="${n.id}" aria-label="${esc(noteTitle(n)||'Untitled note')}">${cardInner(n)}</div>`).join('')
     :'<div class="none">No notes match.</div>';
   layoutNotes(true);
 }
@@ -2149,7 +2187,7 @@ nEd.addEventListener('input',()=>{
   const n=noteById(S.noteSel);n.b=nEd.value;n.t=nowHM();refreshCard(n);
   setSaved(true);clearTimeout(saveT);saveT=setTimeout(()=>{saveT=0;setSaved(false)},500);
 });
-nEd.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();const id=S.noteSel;closeEditor();const c=nIn.querySelector(`.ncard[data-id="${id}"]`);if(c)c.focus()}});
+nEd.addEventListener('keydown',e=>{if(sizeKeys(e,noteById(S.noteSel)))return;if(e.key==='Escape'){e.stopPropagation();const id=S.noteSel;closeEditor();const c=nIn.querySelector(`.ncard[data-id="${id}"]`);if(c)c.focus()}});
 function moveNote(from,to){
   if(from===to||to<0||to>=S.notes.length)return;
   const[m]=S.notes.splice(from,1);S.notes.splice(to,0,m);layoutNotes();
@@ -2257,12 +2295,12 @@ function placeF(el,f){Object.assign(el.style,{left:f.x+'px',top:f.y+'px',width:f
 function defaultFloat(){const k=floatCount(),a=workArea();return{x:innerWidth-FW-24-k*24,y:a.top+24+k*24,w:FW,h:FH}}
 function makeFloat(n){
   const el=document.createElement('div');
-  el.className='fnote'+(n.c?' tinted':'');el.dataset.id=n.id;el.style.setProperty('--nc',noteColor(n));el.style.zIndex=++fZ;el.style.pointerEvents='auto';
+  el.className='fnote fs'+noteSize(n)+(n.c?' tinted':'');el.dataset.id=n.id;el.style.setProperty('--nc',noteColor(n));el.style.zIndex=++fZ;el.style.pointerEvents='auto';
   el.setAttribute('role','dialog');el.setAttribute('aria-label',noteTitle(n)||'Floating note');
   el.innerHTML=`<div class="fhd" title="Drag to move">${icon('grip')}<button type="button" aria-label="Back to island" title="Back to island">${icon('intoisland')}</button></div><textarea aria-label="Note text" placeholder="Write something."></textarea>`;
   const ta=el.querySelector('textarea'),hd=el.querySelector('.fhd');ta.value=n.b;
   ta.addEventListener('input',()=>{n.b=ta.value;n.t=nowHM();el.setAttribute('aria-label',noteTitle(n)||'Floating note');refreshCard(n)});
-  ta.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();ta.blur()}});
+  ta.addEventListener('keydown',e=>{if(sizeKeys(e,n))return;if(e.key==='Escape'){e.stopPropagation();ta.blur()}});
   hd.querySelector('button').onclick=()=>returnFloat(n.id);
   el.addEventListener('pointerdown',()=>{el.style.zIndex=++fZ},{capture:true});
   // Move by the header, 1:1 from where it was grabbed, kept inside the work area.
