@@ -8,7 +8,7 @@ Gili: bar kaca di tepi atas layar Windows 11 dengan "pulau" hitam ala Dynamic Is
 
 Sumber kebenaran:
 - PRD: [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](docs/superpowers/specs/2026-10-25-top-taskbar-prd.md). Setiap fitur punya ID (`F-BAR-01`, `F-ISL-07`, `F-CLD-03`, …) dan nomor fase (bagian 14). Rencana dan commit merujuk ID ini. `F-ISL-09`, `F-ISL-13`, dan `F-RIGHT-06` (suhu CPU) sudah dihapus; nomornya jangan dipakai lagi.
-- Mockup HTML: [docs/mockup/top-taskbar-mockup.html](docs/mockup/top-taskbar-mockup.html), acuan visual dan gerak untuk semua fase. Kalau mockup dan PRD berbeda, PRD yang dipakai.
+- Mockup HTML: [docs/mockup/top-taskbar-mockup.html](docs/mockup/top-taskbar-mockup.html), acuan visual dan gerak untuk semua fase. Tampilan dan gerak app harus persis mockup (keputusan pengguna 2026-10-27). Kalau mockup dan PRD berbeda, laporkan ke pengguna dan samakan keduanya; jangan memilih salah satu diam-diam.
 - `NOTE.jpg` dan `Untitled Diagram.jpg` di root adalah sketsa awal pengguna. Sketsa kedua ("yang lain fade out") sudah diganti PRD 6.3: hanya elemen yang tertimpa panel (+8 px) yang memudar.
 
 ## Bahasa
