@@ -71,8 +71,9 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .launch .lsh{width:auto;min-width:26px;padding:0 5px;display:flex;align-items:center;gap:4px}
 .launch .lsh .num{color:var(--text)}
 .launch .lsh .num:empty{display:none}
-/* Claude launcher: the glyph in Claude's color, with a status dot (yellow asks, green unseen finish) and a slow pulse while working. */
-.launch .lcl{position:relative;color:var(--claude)}
+/* Claude launcher: the glyph in the same grey as the other launcher icons, with a status dot (yellow asks, green unseen finish)
+   and a slow pulse while working. */
+.launch .lcl{position:relative}
 .launch .lcl.work .ic{animation:clPulse .8s ease-in-out infinite alternate}
 .launch .lcl::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--sdot,transparent);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb));transform:scale(0);transition:transform 220ms var(--pop)}
 .launch .lcl.ask::after{--sdot:var(--warn);transform:scale(1)}
@@ -372,7 +373,6 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .xtab[aria-selected="true"]{font-weight:600}
 .xtab .ic{width:15px;height:15px;flex-shrink:0}
 .xtab[aria-selected="true"] .ic{color:var(--accent)}
-.xtab[data-i="7"] .ic{color:var(--claude)}
 /* The name stays in the button while hidden, so every tab keeps its accessible name. Each tab's exact name width at
    both weights (--tl4, --tl6) is set from JS, so the slide lasts the whole 300 ms and the highlight lands on the tab. */
 .xtab .tl{max-width:0;opacity:0;overflow:hidden;transition:max-width 300ms var(--out),opacity 160ms ease}
