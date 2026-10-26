@@ -475,7 +475,6 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .tdl{width:250px;flex-shrink:0}
 .tdbig{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.02em}
 .tdsub{font-size:15px;color:var(--text2);margin-top:4px}
-.tdbtns{display:flex;gap:8px;margin-top:14px}
 .field{height:36px;border-radius:18px;border:0;background:var(--surface);color:var(--text);padding:0 14px;font:inherit;font-size:13px;outline:none;transition:box-shadow 150ms}
 .field:focus{box-shadow:inset 0 0 0 1px var(--text3)}
 .field::placeholder{color:var(--text3)}
@@ -484,6 +483,7 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .tlist li{display:flex;align-items:center;gap:10px;min-height:44px;flex-shrink:0;border-radius:12px;padding:0 12px;background:var(--surface);font-size:15px;transition:background 280ms}
 .tlist li span{transition:color 200ms}
 .tlist li.done{background:var(--done)}
+.tlist li.tnone{background:none;color:var(--text2);font-size:14px;padding:0 4px}
 .tlist li.done span{text-decoration:line-through;color:#aeaeb2}
 /* Row time, then Edit and Delete that appear on hover or focus. */
 .tlist .tt2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -949,9 +949,6 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
               <div class="tdl">
                 <div class="tdbig num"><span id="tdDone"></span>/<span id="tdTot"></span></div>
                 <div class="tdsub">Tasks done today</div>
-                <div class="tdbtns">
-                  <button class="pill" id="tdCal"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg>Add in Calendar</button>
-                </div>
               </div>
               <ul class="tlist" id="tlist"></ul>
             </section>
@@ -1930,7 +1927,8 @@ function todoRow(t,i,cls){
     <span class="tact"><button class="ed" aria-label="Edit ${esc(t.t)}" title="Edit">${icon('pencil')}</button><button class="del" aria-label="Delete ${esc(t.t)}" title="Delete">${icon('trash')}</button></span></li>`;
 }
 function renderTodos(newIdx){
-  $('#tlist').innerHTML=S.todos.map((t,i)=>({t,i})).filter(({t})=>isToday(t)).map(({t,i})=>todoRow(t,i,i===newIdx?'new':'')).join('');
+  // Todos are only created on the Calendar page, so an empty list just says so (no button here).
+  $('#tlist').innerHTML=S.todos.map((t,i)=>({t,i})).filter(({t})=>isToday(t)).map(({t,i})=>todoRow(t,i,i===newIdx?'new':'')).join('')||'<li class="tnone">Nothing due today</li>';
   renderTodoCount();if(S.state==='expanded')layout();
 }
 function renderTodoCount(){
@@ -1969,11 +1967,6 @@ $('#tlist').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target===li){editTodo(li)}
   if(e.key==='Delete'){e.preventDefault();delTodo(li,li.querySelector('.del'))}
 });
-// Todos are only created on the Calendar page; this button jumps there with today selected and the field open.
-$('#tdCal').onclick=()=>{
-  goPage(PAGE.calendar);selectDate(new Date().getDate());S.calAdding=true;renderCev();
-  setTimeout(()=>$('#cAddIn').focus(),S.reduce?0:320);
-};
 
 /* notes: Keep-style masonry grid in the user's order. A card opens by growing in place into the editor,
    and a card dragged out of the island floats on top of other windows. */
