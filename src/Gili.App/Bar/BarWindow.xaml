@@ -112,6 +112,8 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
+            <ContentControl x:Name="LeftSlot" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Focusable="False" />
+
             <StackPanel x:Name="RightModules" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Border Style="{StaticResource Module}" ToolTip="{Binding NetTooltip}">
                     <StackPanel VerticalAlignment="Center" MinWidth="58">

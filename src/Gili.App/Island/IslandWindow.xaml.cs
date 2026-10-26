@@ -136,6 +136,9 @@ public partial class IslandWindow : Window
     /// <summary>Whether the island floats, and the panel's width; the bar fades its backdrop and covered elements (PRD 6.3).</summary>
     public event Action<bool, double>? FloatingChanged;
 
+    /// <summary>The compact island's width without hover, and whether Gili's circle shows beside it.</summary>
+    public event Action<double, bool>? CompactChanged;
+
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
@@ -151,6 +154,17 @@ public partial class IslandWindow : Window
     {
         var s = _settings.Current;
         return new(s.BarHeight, s.IslandHeight, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight);
+    }
+
+    private (double Width, bool Circle) _compactSent;
+
+    private void NotifyCompact(double content)
+    {
+        var width = Math.Max(IslandLayout.MinCompactWidth, content + IslandLayout.CompactPadding);
+        var sent = (width, _giliCircleOn == true);
+        if (sent == _compactSent) return;
+        _compactSent = sent;
+        CompactChanged?.Invoke(sent.width, sent.Item2);
     }
 
     private static bool Floats(IslandMode mode) => mode is IslandMode.Expanded or IslandMode.Card or IslandMode.DropZone;
@@ -186,6 +200,7 @@ public partial class IslandWindow : Window
         var content = _mode == IslandMode.Wide ? WideContent.ActualWidth : CompactContent.ActualWidth;
         var target = IslandLayout.For(_mode, Screen(), content, _hovered, ExpandedLayer.Width, _pageHeight);
         if (_mode == IslandMode.Expanded) SizePages(target.Height);
+        NotifyCompact(content);
         if (_floatingEnvelope) GrowEnvelope(target.Top + target.Height);
         var spring = parameters ?? (Floats(_mode) ? null : SpringParameters.Resize);
         var instant = snap || !SystemParameters.ClientAreaAnimation;
@@ -350,6 +365,7 @@ public partial class IslandWindow : Window
         }
         if (instant) Apply();
         else StartAnimating();
+        NotifyCompact(CompactContent.ActualWidth);
         _gili.SetActiveForm(menuOn ? GiliForm.Menu : circleOn ? GiliForm.Circle : GiliForm.InIsland);
         _gili.SetVisible(insideOn || circleOn || menuOn);
         _gili.SetMusicPlayingInSlot(_vm.ShowMediaSlot && _vm.MusicPlaying);

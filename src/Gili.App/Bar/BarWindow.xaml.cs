@@ -7,6 +7,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using Gili.Core.Apps;
 using Gili.Core.Island;
 using Gili.Core.Settings;
 using Gili.Platform.Interop;
@@ -23,6 +24,9 @@ public partial class BarWindow : Window
     private readonly StatsService _stats;
     private readonly ClockService _clock;
     private readonly BarViewModel _vm = new();
+    private readonly LeftSide _left;
+    private double _compactWidth = IslandLayout.MinCompactWidth;
+    private bool _giliCircle;
     private AppBarService? _appBar;
     private IntPtr _hwnd;
     private bool _quitting;
@@ -31,7 +35,7 @@ public partial class BarWindow : Window
     private bool _floating;
     private bool _glassOff;
 
-    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock)
+    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock, AppsService apps)
     {
         _settings = settings;
         _transparency = transparency;
@@ -39,6 +43,10 @@ public partial class BarWindow : Window
         _clock = clock;
         InitializeComponent();
         DataContext = _vm;
+        _left = new LeftSide(apps);
+        _left.PageRequested += page => PageRequested?.Invoke(page);
+        LeftSlot.Content = _left;
+        SizeChanged += (_, _) => UpdateLeftLimit();
         _settings.Changed += OnSettingsChanged;
         _transparency.Changed += _ => Dispatcher.InvokeAsync(ApplyAppearance);
         _stats.Updated += _vm.ApplyStats;
@@ -58,6 +66,27 @@ public partial class BarWindow : Window
     public event Action? SettingsRequested;
 
     public event Action? ClockClicked;
+
+    /// <summary>A launcher, Shelf or Claude icon asks for its island page.</summary>
+    public event Action<IslandPage>? PageRequested;
+
+    /// <summary>
+    /// The compact island's width (without hover) and whether Gili's circle sits beside it: the left side stays 24 px
+    /// away from both (PRD 6.1 "Aturan jarak").
+    /// </summary>
+    public void SetIslandCompact(double width, bool giliCircle)
+    {
+        _compactWidth = width;
+        _giliCircle = giliCircle;
+        UpdateLeftLimit();
+    }
+
+    private void UpdateLeftLimit()
+    {
+        if (ActualWidth <= 0) return;
+        var s = _settings.Current;
+        _left.SetLimit(BarSpacing.LeftLimit(ActualWidth, _compactWidth, s.IslandHeight, _giliCircle, privacyDots: 0));
+    }
 
     /// <summary>The system clock or time zone changed, or the laptop woke up.</summary>
     public event Action? TimeChanged;
@@ -131,8 +160,9 @@ public partial class BarWindow : Window
     {
         var left = ActualWidth / 2 - islandWidth / 2;
         var right = ActualWidth / 2 + islandWidth / 2;
-        foreach (var element in RightModules.Children.OfType<FrameworkElement>())
+        foreach (var element in RightModules.Children.OfType<FrameworkElement>().Concat(_left.Coverable))
         {
+            if (!element.IsVisible) continue;
             var x = element.TranslatePoint(new Point(0, 0), this).X;
             var covered = islandWidth > 0 && IslandLayout.Covers(left, right, x, x + element.ActualWidth);
             if (element.IsHitTestVisible == !covered) continue;

@@ -86,7 +86,7 @@ public sealed partial class IslandViewModel : ObservableObject
     {
         _island = island;
         _settings = settings;
-        // The Claude page joins in Phase 3, when its integration exists.
+        // Until Phase 3 the Claude tab is a placeholder, as in the mockup (PRD 6.3).
         Tabs =
         [
             new(IslandPage.Media, "Media", Glyph("Icon.Music"), null),
@@ -97,6 +97,7 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), Phase2),
             new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), Phase3),
+            new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), Phase3),
             new(IslandPage.System, "System", Glyph("Icon.Cpu"), Phase3),
         ];
         settings.Changed += _ => UpdateSettings();

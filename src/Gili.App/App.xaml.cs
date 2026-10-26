@@ -32,6 +32,7 @@ public partial class App : Application
     private IslandWindow? _islandWindow;
     private GiliService? _gili;
     private BarWindow? _bar;
+    private AppsService? _apps;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
     private bool _quitting;
@@ -78,7 +79,9 @@ public partial class App : Application
         _media = new MediaService(Dispatcher, _log);
         _islandController = new IslandController(Dispatcher, _media);
 
-        _bar = new BarWindow(_settings, _transparency, _stats, _clock);
+        _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
+        _bar = new BarWindow(_settings, _transparency, _stats, _clock, _apps);
+        _bar.PageRequested += _islandController.Toggle;
         _bar.SettingsRequested += ShowSettings;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
         _bar.QuitRequested += Quit;
@@ -93,14 +96,17 @@ public partial class App : Application
             Owner = _bar,
         };
         _islandWindow.FloatingChanged += _bar.SetIslandFloating;
+        _islandWindow.CompactChanged += _bar.SetIslandCompact;
         _islandWindow.Show();
         _stats.Start();
+        _apps.Start();
         _ = _media.StartAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _stats?.Dispose();
+        _apps?.Dispose();
         _gili?.Dispose();
         _islandController?.Dispose();
         _media?.Dispose();
