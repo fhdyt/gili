@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Tanggal | 25 Oktober 2026 (revisi 3: integrasi Claude) |
+| Tanggal | 26 Oktober 2026 (revisi 4: maskot Gili, kontrol sistem, posisi bar, pengaturan tampil/sembunyi) |
 | Status | Disetujui saat brainstorming, menunggu review dokumen |
 | Platform | Windows 11 (laptop), monitor utama |
 | Pengguna | Pribadi (satu pengguna) |
@@ -14,7 +14,9 @@ Catatan: dokumen ini berbahasa Indonesia, tetapi semua teks yang tampil di aplik
 
 ## 1. Ringkasan
 
-TopBar adalah bar kaca semi-transparan di tepi atas layar, mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (launcher dan aplikasi aktif), tengah untuk jam dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, ngecas, file di Shelf), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi).
+TopBar adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, copy clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon tray, panel Controls (Wi‑Fi, Bluetooth, volume, brightness), jam dan tanggal, Settings, dan power.
+
+Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor dan berkedip. Saat ada aktivitas, Gili berpindah ke kiri pulau sebagai lingkaran kecil, dan pulau menampilkan aktivitasnya.
 
 Saat dibuka, pulau lepas dari bar menjadi panel hitam mengambang sedikit di bawah tepi atas. Latar bar menjadi transparan, isi kiri dan kanan tetap tampil, dan hanya elemen yang tertimpa panel yang memudar. Pulau punya halaman untuk media, timer, alarm, kalender, todo, note, Shelf (tempat file sementara), sesi Claude, dan statistik sistem. Note ditulis langsung di pulau. Jendela Tools terpisah dipakai untuk pengelolaan: daftar alarm, edit todo, riwayat clipboard, dan Settings.
 
@@ -37,11 +39,13 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 2. Satu klik atau satu hotkey untuk media, timer, alarm, todo, note, dan Shelf.
 3. Notifikasi waktu (alarm, timer, pengingat todo) yang sulit terlewat.
 4. Data pribadi tersimpan lokal dan tahan restart atau mati listrik mendadak.
-5. Ringan: RAM di bawah 120 MB, CPU saat diam rata-rata di bawah 1%.
-6. Status sesi Claude Code (bekerja, butuh jawaban, selesai) terlihat tanpa membuka jendelanya.
+5. Sangat ringan: RAM di bawah 120 MB, CPU saat diam rata-rata di bawah 1%, termasuk saat mata maskot mengikuti kursor (8.1).
+6. Status sesi Claude Code (bekerja, butuh jawaban, selesai) dan sisa jendela pemakaian 5 jam terlihat tanpa membuka jendelanya.
+7. Bisa menggantikan taskbar Windows sehari-hari: tombol Start, ikon tray, dan kontrol Wi‑Fi/Bluetooth/volume/brightness ada di bar, jadi taskbar Windows boleh disembunyikan.
+8. Setiap bagian bar dan setiap halaman pulau bisa ditampilkan atau disembunyikan di Settings.
 
 **Bukan tujuan**
-- Menggantikan taskbar, Start menu, atau system tray Windows. Taskbar bawah tetap seperti biasa, termasuk ikon volume dan baterai.
+- Membuat ulang isi Start menu, notification area, atau Quick Settings Windows. TopBar membuka Start menu bawaan, menampilkan ikon tray milik aplikasi lain, dan punya panel Controls ringkas; sisanya tetap di Windows.
 - Lebih dari satu monitor.
 - Sinkronisasi cloud, aplikasi mobile, atau akun pengguna.
 - Distribusi publik: Microsoft Store, auto-update, code signing.
@@ -59,16 +63,20 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
 7. **Ide mendadak**: Ctrl+Alt+N membuka halaman Notes dengan note baru kosong dan kursor siap mengetik. Tulisan tersimpan otomatis; Esc menutup pulau.
 8. **Alarm**: jam 14:30 pulau terbuka dengan kartu alarm (Snooze 5m / Stop), suara berbunyi, toast masuk Notification Center.
 9. **Bekerja dengan Claude**: pengguna memberi tugas di Claude Desktop lalu pindah ke browser. Pulau menampilkan nama sesi dan waktu berjalan. Saat Claude bertanya, kartu `Claude needs your input` muncul dengan cuplikan pertanyaan dan bunyi Ping; **Open Claude** membawa Claude Desktop ke depan. Saat selesai, pulau menampilkan `Done · 4m 12s`, lalu gelembung hijau menunggu sampai Claude Desktop dibuka.
+10. **Batas pemakaian Claude**: prompt pertama pagi itu memulai jendela 5 jam. Pulau menghitung mundur `Resets in 3:12:40`; saat batas tercapai, slot berubah kuning `Limit reached`. Saat jendela berakhir, kartu `Claude usage reset` muncul dengan bunyi seperti timer.
+11. **Meja kosong**: tidak ada yang berjalan. Pulau hanya berisi dua mata Gili yang melirik ke arah kursor dan sesekali berkedip. Begitu musik diputar, Gili meluncur ke kiri menjadi lingkaran kecil dan pulau menampilkan judul lagu.
 
 ## 5. Keputusan desain utama
 
 | Topik | Keputusan |
 |---|---|
-| Bentuk bar | Bar selebar monitor utama, didaftarkan sebagai AppBar (memesan 32 px; jendela maximize mulai di bawahnya) |
-| Material bar | Kaca semi-transparan, secara default lebih lembut dari pulau. Opacity dan kekuatan blur bisa diatur |
+| Bentuk bar | Bar selebar monitor utama, didaftarkan sebagai AppBar (memesan 32 px; jendela maximize mulai di bawahnya). Posisi atas (default) atau bawah; posisi bawah hanya bisa dipilih setelah taskbar Windows disembunyikan |
+| Material bar | Default opacity 100% (tint pekat di atas kaca). Opacity dan kekuatan blur bisa diatur |
+| Maskot | Gili: dua mata putih di pulau saat tidak ada aktivitas, lingkaran kecil di kiri pulau saat ada aktivitas. Mata mengikuti kursor dan berkedip |
 | Material pulau | Hitam pekat di semua keadaan |
 | Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh, 8 px di bawah tepi atas. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
-| Taskbar Windows | Tidak diubah; volume dan baterai tetap di sana dan tidak diduplikasi |
+| Taskbar Windows | Default tidak diubah. Pengaturan **Hide Windows taskbar** menyembunyikannya; TopBar lalu menyediakan tombol Start, ikon tray, dan panel Controls. Taskbar Windows dipulihkan di semua jalur keluar |
+| Tampil/sembunyi | Tombol Start, tiap ikon launcher, Shelf, Claude, tiap halaman pulau, tiap modul kanan, tray, Controls, dan jam bisa dinyalakan/dimatikan di Settings |
 | Monitor | Monitor utama saja |
 | Aksi cepat vs pengelolaan | Aksi cepat, menulis note, dan Shelf ada di pulau; daftar alarm, edit todo, riwayat clipboard, dan Settings ada di jendela Tools |
 | Notifikasi | Kartu di pulau + toast Windows (toast tanpa suara supaya bunyi tidak dobel) |
@@ -86,27 +94,42 @@ Aplikasi jalan otomatis saat login, ringan, dan semua note, todo, alarm, serta i
   - **Bar height**: 28–44 px, default 32 px.
   - **Island height** (tinggi pulau compact dan wide): 20 px sampai tinggi bar − 4 px, default 24 px. Pulau selalu berada di tengah tinggi bar; radius sudutnya setengah tinggi pulau; ukuran teks di pulau mengikuti (setengah tinggi pulau, 11–15 px). Gelembung aktivitas ikut setinggi pulau.
   - Perubahan langsung berlaku dengan animasi pegas; ruang AppBar didaftarkan ulang dengan tinggi baru.
-- Terdaftar sebagai AppBar di tepi atas (`SHAppBarMessage`), jadi area kerja Windows berkurang setinggi bar.
-- **Material**: warna gelap di atas latar yang di-blur. Default: tint `#161618` dengan opacity 78%, kaca "Strong". Pengaturan:
-  - **Bar opacity**: 40–100%.
+- Terdaftar sebagai AppBar (`SHAppBarMessage`) di tepi atas atau bawah, jadi area kerja Windows berkurang setinggi bar.
+- **Material**: warna gelap di atas latar yang di-blur. Default: tint `#161618` dengan **opacity 100%**, kaca "Strong" (kaca baru terlihat setelah opacity diturunkan). Pengaturan:
+  - **Bar opacity**: 40–100%, default 100%.
   - **Glass**: Off (tint polos), Light (blur-behind), Strong (acrylic). Windows tidak menyediakan pengaturan radius blur bebas, jadi tiga tingkat ini dipetakan ke efek blur-behind dan acrylic bawaan sistem.
   - Kalau "Transparency effects" Windows mati, bar digambar polos apa pun pengaturannya.
 - Pulau selalu `#000000` pekat, jadi terlihat sebagai benda paling padat di bar.
 - Disembunyikan saat aplikasi fullscreen aktif di monitor utama (`ABN_FULLSCREENAPP`), muncul lagi setelah keluar.
 - Klik kanan di area kosong bar membuka menu: Open Tools, Settings, Demo mode, Quit.
-- **Aturan jarak**: isi kiri dan kanan tidak boleh lebih dekat dari 24 px ke pulau, termasuk titik kamera/mic dan gelembung aktivitas di sampingnya. Jarak ini dihitung dari ukuran pulau saat di-hover (6.3), supaya isi kiri dan kanan tidak bergeser ketika kursor berada di atas pulau. Modul kanan yang tidak muat pindah ke menu "…" (6.4); di kiri, ikon aplikasi yang tidak aktif pindah ke `+N` lalu nama aplikasi aktif dipotong dengan "…" (6.2).
+- **Aturan jarak**: isi kiri dan kanan tidak boleh lebih dekat dari 24 px ke pulau, termasuk lingkaran Gili, titik kamera/mic, dan gelembung aktivitas di sampingnya.
+
+**Posisi bar** (Settings → General → **Bar position**: `Top` / `Bottom`, default Top)
+- Bottom memindahkan AppBar ke tepi bawah (`ABE_BOTTOM`). Pilihan ini nonaktif selama taskbar Windows masih tampil, dengan keterangan `Hide the Windows taskbar first`, karena dua bar di tepi bawah akan bertumpuk.
+- Di bawah, semua yang mengambang dicerminkan secara vertikal: pulau yang terbuka, kartu, dan drop zone melayang 8 px **di atas** tepi bawah dan membesar ke atas; menu power, Controls, dan tray terbuka ke atas. Isi pulau (menu tab di atas, halaman di bawahnya) tidak dibalik.
+- Pindah posisi berlaku langsung: bar keluar dari tepi lama dan masuk dari tepi baru (pegas compact ↔ wide), lalu ruang AppBar didaftarkan ulang.
+- Kalau taskbar Windows dimunculkan lagi saat bar di bawah, bar otomatis pindah ke atas dan Settings menampilkan `Moved to the top because the Windows taskbar is back`.
+
+**Menyembunyikan taskbar Windows** (Settings → General → **Hide Windows taskbar**, default mati)
+- Saat nyala: taskbar Windows (`Shell_TrayWnd`) diubah ke auto-hide lalu disembunyikan, jadi ruangnya kembali ke jendela lain dan tidak muncul saat kursor menyentuh tepi bawah. Tombol Windows di keyboard tetap membuka Start menu.
+- Status asli taskbar (auto-hide atau tidak) disimpan sebelum diubah dan dikembalikan saat saklar dimatikan, saat Quit, saat crash (handler exception), dan saat TopBar mulai lagi setelah mati paksa.
+- Saat Explorer restart (`TaskbarCreated`), taskbar disembunyikan lagi.
+- Toast Windows tetap muncul di pojok kanan bawah seperti biasa. Jarak ini dihitung dari ukuran pulau saat di-hover (6.3), supaya isi kiri dan kanan tidak bergeser ketika kursor berada di atas pulau. Modul kanan yang tidak muat pindah ke menu "…" (6.4); di kiri, ikon aplikasi yang tidak aktif pindah ke `+N` lalu nama aplikasi aktif dipotong dengan "…" (6.2).
 
 ### 6.2 Bagian kiri
 
-Urutan dari kiri: ikon launcher, ikon Shelf, ikon Claude, **pemisah** (garis vertikal tipis), lalu ikon aplikasi yang sedang berjalan. Indikator kamera/mic tidak di sini, tetapi di samping pulau (6.3).
+Urutan dari kiri: tombol Start, ikon launcher, ikon Shelf, ikon Claude, **pemisah** (garis vertikal tipis), lalu ikon aplikasi yang sedang berjalan. Indikator kamera/mic tidak di sini, tetapi di samping pulau (6.3).
 
 | Elemen | Perilaku |
 |---|---|
+| Start | Paling kiri: logo Windows 16 px dalam tombol 28 × 24 px. Klik membuka Start menu Windows (sama seperti menekan tombol Windows); klik lagi saat Start terbuka menutupnya. Hover: `Start`. Default tampil; bisa disembunyikan di Settings. Start menu muncul di posisi bawaan Windows |
 | Launcher | Empat ikon, urut seperti menu tab pulau: Timer, Alarms, Todo, Notes. Masing-masing membuka halamannya di pulau (Timer, Alarms, Todo, Notes). Kalau pulau sudah terbuka, klik pindah ke halaman itu; klik ikon halaman yang sedang terbuka menutup pulau. Pengelolaan lengkap tetap di jendela Tools (tombol Edit / Manage di halaman pulau). |
 | Shelf | Ikon tray tepat setelah launcher, selalu tampil. Kalau Shelf berisi, diikuti jumlah file (`3`). Ikon memantul kecil (skala 1,25, pegas 380 ms) saat file baru masuk. Klik membuka halaman Shelf di pulau; hover menampilkan `Shelf · 3 files`; file bisa diseret ke ikon ini seperti ke bagian bar lain. |
 | Claude | Glyph Claude (warna `#D97757`) tepat setelah Shelf, selalu tampil saat integrasi Claude nyala. Status mengikuti sesi Claude Code (F-CLD): titik kuning di pojok saat ada sesi yang butuh input, glyph berdenyut pelan saat ada sesi bekerja, titik hijau saat ada sesi selesai yang belum dilihat. Klik membuka halaman Claude Sessions di pulau; hover menampilkan ringkasan (`Claude · 1 needs input`). |
 | Pemisah | Garis 1 × 14 px (putih 22%) yang memisahkan grup launcher + Shelf + Claude dari aplikasi. |
 | Aplikasi berjalan | Semua aplikasi yang punya jendela di taskbar Windows tampil sebagai **ikon asli** 16 px, urut sesuai waktu pertama dibuka. **Aplikasi aktif selalu menampilkan nama**, dalam kapsul tipis di belakang ikonnya; aplikasi lain ikon saja (opacity 70%). **Hover langsung menampilkan nama** tanpa jeda tooltip: nama melebar dari ikon dalam kapsul seperti aplikasi aktif, ikon di kanannya bergeser, lalu nama menyusut lagi saat kursor keluar. Aplikasi yang di-hover hanya berganti saat kursor benar-benar bergerak, bukan karena ikon bergeser di bawah kursor yang diam. Nama hover hanya memakai ruang sisa setelah nama aplikasi aktif (dipotong "…" kalau perlu), jadi aturan jarak 24 px tetap berlaku; kalau sisanya kurang dari 40 px, nama tampil sebagai tooltip biasa. Klik ikon membawa aplikasi itu ke depan. Kalau ikon tidak bisa diambil, tampil ikon jendela generik. |
+
+**Tampil/sembunyi** (Settings → Left side): Start, Timer, Alarms, Todo, Notes, Shelf, dan Claude masing-masing punya saklar (default semua nyala; Claude hanya saat integrasinya nyala). Pemisah hanya tampil kalau ada ikon di kirinya. Ikon yang disembunyikan tidak menyisakan celah; deretan merapat dengan gerak yang sama seperti aplikasi yang ditutup.
 
 **Gerak saat berpindah aplikasi**: nama aplikasi lama menyusut (lebar ke 0, fade 160 ms) sementara nama aplikasi baru melebar dari ikonnya (300 ms ease-out, fade masuk mulai 90 ms), dan kapsul latarnya berpindah bersamaan; ikon lain ikut bergeser mulus. Aplikasi yang baru dibuka muncul di ujung kanan deretan dengan pegas (skala 0,6 → 1, 320 ms); aplikasi yang ditutup mengecil lalu hilang dan ikon lain merapat.
 
@@ -120,9 +143,9 @@ Cuplikan clipboard (copy/cut teks, gambar, file) dan progres copy, move, dan del
 
 | Keadaan | Posisi | Isi | Bagian bar lainnya |
 |---|---|---|---|
-| Compact | Di dalam bar, kapsul hitam setinggi pengaturan "Tinggi pulau" (default 24 px), di tengah tinggi bar | Jam + tanggal saat tidak ada aktivitas; saat ada aktivitas hanya aktivitas itu. Lebar mengikuti isinya, minimal 200 px | Tampil |
+| Compact | Di dalam bar, kapsul hitam setinggi pengaturan "Tinggi pulau" (default 24 px), di tengah tinggi bar | Mata Gili saat tidak ada aktivitas; saat ada aktivitas hanya aktivitas itu, dan Gili pindah ke lingkaran di kiri pulau. Lebar mengikuti isinya, minimal 200 px | Tampil |
 | Wide | Di dalam bar, kapsul lebih panjang | Kejadian singkat: Caps/Num Lock, charger, peringatan baterai | Tampil |
-| Expanded | Panel mengambang 8 px di bawah tepi atas, sekitar 680 × 256 px (lebih besar di halaman Notes: 960 × 500 px), radius sudut 32 px di semua halaman | Menu tab (ikon + nama) selebar pulau, halaman, jam + tanggal di tengah bawah | Latar transparan; elemen tertimpa memudar |
+| Expanded | Panel mengambang 8 px di bawah tepi atas, lebar 680 px (Notes 960 px); **tinggi mengikuti isi halaman** (lihat "Tinggi pulau terbuka"), minimal 256 px (Notes 500 px), radius sudut 32 px di semua halaman | Menu tab (ikon + nama) selebar pulau, lalu halaman | Latar transparan; elemen tertimpa memudar |
 | Kartu notifikasi | Panel mengambang sekitar 560 × 104 px, radius 28 px | Satu notifikasi dengan tombol aksi | Latar transparan; elemen tertimpa memudar |
 | Drop zone | Panel mengambang sekitar 420 × 140 px, radius 30 px | Target "Drop to keep on the Shelf" saat file diseret ke atas bar | Latar transparan; elemen tertimpa memudar |
 
@@ -136,8 +159,8 @@ Keadaan mengambang memakai bayangan lembut dan garis cahaya tipis di tepi atas, 
 
 #### Isi compact
 
-- **Saat tidak ada aktivitas**: jam `14:32` (24 jam, tanpa detik) dan tanggal `Sat 25 Oct`.
-- **Saat ada aktivitas**: jam dan tanggal disembunyikan; pulau hanya berisi satu aktivitas dengan prioritas tertinggi. **Lebar pulau mengikuti isi aktivitasnya, tetapi tidak pernah kurang dari 200 px** (selebar notifikasi `Charging · 64%`), dan berubah dengan pegas saat isinya berganti. Lebar minimal ini berlaku juga saat tidak ada aktivitas dan untuk timer, pomodoro, dan stopwatch; aktivitas yang lebih pendek direntang dari ujung ke ujung (ikon di kiri, nilai di kanan). Jam dan tanggal muncul lagi saat aktivitas terakhir selesai. Saat pulau terbuka, jam dan tanggal pindah ke baris kecil di tengah bawah pulau (lihat "Menu halaman").
+- **Saat tidak ada aktivitas**: mata Gili (lihat "Maskot Gili" di bawah). Jam dan tanggal tidak lagi di pulau; keduanya ada di bagian kanan bar (6.4).
+- **Saat ada aktivitas**: pulau hanya berisi satu aktivitas dengan prioritas tertinggi, dan Gili pindah ke lingkaran di kiri pulau. **Lebar pulau mengikuti isi aktivitasnya, tetapi tidak pernah kurang dari 200 px** (selebar notifikasi `Charging · 64%`), dan berubah dengan pegas saat isinya berganti. Lebar minimal ini berlaku juga saat tidak ada aktivitas dan untuk timer, pomodoro, dan stopwatch; aktivitas yang lebih pendek direntang dari ujung ke ujung (ikon di kiri, nilai di kanan). Gili kembali ke dalam pulau saat aktivitas terakhir selesai.
 - Urutan prioritas aktivitas:
   1. Cuplikan clipboard, 3 detik (lihat "Cuplikan clipboard" di bawah)
   2. Sesi Claude yang butuh jawaban, atau hasil `Done` selama 4 detik (lihat "Sesi Claude" di bawah)
@@ -149,9 +172,29 @@ Keadaan mengambang memakai bayangan lembut dan garis cahaya tipis di tepi atas, 
      - Musik: bar level bergerak + judul dan artis (maks. 36 karakter) + tombol play/pause
      - Video: ikon film + judul (maks. 32 karakter) + garis progres 36 px
   8. Sedang dicas: ikon petir + persen
-- Isi Shelf bukan aktivitas pulau; jumlahnya tampil di ikon Shelf di bagian kiri bar (6.2), jadi jam dan tanggal tidak tersembunyi hanya karena ada file di Shelf.
-- Aktivitas berjalan kedua tampil sebagai gelembung bundar kecil di kanan pulau (ikon saja). Klik gelembung membuka halaman aktivitas itu. Gelembung hijau Claude "selesai, belum dilihat" (lihat "Sesi Claude") selalu paling kanan dan bukan aktivitas, jadi tidak menyembunyikan jam.
-- **Hover**: saat kursor berada di atas pulau compact, pulau memanjang 16 px (8 px di tiap sisi) dengan pegas, lalu kembali ke ukuran semula saat kursor pergi. Ini tanda bahwa pulau bisa diklik. Gelembung aktivitas dan titik kamera/mic ikut bergeser. Hover tidak berlaku saat pulau sedang wide atau mengambang.
+  9. Jendela pemakaian Claude 5 jam yang sedang berjalan: ikon jam pasir oranye Claude + `Resets in` + `3:12:40` (lihat "Batas pemakaian Claude"). Saat batas sudah tercapai, aktivitas ini naik ke posisi tepat setelah sesi Claude yang butuh jawaban (posisi 2)
+- Isi Shelf bukan aktivitas pulau; jumlahnya tampil di ikon Shelf di bagian kiri bar (6.2), jadi Gili tidak pindah hanya karena ada file di Shelf.
+- Aktivitas berjalan kedua tampil sebagai gelembung bundar kecil di kanan pulau (ikon saja). Klik gelembung membuka halaman aktivitas itu. Gelembung hijau Claude "selesai, belum dilihat" (lihat "Sesi Claude") selalu paling kanan dan bukan aktivitas, jadi Gili tetap di dalam pulau.
+- **Hover**: saat kursor berada di atas pulau compact, pulau memanjang 16 px (8 px di tiap sisi) dengan pegas, lalu kembali ke ukuran semula saat kursor pergi. Ini tanda bahwa pulau bisa diklik. Lingkaran Gili, gelembung aktivitas, dan titik kamera/mic ikut bergeser. Hover tidak berlaku saat pulau sedang wide atau mengambang.
+
+#### Maskot Gili
+
+Gili adalah maskot TopBar: sepasang mata putih yang hidup di pulau (sketsa pengguna: `MASKOT GILI.jpg`). Gili punya dua bentuk.
+
+| Bentuk | Kapan | Rupa |
+|---|---|---|
+| Di dalam pulau | Compact tanpa aktivitas | Dua kotak putih membulat di ujung kiri pulau, masing-masing 10 × 10 px (radius 3 px, celah 2 px) pada tinggi pulau 24 px, 9 px dari tepi kiri pulau. Ukuran ikut tinggi pulau (sisi mata = 42% tinggi pulau). Sisa pulau hitam kosong, lebar 200 px |
+| Lingkaran | Compact dengan aktivitas, dan wide | Lingkaran hitam setinggi pulau (24 × 24 px), 6 px di kiri pulau, berisi dua mata 6 × 6 px (radius 2 px, celah 2 px) |
+
+- **Mata mengikuti kursor**: kedua mata bergeser bersama ke arah kursor, maksimal 3 px ke kiri/kanan dan 2 px ke atas/bawah (lingkaran: 2 px dan 1,5 px), dari titik tengah mata ke posisi kursor di mana pun di layar. Pergeseran sebanding dengan jarak kursor sampai 400 px, lalu mentok. Gerakan diperhalus dengan pegas (damping 0,8, response 0,25 dtk), jadi mata menyusul kursor dengan lembut, tidak meloncat. Saat kursor diam lebih dari 8 detik, mata pelan-pelan kembali ke tengah.
+- **Berkedip**: tiap 3–6 detik (acak), kedua mata menutup lalu membuka: tinggi mata 100% → 10% dalam 90 ms (ease-in), lalu kembali ke 100% dalam 140 ms (ease-out), jadi kedipan terasa lembut, tidak patah. Sesekali (1 dari 5 kedipan) kedip dua kali berturut-turut dengan jeda 120 ms. Kedipan tidak terjadi saat Gili sedang berpindah bentuk.
+- **Berpindah bentuk**: saat aktivitas pertama muncul, mata mengecil dan meluncur ke kiri keluar dari pulau, lalu lingkaran Gili "menetes" dari ujung kiri pulau ke posisinya 6 px di kiri (pegas damping 0,8, response 0,45 dtk; lingkaran mulai dari skala 0,6 dan menempel di tepi pulau). Bersamaan, isi aktivitas muncul di pulau. Saat aktivitas terakhir selesai, gerak dibalik: lingkaran merapat ke pulau, menyatu, dan matanya membesar kembali di ujung kiri pulau. Semua perpindahan bisa disela dari posisi yang sedang tampil.
+- **Saat pulau mengambang** (expanded, kartu, drop zone): lingkaran Gili mengecil ke skala 0 dan muncul lagi saat pulau kembali compact.
+- **Klik Gili** (di pulau maupun lingkaran): sama dengan klik pulau saat tidak ada aktivitas, yaitu membuka halaman terakhir yang dilihat.
+- **Titik kamera/mic** berada di kiri lingkaran Gili (jarak 6 px), bukan langsung di kiri pulau, selama lingkaran tampil.
+- **Animation effects mati**: mata tidak mengikuti kursor dan tetap di tengah; kedipan menjadi fade tinggi mata 100 ms; perpindahan bentuk menjadi cross-fade 100 ms.
+- **Ringan**: posisi kursor dibaca dengan `GetCursorPos` 30 kali per detik hanya selama Gili tampil dan bar terlihat; mata digambar ulang hanya kalau posisi targetnya berubah ≥ 0,25 px. Saat layar mati, sleep, atau fullscreen, pembacaan berhenti. Tanpa hook mouse global.
+- Settings → Island → **Show Gili** (default nyala). Kalau mati, pulau tanpa aktivitas berisi kapsul hitam kosong 200 px dan tidak ada lingkaran di kiri pulau.
 
 #### Cuplikan clipboard
 
@@ -245,16 +288,42 @@ Saat sebuah sesi mulai menunggu, pulau membuka kartu (prioritas 2, seperti pengi
 
 **Setelah selesai**
 - Kalau jendela sesi itu sedang aktif saat Claude selesai, cukup tampilan `Done` 4 detik.
-- Kalau tidak, setelah 4 detik muncul **gelembung hijau** berikon Claude di kanan pulau, paling kanan dari semua gelembung (kecuali aktivitas Claude sedang tampil; lihat titik hijau di atas). Gelembung ini bukan aktivitas, jadi jam dan tanggal tetap tampil.
+- Kalau tidak, setelah 4 detik muncul **gelembung hijau** berikon Claude di kanan pulau, paling kanan dari semua gelembung (kecuali aktivitas Claude sedang tampil; lihat titik hijau di atas). Gelembung ini bukan aktivitas, jadi Gili tetap di dalam pulau.
 - Gelembung hilang saat jendela sesi itu menjadi aktif, saat gelembung diklik (membawa jendela itu ke depan), atau saat prompt baru dikirim di sesi itu. Kalau lebih dari satu sesi selesai dan belum dilihat, gelembung diberi angka (`2`) dan klik membuka halaman Claude.
 - Untuk sesi Claude Desktop, "jendela aktif" berarti jendela Claude Desktop di depan, karena TopBar tidak tahu percakapan mana yang sedang dilihat di dalamnya.
 - Selesai tidak berbunyi.
+
+#### Batas pemakaian Claude (jendela 5 jam)
+
+Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat pesan pertama dikirim. TopBar menghitung mundur jendela itu dan memberi tahu saat jendela berakhir, supaya pengguna tahu kapan bisa lanjut bekerja penuh. Fitur ini bagian dari integrasi Claude (mati bila integrasi mati) dan punya saklar sendiri: Settings → Claude → **Show 5-hour usage timer** (default nyala).
+
+**Sumber waktu** (urutan dipakai; diverifikasi di awal Fase 3, lihat bagian 12):
+1. Waktu reset resmi dari Claude Code bila tersedia di data yang bisa dibaca TopBar (misalnya field `rate_limits.five_hour.resets_at` dan `used_percentage`, atau pesan batas di file sesi yang memuat waktu reset). Dengan sumber ini, persentase terpakai ikut ditampilkan.
+2. Perkiraan dari hook: jendela dimulai pada `UserPromptSubmit` pertama dari sesi mana pun ketika tidak ada jendela yang berjalan, dibulatkan ke bawah ke jam penuh, dan berakhir 5 jam kemudian. Tooltip menambahkan `Estimated`.
+
+**Di slot pulau**
+
+| Keadaan | Ikon dan warna | Di slot |
+|---|---|---|
+| Jendela berjalan | Jam pasir, oranye Claude `#D97757` | Ikon + `Resets in` + `3:12:40` (j:mm:ss, digit tabular). Prioritas aktivitas 9, jadi biasanya tampil sebagai gelembung saat ada aktivitas lain |
+| Batas tercapai | Jam pasir, kuning `#FFD60A` | Ikon + `Limit reached` + `1:04:12`. Naik ke prioritas tepat setelah sesi Claude yang butuh jawaban |
+| Tidak ada jendela | — | Tidak tampil |
+
+- Tooltip: `Claude 5-hour window · resets at 19:00` (ditambah `· 62% used` bila sumber 1 tersedia, atau `· Estimated` untuk sumber 2).
+- Klik slot atau gelembungnya membuka halaman Claude.
+- Halaman Claude menampilkan baris ringkasan di atas daftar sesi: ring kecil sisa waktu, `5-hour window`, `Resets 19:00`, dan sisa waktu; bila sumber 1 tersedia, ring menunjukkan persen terpakai.
+
+**Saat jendela berakhir**
+- Kartu notifikasi (prioritas 1, seperti timer habis): ikon jam pasir oranye, `Claude usage reset`, baris kedua `Your 5-hour limit is available again`. Tombol **Close** dan **Open Claude**.
+- Suara mengikuti timer (default Chime, berulang sampai ditanggapi, maksimal 5 menit) dan toast tanpa suara dikirim ke Notification Center, sama seperti timer.
+- Selama fase fokus pomodoro kartu ditahan sampai istirahat, seperti kartu prioritas 2; toast tetap dikirim.
+- Jendela baru tidak dimulai otomatis; baru dimulai saat prompt berikutnya dikirim.
 
 **Jendela sesi**: TopBar menelusuri proses induk dari proses `claude` sebuah sesi sampai menemukan jendela pertama yang terlihat: Claude Desktop untuk sesi Desktop, atau jendela terminal (wmux, Windows Terminal) untuk sesi CLI. Membawa ke depan berarti memulihkan jendela kalau diminimize, lalu memfokuskannya. Membuka percakapan tertentu di dalam Claude Desktop di luar cakupan.
 
 #### Indikator kamera dan mikrofon
 
-- Saat kamera atau mikrofon dipakai aplikasi mana pun, **titik berwarna 8 px tanpa latar** muncul tepat di **kiri pulau**, berjarak 6 px, seperti titik privasi di iPhone. Kamera hijau (`#30D158`), mikrofon oranye (`#FF9F0A`).
+- Saat kamera atau mikrofon dipakai aplikasi mana pun, **titik berwarna 8 px tanpa latar** muncul tepat di **kiri pulau** (atau di kiri lingkaran Gili kalau sedang tampil), berjarak 6 px, seperti titik privasi di iPhone. Kamera hijau (`#30D158`), mikrofon oranye (`#FF9F0A`).
 - Saat compact, titik berjajar horizontal dan sejajar tengah dengan pulau; kalau keduanya aktif, titik kamera paling dekat ke pulau (jarak antar-titik 5 px).
 - Setiap titik punya garis tepi gelap tipis (1,5 px, hitam 35%) supaya tetap terlihat di atas jendela berlatar terang. Area hover diperlebar 6 px di semua sisi.
 - Titik muncul dengan pegas (skala 0 → 1) dan hilang dengan cara sebaliknya ≤ 2 detik setelah perangkat berhenti dipakai.
@@ -273,7 +342,7 @@ Saat sebuah sesi mulai menunggu, pulau membuka kartu (prioritas 2, seperti pengi
 | Perangkat Bluetooth tersambung | Ikon jenis perangkat (biru) + nama (`Galaxy Buds2 Pro`) + `Connected` + baterai perangkat (`80%`) kalau perangkat melaporkannya | 4 detik |
 | Perangkat Bluetooth terputus | Ikon abu-abu + nama + `Disconnected` | 2 detik |
 
-Perubahan volume dan brightness tidak ditampilkan; flyout bawaan Windows sudah menanganinya.
+Perubahan volume dan brightness tidak ditampilkan di pulau; flyout bawaan Windows sudah menanganinya. Mengatur keduanya bisa lewat panel Controls (6.4).
 
 **Bluetooth**: berlaku untuk perangkat audio (TWS, headphone, speaker), mouse, keyboard, controller, dan ponsel, dengan ikon sesuai jenisnya. Hanya kejadian sambung/putus yang ditampilkan, bukan perangkat yang sudah tersambung saat TopBar mulai. Kalau perangkat yang sama tersambung-putus berulang dalam 10 detik, hanya kejadian terakhir yang ditampilkan.
 
@@ -281,12 +350,12 @@ Perubahan volume dan brightness tidak ditampilkan; flyout bawaan Windows sudah m
 
 Kalau beberapa kejadian bersamaan, `IslandCoordinator` menampilkan yang paling tinggi dan menahan sisanya di antrean:
 
-1. Alarm berbunyi / timer habis / fase pomodoro selesai / konflik file Explorer (kartu, tetap tampil sampai ditanggapi)
+1. Alarm berbunyi / timer habis / fase pomodoro selesai / jendela Claude 5 jam berakhir / konflik file Explorer (kartu, tetap tampil sampai ditanggapi)
 2. Pengingat todo (kartu selama 10 detik lalu menutup; toast-nya tetap di Notification Center) dan kartu Claude "Needs input" (8 detik lalu mengecil ke slot, tanpa toast)
 3. Drop zone saat file diseret ke atas bar
 4. Kejadian wide
 5. Aktivitas berjalan (slot compact)
-6. Jam dan tanggal saja
+6. Gili saja (tanpa aktivitas)
 
 Pulau yang dibuka pengguna (expanded) berada di atas prioritas 4–6 dan di bawah 1–3. Alarm menggantikan halaman yang sedang terbuka, lalu halaman itu kembali setelah alarm ditanggapi. Saat aplikasi fullscreen aktif, hanya prioritas 1 yang muncul (sebagai overlay); prioritas 2 lewat toast saja (kartu Claude dilewati karena tidak punya toast), prioritas 3–6 dilewati.
 
@@ -296,12 +365,27 @@ Pulau yang dibuka pengguna (expanded) berada di atas prioritas 4–6 dan di bawa
 - Kapsul menu di bagian atas pulau, **selebar pulau**, berjarak **14 px dari tepi atas, kiri, dan kanan**, tinggi 36 px, radius penuh 18 px, latar `#1C1C1E`.
 - **Sudut konsentris**: radius menu + jaraknya ke tepi = radius pulau (18 + 14 = 32 px), jadi lengkung menu sejajar dengan lengkung pulau dan celahnya sama rata di sisi maupun sudut. Sorotan tab mengikuti aturan yang sama di dalam menu (15 + 3 = 18 px). Karena itu pulau Notes juga memakai radius 32 px (bukan 36), supaya menu tidak bergeser saat pindah ke Notes.
 - Berisi 9 tab dengan lebar sama, masing-masing **ikon + nama**: Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, System. Teks 12 px abu-abu, ikon 15 px.
+- **Tab bisa disembunyikan** (Settings → Island pages, saklar per halaman, default semua nyala, minimal satu tetap nyala). Tab yang disembunyikan keluar dari menu dan dari urutan geser/panah; tab sisanya membagi lebar menu sama rata. Halaman tersembunyi tetap terbuka kalau sesuatu menunjuk langsung ke sana (klik aktivitas di slot, ikon bar, hotkey, kartu); selama terbuka dengan cara itu, tabnya tampil sementara di posisi aslinya dan hilang lagi setelah pindah halaman.
 - Tab aktif: sorotan `#3A3A3C` yang bergeser ke tab yang dipilih, teks putih semibold, ikon hijau aksen (ikon Claude tetap oranye Claude).
 - Saat musik diputar, ikon tab Media berganti menjadi bar level hijau yang bergerak, jadi musik tetap terlihat dari halaman mana pun.
 - Di halaman Notes (960 px) menu ikut melebar; sorotan tetap pas dengan tabnya selama pulau berubah ukuran.
 - Kalau layar terlalu sempit (pulau < 680 px), tab yang tidak aktif hanya menampilkan ikon.
-- **Jam saat pulau terbuka**: baris kecil di tengah bawah pulau, jauh dari menu di atas: jam putih semibold + tanggal abu-abu (`19:38 Mon 26 Oct`), 12 px, digit tabular, 8 px dari tepi bawah. Klik membuka halaman Calendar (hover: latar `#1C1C1E`). Supaya baris ini tidak mengambil ruang halaman, pulau 20 px lebih tinggi (680 × 256 px; Notes 960 × 500 px).
+- **Tanpa baris jam di dalam pulau**: jam dan tanggal sudah selalu tampil di kanan bar (6.4), jadi baris jam di bawah pulau (revisi 3) dihapus; ruangnya dipakai halaman.
 - Nama bulan dan tahun tampil di atas grid halaman Calendar. Aksesibilitas: menu adalah `tablist`, tiap tab `tab` dengan `aria-selected`.
+
+**Tinggi pulau terbuka**
+- Tinggi pulau mengikuti isi halaman yang sedang tampil, supaya isi tidak perlu di-scroll: 14 px + menu 36 px + 8 px + tinggi isi halaman + 20 px.
+- **Minimal** 256 px (Notes 500 px), sama dengan ukuran sebelumnya, jadi halaman yang isinya sedikit tidak menyusut.
+- **Maksimal** setinggi layar dikurangi 16 px (8 px jarak dari tepi bar dan 8 px dari tepi seberang). Baru setelah batas ini isi halaman bisa di-scroll.
+- Contoh: Todo dengan 9 tugas menampilkan kesembilannya sekaligus (baris 44 px + jarak 6 px); Calendar menampilkan semua item tanggal terpilih (tanpa `+N more`); Alarms menampilkan semua alarm; Claude menampilkan semua sesi; Notes memanjang mengikuti kolom kartu tertinggi.
+- Tinggi berubah dengan pegas yang sama seperti membuka pulau, bersamaan dengan geser halaman. Saat isi bertambah atau berkurang (centang, tambah tugas, hapus), tinggi menyesuaikan dengan pegas compact ↔ wide. Lebar tidak berubah.
+- Pulau tidak pernah menutup bar di tepi seberang; di posisi bar bawah, batas atasnya 8 px dari tepi atas layar.
+
+**Ambient glow**
+- Di belakang isi pulau terbuka ada sapuan warna lembut dari halaman yang sedang tampil: warna cover album di Media, oranye di Timer (merah saat fokus pomodoro, hijau saat istirahat, biru muda untuk stopwatch), kuning di Alarms dan Notes, merah di Calendar, biru di Todo, biru muda di Shelf, oranye Claude di Claude, ungu di System. Pindah halaman menyilangkan warna dalam 600 ms.
+- **Bergerak pelan**: dua gumpalan cahaya melayang perlahan di belakang isi, masing-masing di lintasan elips sendiri (periode 22 dan 31 detik, bergeser maksimal 12% lebar pulau), dan "bernapas" pelan (skala 0,92–1,08, periode 9 detik). Geraknya hampir tidak terasa, seperti cahaya yang hidup, tidak mengganggu baca. Di Media saat musik dijeda, gerak berhenti dan cahaya meredup ke 50%.
+- Hanya berjalan selama pulau terbuka dan terlihat; berhenti total saat pulau menutup, saat layar mati, dan saat Animation effects mati (cahaya tetap ada tapi diam). Digambar maksimal 30 fps (8.1).
+- Settings → Appearance → **Ambient glow** (default nyala) dan **Ambient motion** (default nyala).
 
 **Halaman** (urutan tetap):
 
@@ -309,21 +393,19 @@ Pulau yang dibuka pengguna (expanded) berada di atas prioritas 4–6 dan di bawa
 |---|---|---|---|
 | 1 | Media | **Musik**: cover, judul, artis, aplikasi sumber, progress bar dengan waktu. **Video**: hanya judul, aplikasi sumber, dan progress bar dengan waktu berjalan dan sisa waktu, tanpa gambar dan tanpa tombol | Musik: ⏮ ⏯ ⏭, klik progress bar untuk seek bila sumber mendukung |
 | 2 | Timer | Pilihan mode Timer / Stopwatch / Pomodoro, angka besar, ring sisa waktu | Start, Pause, Reset, preset 10 dtk / 5 / 10 / 25 menit, fase pomodoro |
-| 3 | Alarms | Alarm berikutnya dalam huruf besar ("Tomorrow 05:30"), tiga alarm dengan saklar | Nyala/mati alarm; "Manage alarms" membuka Tools |
-| 4 | Calendar | Nama bulan dan tahun di atas grid, bulan berjalan, hari ini ditandai, titik pada tanggal yang punya todo/alarm; memilih tanggal menampilkan daftarnya di kanan (maksimal 2 baris, sisanya `+N more`) | Bulan sebelum/berikutnya; **Add task** untuk tanggal terpilih (satu-satunya tempat membuat todo) |
-| 5 | Todo | Angka besar `4/5` + "Tasks done today", daftar hari ini (yang selesai dicoret dengan latar hijau gelap), scroll vertikal | Centang; **Add in Calendar** (membuka Calendar di hari ini dengan Add task terbuka); Edit membuka Tools |
-| 6 | Notes | Pulau membesar ke sekitar 960 × 500 px. Atas: kolom cari dan tombol New note. Kiri: **grid kartu ala Google Keep** (lihat "Halaman Notes" di bawah). Kanan: editor teks yang **hanya muncul saat menambah atau mengedit** note | Buat, klik kartu untuk edit, cari, **seret kartu untuk mengatur urutan** (Alt + panah dari keyboard), hapus (klik dua kali untuk konfirmasi), Done |
+| 3 | Alarms | Alarm berikutnya dalam huruf besar ("Tomorrow 05:30"), semua alarm dengan saklar (pulau memanjang mengikuti jumlahnya) | Nyala/mati alarm; "Manage alarms" membuka Tools |
+| 4 | Calendar | Nama bulan dan tahun di atas grid, bulan berjalan, hari ini ditandai, titik pada tanggal yang punya todo/alarm; memilih tanggal menampilkan semua itemnya di kanan (pulau memanjang bila perlu) | Bulan sebelum/berikutnya; **Add task** untuk tanggal terpilih, dengan jam opsional (satu-satunya tempat membuat todo) |
+| 5 | Todo | Angka besar `4/5` + "Tasks done today", semua tugas hari ini tanpa scroll (yang selesai dicoret dengan latar hijau gelap; jam tampil di kanan baris bila diatur) | Centang; **Add in Calendar** (membuka Calendar di hari ini dengan Add task terbuka); **Edit** dan **Delete** per baris (lihat "Mengubah dan menghapus todo") |
+| 6 | Notes | Pulau membesar ke lebar 960 px, tinggi minimal 500 px dan memanjang mengikuti kartu. Atas: kolom cari dan tombol New note. Kiri: **grid kartu ala Google Keep** (lihat "Halaman Notes" di bawah). Kanan: editor teks yang **hanya muncul saat menambah atau mengedit** note | Buat, klik kartu untuk edit, cari, **seret kartu untuk mengatur urutan** (Alt + panah dari keyboard), hapus (klik dua kali untuk konfirmasi), Done |
 | 7 | Shelf | Grid tetap 4 × 2 (maksimal 8 item, **tanpa scroll**). Tile ringkas: ikon jenis file dan nama satu baris; bundel menampilkan ikon tumpukan dengan jumlah file. Ringkasan jumlah file dan total ukuran di kiri | Seret tile keluar ke folder/aplikasi, hapus satu, Clear all |
-| 8 | Claude | Judul "Claude" + "Sessions". Satu baris per sesi yang hidup, urut Needs input → Working → Done (belum dilihat) → Idle: ikon status, nama sesi, folder, dan waktu (berjalan, lama selesai, atau sejak kapan idle). Baris Needs input menampilkan cuplikan pertanyaan di baris kedua; sesi Idle redup; daftar bisa di-scroll vertikal. Tanpa sesi: `No Claude sessions`. Halaman hanya ada bila integrasi Claude menyala | Klik baris membawa jendela sesi ke depan dan menandai Done sebagai sudah dilihat |
+| 8 | Claude | Baris ringkasan jendela pemakaian 5 jam (bila fiturnya nyala), lalu satu baris per sesi yang hidup, urut Needs input → Working → Done (belum dilihat) → Idle: ikon status, nama sesi, folder, dan waktu (berjalan, lama selesai, atau sejak kapan idle). Baris Needs input menampilkan cuplikan pertanyaan di baris kedua; sesi Idle redup; pulau memanjang mengikuti jumlah sesi. Tanpa sesi: `No Claude sessions`. Halaman hanya ada bila integrasi Claude menyala | Klik baris membawa jendela sesi ke depan dan menandai Done sebagai sudah dilihat |
 | 9 | System | Grafik mini 60 detik untuk CPU, RAM, GPU, unduhan; suhu CPU; sisa ruang C: | Klik membuka Task Manager |
-
-Titik penanda halaman di bawah tengah; halaman aktif berupa garis lebih panjang.
 
 **Todo hari ini**: todo yang jatuh tempo hari ini, ditambah todo tanpa tanggal yang belum selesai, ditambah todo tanpa tanggal yang diselesaikan hari ini. Rasio dan ring = jumlah selesai / total daftar itu. Kalau daftar kosong tampil "Nothing due today" dan tombol Add in Calendar.
 
 **Halaman Notes**
-- **Ukuran**: pulau membesar ke sekitar 960 × 500 px (dibatasi lebar layar dikurangi 24 px), jauh lebih besar dari halaman lain, dengan pegas yang sama seperti membuka pulau. Muat 5 kolom kartu saat editor tertutup dan 3 kolom saat editor terbuka.
-- **Grid kartu ala Google Keep**: setiap note jadi kartu (judul tebal = baris pertama, isi maksimal 8 baris, waktu terakhir diedit). Lebar kolom minimal 140 px dan jarak antar-kartu 8 px. Tinggi kartu mengikuti isinya, dan kartu ditempatkan berurutan ke kolom yang paling pendek (masonry), jadi susunannya rapat seperti Keep. Kalau note lebih banyak dari ruangnya, grid bisa di-scroll vertikal.
+- **Ukuran**: pulau membesar ke lebar 960 px dan tinggi minimal 500 px yang memanjang mengikuti kartu (dibatasi lebar layar dikurangi 24 px), jauh lebih besar dari halaman lain, dengan pegas yang sama seperti membuka pulau. Muat 5 kolom kartu saat editor tertutup dan 3 kolom saat editor terbuka.
+- **Grid kartu ala Google Keep**: setiap note jadi kartu (judul tebal = baris pertama, isi maksimal 8 baris, waktu terakhir diedit). Lebar kolom minimal 140 px dan jarak antar-kartu 8 px. Tinggi kartu mengikuti isinya, dan kartu ditempatkan berurutan ke kolom yang paling pendek (masonry), jadi susunannya rapat seperti Keep. Pulau memanjang mengikuti kolom tertinggi (6.3 "Tinggi pulau terbuka"); grid baru bisa di-scroll setelah pulau setinggi layar.
 - **Editor hanya saat dibutuhkan**: saat tidak sedang menulis, grid memakai seluruh lebar. Klik kartu atau **New note** membuat editor (lebar 360 px) meluncur masuk dari kanan, grid menyempit, dan kartu-kartu bergeser ke posisi barunya dengan animasi. Kartu yang sedang diedit diberi garis hijau.
 - **Menutup editor**: tombol **Done**, atau Esc di editor (Esc berikutnya menutup pulau). Grid kembali selebar penuh. Note baru yang ditutup dalam keadaan kosong dibuang otomatis, seperti di Keep.
 - **Mengatur urutan**: seret kartu. Kartu terangkat (bayangan dan skala 3%) dan mengikuti pointer 1:1 dari titik pegang; saat melewati kartu lain, urutannya bertukar dan kartu lain bergeser dengan animasi; saat dilepas, kartu mendarat ke slotnya dengan pegas. Dari keyboard: fokus kartu lalu Alt + panah (kiri/atas = lebih awal, kanan/bawah = lebih akhir). Mengurutkan tidak bisa selama pencarian aktif.
@@ -342,14 +424,22 @@ Titik penanda halaman di bawah tengah; halaman aktif berupa garis lebih panjang.
 | Purple | `#42265A` |
 
 **Menambah todo (hanya lewat Calendar)**
-- Todo **hanya dibuat dari halaman Calendar**: pilih tanggal, lalu **Add task** di bawah daftar tanggal itu. Kolom input muncul di tempat; Enter menyimpan, Esc membatalkan.
+- Todo **hanya dibuat dari halaman Calendar**: pilih tanggal, lalu **Add task** di bawah daftar tanggal itu. Kolom input muncul di tempat: judul tugas, lalu kolom **jam** kecil di kanannya (placeholder `Time`, format 24 jam `15:00`, opsional). Enter menyimpan, Esc membatalkan, Tab berpindah dari judul ke jam.
+- **Jam**: tugas dengan jam tampil sebagai `15:00 · Prepare meeting slides` di Calendar dan dengan jam di kanan baris Todo. Pada jam itu, kartu pengingat todo muncul (6.3 "Kartu notifikasi"). Tugas tanpa jam tidak punya pengingat. Jam yang sudah lewat untuk hari ini tetap disimpan, tanpa pengingat, dan kolomnya diberi garis kuning sebagai tanda.
 - Halaman Todo tidak punya kolom input. Tombol **Add in Calendar** di sana menggeser pulau ke halaman Calendar dengan tanggal hari ini terpilih dan kolom Add task langsung terbuka dan fokus.
 - **Umpan balik**: tugas untuk hari ini langsung muncul di daftar Todo dengan animasi. Tugas untuk tanggal lain tidak masuk daftar hari ini; pulau menampilkan konfirmasi singkat `Added to Tue 28 Oct`, dan tanggal itu di Calendar mendapat titik.
-- Jam pengingat tetap diatur di Tools, supaya kolom di pulau tetap ringkas.
+
+**Mengubah dan menghapus todo** (di halaman Todo)
+- Hover atau fokus baris menampilkan dua tombol ikon 28 px di kanan baris: **Edit** (pensil) dan **Delete** (tempat sampah). Jam tugas bergeser ke kiri tombol itu.
+- **Edit**: baris berubah menjadi kolom judul + kolom jam di tempat (baris memanjang dengan pegas); Enter atau tombol centang menyimpan, Esc membatalkan. Mengosongkan jam menghapus pengingatnya.
+- **Delete**: klik pertama mengubah tombol menjadi `Delete?` merah selama 3 detik; klik kedua menghapus baris (baris menyusut dan lenyap, baris lain merapat, pulau memendek). Sama seperti hapus note, tanpa dialog.
+- Dari keyboard: fokus baris, `Enter` = edit, `Delete` dua kali = hapus.
+- Pengelolaan lengkap (tanggal jatuh tempo, urutan, filter All/Done) tetap di jendela Tools.
 
 **Membuka pulau**
 - Klik pulau compact. Halaman yang dibuka sesuai aktivitas di slot (Media, Timer); kalau tidak ada, halaman terakhir yang dilihat. Slot Claude punya aturan sendiri (lihat "Sesi Claude").
-- Klik jam atau tanggal: halaman Calendar (sebelum Fase 2: halaman terakhir).
+- Klik Gili saat tidak ada aktivitas: halaman terakhir yang dilihat.
+- Klik jam atau tanggal di kanan bar: halaman Calendar (sebelum Fase 2: halaman terakhir), dengan aturan buka/tutup yang sama seperti ikon bar lain.
 - Klik CPU/RAM/GPU/suhu/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
 - Ikon Timer / Alarms / Todo di launcher: halaman Timer / Alarms / Todo.
 - Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halamannya; klik saat halamannya sedang terbuka menutup pulau.
@@ -366,6 +456,7 @@ Titik penanda halaman di bawah tengah; halaman aktif berupa garis lebih panjang.
 |---|---|---|
 | Alarm | Ikon alarm, jam, label | Snooze 5m, Stop |
 | Timer habis | `Timer 10:00 done`, label | Repeat, Close |
+| Jendela Claude 5 jam berakhir | `Claude usage reset`, `Your 5-hour limit is available again` | Close, Open Claude |
 | Pengingat todo | Judul tugas, waktu jatuh tempo | Snooze 10m, Done |
 | Fokus selesai | `Focus session done`, `5-minute break · session 1 of 4` | Skip, Start break |
 | Istirahat selesai | `Break over`, `Session 2 of 4 ready` | Stop, Start focus |
@@ -374,7 +465,7 @@ Titik penanda halaman di bawah tengah; halaman aktif berupa garis lebih panjang.
 | Butuh izin admin | `Needs administrator permission`, nama folder tujuan | Open dialog |
 | Claude butuh jawaban | `Claude needs your input`, `Claude needs permission`, atau `Plan ready for review`; nama sesi; cuplikan pertanyaan | Later, Open Claude (sesi terminal: Open terminal) |
 
-Suara tiap kartu diatur di 6.5. Kalau alarm atau timer tidak ditanggapi dalam 5 menit, suara berhenti, kartu mengecil ke compact dengan tanda merah, dan toast "Missed alarm 14:30" tetap di Notification Center.
+Suara tiap kartu diatur di 6.6. Kalau alarm atau timer tidak ditanggapi dalam 5 menit, suara berhenti, kartu mengecil ke compact dengan tanda merah, dan toast "Missed alarm 14:30" tetap di Notification Center.
 
 #### Shelf (tempat file sementara)
 
@@ -408,12 +499,35 @@ Urutan default dari kiri ke kanan:
 | GPU | Mati | `GPU` / `4%` | Klik: halaman System |
 | Suhu CPU | Mati | `TEMP` / `62°C`, nilai kuning ≥ 80°C, merah ≥ 90°C | Klik: halaman System |
 | Disk | Mati | `C: FREE` / `120 GB` | Klik: halaman System |
-| Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: daftar jaringan Windows (`ms-availablenetworks:`) |
+| Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: panel Controls dengan daftar Wi‑Fi terbuka |
+| Tray | Nyala | Ikon chevron (`^` saat bar di atas: menunjuk ke bawah; saat bar di bawah: ke atas) | Klik: panel tray (di bawah). Hover: `Show hidden icons` |
+| Controls | Nyala | Satu ikon slider | Klik: panel Controls (di bawah). Hover: `Controls` |
+| Jam dan tanggal | Nyala | Gaya dua baris: tanggal di atas sebagai label (`SAT 25 OCT`), jam di bawah sebagai nilai (`14:32`, 24 jam tanpa detik, atau 12 jam sesuai Settings) | Klik: halaman Calendar. Hover: `Saturday, 25 October 2026` |
+| Settings | Selalu | Ikon roda gigi, tepat di kiri Power | Klik: jendela Settings. Hover: `Settings` |
 | Power | Selalu, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: menu power (di bawah) |
 
-- Volume dan baterai tidak ditampilkan; taskbar Windows sudah memilikinya.
-- Tiap modul bisa dinyalakan/dimatikan dan diurutkan di Settings. GPU, suhu, dan disk tetap tersedia di halaman System walaupun modulnya mati.
-- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, Suhu, GPU, RAM, CPU. Wi‑Fi dan Power selalu tampil.
+- Ikon volume dan baterai tidak ditampilkan di bar; volume ada di panel Controls, dan status ngecas tampil di pulau.
+- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Suhu, Disk, Wi‑Fi, Tray, Controls, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU, suhu, dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
+- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, Suhu, GPU, RAM, CPU. Wi‑Fi, Tray, Controls, Jam, Settings, dan Power selalu tampil.
+
+**Panel tray** (ikon aplikasi latar belakang)
+- Panel kecil yang turun dari tombol Tray (latar `#1C1C1E`, radius 12 px, bayangan lembut, sama seperti menu power), berisi grid ikon notification area **semua** aplikasi latar belakang (yang di taskbar Windows tampil langsung maupun yang tersembunyi di overflow), 16 px dalam sel 32 × 32 px, maksimal 6 kolom.
+- Klik kiri, klik kanan (menu konteks aplikasinya), dan klik dua kali diteruskan ke aplikasi pemilik ikon, jadi perilakunya sama seperti di taskbar Windows. Hover menampilkan tooltip aplikasi.
+- Ikon diperbarui langsung saat aplikasi menambah, mengubah, atau menghapus ikonnya. Ikon berkedip/animasi dari aplikasi ditampilkan apa adanya.
+- Menutup dengan klik di luar, Esc, atau setelah aksi dijalankan. Bisa dipakai dengan keyboard (panah, Enter, Shift+F10 untuk menu konteks).
+- Kosong: `No background apps`.
+
+**Panel Controls** (pengganti Quick Settings di bar)
+- Panel 320 px yang turun dari tombol Controls, gaya sama dengan panel tray. Isi dari atas:
+  1. Tiga tombol saklar besar: **Wi‑Fi**, **Bluetooth**, **Airplane mode** (nyala = latar aksen). Panah kecil di Wi‑Fi dan Bluetooth membuka daftarnya di tempat.
+  2. **Volume**: ikon speaker (klik = mute/unmute), slider 0–100, persen; di bawahnya nama perangkat output (`Speakers (Realtek)`), klik untuk memilih perangkat lain.
+  3. **Brightness**: ikon matahari, slider 0–100, persen. Disembunyikan kalau layar tidak mendukung (monitor eksternal tanpa kontrol brightness).
+  4. Baris bawah: baterai (`64% · 2 h 10 min left` atau `Charging`), tombol **Windows Quick Settings** (membuka panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility), dan **All settings** (`ms-settings:`).
+- **Daftar Wi‑Fi**: jaringan yang terlihat diurutkan dari sinyal terkuat, jaringan tersambung paling atas dengan `Connected`. Klik jaringan yang sudah pernah dipakai langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena TopBar tidak menangani password. Tombol **Disconnect** di jaringan tersambung.
+- **Daftar Bluetooth**: perangkat yang sudah di-pair beserta statusnya; klik menyambung/memutus. **Add device** membuka `ms-settings:bluetooth`.
+- Slider berlaku langsung saat digeser; flyout volume/brightness bawaan Windows boleh ikut muncul. Scroll di atas slider mengubah nilainya 2 poin.
+- Menutup dengan klik di luar atau Esc. Saat pulau mengambang, panel tray dan Controls tertutup.
+- Panel hanya dibuat saat dibuka, dan semua pembacaan statusnya (daftar Wi‑Fi, perangkat Bluetooth) berhenti saat panel tertutup.
 - Semua angka yang berubah memakai digit tabular supaya bar tidak bergoyang.
 
 **Menu power**
@@ -433,7 +547,25 @@ Klik ikon power membuka menu kecil yang turun dari ikon (latar `#1C1C1E`, radius
 - Menu menutup dengan klik di luar, Esc, atau saat pulau terbuka. Bisa dipakai dengan keyboard (panah atas/bawah, Enter).
 - Saat pulau mengambang, ikon power ikut aturan elemen tertimpa (6.3).
 
-### 6.5 Suara
+### 6.5 Settings
+
+Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan bar, atau dengan menjalankan TopBar saat sudah berjalan. Jendela gelap biasa dengan bagian di kiri. Semua perubahan berlaku langsung tanpa tombol Save.
+
+| Bagian | Isi |
+|---|---|
+| General | Bar position (Top / Bottom), Hide Windows taskbar, Start with Windows, Clock format (24-hour / 12-hour) |
+| Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
+| Left side | Saklar Start, Timer, Alarms, Todo, Notes, Shelf, Claude |
+| Island | Show Gili; saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, System) |
+| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, CPU temperature, Disk; saklar Wi‑Fi, Tray, Controls, Clock; kota cuaca; ambang baterai |
+| Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
+| Sounds | Suara timer, Alert volume, Gradually increase, contoh suara |
+| Shortcuts | Hotkey (Fase 4) |
+
+- Bagian yang belum ada fasenya tetap tampil tapi nonaktif dengan keterangan `Coming in a later version` sampai fasenya selesai.
+- Saklar yang menyembunyikan sesuatu langsung menganimasikan bar (elemen mengecil dan deretan merapat), jadi hasilnya terlihat sambil mengatur.
+
+### 6.6 Suara
 
 **Suara bawaan**: lima file suara pendek yang ditanam di aplikasi. Semuanya dibuat sendiri atau berlisensi CC0, jadi aman dipakai tanpa izin tambahan.
 
@@ -451,6 +583,7 @@ Klik ikon power membuka menu kecil yang turun dari ikon (latar `#1C1C1E`, radius
 |---|---|---|
 | Alarm | Dipilih per alarm (default Radar) | Berulang sampai Snooze atau Stop, maksimal 5 menit; volume naik bertahap |
 | Timer habis | Dipilih di Settings (default Chime) | Berulang sampai Repeat atau Close, maksimal 5 menit; langsung di volume penuh |
+| Jendela Claude 5 jam berakhir | Sama dengan suara timer | Berulang sampai Close atau Open Claude, maksimal 5 menit; ditahan selama fase fokus pomodoro |
 | Fase pomodoro selesai | Bell | Sekali |
 | Pengingat todo | Ping | Sekali; dibisukan selama fase fokus pomodoro (ikut F-TOOL-04) |
 | Claude butuh jawaban | Ping | Sekali per pertanyaan; dibisukan selama fase fokus pomodoro |
@@ -481,15 +614,19 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
-| F-BAR-01 | Bar terdaftar sebagai AppBar di monitor utama | Jendela maximize mulai tepat di bawah bar; taskbar Windows tidak berubah | 1 |
+| F-BAR-01 | Bar terdaftar sebagai AppBar di monitor utama | Jendela maximize mulai tepat di bawah bar; taskbar Windows tidak berubah kecuali Hide Windows taskbar dinyalakan (F-BAR-11) | 1 |
 | F-BAR-02 | Bar sembunyi saat fullscreen | YouTube fullscreen dan game fullscreen tidak tertutup; bar kembali ≤ 1 detik setelah keluar | 1 |
 | F-BAR-03 | Bar pulih dari kejadian sistem | Setelah Explorer restart, resolusi/DPI berubah, atau bangun dari sleep, bar kembali di posisi benar dan area kerja tetap berkurang 32 px | 1 |
 | F-BAR-04 | Autostart saat login | Setelah restart, bar muncul ≤ 2 detik setelah desktop tampil; bisa dimatikan di Settings | 1 |
 | F-BAR-05 | Hanya satu instance | Menjalankan app kedua kalinya hanya memfokuskan instance yang sudah jalan | 1 |
 | F-BAR-06 | Material bar | Opacity dan tingkat kaca mengubah bar langsung; Transparency effects Windows mati memaksa bar polos; pulau tetap hitam pekat | 1 |
 | F-BAR-07 | Jarak dan overflow | Di lebar 1366 px dan 1920 px, isi kiri dan kanan berjarak minimal 24 px dari pulau di semua keadaan pulau yang masih menampilkan bar | 1 |
-| F-BAR-08 | Settings | Jendela Settings: jam 12/24, opacity bar, tingkat kaca, tinggi bar (28–44 px), tinggi pulau (20 px – tinggi bar − 4), modul kanan (nyala/urutan), ambang baterai, kota cuaca, hotkey, suhu CPU, autostart | 1 (jam, material, tinggi bar dan pulau, autostart), 3 (modul, baterai), 4 (cuaca, hotkey, suhu) |
-| F-BAR-09 | Mode demo | "Demo mode" memutar skenario palsu (media, ngecas, notifikasi, copy, drop ke Shelf, dan mulai Fase 3 sesi Claude) untuk mengecek UI | 1 |
+| F-BAR-08 | Settings | Jendela Settings dengan bagian di 6.5: jam 12/24, opacity bar (default 100%), tingkat kaca, tinggi bar (28–44 px), tinggi pulau (20 px – tinggi bar − 4), ambient glow/motion, Gili, modul kanan (nyala/urutan), ambang baterai, kota cuaca, hotkey, suhu CPU, autostart | 1 (jam, material, tinggi bar dan pulau, autostart), 3 (modul, baterai), 4 (cuaca, hotkey, suhu) |
+| F-BAR-09 | Mode demo | "Demo mode" memutar skenario palsu (media, ngecas, notifikasi, copy, drop ke Shelf, Gili berpindah bentuk, dan mulai Fase 3 sesi Claude serta jendela 5 jam) untuk mengecek UI | 1 |
+| F-BAR-10 | Posisi bar atas/bawah | Bottom hanya bisa dipilih saat taskbar Windows disembunyikan; di bawah, jendela maximize berakhir tepat di atas bar dan semua panel mengambang terbuka ke atas sesuai 6.1; memunculkan taskbar Windows lagi memindahkan bar ke atas | 3 |
+| F-BAR-11 | Sembunyikan taskbar Windows | Saklar menyembunyikan taskbar Windows dan ruangnya kembali ke jendela lain; status asli dipulihkan saat saklar mati, Quit, crash, dan start berikutnya setelah mati paksa; tetap tersembunyi setelah Explorer restart; tombol Windows tetap membuka Start | 3 |
+| F-BAR-12 | Tampil/sembunyi | Setiap saklar di 6.5 (Left side, Island, Right side) langsung menampilkan/menyembunyikan elemennya dengan animasi; elemen yang mati tidak menyisakan celah dan berhenti mengambil data; pilihan tersimpan setelah restart | 3 |
+| F-BAR-13 | Tombol Settings | Roda gigi selalu tampil tepat di kiri Power dan membuka jendela Settings; kalau Settings sudah terbuka, jendelanya dibawa ke depan | 1 |
 
 ### 7.2 Bagian kiri
 
@@ -499,13 +636,14 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-LEFT-02 | Launcher | Timer, Alarms, Todo, dan Notes membuka halamannya di pulau; saat pulau terbuka klik berpindah halaman tanpa menutup-membuka ulang; klik ikon halaman yang sedang terbuka menutup pulau | 3 |
 | F-LEFT-03 | Riwayat clipboard | 50 teks terakhir tersimpan (tahan restart), bisa dicari, klik untuk menyalin ulang, bisa dihapus semua | 4 |
 | F-LEFT-04 | Ikon Shelf | Selalu tampil tepat setelah launcher; jumlah file sesuai isi Shelf; memantul saat file baru masuk; klik membuka halaman Shelf | 3 |
+| F-LEFT-06 | Tombol Start | Paling kiri; klik membuka Start menu Windows dan klik kedua menutupnya, baik saat taskbar Windows tampil maupun disembunyikan | 3 |
 | F-LEFT-05 | Ikon Claude | Tampil setelah Shelf saat integrasi Claude nyala; status (titik kuning, denyut, titik hijau) sesuai sesi Claude Code dalam ≤ 1 detik; klik membuka halaman Claude Sessions | 3 |
 
 ### 7.3 Pulau tengah
 
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
-| F-ISL-01 | Jam dan tanggal | Berganti tepat di pergantian menit; jam dan tanggal hanya tampil saat tidak ada aktivitas, hilang saat aktivitas pertama muncul, dan kembali saat aktivitas terakhir selesai; lebar pulau mengikuti isinya dengan minimal 200 px di semua keadaan compact dan wide | 1 |
+| F-ISL-01 | Pulau tanpa aktivitas | Pulau berisi mata Gili saat tidak ada aktivitas dan aktivitas menggantikannya saat muncul; lebar pulau mengikuti isinya dengan minimal 200 px di semua keadaan compact dan wide. (Jam dan tanggal pindah ke F-RIGHT-11) | 1 |
 | F-ISL-02 | Keadaan pulau dan gerak | Transisi compact ↔ wide ↔ expanded ↔ kartu ↔ drop zone sesuai 8.3; selama pulau mengambang latar bar transparan, isi bar tetap tampil, dan hanya elemen yang tertimpa panel (+8 px) yang memudar | 1 |
 | F-ISL-03 | Prioritas dan antrean | Aturan di 6.3 terpenuhi; dites unit | 1 |
 | F-ISL-04 | Musik | Spotify dan YouTube (Chrome/Edge) tampil di slot dan halaman Media; tombol kontrol berfungsi; judul berganti ≤ 1 detik setelah lagu ganti | 1 |
@@ -518,7 +656,12 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-ISL-12 | Shelf | Perilaku di 6.3 "Shelf": drop zone, satu drop = satu item (bundel untuk banyak file), maksimal 8 item di grid 4 × 2 tanpa scroll, pesan saat penuh, referensi, seret keluar dengan Copy/Move, pembersihan file yang hilang, tersimpan setelah restart | 3 |
 | F-ISL-14 | Titik kamera/mic | Titik muncul di kiri pulau ≤ 2 detik setelah kamera/mic mulai dipakai dan hilang ≤ 2 detik setelah berhenti; tetap tampil saat pulau mengambang; terlihat di atas latar gelap maupun terang; tidak pernah tumpang-tindih dengan isi bagian kiri bar | 3 |
 | F-ISL-15 | Progres operasi file Explorer | Copy dan move file > 1 GB, serta delete > 1.000 item (ke Recycle Bin maupun permanen), tampil di slot pulau sesuai tabel di 6.3; pulau tetap compact dan tidak pernah terbuka atau mengambang karena operasi file; hasil akhir tampil 2 detik; batal menampilkan "Cancelled"; konflik file membuka kartu di pulau (Replace/Skip, Try again/Skip, atau Open dialog) dan pilihannya diteruskan ke dialog Explorer; klik slot membawa dialog Explorer ke depan | 4 |
-| F-ISL-16 | Todo dibuat lewat Calendar | Todo hanya bisa dibuat dari Add task di halaman Calendar, dengan tanggal yang dipilih; Add in Calendar di halaman Todo membuka Calendar di hari ini dengan kolom terbuka; tugas hari ini muncul di daftar Todo, tugas tanggal lain memunculkan `Added to …` dan titik di Calendar; semua bisa dilakukan dengan keyboard | 2 |
+| F-ISL-16 | Todo dibuat lewat Calendar | Todo hanya bisa dibuat dari Add task di halaman Calendar, dengan tanggal yang dipilih dan jam opsional; tugas berjam memunculkan kartu pengingat tepat pada jamnya; Add in Calendar di halaman Todo membuka Calendar di hari ini dengan kolom terbuka; tugas hari ini muncul di daftar Todo, tugas tanggal lain memunculkan `Added to …` dan titik di Calendar; semua bisa dilakukan dengan keyboard | 2 |
+| F-ISL-19 | Maskot Gili | Mata di pulau saat tanpa aktivitas dan lingkaran di kiri pulau saat ada aktivitas, sesuai "Maskot Gili" di 6.3; mata mengikuti kursor di seluruh layar dengan pegas; kedipan lembut tiap 3–6 detik; perpindahan bentuk mulus dan bisa disela; mati saat Animation effects mati sesuai aturannya; bisa dimatikan; anggaran CPU 8.1 terpenuhi | 1 |
+| F-ISL-20 | Tinggi pulau mengikuti isi | Tinggi pulau terbuka sesuai "Tinggi pulau terbuka" di 6.3: minimal 256 px (Notes 500 px), maksimal tinggi layar − 16 px; Todo dengan 10 tugas, Calendar dengan 6 item, dan Claude dengan 6 sesi tampil penuh tanpa scroll di layar 1080 px; perubahan tinggi beranimasi pegas | 2 |
+| F-ISL-21 | Ambient glow bergerak | Warna per halaman sesuai 6.3; cahaya melayang pelan saat pulau terbuka dan berhenti total saat pulau menutup; diam saat Animation effects mati; bisa dimatikan terpisah (glow dan motion); anggaran CPU 8.1 terpenuhi | 1 (Media), 2 (halaman lain) |
+| F-ISL-22 | Edit dan hapus todo di pulau | Tombol Edit dan Delete per baris di halaman Todo; edit judul dan jam di tempat; hapus dengan konfirmasi klik kedua; pulau memendek setelah hapus; bisa dengan keyboard | 2 |
+| F-ISL-23 | Tab pulau bisa disembunyikan | Tab yang dimatikan hilang dari menu dan urutan geser; tab lain membagi lebar sama rata; halaman tersembunyi tetap terbuka dari slot, ikon bar, hotkey, atau kartu dengan tab sementara | 3 |
 | F-ISL-18 | Bluetooth tersambung/terputus | Menyambungkan earbuds atau perangkat Bluetooth lain menampilkan wide dengan ikon jenis, nama, `Connected`, dan baterai bila tersedia ≤ 2 detik setelah Windows menyatakan tersambung; memutus menampilkan `Disconnected`; perangkat yang sudah tersambung saat start tidak memicu apa pun | 3 |
 | F-ISL-17 | Cuplikan clipboard di pulau | Teks, gambar, file (copy dan cut), dan isi sensitif tampil 3 detik di slot pulau sesuai tabel 6.3; gambar tampil sebagai thumbnail asli dengan nama file dan dimensinya; pulau tidak terbuka; isi sensitif disembunyikan | 1 |
 
@@ -535,6 +678,9 @@ F-ISL-09 dan F-ISL-13 (OSD brightness dan menyembunyikan OSD brightness Windows)
 | F-RIGHT-05 | Cuaca | Suhu dan ikon dari Open-Meteo untuk kota di Settings; diperbarui tiap 30 menit; offline menampilkan nilai terakhir berwarna abu-abu | 4 |
 | F-RIGHT-06 | Sumber suhu CPU | Tampil bila helper sensor jalan; sembunyi bila tidak bisa membaca nilai | 4 |
 | F-RIGHT-07 | Menu power | Ikon power selalu paling kanan; Sleep, Shut down, dan Restart bekerja seperti di Start menu (aplikasi yang belum disimpan tetap ditanyakan oleh Windows); menu bisa dipakai dengan keyboard | 3 |
+| F-RIGHT-09 | Panel tray | Semua ikon notification area aplikasi latar belakang tampil di panel tray, termasuk yang tersembunyi di overflow Windows; klik kiri, klik kanan, dan klik dua kali bekerja seperti di taskbar Windows; ikon baru/berubah/hilang tampil ≤ 1 detik; tetap bekerja saat taskbar Windows disembunyikan | 3 |
+| F-RIGHT-10 | Panel Controls | Saklar Wi‑Fi, Bluetooth, dan Airplane mode mengubah radio sistem; daftar Wi‑Fi bisa menyambung ke jaringan yang tersimpan; daftar Bluetooth bisa menyambung/memutus perangkat ter-pair; slider volume dan brightness mengubah nilai sistem langsung; pilihan perangkat output; tombol Windows Quick Settings dan All settings | 3 |
+| F-RIGHT-11 | Jam dan tanggal di kanan | Gaya dua baris (tanggal di atas, jam di bawah) di kiri tombol Settings; berganti tepat di pergantian menit; format 12/24 jam dari Settings; klik membuka/menutup halaman Calendar; bisa disembunyikan | 1 |
 | F-RIGHT-08 | Update and shut down / Update and restart | Kedua item dan titik oranye hanya muncul saat Windows punya update yang menunggu, cocok dengan yang ditampilkan Start menu; memilihnya memasang update lalu mematikan/restart | 3 |
 
 ### 7.5 Tools dan produktivitas
@@ -550,7 +696,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | F-TOOL-05 | Alarm | Jam, label, hari berulang atau sekali, nyala/mati, snooze 5 menit; alarm saat sleep membangunkan laptop bila wake timer diizinkan; alarm terlewat berbunyi saat bangun dengan label "Missed" | 2 |
 | F-TOOL-06 | Todo | Judul, tanggal jatuh tempo opsional, jam pengingat opsional, selesai, urutan manual (seret), filter Today / All / Done | 2 |
 | F-TOOL-07 | Pengingat todo | Saat jam pengingat tiba, kartu + toast muncul; "Snooze 10m" menggeser pengingat | 2 |
-| F-TOOL-08 | Note di pulau | Halaman Notes sesuai "Halaman Notes" di 6.3: pulau 960 × 500 px; grid kartu masonry ala Google Keep dalam urutan pengguna (note baru di atas; mengedit tidak mengubah urutan); editor di kanan hanya muncul saat menambah/mengedit dan tertutup lewat Done atau Esc; note baru yang kosong dibuang saat ditutup; 8 pilihan warna per note yang tersimpan dan tampil di kartu serta area teks; seret kartu untuk mengatur urutan (dan Alt + panah); tersimpan 0,5 detik setelah berhenti mengetik dan saat pulau menutup; cari; hapus dengan konfirmasi; pulau tidak menutup otomatis selama editor fokus atau kartu sedang diseret | 2 |
+| F-TOOL-08 | Note di pulau | Halaman Notes sesuai "Halaman Notes" di 6.3: pulau 960 px dengan tinggi minimal 500 px; grid kartu masonry ala Google Keep dalam urutan pengguna (note baru di atas; mengedit tidak mengubah urutan); editor di kanan hanya muncul saat menambah/mengedit dan tertutup lewat Done atau Esc; note baru yang kosong dibuang saat ditutup; 8 pilihan warna per note yang tersimpan dan tampil di kartu serta area teks; seret kartu untuk mengatur urutan (dan Alt + panah); tersimpan 0,5 detik setelah berhenti mengetik dan saat pulau menutup; cari; hapus dengan konfirmasi; pulau tidak menutup otomatis selama editor fokus atau kartu sedang diseret | 2 |
 | F-TOOL-09 | Ketahanan data | Mematikan paksa laptop saat mengetik note kehilangan paling banyak 1 detik ketikan terakhir | 2 |
 | F-TOOL-10 | Hotkey global dan quick capture | `Ctrl+Alt+Space` buka/tutup pulau; `Ctrl+Alt+V` riwayat clipboard; `Ctrl+Alt+N` halaman Notes dengan note baru dan editor fokus; `Ctrl+Alt+T` halaman Calendar di hari ini dengan kolom Add task terbuka dan fokus (Enter simpan, Esc batal) | 4 |
 | F-TOOL-11 | Hotkey bisa diubah | Semua hotkey bisa diganti di Settings; bentrok ditampilkan "Used by another app" | 4 |
@@ -576,6 +722,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | F-CLD-04 | Selesai dan belum dilihat | Done tampil 4 detik; gelembung hijau muncul hanya bila jendela sesi tidak aktif saat selesai, dan hilang saat jendela itu aktif, gelembung diklik, atau prompt baru dikirim di sesi itu | 3 |
 | F-CLD-05 | Halaman Claude | Halaman 8 mendaftar semua sesi yang hidup dengan urutan dan isi sesuai 6.3; klik baris membawa jendela sesi ke depan | 3 |
 | F-CLD-06 | Membawa jendela sesi ke depan | Sesi Claude Desktop membuka jendela Claude Desktop; sesi CLI di wmux dan Windows Terminal membuka jendela terminalnya; jendela yang diminimize dipulihkan | 3 |
+| F-CLD-08 | Timer jendela 5 jam | Jendela dimulai dari prompt pertama dan dihitung mundur di slot sesuai "Batas pemakaian Claude" di 6.3; batas tercapai mengubah slot ke kuning; saat jendela berakhir kartu `Claude usage reset` muncul dengan suara timer dan toast; waktu reset tetap benar setelah TopBar atau laptop restart; tooltip menandai `Estimated` bila waktu resmi tidak tersedia | 3 |
 | F-CLD-07 | Hook tidak memperlambat Claude | `TopBar.ClaudeHook` selesai ≤ 50 ms (p95) saat TopBar jalan dan ≤ 100 ms saat TopBar mati; tidak pernah menulis ke stdout; selalu keluar dengan kode 0 | 3 |
 
 ## 8. Kebutuhan non-fungsional
@@ -586,6 +733,23 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 - Polling dijeda saat bar tersembunyi (fullscreen), layar mati, atau sleep.
 - Bar muncul ≤ 2 detik setelah login.
 - Helper hook Claude selesai ≤ 50 ms (p95), jadi Claude tidak terasa lebih lambat walau hook dipanggil di setiap tool.
+
+**Aturan ringan** (pengguna meminta TopBar tetap sangat ringan dan minta diingatkan bila fitur berat):
+- Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
+- Panel (tray, Controls, power, Settings) dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup.
+- Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
+- Tidak ada hook mouse atau keyboard global selain hook Caps/Num Lock yang sudah ada.
+
+**Anggaran per fitur revisi 4** (diukur di laptop pengguna saat fase fiturnya; kalau melewati anggaran, cadangannya dipakai):
+
+| Fitur | Biaya yang diperkirakan | Anggaran | Cadangan bila lewat |
+|---|---|---|---|
+| Mata Gili mengikuti kursor | Baca posisi kursor 30×/detik; gambar ulang dua kotak kecil hanya saat kursor bergerak | CPU ≤ 0,3% rata-rata saat mouse aktif dipakai, 0% saat kursor diam | Turun ke 15×/detik |
+| Ambient glow bergerak | **Paling berat di revisi ini**: menggambar ulang gradasi selebar pulau terus-menerus. WPF menggambar jendela transparan (layered) di CPU, jadi tiap frame mahal | CPU ≤ 3% selama pulau terbuka, 0% saat tertutup | Turun ke 15 fps; kalau tetap lewat, Ambient motion default mati (glow diam tetap ada) |
+| Panel tray | Library notification area (ManagedShell) + bitmap ikon tray | RAM ≤ +10 MB; CPU 0% saat diam (berbasis event) | — |
+| Panel Controls | Daftar Wi‑Fi dan Bluetooth hanya dipindai saat panel terbuka | 0 saat tertutup | — |
+| Timer jendela Claude 5 jam | Satu teks diperbarui tiap detik saat tampil di slot | Tidak terukur | Saat hanya di gelembung, tidak ada pembaruan teks |
+| Tinggi pulau mengikuti isi, posisi bawah, sembunyikan taskbar, tombol Start, jam di kanan | Hanya saat ada perubahan | Tidak terukur | — |
 
 ### 8.2 Keandalan dan privasi
 - Gagalnya satu provider tidak mematikan bar (bagian 11).
@@ -599,7 +763,8 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 
 | Token | Nilai | Pemakaian |
 |---|---|---|
-| `bar-tint` | `#161618` opacity 78% (bisa diatur) di atas blur | Latar bar |
+| `bar-tint` | `#161618` opacity 100% (bisa diatur 40–100%) di atas blur | Latar bar |
+| `gili-eye` | `#FFFFFF` | Mata maskot Gili |
 | `island` | `#000000` | Pulau di semua keadaan |
 | `surface` | `#1C1C1E` | Baris, tile, kolom input di dalam pulau |
 | `control` | `#2C2C2E` / hover `#3A3A3C` | Tombol |
@@ -614,7 +779,7 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 
 **Tipografi**: Segoe UI Variable (font sistem Windows 11). Teks bar 12 px dengan tracking +0,01em, kecuali modul kanan yang memakai gaya dua baris (label 8.5 px kapital, nilai 11.5 px; lihat 6.4); judul di pulau 19 px semibold −0,01em; angka besar 44–46 px tebal −0,02em; digit tabular untuk semua angka yang berubah.
 
-**Bentuk**: kapsul compact radius setengah tinggi pulau (12 px pada default 24 px), lebar minimal 200 px; panel expanded radius 32 px (termasuk Notes); elemen yang menempel di tepi panel memakai radius konsentris (radius dalam = 32 − jarak ke tepi, contoh menu halaman 18 px pada jarak 14 px); kartu 28 px; drop zone 30 px; baris dan tile 12 px; gelembung aktivitas 24 px bulat penuh; titik kamera/mic 8 px.
+**Bentuk**: kapsul compact radius setengah tinggi pulau (12 px pada default 24 px), lebar minimal 200 px; mata Gili 10 × 10 px radius 3 px (di lingkaran 6 × 6 px radius 2 px); lingkaran Gili setinggi pulau; panel expanded radius 32 px (termasuk Notes); elemen yang menempel di tepi panel memakai radius konsentris (radius dalam = 32 − jarak ke tepi, contoh menu halaman 18 px pada jarak 14 px); kartu 28 px; drop zone 30 px; baris dan tile 12 px; gelembung aktivitas 24 px bulat penuh; titik kamera/mic 8 px.
 
 **Gerak** (pegas dijelaskan dengan damping ratio dan response, mengikuti panduan gerak Apple):
 
@@ -637,6 +802,14 @@ Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan t
 | Isi slot berganti (cuplikan clipboard, progres file, aktivitas lain), atau jam/tanggal hilang dan muncul | Lebar pulau dan rentang isi aktivitas mengikuti dengan pegas compact ↔ wide; isi slot fade 180 ms |
 | Titik kamera/mic dan gelembung aktivitas muncul/hilang | Skala 0 → 1 dengan pegas 320 ms; posisinya ikut bergeser dengan pegas yang sama seperti pulau saat pulau berubah ukuran |
 | Ikon Claude saat Working | Opacity 0,55 ↔ 1, 1,6 detik ease-in-out berulang; diam di opacity 1 bila Animation effects mati |
+| Mata Gili mengikuti kursor | Pegas damping 0,8, response 0,25 dtk menuju target; kembali ke tengah 600 ms ease-in-out setelah kursor diam 8 detik |
+| Kedipan Gili | Tinggi mata 100% → 10% dalam 90 ms ease-in, kembali 140 ms ease-out; kedip ganda berjeda 120 ms |
+| Gili pindah ke lingkaran / kembali ke pulau | Pegas damping 0,8, response 0,45 dtk; lingkaran mulai dari skala 0,6 menempel di tepi pulau; mata mengecil/membesar bersamaan |
+| Ambient glow bergerak | Dua lintasan elips 22 dan 31 detik, napas skala 9 detik, linear terus-menerus; warna halaman bersilang 600 ms |
+| Tinggi pulau terbuka berubah | Pegas membuka pulau saat pindah halaman; pegas compact ↔ wide saat isi berubah |
+| Panel tray, Controls, power | Turun 4 px + fade 160 ms ease-out (naik 4 px saat bar di bawah) |
+| Elemen bar disembunyikan/dimunculkan dari Settings | Skala 0,6 → 1 dan opacity, pegas 320 ms; deretan merapat 300 ms ease-out |
+| Bar pindah posisi atas ↔ bawah | Keluar dari tepi lama dan masuk dari tepi baru, masing-masing pegas compact ↔ wide |
 
 Semua transisi pulau bisa disela: keadaan baru mulai dari ukuran yang sedang tampil di layar, bukan dari target sebelumnya. Kalau "Animation effects" Windows mati, semua transisi menjadi cross-fade 100 ms.
 
@@ -691,6 +864,12 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Suara | NAudio: `WasapiOut` (shared mode) di perangkat default, `VolumeSampleProvider` untuk Alert volume dan kurva naik bertahap; `IAudioEndpointVolume` untuk cek mute/volume sistem; `IMMNotificationClient` untuk pergantian perangkat default | Saat dibutuhkan + event perangkat |
 | Notifikasi | Toast via Microsoft.Toolkit.Uwp.Notifications (butuh shortcut Start Menu dengan AUMID, dibuat saat run pertama) | — |
 | Material bar | `SetWindowCompositionAttribute` (accent policy): acrylic untuk "Strong", blur-behind untuk "Light", tanpa accent (tint polos) untuk "Off"; tint digambar WPF di atasnya. Bukan `DWMWA_SYSTEMBACKDROP_TYPE`, karena backdrop DWM berubah polos saat jendela tidak aktif, padahal bar tidak pernah aktif (diverifikasi 26 Okt 2026). Membaca `UISettings.AdvancedEffectsEnabled` | Saat berubah |
+| Kursor (Gili) | `GetCursorPos` dari `DispatcherTimer` 30 Hz, aktif hanya selama Gili tampil dan bar terlihat | 30×/detik saat aktif |
+| Start | Membuka Start menu seperti tombol Windows: `SendInput` VK_LWIN, atau pesan Start ke `Shell_TrayWnd` bila taskbar disembunyikan (diverifikasi Fase 3) | Saat diklik |
+| Taskbar Windows | `SHAppBarMessage(ABM_GETSTATE/ABM_SETSTATE)` untuk auto-hide, `ShowWindow(SW_HIDE/SW_SHOW)` pada `Shell_TrayWnd` dan `Shell_SecondaryTrayWnd`; status asli disimpan di `settings.json` | Saat saklar berubah + `TaskbarCreated` |
+| Notification area (tray) | ManagedShell (MIT, dipakai RetroBar) `NotificationArea`: menjadi host tray tambahan sehingga aplikasi mengirim ikonnya (`Shell_NotifyIcon`) juga ke TopBar, sementara Explorer tetap menerima salinannya. Klik diteruskan ke aplikasi lewat pesan callback ikon (`uCallbackMessage`) | Event |
+| Controls | Radio Wi‑Fi/Bluetooth/airplane: `Windows.Devices.Radios`; daftar dan sambung Wi‑Fi: Native WLAN API (`WlanScan`, `WlanGetAvailableNetworkList`, `WlanConnect` dengan profil tersimpan); Bluetooth ter-pair: `DeviceInformation` + `BluetoothDevice`; volume dan perangkat output: Core Audio (`IAudioEndpointVolume`, `IPolicyConfig` untuk ganti perangkat default); brightness: WMI `WmiMonitorBrightness` / `WmiMonitorBrightnessMethods` | Saat panel terbuka |
+| Jendela Claude 5 jam | Waktu `UserPromptSubmit` dari hook (sudah ada) untuk perkiraan; waktu reset resmi dari data Claude Code bila tersedia (diverifikasi Fase 3). Waktu akhir jendela disimpan sebagai UTC lewat `Scheduler`, jadi tahan restart | Event + jadwal |
 | Sesi Claude | Hook Claude Code → `TopBar.ClaudeHook` → named pipe `\\.\pipe\TopBar.Claude` (tabel di bawah). Pelengkap: file `~/.claude/sessions/<pid>.json` (judul sesi, status `busy`/`idle`, PID) dipantau dengan `FileSystemWatcher`. Jendela sesi dicari dari rantai proses induk (Toolhelp snapshot) lalu dipulihkan dan difokuskan (`ShowWindow` + `SetForegroundWindow`). Pembaruan UI digabung, maksimal 4 kali per detik | Event + cek proses hidup tiap 5 detik selama ada sesi |
 
 **Hook Claude Code**
@@ -735,18 +914,19 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 | `timers` | `id`, `kind` (timer/pomodoro), `label`, `duration_s`, `ends_at` (saat jalan), `remaining_s` (saat dijeda), `pomodoro_phase`, `pomodoro_round` |
 | `stopwatch` | `id`, `started_at`, `accumulated_ms`, `laps` (JSON) |
 | `clipboard_history` | `id`, `text`, `source_app`, `copied_at` (dibatasi 50 baris) |
+| `claude_window` | `id`, `started_at`, `resets_at`, `source` (official/estimated), `limit_hit_at` (opsional), `notified` (1 baris aktif) |
 | `shelf_items` | `id`, `paths` (JSON, satu path atau banyak untuk bundel), `display_name`, `size_bytes`, `sort_order`, `added_at` (dibatasi 8 baris) |
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan.
 - Migrasi skema lewat tabel `schema_version`.
-- `settings.json` berisi: format jam, opacity bar, tingkat kaca, tinggi bar, tinggi pulau, modul kanan (id, nyala, urutan), ambang baterai, kota cuaca (nama, lat, lon), hotkey, suhu CPU nyala/mati, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
+- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), tray/Controls/jam nyala, timer Claude 5 jam nyala, ambang baterai, kota cuaca (nama, lat, lon), hotkey, suhu CPU nyala/mati, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
 
 ## 11. Penanganan error
 
 | Kejadian | Penanganan |
 |---|---|
 | Provider melempar exception atau sumber data hilang | Modul menampilkan "—" dengan alasan di tooltip; dicoba lagi setelah 5 detik, 30 detik, lalu tiap 2 menit |
-| Exception tak tertangani | Ditulis ke log harian (disimpan 7 hari), AppBar dilepas, app restart sendiri sekali. Crash kedua dalam 1 menit menghentikan app dan menampilkan toast berisi lokasi log |
+| Exception tak tertangani | Ditulis ke log harian (disimpan 7 hari), AppBar dilepas, taskbar Windows dikembalikan ke status aslinya, app restart sendiri sekali. Crash kedua dalam 1 menit menghentikan app dan menampilkan toast berisi lokasi log |
 | Explorer restart | Daftar ulang AppBar saat menerima `TaskbarCreated` |
 | Resolusi, DPI, atau monitor utama berubah | Hitung ulang posisi dan ukuran bar serta pulau |
 | Bangun dari sleep | Daftar ulang AppBar, muat ulang provider, jalankan `Scheduler` untuk jadwal terlewat |
@@ -761,6 +941,9 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 | TopBar tidak berjalan saat hook dipanggil | Helper tidak menemukan pipe dan keluar dalam ≤ 100 ms tanpa efek; Claude bekerja seperti biasa |
 | Helper tidak ada di path hook (TopBar dipindah atau dihapus) | Hook gagal tanpa menghentikan Claude; Settings menampilkan `Hook helper not found · Reinstall` |
 | Hook TopBar dihapus dari luar TopBar | Settings menampilkan `Hooks removed outside TopBar · Reinstall` |
+| TopBar mati paksa saat taskbar Windows disembunyikan | Taskbar tetap tersembunyi sampai TopBar jalan lagi; saat start, TopBar membaca status asli dari `settings.json` dan memulihkannya bila saklar sudah mati. `TopBar.exe --quit` dan `--restore-taskbar` memulihkannya dari luar |
+| Ikon tray tidak bisa dibaca (host tray gagal) | Tombol Tray menampilkan panel dengan `Can't show tray icons` dan tombol `Show Windows taskbar`; dicoba lagi sesuai aturan provider |
+| Radio, Wi‑Fi, atau brightness tidak bisa diubah | Kontrolnya dinonaktifkan dengan alasan di tooltip; panel lain tetap jalan |
 | Format file sesi Claude tidak dikenali | Nama sesi diganti nama folder, status hanya dari hook, deteksi Esc tidak jalan; dicatat sekali di log |
 
 ## 12. Risiko dan mitigasi
@@ -783,25 +966,30 @@ Lokasi: `%LOCALAPPDATA%\TopBar\` berisi `topbar.db` (SQLite, mode WAL), `setting
 | Sleep lewat `SetSuspendState` berbeda di laptop Modern Standby | Laptop tidak tidur, atau masuk hibernate | Diuji di laptop pengguna saat Fase 3; kalau berbeda, Sleep memakai jalur lain yang ditentukan saat implementasi |
 | Prompt izin di Claude Desktop tidak memicu hook `Notification` (Desktop menangani izin sendiri) | Menunggu izin tampil sebagai Working, bukan Needs input | Diverifikasi di awal Fase 3. Kalau tidak terpicu, Needs input hanya untuk pertanyaan dan rencana; kalau file sesi ternyata punya status menunggu izin, status itu dipakai sebagai gantinya |
 | Format `~/.claude/sessions/*.json` tidak resmi dan bisa berubah setelah update Claude | Nama sesi dan deteksi Esc hilang | File itu hanya pelengkap; cadangan di bagian 11 |
+| Claude Code tidak menyediakan waktu reset jendela 5 jam yang bisa dibaca TopBar | Timer hanya perkiraan; bisa meleset bila jendela dimulai dari perangkat lain (claude.ai, ponsel) | Diverifikasi di awal Fase 3. Tanpa sumber resmi, timer memakai perkiraan dari prompt pertama dan tooltip menulis `Estimated`; batas tercapai dideteksi dari pesan batas di file sesi bila ada |
+| Host tray tambahan (ManagedShell) tidak menerima semua ikon di Windows 11 versi pengguna | Sebagian ikon tray tidak tampil | Diuji di laptop pengguna di awal Fase 3 sebelum tray dibangun; kalau gagal, tombol Tray membuka overflow tray Windows sebagai cadangan |
+| Menyembunyikan `Shell_TrayWnd` tidak didukung resmi dan bisa berubah setelah update Windows | Taskbar muncul lagi atau ruangnya tertinggal | Pakai auto-hide resmi sebagai dasar, sembunyikan jendela hanya sebagai tambahan; periksa ulang tiap `TaskbarCreated` dan saat bangun dari sleep |
+| Animasi terus-menerus di jendela WPF transparan dirender di CPU | Ambient motion atau mata Gili melewati anggaran CPU | Anggaran dan cadangan di 8.1; diukur di Fase 1 sebelum fitur dianggap selesai |
 | Update Claude Code mengubah nama event atau isi JSON hook | Status sesi tidak terbaca | Helper mengabaikan field yang tidak dikenal; Settings menampilkan waktu kejadian terakhir (`Connected · last event 2 min ago`) supaya masalah cepat terlihat |
 
 ## 13. Pengujian
 
 - **Unit test (xUnit) untuk Core**: `Scheduler` (alarm berulang, snooze, terlewat saat sleep, restart di tengah timer, perubahan zona waktu), `IslandCoordinator` (semua aturan prioritas di 6.3, termasuk fullscreen dan drop zone), `ShelfService` (batas 8 item, bundel, pembersihan file hilang termasuk sebagian isi bundel, hasil Move vs Copy), format angka/satuan/tanggal, definisi "todo hari ini", pengubahan urutan note, kurva volume naik bertahap, aturan kapan suara dibisukan (fase fokus, mute).
+- **Unit test revisi 4 (Core)**: aturan bentuk Gili (di pulau ↔ lingkaran, tersembunyi saat mengambang), pemetaan posisi kursor ke geser mata (batas 3 × 2 px), jadwal kedip acak dengan seed tetap, perhitungan tinggi pulau terbuka (minimal, maksimal, posisi bawah), jendela Claude 5 jam (mulai dari prompt pertama, pembulatan jam, restart di tengah jendela, batas tercapai, kartu saat berakhir, ditahan saat fokus), halaman tersembunyi dan tab sementara, aturan posisi bawah hanya saat taskbar Windows tersembunyi.
 - **Unit test sesi Claude (Core)**: perpindahan status (prompt → Working → Needs input → Working → Done; Esc → Idle; proses mati → dihapus; izin ditolak), penggabungan beberapa sesi jadi satu aktivitas, aturan gelembung "belum dilihat", posisi di `IslandCoordinator` termasuk saat fase fokus dan fullscreen.
 - **Unit test penggabung `settings.json` Claude**: memasang dua kali tidak menggandakan entri, hook wmux tetap ada, melepas hanya menghapus entri TopBar, JSON rusak tidak disentuh, cadangan dibuat.
 - **Test repository** pada file SQLite sementara: simpan/muat, migrasi, batas baris (50 riwayat clipboard, 8 item Shelf).
 - **Mode demo** untuk memeriksa tampilan dan gerak semua keadaan tanpa kejadian nyata.
-- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, menu power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat TopBar mati, overhead hook Claude (p95).
+- **Checklist manual per fase** di laptop pengguna: ruang AppBar, fullscreen (YouTube, game), restart Explorer, sleep/resume, DPI 100/125/150%, lebar 1366 dan 1920 px, colok/cabut charger, Spotify dan YouTube di Chrome/Edge, video di Media Player dan VLC, copy, cut/move, dan delete file besar (termasuk Shift+Delete, batal di tengah jalan, dan bentrok nama file), copy gambar, Caps Lock, kamera dan mikrofon dipakai bersamaan (compact dan saat pulau terbuka), alarm saat Windows di-mute dan saat volume 0, cabut headset saat alarm berbunyi, menu power (Sleep, Shut down, Restart, dan varian update saat ada update menunggu), alarm saat sleep, matikan paksa saat mengetik note, seret file masuk dan keluar Shelf, atur urutan note dengan mouse dan keyboard, tambah todo untuk hari ini dan tanggal lain dari halaman Calendar (termasuk lewat Add in Calendar), sambungkan dan putuskan earbuds Bluetooth, buka dan tutup beberapa aplikasi lalu pindah fokus di antaranya, ubah tinggi bar dan pulau di Settings, Transparency effects mati, sesi Claude Desktop yang bertanya / minta izin / menyerahkan rencana / dihentikan dengan Esc / ditutup, dua sesi Claude bersamaan, sesi `claude` di wmux, Claude dipakai saat TopBar mati, overhead hook Claude (p95), Gili mengikuti kursor di seluruh layar dan berkedip, Gili pindah ke lingkaran saat musik mulai dan kembali saat berhenti, CPU saat menggerakkan mouse dan saat pulau terbuka dengan ambient motion (bandingkan dengan anggaran 8.1), tombol Start, sembunyikan dan munculkan taskbar Windows (termasuk mati paksa lalu start lagi), bar di bawah, panel tray (klik kiri/kanan ikon OneDrive, Discord, dll.), panel Controls (Wi‑Fi, Bluetooth, volume, brightness), jam di kanan, tombol Settings, matikan setiap elemen di Settings, todo dengan jam dan pengingatnya, edit dan hapus todo, Todo dengan 12 tugas tanpa scroll, jendela Claude 5 jam berakhir.
 - **Pengukuran performa**: catat RAM dan CPU dari Task Manager setelah 8 jam pemakaian normal.
 
 ## 14. Fase rilis
 
 | Fase | Isi | Selesai bila |
 |---|---|---|
-| 1. Fondasi bar | F-BAR-01–07, F-BAR-08 (jam, material, autostart), F-BAR-09, F-LEFT-01, F-ISL-17, F-ISL-01–06, F-ISL-07 kerangka + Media, F-RIGHT-01 | Bar dipakai seharian penuh tanpa crash; checklist Fase 1 lulus; target 8.1 terpenuhi |
-| 2. Produktivitas | SQLite, jendela Tools, F-TOOL-01–09 (F-TOOL-04 bagian pulau), F-ISL-07 Timer/Alarms/Calendar/Todo/Notes, F-ISL-08, F-ISL-16, F-SND-01–06 | Data tahan restart dan matikan paksa; alarm berbunyi tepat waktu termasuk setelah sleep |
-| 3. Sistem lengkap | F-ISL-10–12, F-ISL-14, F-ISL-18, F-LEFT-02, F-LEFT-04–05, F-RIGHT-02–04, F-RIGHT-07–08, F-ISL-07 Shelf + System, F-BAR-08 modul dan baterai, F-CLD-01–07 (diawali verifikasi hook izin di Claude Desktop) | Modul kanan cocok dengan Task Manager; overflow bekerja di 1366 px; file bisa masuk dan keluar Shelf; sesi Claude Desktop dan terminal tampil benar saat bekerja, bertanya, dan selesai |
+| 1. Fondasi bar | F-BAR-01–07, F-BAR-08 (jam, material, autostart), F-BAR-09, F-BAR-13, F-LEFT-01, F-ISL-17, F-ISL-01–06, F-ISL-07 kerangka + Media, F-ISL-19, F-ISL-21 (Media), F-RIGHT-01, F-RIGHT-11 | Bar dipakai seharian penuh tanpa crash; checklist Fase 1 lulus; target 8.1 terpenuhi |
+| 2. Produktivitas | SQLite, jendela Tools, F-TOOL-01–09 (F-TOOL-04 bagian pulau), F-ISL-07 Timer/Alarms/Calendar/Todo/Notes, F-ISL-08, F-ISL-16, F-ISL-20, F-ISL-21 (halaman lain), F-ISL-22, F-SND-01–06 | Data tahan restart dan matikan paksa; alarm berbunyi tepat waktu termasuk setelah sleep |
+| 3. Sistem lengkap | F-ISL-10–12, F-ISL-14, F-ISL-18, F-ISL-23, F-LEFT-02, F-LEFT-04–06, F-RIGHT-02–04, F-RIGHT-07–10, F-ISL-07 Shelf + System, F-BAR-08 modul dan baterai, F-BAR-10–12, F-CLD-01–08 (diawali verifikasi hook izin di Claude Desktop, sumber waktu reset 5 jam, dan host tray) | Modul kanan cocok dengan Task Manager; overflow bekerja di 1366 px; file bisa masuk dan keluar Shelf; sesi Claude Desktop dan terminal tampil benar saat bekerja, bertanya, dan selesai |
 | 4. Ekstra | F-TOOL-10–11, F-LEFT-03, F-ISL-15, F-RIGHT-05–06, F-TOOL-04 DND Windows, sisa F-BAR-08 | Semua fitur best-effort punya cadangan yang bekerja saat fiturnya gagal |
 
 Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari keempat fase sebagai acuan visual dan gerak.
@@ -809,7 +997,9 @@ Mockup HTML di `docs/mockup/top-taskbar-mockup.html` menampilkan keadaan dari ke
 ## 15. Di luar cakupan
 
 - Lebih dari satu monitor.
-- Mengganti taskbar, Start menu, atau system tray Windows, termasuk volume dan baterai.
+- Membuat ulang Start menu, Quick Settings, atau Notification Center Windows (TopBar hanya membukanya, menampilkan ikon tray, dan punya panel Controls ringkas).
+- Memasukkan password Wi‑Fi baru dari panel Controls (diserahkan ke daftar jaringan Windows).
+- Ekspresi atau suasana hati maskot selain mengikuti kursor dan berkedip.
 - Bahasa UI selain Inggris.
 - Sinkronisasi cloud dan backup online.
 - Note berformat (markdown, gambar), lampiran todo, todo berulang.
