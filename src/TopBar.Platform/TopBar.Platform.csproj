@@ -6,4 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TopBar.Core\TopBar.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.14" />
+  </ItemGroup>
 </Project>
