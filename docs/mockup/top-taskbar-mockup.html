@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TopBar Mockup</title>
+<title>Gili Mockup</title>
 <style>
 :root{
   --bar-rgb:22,22,24;--bar-a:1;--bar-blur:30px;
@@ -180,27 +180,58 @@ button.qi:hover{background:var(--ctl)}
 .iw.ctlm .xp{top:0}
 /* The other pages are wider than a control island; let them shrink so the track still lands on Controls. */
 .iw.ctlm .page{min-width:0;overflow:hidden}
-.pg-ctl{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:16px;gap:0}
+/* Spacing: 16 px from the island's edge (inner radius 12 = 28 - 16). Icons sit in a 28 px column and text, sliders and
+   the device row start 40 px in; 4 px between rows of one group, 12 px between groups. */
+.page.pg-ctl{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:16px;gap:0;--lead:40px}
 .cv{display:none;flex-direction:column;gap:12px}
 .cv.on{display:flex;animation:fadeUp 180ms var(--out)}
-.cvh{display:flex;align-items:center;gap:10px;font-size:14px}
-.cvh b{flex:1;font-weight:600}
-.cvh .num{font-size:13px;color:var(--text2)}
-.cvr{font-size:13px}.cvr b{font-weight:500}
-.cv input[type=range]{width:100%;margin:0;accent-color:var(--text)}
-.cvdev{display:flex;align-items:center;gap:10px;padding:6px 8px;margin:-4px -8px;border-radius:8px;font-size:12px;color:var(--text2);text-align:left}
-.cvdev:hover{background:var(--ctl)}
+.cvg{display:flex;flex-direction:column;gap:4px}
+.cvh{display:flex;align-items:center;gap:12px;min-height:32px;font-size:14px}
+.cvh b{flex:1;font-weight:600;letter-spacing:-.01em}
+.cvh .num{text-align:right;font-size:13px;color:var(--text2)}
+.cvr b{font-size:13px;font-weight:500;letter-spacing:0}
+/* Icon chip: neutral by default, blue while its radio is on. */
+.cv .qi{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);color:var(--text);transition:background 200ms,color 200ms}
+.cv .qi .ic{width:15px;height:15px}
+.cv .qi.on{background:var(--blue);color:#fff}
+.cv button.qi:hover{background:rgba(255,255,255,.14)}
+/* Sliders: 4 px track filled white up to the value, 16 px thumb. */
+.cv input[type=range]{-webkit-appearance:none;appearance:none;width:calc(100% - var(--lead));height:16px;margin:0 0 0 var(--lead);background:transparent;cursor:pointer}
+.cv input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--text) var(--v,50%),rgba(255,255,255,.16) var(--v,50%))}
+.cv input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.16)}
+.cv input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--text)}
+.cv input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.45);transition:transform 120ms var(--out)}
+.cv input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.cv input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.cv input[type=range]:focus-visible{outline:none}
+.cv input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(10,132,255,.6)}
+/* Output device: a quiet row under the slider, aligned with it. */
+.cvdev{display:flex;align-items:center;gap:8px;min-height:28px;margin-left:calc(var(--lead) - 8px);padding:0 8px;border-radius:8px;font-size:12px;color:var(--text2);text-align:left;transition:background 120ms,color 120ms}
+.cvdev:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .cvdev span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cvdev .ic{width:14px;height:14px}
+.cvdev .ic{width:13px;height:13px}
+.cvdev>.ic:first-child{display:none}
 .cvdev .chev{transition:transform 200ms var(--out)}
 .cvdev[aria-expanded="true"] .chev{transform:rotate(90deg)}
-.cv .qlist{max-height:228px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#48484a transparent}
-.cvoff{padding:10px 8px;font-size:12px;color:var(--text2)}
+/* Lists and action rows share one surface: a 12 px group, 8 px rows, white 5% at rest, 8-10% on hover. */
+.cv .qlist{gap:2px;padding:4px;border-radius:12px;background:rgba(255,255,255,.05);max-height:232px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.cv .qn{gap:12px;min-height:36px;padding:0 10px;border-radius:8px;font-size:13px;transition:background 120ms}
+.cv .qn:hover{background:rgba(255,255,255,.08)}
+.cv .qn .ic{width:15px;height:15px}
+.cv .qn b{min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv .qn span{font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cv .qn span .ic{color:var(--accent)}
+.cv .qn.on b{font-weight:600}
+.cvoff{padding:12px 10px;font-size:13px;color:var(--text2)}
+.cv .pwl{gap:4px}
+.cv .pwl .pill{justify-content:flex-start;width:100%;height:40px;padding:0 12px;gap:12px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px;font-weight:500}
+.cv .pwl .pill:hover{background:rgba(255,255,255,.1)}
+.cv .pwl .pill .ic{width:16px;height:16px;color:var(--text2)}
+.cv .qfoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.08)}
+.cv .qfoot button{height:32px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--text);font-size:12px;font-weight:500;text-align:center;overflow:hidden;text-overflow:ellipsis;transition:background 120ms}
+.cv .qfoot button:hover{background:rgba(255,255,255,.1)}
 #mBt{position:relative}
 .bdot{position:absolute;top:3px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb))}
-.cleft{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
-.cright{flex:1;min-width:0;display:flex;flex-direction:column}
-.pwbox{display:flex;flex-direction:column;gap:12px}
 .pwl{display:flex;flex-direction:column;gap:6px}
 .pwl .pill{height:34px;font-size:13px;width:100%}
 .pwl .pill .ic{width:15px;height:15px;color:#aeaeb2}
@@ -718,7 +749,7 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
       <div class="ls"><i style="width:80%"></i><i style="width:60%"></i><i style="width:72%"></i><i style="width:50%"></i><i style="width:66%"></i><i style="width:40%"></i></div></div>
   </div>
   <div class="win" id="winB" data-name="Visual Studio Code" data-icon="a-code">
-    <div class="tb"><svg class="aic" aria-hidden="true"><use href="#a-code"/></svg>BarWindow.xaml.cs · TopBar · Visual Studio Code
+    <div class="tb"><svg class="aic" aria-hidden="true"><use href="#a-code"/></svg>BarWindow.xaml.cs · Gili · Visual Studio Code
       <span class="wc"><span><svg class="ic" aria-hidden="true"><use href="#i-min"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-max"/></svg></span><span><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span></span></div>
 <div class="code"><span class="c">// Register the bar as an AppBar on the top edge</span>
 <span class="k">var</span> data = <span class="k">new</span> <span class="t">APPBARDATA</span> { hWnd = handle };
@@ -887,15 +918,16 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 <input type="range" id="qBri" min="0" max="100" value="70" aria-label="Brightness">
               </div>
               <div class="cv" data-cv="wifi" aria-label="Wi‑Fi">
-                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg></span><b>Wi‑Fi</b><button class="sw" role="switch" data-q="wifi" aria-checked="true" aria-label="Wi‑Fi"></button></div>
-                <div class="cvh cvr"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-plane"/></svg></span><b>Airplane mode</b><button class="sw" role="switch" data-q="air" aria-checked="false" aria-label="Airplane mode"></button></div>
+                <div class="cvg"><div class="cvh"><span class="qi on" id="qiWifi"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg></span><b>Wi‑Fi</b><button class="sw" role="switch" data-q="wifi" aria-checked="true" aria-label="Wi‑Fi"></button></div>
+                <div class="cvh cvr"><span class="qi" id="qiAir"><svg class="ic" aria-hidden="true"><use href="#i-plane"/></svg></span><b>Airplane mode</b><button class="sw" role="switch" data-q="air" aria-checked="false" aria-label="Airplane mode"></button></div></div>
                 <div class="qlist" id="qWifiL"></div>
               </div>
               <div class="cv" data-cv="bt" aria-label="Bluetooth">
-                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg></span><b>Bluetooth</b><button class="sw" role="switch" data-q="bt" aria-checked="true" aria-label="Bluetooth"></button></div>
+                <div class="cvh"><span class="qi on" id="qiBt"><svg class="ic" aria-hidden="true"><use href="#i-bt"/></svg></span><b>Bluetooth</b><button class="sw" role="switch" data-q="bt" aria-checked="true" aria-label="Bluetooth"></button></div>
                 <div class="qlist" id="qBtL"></div>
               </div>
               <div class="cv" data-cv="power" aria-label="Power">
+                <div class="cvh"><span class="qi"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg></span><b>Power</b><span class="num" id="qBat">64% · 2 h 10 min</span></div>
                 <div class="pwl" id="pwList" role="group" aria-label="Power">
                     <button class="pill" data-pw="sleep"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
                     <button class="pill upd" data-pw="upd-shutdown" hidden><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg>Update and shut down<i class="udot"></i></button>
@@ -903,7 +935,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                     <button class="pill upd" data-pw="upd-restart" hidden><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Update and restart<i class="udot"></i></button>
                     <button class="pill" data-pw="restart"><svg class="ic" aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
                   </div>
-                  <div class="qfoot"><span class="num" id="qBat">64% · 2 h 10 min</span><button data-qf="win">Windows Quick Settings</button><button data-qf="all">All settings</button></div>
+                  <div class="qfoot"><button data-qf="win">Windows Quick Settings</button><button data-qf="all">All settings</button></div>
               </div>
             </section>
           </div>
@@ -922,8 +954,8 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
   <span class="pc cam" id="pCam" role="img" aria-label="Camera in use: Zoom" title="Camera in use: Zoom"></span>
   <span class="pc mic" id="pMic" role="img" aria-label="Microphone in use: Discord" title="Microphone in use: Discord"></span>
 
-  <div class="setw" id="setw" role="dialog" aria-label="TopBar Settings" hidden>
-    <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>TopBar Settings<button id="setX" aria-label="Close Settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <div class="setw" id="setw" role="dialog" aria-label="Gili Settings" hidden>
+    <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Gili Settings<button id="setX" aria-label="Close Settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="setb"><nav class="setn" id="setn" role="tablist" aria-label="Settings sections"></nav><div class="setp" id="setp" role="tabpanel"></div></div>
   </div>
 
@@ -1041,7 +1073,7 @@ const S={
   wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
   todos:[{t:'Revise the report',d:1},{t:'Reply to Dina',d:1},{t:'Post weekly update',d:1},{t:'Pay electricity bill',d:1},{t:'Prepare meeting slides',d:0,tm:'15:00'}],
   notes:[
-    {id:1,b:'TopBar ideas\n- drag the island down\n- custom accent color\n- hover to stretch',t:'19:20',c:3},
+    {id:1,b:'Gili ideas\n- drag the island down\n- custom accent color\n- hover to stretch',t:'19:20',c:3},
     {id:2,b:'Groceries\neggs, coffee, dish soap',t:'Yesterday',c:4},
     {id:3,b:'Monday meeting\nQ4 budget and release dates. Ask Dina about the vendor contract before Friday.',t:'Mon'},
     {id:4,b:'Books to read\nLaut Bercerita\nCantik Itu Luka\nBumi Manusia',t:'12 Oct',c:7},
@@ -1983,6 +2015,7 @@ function renderCtl(){
 function renderWifi(){
   const on=S.wifiOn&&!S.air;
   $('[data-q="wifi"]').setAttribute('aria-checked',on);$('[data-q="air"]').setAttribute('aria-checked',S.air);
+  $('#qiWifi').classList.toggle('on',on);$('#qiAir').classList.toggle('on',S.air);
   $('#qWifiL').innerHTML=on
     ?WIFI.map(([n,saved],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
     :`<div class="cvoff">${S.air?'Airplane mode is on':'Wi‑Fi is off'}</div>`;
@@ -1991,7 +2024,7 @@ function renderWifi(){
 }
 function renderBt(){
   const on=S.btOn&&!S.air,dev=on&&BTD.find(d=>d[2]);
-  $('[data-q="bt"]').setAttribute('aria-checked',on);
+  $('[data-q="bt"]').setAttribute('aria-checked',on);$('#qiBt').classList.toggle('on',on);
   $('#qBtL').innerHTML=on
     ?BTD.map(([n,ic,c,bat],i)=>`<button class="qn ${c?'on':''}" data-b="${i}">${icon(ic)}<b>${n}</b><span>${c?'Connected'+(bat?' · '+bat+'%':''):'Paired'}</span></button>`).join('')+`<button class="qn" data-qf="addbt">${icon('plus')}<b>Add device</b></button>`
     :`<div class="cvoff">Bluetooth is off</div>`;
@@ -2002,10 +2035,10 @@ const volIcon=()=>S.qMuted||!S.vol?'mute':S.vol<34?'vol0':S.vol<67?'vol':'vol2';
 function renderVol(){
   const ic=volIcon();$('#qMute').innerHTML=icon(ic);$('#mVol').innerHTML=icon(ic);
   $('#qMute').setAttribute('aria-label',S.qMuted?'Unmute':'Mute');
-  $('#qVolV').textContent=S.qMuted?'Muted':S.vol+'%';$('#qVol').value=S.vol;
+  $('#qVolV').textContent=S.qMuted?'Muted':S.vol+'%';$('#qVol').value=S.vol;$('#qVol').style.setProperty('--v',(S.qMuted?0:S.vol)+'%');
   $('#mVol').title=S.qMuted?'Muted':'Volume '+S.vol+'%';$('#qDevN').textContent=AUDIO[S.dev][0];
 }
-function renderBri(){$('#qBriV').textContent=S.bri+'%';$('#qBri').value=S.bri;$('#mBri').title='Brightness '+S.bri+'%'}
+function renderBri(){$('#qBriV').textContent=S.bri+'%';$('#qBri').value=S.bri;$('#qBri').style.setProperty('--v',S.bri+'%');$('#mBri').title='Brightness '+S.bri+'%'}
 $('.pg-ctl').addEventListener('click',e=>{
   const q=e.target.closest('.sw[data-q]');
   if(q){
@@ -2061,7 +2094,7 @@ function limCheck(){
 
 /* Settings window */
 const SET={
-  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'TopBar gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
+  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
   Appearance:[['opacity','Bar opacity','range'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
