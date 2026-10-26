@@ -553,7 +553,16 @@ li.done .chk .ic{opacity:1;transform:none}
 .npop .ic{width:15px;height:15px}
 
 /* Floating notes: a note torn out of the island becomes its own always-on-top window (PRD 6.3 "Note mengambang") */
-/* One fixed size (260 x 220): no resize grips, so the note stays clean. */
+/* Starts at 260 x 220. Every edge and corner resizes it, but nothing shows until the pointer is there: no grip icon,
+   only the resize cursor over a 6 px band (12 px squares at the corners). */
+.fr{position:absolute;z-index:3}
+.fr[data-d="n"],.fr[data-d="s"]{left:12px;right:12px;height:6px;cursor:ns-resize}
+.fr[data-d="e"],.fr[data-d="w"]{top:12px;bottom:12px;width:6px;cursor:ew-resize}
+.fr[data-d="n"]{top:0}.fr[data-d="s"]{bottom:0}.fr[data-d="e"]{right:0}.fr[data-d="w"]{left:0}
+.fr[data-d="ne"],.fr[data-d="nw"],.fr[data-d="se"],.fr[data-d="sw"]{width:12px;height:12px}
+.fr[data-d="nw"]{top:0;left:0;cursor:nwse-resize}.fr[data-d="se"]{bottom:0;right:0;cursor:nwse-resize}
+.fr[data-d="ne"]{top:0;right:0;cursor:nesw-resize}.fr[data-d="sw"]{bottom:0;left:0;cursor:nesw-resize}
+.fnote.sizing{transition:none}
 .fnote{position:absolute;z-index:16;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;
   background:var(--nc,var(--surface));box-shadow:0 18px 40px -12px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.1);
   transition:width 420ms var(--spr),height 420ms var(--spr),opacity 160ms,transform 160ms var(--out)}
@@ -1907,7 +1916,7 @@ $('#tdCal').onclick=()=>{
 /* notes: Keep-style masonry grid in the user's order. A card opens by growing in place into the editor,
    and a card dragged out of the island floats on top of other windows. */
 let saveT=0,delT=0,noteDrag=null,edT=0;
-const NGAP=8,NMIN=140,EDW=440,EDH=360,FW=260,FH=220,MAXF=6;
+const NGAP=8,NMIN=140,EDW=440,EDH=360,FW=260,FH=220,MAXF=6,FMIN=[200,140],FMAX=[520,640];
 const nGrid=$('#nGrid'),nPanel=$('#nEdPanel'),nEdIn=$('#nEdIn');
 // Dark tints so white text keeps at least 4.5:1 contrast on every color.
 const NOTE_COLORS=[['Default','#1c1c1e'],['Red','#5c1f26'],['Orange','#643013'],['Yellow','#5c470c'],['Green','#1d4a31'],['Teal','#0f4c4b'],['Blue','#1c3c61'],['Purple','#42265a']];
@@ -2154,6 +2163,23 @@ function makeFloat(n){
     const up=()=>{el.classList.remove('held');GX.watchUntil=0;hd.removeEventListener('pointermove',mv);hd.removeEventListener('pointerup',up);hd.removeEventListener('pointercancel',up)};
     hd.addEventListener('pointermove',mv);hd.addEventListener('pointerup',up);hd.addEventListener('pointercancel',up);
   });
+  // Resize from any edge or corner; the opposite edge stays put. 200 x 140 to 520 x 640, inside the work area.
+  el.insertAdjacentHTML('beforeend',['n','s','e','w','ne','nw','se','sw'].map(d=>`<i class="fr" data-d="${d}" aria-hidden="true"></i>`).join(''));
+  el.addEventListener('pointerdown',e=>{
+    const h=e.target.closest('.fr');if(!h||e.button!==0)return;
+    e.preventDefault();e.stopPropagation();try{h.setPointerCapture(e.pointerId)}catch{}el.classList.add('sizing');
+    const d=h.dataset.d,x0=e.clientX,y0=e.clientY,r0={x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight},a=workArea();
+    const mv=ev=>{
+      const dx=ev.clientX-x0,dy=ev.clientY-y0;let{x,y,w,h:ht}=r0;
+      if(d.includes('e'))w=Math.min(FMAX[0],innerWidth-x,Math.max(FMIN[0],r0.w+dx));
+      if(d.includes('s'))ht=Math.min(FMAX[1],a.bottom-y,Math.max(FMIN[1],r0.h+dy));
+      if(d.includes('w')){w=Math.min(FMAX[0],r0.x+r0.w,Math.max(FMIN[0],r0.w-dx));x=r0.x+r0.w-w}
+      if(d.includes('n')){ht=Math.min(FMAX[1],r0.y+r0.h-a.top,Math.max(FMIN[1],r0.h-dy));y=r0.y+r0.h-ht}
+      n.f={x,y,w,h:ht};placeF(el,n.f);
+    };
+    const up=()=>{el.classList.remove('sizing');h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up)};
+    h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);
+  },{capture:true});
   fLayer.appendChild(el);
   return el;
 }
