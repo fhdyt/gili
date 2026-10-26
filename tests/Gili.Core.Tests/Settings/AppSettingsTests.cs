@@ -9,11 +9,19 @@ public class AppSettingsTests
     {
         var s = new AppSettings();
         Assert.True(s.Use24HourClock);
-        Assert.Equal(78, s.BarOpacity);
+        Assert.Equal(100, s.BarOpacity);
         Assert.Equal(GlassLevel.Strong, s.Glass);
         Assert.Equal(32, s.BarHeight);
         Assert.Equal(24, s.IslandHeight);
         Assert.True(s.Autostart);
+    }
+
+    [Fact]
+    public void New_defaults_match_the_mockup()
+    {
+        var s = new AppSettings();
+        Assert.Equal(100, s.BarOpacity);
+        Assert.True(s.ShowGili && s.ShowSeconds && s.AmbientGlow && s.AmbientMotion);
     }
 
     [Theory]

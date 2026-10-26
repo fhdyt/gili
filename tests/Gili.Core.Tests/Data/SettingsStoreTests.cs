@@ -55,7 +55,7 @@ public sealed class SettingsStoreTests : IDisposable
 
         Assert.Equal(36, settings.BarHeight);
         Assert.Equal(24, settings.IslandHeight);
-        Assert.Equal(78, settings.BarOpacity);
+        Assert.Equal(100, settings.BarOpacity);
     }
 
     [Fact]

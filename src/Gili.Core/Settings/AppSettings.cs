@@ -12,11 +12,15 @@ public sealed record AppSettings
     public const int MaxBarOpacity = 100;
 
     public bool Use24HourClock { get; init; } = true;
-    public int BarOpacity { get; init; } = 78;
+    public int BarOpacity { get; init; } = 100;
     public GlassLevel Glass { get; init; } = GlassLevel.Strong;
     public int BarHeight { get; init; } = 32;
     public int IslandHeight { get; init; } = 24;
     public bool Autostart { get; init; } = true;
+    public bool ShowSeconds { get; init; } = true;
+    public bool ShowGili { get; init; } = true;
+    public bool AmbientGlow { get; init; } = true;
+    public bool AmbientMotion { get; init; } = true;
 
     public static int MaxIslandHeight(int barHeight) => barHeight - 4;
 
