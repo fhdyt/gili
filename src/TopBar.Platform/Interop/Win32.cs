@@ -73,6 +73,10 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(IntPtr hwnd);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetClassName(IntPtr hwnd, StringBuilder name, int maxCount);
 }
