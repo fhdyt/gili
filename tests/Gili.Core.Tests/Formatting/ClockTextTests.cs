@@ -35,4 +35,24 @@ public class ClockTextTests
         var now = new DateTime(2026, 10, 26, 19, 38, second, millisecond);
         Assert.Equal(TimeSpan.FromMilliseconds(expectedMs), ClockText.UntilNextMinute(now));
     }
+
+    private static readonly DateTime At = new(2026, 10, 25, 14, 32, 5, 400);
+
+    [Fact]
+    public void Bar_time_has_seconds() => Assert.Equal("14:32:05", ClockText.BarTime(At, true, true));
+
+    [Fact]
+    public void Bar_time_12_hour() => Assert.Equal("2:32:05 PM", ClockText.BarTime(At, false, true));
+
+    [Fact]
+    public void Bar_time_without_seconds() => Assert.Equal("14:32", ClockText.BarTime(At, true, false));
+
+    [Fact]
+    public void Bar_date_is_upper_case() => Assert.Equal("SUN 25 OCT", ClockText.BarDate(At));
+
+    [Fact]
+    public void Long_date_for_the_tooltip() => Assert.Equal("Sunday, 25 October 2026", ClockText.LongDate(At));
+
+    [Fact]
+    public void Next_second_starts_on_the_boundary() => Assert.Equal(TimeSpan.FromMilliseconds(600), ClockText.UntilNextSecond(At));
 }

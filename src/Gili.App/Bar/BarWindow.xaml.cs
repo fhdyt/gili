@@ -21,6 +21,7 @@ public partial class BarWindow : Window
     private readonly SettingsHub _settings;
     private readonly TransparencyWatcher _transparency;
     private readonly StatsService _stats;
+    private readonly ClockService _clock;
     private readonly BarViewModel _vm = new();
     private AppBarService? _appBar;
     private IntPtr _hwnd;
@@ -30,16 +31,21 @@ public partial class BarWindow : Window
     private bool _floating;
     private bool _glassOff;
 
-    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats)
+    public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock)
     {
         _settings = settings;
         _transparency = transparency;
         _stats = stats;
+        _clock = clock;
         InitializeComponent();
         DataContext = _vm;
         _settings.Changed += OnSettingsChanged;
         _transparency.Changed += _ => Dispatcher.InvokeAsync(ApplyAppearance);
         _stats.Updated += _vm.ApplyStats;
+        _clock.Ticked += () => _vm.ApplyClock(_clock.Now, _settings.Current);
+        _clock.SecondTicked += () => _vm.ApplySecond(_clock.Now, _settings.Current);
+        _clock.Seconds = _settings.Current.ShowSeconds;
+        _vm.ApplyClock(_clock.Now, _settings.Current);
 #if DEBUG
         var crash = new MenuItem { Header = "Simulate crash", Style = (Style)FindResource("BarMenuItem") };
         crash.Click += (_, _) => throw new InvalidOperationException("Simulated crash from the bar menu");
@@ -50,6 +56,8 @@ public partial class BarWindow : Window
     public event Action? QuitRequested;
 
     public event Action? SettingsRequested;
+
+    public event Action? ClockClicked;
 
     /// <summary>The system clock or time zone changed, or the laptop woke up.</summary>
     public event Action? TimeChanged;
@@ -135,6 +143,8 @@ public partial class BarWindow : Window
 
     private void OnSettingsChanged(AppSettings settings)
     {
+        _clock.Seconds = settings.ShowSeconds && !_hidden;
+        _vm.ApplyClock(DateTime.Now, settings);
         _appBar?.SetHeight(settings.BarHeight);
         ApplyAppearance();
     }
@@ -150,6 +160,7 @@ public partial class BarWindow : Window
     {
         _hidden = fullscreen;
         UpdatePolling();
+        _clock.Seconds = _settings.Current.ShowSeconds && !fullscreen;
         FullscreenChanged?.Invoke(fullscreen);
         if (fullscreen)
         {
@@ -203,6 +214,10 @@ public partial class BarWindow : Window
     }
 
     private void OnSettings(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
+
+    private void OnSettingsButton(object sender, MouseButtonEventArgs e) => SettingsRequested?.Invoke();
+
+    private void OnClock(object sender, MouseButtonEventArgs e) => ClockClicked?.Invoke();
 
     private void OnQuit(object sender, RoutedEventArgs e)
     {

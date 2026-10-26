@@ -78,8 +78,9 @@ public partial class App : Application
         _media = new MediaService(Dispatcher, _log);
         _islandController = new IslandController(Dispatcher, _media);
 
-        _bar = new BarWindow(_settings, _transparency, _stats);
+        _bar = new BarWindow(_settings, _transparency, _stats, _clock);
         _bar.SettingsRequested += ShowSettings;
+        _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _bar.FullscreenChanged += _islandController.SetFullscreen;

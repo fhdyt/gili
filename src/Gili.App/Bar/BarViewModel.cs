@@ -17,6 +17,25 @@ public sealed partial class BarViewModel : ObservableObject
     [ObservableProperty] private string _upText = "↑ —";
     [ObservableProperty] private string _downText = "↓ —";
     [ObservableProperty] private string? _netTooltip;
+    [ObservableProperty] private string _clockTime = "";
+    [ObservableProperty] private string _clockDate = "";
+    [ObservableProperty] private string _clockTooltip = "";
+
+    /// <summary>The widest the time can be, laid under it so the bar never shifts as the digits tick (PRD 6.4).</summary>
+    [ObservableProperty] private string _clockTemplate = "00:00:00";
+
+    public void ApplyClock(DateTime now, AppSettings settings)
+    {
+        ClockTime = ClockText.BarTime(now, settings.Use24HourClock, settings.ShowSeconds);
+        ClockDate = ClockText.BarDate(now);
+        ClockTooltip = ClockText.LongDate(now);
+        ClockTemplate = ClockText.BarTime(new DateTime(2000, 1, 1, 20, 0, 0), settings.Use24HourClock, settings.ShowSeconds)
+            .Replace('2', '0');
+    }
+
+    /// <summary>Each second only the time text changes; the bar is laid out again only when the minute changes.</summary>
+    public void ApplySecond(DateTime now, AppSettings settings) =>
+        ClockTime = ClockText.BarTime(now, settings.Use24HourClock, settings.ShowSeconds);
 
     public void ApplySettings(AppSettings settings, BarAppearance look)
     {
