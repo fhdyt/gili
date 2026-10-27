@@ -22,4 +22,11 @@ public class SoundRulesTests
         Assert.Equal(("Bell", false, false), SoundRules.ForCard("pomo-break", "Chime"));
         Assert.Null(SoundRules.ForCard("conflict", "Chime"));
     }
+
+    [Fact]
+    public void Alarm_cards_ring_on_repeat_with_the_ramp()
+    {
+        Assert.Equal(("Soft", true, true), SoundRules.ForCard("alarm:7", "Chime", alarmSound: "Soft"));
+        Assert.Equal(("Radar", true, true), SoundRules.ForCard("alarm:7", "Chime"));
+    }
 }

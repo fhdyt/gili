@@ -27,11 +27,14 @@ public sealed class SoundService : IDisposable
         _log = log;
     }
 
-    /// <summary>The sound for the card now showing (PRD 6.6 "Kapan berbunyi"); null stops it with a 100 ms fade.</summary>
-    public void PlayForCard(string? cardId)
+    /// <summary>
+    /// The sound for the card now showing (PRD 6.6 "Kapan berbunyi"), an alarm's own sound for its card; null stops it
+    /// with a 100 ms fade.
+    /// </summary>
+    public void PlayForCard(string? cardId, string? alarmSound = null)
     {
         var s = _settings.Current;
-        if (cardId is null || SoundRules.ForCard(cardId, s.TimerSound) is not { } sound)
+        if (cardId is null || SoundRules.ForCard(cardId, s.TimerSound, alarmSound) is not { } sound)
         {
             Stop();
             return;

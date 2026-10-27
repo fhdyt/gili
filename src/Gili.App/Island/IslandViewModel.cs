@@ -105,6 +105,7 @@ public sealed partial class IslandViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasCardSubtitle))]
     private string? _cardSubtitle;
     [ObservableProperty] private IReadOnlyList<CardButton> _cardButtons = [];
+    [ObservableProperty] private bool _cardShake;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCardWarning))]
@@ -119,7 +120,7 @@ public sealed partial class IslandViewModel : ObservableObject
         [
             new(IslandPage.Media, "Media", Glyph("Icon.Music"), null),
             new(IslandPage.Timer, "Timer", Glyph("Icon.Hourglass"), null),
-            new(IslandPage.Alarms, "Alarms", Glyph("Icon.Alarm"), Phase2),
+            new(IslandPage.Alarms, "Alarms", Glyph("Icon.Alarm"), null),
             new(IslandPage.Calendar, "Calendar", Glyph("Icon.Calendar"), Phase2),
             new(IslandPage.Todo, "Todo", Glyph("Icon.Todo"), Phase2),
             new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), Phase2),
@@ -193,6 +194,7 @@ public sealed partial class IslandViewModel : ObservableObject
         CardSubtitle = content.Subtitle;
         CardButtons = content.Buttons;
         CardWarning = content.Warning;
+        CardShake = content.Shake;
     }
 
     public bool HasClipThumb => ClipThumb is not null;

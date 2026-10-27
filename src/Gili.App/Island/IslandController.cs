@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using System.Windows.Threading;
+using Gili.Core.Alarms;
 using Gili.Core.Clipboard;
 using Gili.Core.Island;
 using Gili.Core.Power;
@@ -16,13 +17,16 @@ public sealed class IslandController : IDisposable
     private readonly DispatcherTimer _deadline = new(DispatcherPriority.Normal);
     private readonly PowerMonitor _power = new();
     private readonly ClipboardService _clipboard = new();
+    // The alarm each alarm card stands for, as it was when it rang, and whether it was late.
+    private readonly Dictionary<string, (Alarm Alarm, bool Missed)> _ringing = [];
     private bool _demo;
     private string? _soundCard;
 
-    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers)
+    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms)
     {
         Media = media;
         Timers = timers;
+        Alarms = alarms;
         _deadline.Tick += (_, _) =>
         {
             _deadline.Stop();
@@ -48,9 +52,41 @@ public sealed class IslandController : IDisposable
         timers.Changed += ApplyTimers;
         timers.Finished += id => _coordinator.ShowCard(new IslandCard(id, CardPriority.Urgent, TimeSpan.Zero));
         ApplyTimers();
+        alarms.Ringing += (alarm, missed) => Ring(alarm, missed, AlarmCard(alarm.Id));
+        alarms.Stale += id => DismissCard(AlarmCard(id));
     }
 
     public TimerService Timers { get; }
+
+    public AlarmService Alarms { get; }
+
+    /// <summary>Whether the clock reads 24-hour, for the alarm card's title.</summary>
+    public Func<bool> Use24Hour { get; set; } = () => true;
+
+    /// <summary>The sound an alarm card rings: its alarm's own (PRD 6.6); null for other cards.</summary>
+    public string? AlarmSound(string? cardId) => cardId is not null && _ringing.TryGetValue(cardId, out var r) ? r.Alarm.Sound : null;
+
+    /// <summary>The Alarms page's Manage alarms: Tools opens on its Alarms tab.</summary>
+    public event Action<string>? ToolsRequested;
+
+    public void ManageAlarms()
+    {
+        Close();
+        ToolsRequested?.Invoke("Alarms");
+    }
+
+    /// <summary>The demo's alarm, shown like a real one and never saved (F-BAR-09).</summary>
+    public void ShowDemoAlarm(TimeOnly time, string label) =>
+        Ring(new Alarm(0, time, Gili.Core.Time.Days.None, label, "Radar", true, null), missed: false, Gili.Core.Demo.DemoAlarm.CardId);
+
+    private static string AlarmCard(long id) => $"alarm:{id}";
+
+    /// <summary>An alarm's card is urgent and stays until answered; two at once wait in turn (F-TOOL-05).</summary>
+    private void Ring(Alarm alarm, bool missed, string cardId)
+    {
+        _ringing[cardId] = (alarm, missed);
+        _coordinator.ShowCard(new IslandCard(cardId, CardPriority.Urgent, TimeSpan.Zero));
+    }
 
     /// <summary>The card now showing, or null when none: what plays its sound (PRD 6.6).</summary>
     public event Action<string?>? CardShown;
@@ -86,9 +122,22 @@ public sealed class IslandController : IDisposable
                 [new("Skip", false, Card(id, Timers.SkipBreak)), new("Start break", true, Card(id, Timers.StartBreak))]),
             "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro),
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
+            _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ => null,
         };
         return content is null ? null : WithMuteWarning(id, content);
+    }
+
+    /// <summary>"Alarm 14:30" or "Missed alarm 14:30", the label, Snooze 5m and Stop (mockup CARDS.alarm).</summary>
+    private CardContent AlarmContent(string id, Alarm alarm, bool missed, Color orange)
+    {
+        var demo = alarm.Id == 0;
+        return new("Icon.Alarm", orange, AlarmText.CardTitle(alarm, missed, Use24Hour()), AlarmText.Label(alarm),
+            [
+                new("Snooze 5m", false, Card(id, () => { if (!demo) Alarms.Snooze(alarm.Id); })),
+                new("Stop", true, Card(id, () => { })),
+            ],
+            Shake: true);
     }
 
     /// <summary>
@@ -107,6 +156,7 @@ public sealed class IslandController : IDisposable
     {
         action();
         _coordinator.DismissCard(id);
+        _ringing.Remove(id);
     };
 
     /// <summary>A running timer or pomodoro and a running stopwatch are activities; a focus phase holds reminders (F-TOOL-04).</summary>
@@ -153,7 +203,11 @@ public sealed class IslandController : IDisposable
 
     public void Close() => _coordinator.Close();
 
-    public void DismissCard(string id) => _coordinator.DismissCard(id);
+    public void DismissCard(string id)
+    {
+        _coordinator.DismissCard(id);
+        _ringing.Remove(id);
+    }
 
     /// <summary>The pointer went down outside the open island.</summary>
     public void Dismiss() => _coordinator.Dismiss();

@@ -27,6 +27,15 @@ public class DemoTests
     }
 
     [Fact]
+    public void An_alarm_card_shows_and_is_stopped()
+    {
+        var ring = Steps.Single(s => s.Action is DemoAlarm);
+        Assert.Equal(("Take medicine", new TimeOnly(14, 30)), (((DemoAlarm)ring.Action).Label, ((DemoAlarm)ring.Action).Time));
+        var stop = Steps.Single(s => s.Action is DemoDismiss { Card: DemoAlarm.CardId });
+        Assert.True(stop.At >= ring.At + TimeSpan.FromSeconds(3));
+    }
+
+    [Fact]
     public void Music_starts_after_the_copy()
     {
         var music = Steps.First(s => s.Action is DemoMedia);

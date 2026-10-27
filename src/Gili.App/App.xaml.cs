@@ -12,6 +12,7 @@ using Gili.Core;
 using Gili.Core.Diagnostics;
 using Gili.Core.Settings;
 using Gili.Data;
+using Gili.Platform.Power;
 using Gili.Platform.Shell;
 using Gili.Platform.Stats;
 
@@ -39,6 +40,7 @@ public partial class App : Application
     private DemoService? _demo;
     private Database? _database;
     private TimerService? _timers;
+    private AlarmService? _alarms;
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
@@ -90,12 +92,16 @@ public partial class App : Application
         _clock = new ClockService();
         _media = new MediaService(Dispatcher, _log);
         _timers = new TimerService(_database is null ? null : new TimerStore(_database));
-        _islandController = new IslandController(Dispatcher, _media, _timers);
+        _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms)
+        {
+            Use24Hour = () => _settings.Current.Use24HourClock,
+        };
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
         _right = new RightService(Dispatcher, _settings, _log);
         _sound = new SoundService(Dispatcher, _settings, _log);
-        _islandController.CardShown += _sound.PlayForCard;
+        _islandController.CardShown += id => _sound.PlayForCard(id, _islandController.AlarmSound(id));
         _islandController.Volume = () => _right.Volume;
         _islandController.Unmute = _right.Unmute;
         _right.Changed += _islandController.RefreshCard;
@@ -118,6 +124,7 @@ public partial class App : Application
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _bar.TimeChanged += _timers.Reschedule;
+        _bar.TimeChanged += _alarms.Reschedule;
         _bar.FullscreenChanged += _islandController.SetFullscreen;
         _bar.PollingChanged += poll =>
         {
@@ -139,6 +146,8 @@ public partial class App : Application
         _islandWindow.Show();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
         _timers.Reschedule();
+        // Likewise an alarm missed while Gili was closed or the laptop slept rings now, marked missed (F-TOOL-05).
+        _alarms.Reschedule();
         _stats.Start();
         _apps.Start();
         _right.Start();
@@ -156,6 +165,7 @@ public partial class App : Application
         _right?.Dispose();
         _gili?.Dispose();
         _islandController?.Dispose();
+        _alarms?.Dispose();
         _media?.Dispose();
         _bar?.ReleaseAppBar();
         _settings?.Flush();

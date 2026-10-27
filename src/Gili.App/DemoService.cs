@@ -53,6 +53,7 @@ public sealed class DemoService
         // Only the demo's own card; a real timer's card stays.
         if (_timerCardPending) _island.DismissCard("timer");
         _timerCardPending = false;
+        _island.DismissCard(DemoAlarm.CardId);
         _island.EndDemo();
         Changed?.Invoke();
     }
@@ -86,6 +87,9 @@ public sealed class DemoService
                 case DemoTimer timer:
                     _island.Timers.StartDemoTimer(timer.Seconds);
                     _timerCardPending = true;
+                    break;
+                case DemoAlarm alarm:
+                    _island.ShowDemoAlarm(alarm.Time, alarm.Label);
                     break;
                 case DemoDismiss dismiss:
                     _island.DismissCard(dismiss.Card);

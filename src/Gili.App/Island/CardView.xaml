@@ -15,7 +15,11 @@
                     <ScaleTransform x:Name="PulseScale" />
                 </Ellipse.RenderTransform>
             </Ellipse>
-            <c:IconView Glyph="{Binding CardGlyph}" Foreground="{Binding CardBrush}" Width="22" Height="22" />
+            <c:IconView Glyph="{Binding CardGlyph}" Foreground="{Binding CardBrush}" Width="22" Height="22" RenderTransformOrigin="0.5,0.5">
+                <c:IconView.RenderTransform>
+                    <RotateTransform x:Name="IconTurn" />
+                </c:IconView.RenderTransform>
+            </c:IconView>
         </Grid>
         <ItemsControl DockPanel.Dock="Right" ItemsSource="{Binding CardButtons}" VerticalAlignment="Center" Margin="6,0,0,0">
             <ItemsControl.ItemsPanel>

@@ -12,16 +12,6 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleWhen" />
 
-        <!-- Shown only when moving with the keyboard, like the mockup's :focus-visible outline (2 px blue). -->
-        <Style x:Key="FocusRing">
-            <Setter Property="Control.Template">
-                <Setter.Value>
-                    <ControlTemplate>
-                        <Border Margin="-3" CornerRadius="9" BorderBrush="#0A84FF" BorderThickness="2" />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <Style x:Key="CloseButton" TargetType="Button">
             <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -71,50 +61,6 @@
             </Setter>
         </Style>
 
-        <!-- Switch (mockup .sw): 38 × 22, knob 18 px sliding 16 px on the pop curve. -->
-        <Style x:Key="Switch" TargetType="ToggleButton">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Grid Width="38" Height="22">
-                            <Border x:Name="Track" CornerRadius="11" Background="#48484A" />
-                            <Ellipse Width="18" Height="18" Fill="#FFFFFF" HorizontalAlignment="Left" Margin="2,0,0,0">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="4" ShadowDepth="2" Direction="270" Opacity="0.3" />
-                                </Ellipse.Effect>
-                                <Ellipse.RenderTransform>
-                                    <TranslateTransform x:Name="Knob" />
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="X" To="16" Duration="0:0:0.26"
-                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
-                                            <ColorAnimation Storyboard.TargetName="Track" Storyboard.TargetProperty="Background.Color" To="#30D158" Duration="0:0:0.2" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.26"
-                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
-                                            <ColorAnimation Storyboard.TargetName="Track" Storyboard.TargetProperty="Background.Color" To="#48484A" Duration="0:0:0.2" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <!-- Segmented choice (mockup .seg). -->
         <Style x:Key="Segments" TargetType="ListBox">

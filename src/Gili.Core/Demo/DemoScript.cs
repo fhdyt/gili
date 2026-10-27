@@ -13,6 +13,12 @@ public sealed record DemoCopy(string Text) : DemoAction;
 /// <summary>A timer that runs for the demo only and is never saved (F-TOOL-01).</summary>
 public sealed record DemoTimer(int Seconds) : DemoAction;
 
+/// <summary>An alarm that rings for the demo only and is never saved (F-TOOL-05).</summary>
+public sealed record DemoAlarm(TimeOnly Time, string Label) : DemoAction
+{
+    public const string CardId = "alarm:demo";
+}
+
 /// <summary>Answers a card the demo raised.</summary>
 public sealed record DemoDismiss(string Card) : DemoAction;
 
@@ -62,7 +68,9 @@ public static class DemoScript
             Step(31, new DemoOpen(IslandPage.Controls)),
             Step(34, new DemoClose()),
             Step(35.5, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 64))),
+            Step(36.5, new DemoAlarm(new TimeOnly(14, 30), "Take medicine")),
             Step(39, new DemoMedia(paused)),
+            Step(40.5, new DemoDismiss(DemoAlarm.CardId)),
             Step(41.5, new DemoMedia(null)),
             Step(43.5, new DemoEnd()),
         ];

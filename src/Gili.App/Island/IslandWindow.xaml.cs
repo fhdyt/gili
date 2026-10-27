@@ -45,6 +45,7 @@ public partial class IslandWindow : Window
     private readonly GiliService _gili;
     private readonly PowerPage _powerPage;
     private readonly TimerViewModel _timerPage;
+    private readonly AlarmsViewModel _alarmsPage;
     private string? _glowTimer;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
@@ -104,6 +105,15 @@ public partial class IslandWindow : Window
         gili.Register(GiliCircleEyes);
         gili.Register(MenuGiliEyes);
         _timerPage = new TimerViewModel(island.Timers);
+        _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
+        settings.Changed += _ => _alarmsPage.Refresh();
+        // The island grows and shrinks with the number of alarms (PRD 6.3 page 3).
+        island.Alarms.Changed += () =>
+        {
+            if (_island.View.Page != IslandPage.Alarms) return;
+            _pageHeight = PageHeight();
+            if (_mode == IslandMode.Expanded) Relayout(SpringParameters.Open);
+        };
         // The Timer page's glow follows the segment and the pomodoro phase.
         island.Timers.Changed += () =>
         {
@@ -417,7 +427,7 @@ public partial class IslandWindow : Window
     private void ShowLayers(IslandMode mode)
     {
         Reveal(CardLayer, mode == IslandMode.Card);
-        CardLayer.SetPulsing(mode == IslandMode.Card);
+        CardLayer.SetPulsing(mode == IslandMode.Card, _vm.CardShake);
         _timerPage.SetPageOpen(mode == IslandMode.Expanded && _island.View.Page == IslandPage.Timer);
         Fade(CompactLayer, mode == IslandMode.Compact);
         Fade(WideLayer, mode == IslandMode.Wide);
@@ -648,6 +658,7 @@ public partial class IslandWindow : Window
     {
         IslandPage.Media => new MediaPage(_island.Media),
         IslandPage.Timer => new TimerPage(_timerPage),
+        IslandPage.Alarms => new AlarmsPage(_alarmsPage),
         _ => Placeholder(tab),
     };
 
@@ -773,9 +784,14 @@ public partial class IslandWindow : Window
                 var animate = _mode == IslandMode.Expanded;
                 UpdateTabs(animate);
                 ShowPage(animate);
+                // Today and Tomorrow move on at midnight.
+                if (_island.View.Page == IslandPage.Alarms) _alarmsPage.Refresh();
                 _pageHeight = PageHeight();
                 if (animate) Relayout(SpringParameters.Open);
                 UpdateGlow();
+                break;
+            case nameof(IslandViewModel.CardShake):
+                CardLayer.SetPulsing(_mode == IslandMode.Card, _vm.CardShake);
                 break;
             case nameof(IslandViewModel.IsPlaying) or nameof(IslandViewModel.GlowPrimary) or nameof(IslandViewModel.GlowSecondary):
                 UpdateGlow();
