@@ -471,7 +471,12 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,30px);gap:2px;font-size:11px;text-align:center;flex-shrink:0}
 .cal .h{color:var(--text2);height:16px;line-height:16px}
-.cal .mh{grid-column:1/-1;text-align:left;font-size:13px;font-weight:600;height:20px;line-height:18px;padding-left:4px}
+.cal .mh{grid-column:1/-1;display:flex;align-items:center;gap:2px;text-align:left;font-size:13px;font-weight:600;height:20px;line-height:18px;padding-left:4px}
+.cal .mh span{flex:1}
+/* Previous and next month: 20 px chevrons at the right of the month name. */
+.cal .mh button{width:20px;height:20px;display:grid;place-items:center;color:var(--text2)}
+.cal .mh button:hover{color:var(--text)}
+.cal .mh .ic{width:12px;height:12px}
 .cal button{height:19px;border-radius:6px;position:relative;font-size:11px;transition:background 120ms}
 .cal button:hover{background:var(--surface)}
 .cal button.today{background:var(--accent);color:#000;font-weight:700}
@@ -483,6 +488,8 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .cev .e{background:var(--surface);border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:6px;animation:fadeUp 220ms var(--out);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cev .e.dn{text-decoration:line-through;color:var(--text2)}
 .cev .none{color:var(--text2);font-size:12px;margin-bottom:8px}
+/* "Added to Tue 28 Oct" under the day's list for 2.4 s: the open island hides wide notices. */
+.cev .cadded{color:var(--accent);font-size:12px;margin-bottom:8px;animation:fadeUp 200ms var(--out)}
 .cadd{display:flex;gap:6px;animation:fadeUp 200ms var(--out)}
 .cadd .field{flex:1;min-width:0;height:32px}
 .pill.sm{height:30px;font-size:13px;padding:0 12px;gap:6px}
@@ -2139,20 +2146,25 @@ const EV={};
 (()=>{const add=(n,items)=>{const d=new Date();d.setDate(d.getDate()+n);EV[dkey(d)]=items};
   add(0,['15:00 · Prepare meeting slides','14:30 · Alarm: take medicine']);add(2,['Send client invoice']);add(5,["Rani's birthday"]);add(-3,['Motorbike service'])})();
 const todayKey=()=>dkey(new Date());
-const dayKey=d=>{const n=new Date();return dkey(new Date(n.getFullYear(),n.getMonth(),d))};
+// The month on show; null is the current month.
+let calYM=null;
+const calMonth=()=>{const n=new Date();return calYM||[n.getFullYear(),n.getMonth()]};
+const dayKey=d=>{const[y,m]=calMonth();return dkey(new Date(y,m,d))};
 function fmtDay(key){const[y,m,d]=key.split('-').map(Number),dt=new Date(y,m,d);return `${DAYS[dt.getDay()]} ${d} ${MONTHS[m]}`}
 function dayItems(key){
   return (EV[key]||[]).map(t=>({text:t})).concat(S.todos.filter(t=>t.due===key).map(t=>({text:(t.tm?t.tm+' · ':'Task · ')+t.t,done:!!t.d})));
 }
 function buildCal(){
-  const n=new Date(),y=n.getFullYear(),m=n.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
-  let h=`<span class="mh">${MONTHS_FULL[m]} ${y}</span>`+['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>`<span class="h">${d}</span>`).join('');
+  const n=new Date(),[y,m]=calMonth(),now=y===n.getFullYear()&&m===n.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+  let h=`<div class="mh"><span>${MONTHS_FULL[m]} ${y}</span><button id="calPrev" aria-label="Previous month">${icon('chevl')}</button><button id="calNext" aria-label="Next month">${icon('chevr')}</button></div>`
+    +['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>`<span class="h">${d}</span>`).join('');
   for(let i=0;i<off;i++)h+='<span></span>';
-  for(let d=1;d<=days;d++)h+=`<button data-d="${d}" class="${d===n.getDate()?'today':''}" aria-label="${d} ${MONTHS_FULL[m]}">${d}</button>`;
-  $('#cal').innerHTML=h;refreshCalDots();selectDate(n.getDate());
+  for(let d=1;d<=days;d++)h+=`<button data-d="${d}" class="${now&&d===n.getDate()?'today':''}" aria-label="${d} ${MONTHS_FULL[m]}">${d}</button>`;
+  $('#cal').innerHTML=h;refreshCalDots();selectDate(now?n.getDate():1);
 }
-function refreshCalDots(){$$('#cal button').forEach(b=>b.classList.toggle('ev',dayItems(dayKey(+b.dataset.d)).length>0))}
-function selectDate(d){S.calSel=d;S.calAdding=false;$$('#cal button').forEach(b=>b.classList.toggle('sel',+b.dataset.d===d));renderCev()}
+function stepMonth(by){const[y,m]=calMonth(),d=new Date(y,m+by,1);calYM=[d.getFullYear(),d.getMonth()];buildCal();if(S.state==='expanded')layout()}
+function refreshCalDots(){$$('#cal button[data-d]').forEach(b=>b.classList.toggle('ev',dayItems(dayKey(+b.dataset.d)).length>0))}
+function selectDate(d){S.calSel=d;S.calAdding=false;$$('#cal button[data-d]').forEach(b=>b.classList.toggle('sel',+b.dataset.d===d));renderCev()}
 // Right-hand panel: the selected day's items and the Add task control (the only place todos are created).
 function renderCev(){
   const cev=$('#cev');
@@ -2160,6 +2172,7 @@ function renderCev(){
   // Every item shows: the island grows to fit the day instead of cutting it off at "+N more".
   cev.innerHTML=`<h4>${key===todayKey()?'Today':fmtDay(key)}</h4>`+
     (items.length?items.map(it=>`<div class="e ${it.done?'dn':''}">${esc(it.text)}</div>`).join(''):'<div class="none">Nothing scheduled.</div>')+
+    (S.calAdded?`<div class="cadded" role="status">${S.calAdded}</div>`:'')+
     (S.calAdding?`<form class="cadd" id="cAdd"><input class="field" id="cAddIn" placeholder="Add a task for this day" maxlength="60" aria-label="New task for ${fmtDay(key)}"><input class="field ftime" id="cAddTm" type="time" aria-label="Time (optional)" title="Time (optional): a reminder card appears then"><button class="pill pri iconbtn" aria-label="Add task">${icon('check')}</button></form>`
       :`<button class="pill sm" id="cAddBtn">${icon('plus')}Add task</button>`);
   if(S.state==='expanded')layout();
@@ -2168,10 +2181,12 @@ function addTodo(text,key,tm){
   S.todos.push({t:text,d:0,due:key,tm:tm||''});
   const today=key===todayKey();
   renderTodos(today?S.todos.length-1:undefined);refreshCalDots();
-  if(!today)hint('Added to '+fmtDay(key)+(tm?' · '+tm:''));
+  if(!today){S.calAdded='Added to '+fmtDay(key)+(tm?' · '+tm:'');clearTimeout(addTodo.t);addTodo.t=setTimeout(()=>{S.calAdded='';renderCev()},2400)}
 }
 $('#cal').onclick=e=>{
-  const b=e.target.closest('button');if(b)selectDate(+b.dataset.d);
+  if(e.target.closest('#calPrev')){stepMonth(-1);return}
+  if(e.target.closest('#calNext')){stepMonth(1);return}
+  const b=e.target.closest('button[data-d]');if(b)selectDate(+b.dataset.d);
 };
 $('#cev').addEventListener('click',e=>{
   if(e.target.closest('#cAddBtn')){S.calAdding=true;renderCev();$('#cAddIn').focus()}
