@@ -182,7 +182,8 @@ public partial class App : Application
         try
         {
             _startup = await PackagedStartup.ReadAsync();
-            if (StartupRules.CanChange(_startup.Value)) _settings!.Update(s => s with { Autostart = _startup == StartupState.On });
+            var on = StartupRules.AutostartFor(_startup.Value);
+            _settings!.Update(s => s with { Autostart = on });
         }
         catch (Exception ex) when (ex is COMException or InvalidOperationException or ArgumentException)
         {

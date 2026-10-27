@@ -8,6 +8,9 @@ public static class StartupRules
     /// <summary>Once switched off in Task Manager, only the user can turn it back on there.</summary>
     public static bool CanChange(StartupState state) => state is StartupState.On or StartupState.Off;
 
+    /// <summary>Settings shows what Task Manager says, blocked states included, so the switch never claims "on" wrongly.</summary>
+    public static bool AutostartFor(StartupState state) => state == StartupState.On;
+
     public static string? Note(StartupState state) => state switch
     {
         StartupState.BlockedByUser => "Turned off in Task Manager › Startup apps",

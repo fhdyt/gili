@@ -14,4 +14,12 @@ public class StartupRulesTests
         Assert.True(StartupRules.CanChange(StartupState.Off));
         Assert.Null(StartupRules.Note(StartupState.On));
     }
+
+    [Theory]
+    [InlineData(StartupState.On, true)]
+    [InlineData(StartupState.Off, false)]
+    [InlineData(StartupState.BlockedByUser, false)]
+    [InlineData(StartupState.BlockedByPolicy, false)]
+    public void Settings_follow_task_manager_even_when_blocked(StartupState state, bool autostart) =>
+        Assert.Equal(autostart, StartupRules.AutostartFor(state));
 }
