@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows;
 using System.Windows.Markup;
@@ -18,10 +19,9 @@ namespace Gili.App;
 
 public partial class App : Application
 {
-    private static readonly bool IsInstalledBuild =
-        Environment.ProcessPath is { } exe && AppPaths.IsUnder(exe, AppPaths.InstallDirectory);
+    private static readonly InstallKind Kind = AppPaths.KindOf(Environment.ProcessPath, PackageInfo.IsPackaged, AppPaths.InstallDirectory);
 
-    private static readonly DataFolders Data = AppPaths.Data(null);
+    private static readonly DataFolders Data = AppPaths.Data(PackageInfo.LocalFolder());
 
     private FileLog? _log;
     private SingleInstance? _instance;
@@ -39,6 +39,7 @@ public partial class App : Application
     private DemoService? _demo;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
+    private StartupState? _startup;
     private bool _quitting;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -71,7 +72,8 @@ public partial class App : Application
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
         _settings.Changed += SyncAutostart;
-        SyncAutostart(_settings.Current);
+        if (Kind == InstallKind.Store) _ = AdoptStartupTaskAsync();
+        else SyncAutostart(_settings.Current);
         _transparency = new TransparencyWatcher();
 
         var cpu = new CpuSampler();
@@ -144,7 +146,7 @@ public partial class App : Application
             _settingsWindow.Activate();
             return;
         }
-        _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, IsInstalledBuild));
+        _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup));
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
         // Show alone can leave it behind the active app, since the bar never takes focus (F-BAR-13).
@@ -153,11 +155,16 @@ public partial class App : Application
 
     /// <summary>
     /// Only the installed copy owns the Run entry, so a dev build started with `dotnet run` never registers itself
-    /// (F-BAR-04; the first run of the installed copy creates the entry, PRD 9.4).
+    /// (F-BAR-04; the first run of the installed copy creates the entry, PRD 9.4). The Store copy uses its StartupTask.
     /// </summary>
     private void SyncAutostart(AppSettings settings)
     {
-        if (!IsInstalledBuild || _autostartApplied == settings.Autostart) return;
+        if (Kind == InstallKind.Store)
+        {
+            _ = SetStartupTaskAsync(settings.Autostart);
+            return;
+        }
+        if (Kind != InstallKind.Installed || _autostartApplied == settings.Autostart) return;
         try
         {
             Autostart.Apply(settings.Autostart, Environment.ProcessPath!);
@@ -166,6 +173,32 @@ public partial class App : Application
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or SecurityException)
         {
             _log?.Write("Could not update the autostart entry", ex);
+        }
+    }
+
+    /// <summary>The Store copy follows Task Manager's Startup apps at start, since the user may have changed it there.</summary>
+    private async Task AdoptStartupTaskAsync()
+    {
+        try
+        {
+            _startup = await PackagedStartup.ReadAsync();
+            if (StartupRules.CanChange(_startup.Value)) _settings!.Update(s => s with { Autostart = _startup == StartupState.On });
+        }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException or ArgumentException)
+        {
+            _log?.Write("Could not read the startup task", ex);
+        }
+    }
+
+    private async Task SetStartupTaskAsync(bool on)
+    {
+        try
+        {
+            _startup = await PackagedStartup.SetAsync(on);
+        }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException or ArgumentException)
+        {
+            _log?.Write("Could not change the startup task", ex);
         }
     }
 

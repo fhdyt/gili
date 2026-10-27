@@ -12,6 +12,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
 {
     private readonly SettingsHub _hub;
     private readonly SettingRow _row;
+    private readonly bool _changeable;
     private bool _loading;
 
     [ObservableProperty] private bool _isOn;
@@ -21,10 +22,11 @@ public sealed partial class SettingRowViewModel : ObservableObject
     [ObservableProperty] private double _max;
     [ObservableProperty] private string _valueText = "";
 
-    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note)
+    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true)
     {
         _hub = hub;
         _row = row;
+        _changeable = changeable;
         Note = row.Available ? note ?? row.Help : SettingsCatalog.LaterVersion;
         Reload(hub.Current);
     }
@@ -32,7 +34,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public string Label => _row.Label;
     public string? Note { get; }
     public bool HasNote => Note is not null;
-    public bool IsEnabled => _row.Available;
+    public bool IsEnabled => _row.Available && _changeable;
     public bool IsSwitch => _row.Kind == SettingKind.Switch;
     public bool IsSegment => _row.Kind == SettingKind.Segment;
     public bool IsRange => _row.Kind == SettingKind.Range;
@@ -75,7 +77,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
 
     private void Push(object value)
     {
-        if (_loading || !_row.Available) return;
+        if (_loading || !IsEnabled) return;
         _hub.Update(s => SettingsCatalog.Write(s, _row.Key, value));
     }
 }
