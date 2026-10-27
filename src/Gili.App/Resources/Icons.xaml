@@ -19,6 +19,11 @@
     <PathGeometry x:Key="Icon.Close" Figures="M18 6L6 18 M6 6l12 12" />
     <PathGeometry x:Key="Icon.Gear" Figures="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M19.4 15a1.65 1.65 0 0 0 0.33 1.82l0.06 0.06a2 2 0 1 1 -2.83 2.83l-0.06 -0.06a1.65 1.65 0 0 0 -1.82 -0.33a1.65 1.65 0 0 0 -1 1.51V21a2 2 0 1 1 -4 0v-0.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0 -1.82 0.33l-0.06 0.06a2 2 0 1 1 -2.83 -2.83l0.06 -0.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0 -1.51 -1H3a2 2 0 1 1 0 -4h0.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0 -0.33 -1.82l-0.06 -0.06a2 2 0 1 1 2.83 -2.83l0.06 0.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1 -1.51V3a2 2 0 1 1 4 0v0.09a1.65 1.65 0 0 0 1 1.51a1.65 1.65 0 0 0 1.82 -0.33l0.06 -0.06a2 2 0 1 1 2.83 2.83l-0.06 0.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-0.09a1.65 1.65 0 0 0 -1.51 1z" />
     <PathGeometry x:Key="Icon.Sliders" Figures="M4 7h10 M18 7h2 M4 17h2 M10 17h10 M13.8 7a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0 M5.8 17a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0" />
+    <PathGeometry x:Key="Icon.Pencil" Figures="M4 20h4L19 9l-4 -4L4 16z M13.5 6.5l4 4" />
+    <PathGeometry x:Key="Icon.Trash" Figures="M3 6h18 M8 6V4a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1 -2 2H8a2 2 0 0 1 -2 -2L5 6" />
+    <PathGeometry x:Key="Icon.Plus" Figures="M12 5v14 M5 12h14" />
+    <PathGeometry x:Key="Icon.ChevronLeft" Figures="M15 6l-6 6l6 6" />
+    <PathGeometry x:Key="Icon.ChevronRight" Figures="M9 6l6 6l-6 6" />
     <PathGeometry x:Key="Icon.Film" Figures="M4.5 3h15a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-15A2.5 2.5 0 0 1 2 18.5v-13A2.5 2.5 0 0 1 4.5 3z M7 3v18 M17 3v18 M2 12h20 M2 7.5h5 M2 16.5h5 M17 7.5h5 M17 16.5h5" />
 
     <!-- Filled (IconView Filled="True"). -->

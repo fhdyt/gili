@@ -6,6 +6,7 @@ using Gili.Core.Island;
 using Gili.Core.Power;
 using Gili.Core.Sound;
 using Gili.Core.Timers;
+using Gili.Core.Todos;
 using Gili.Platform.Power;
 
 namespace Gili.App.Island;
@@ -19,14 +20,17 @@ public sealed class IslandController : IDisposable
     private readonly ClipboardService _clipboard = new();
     // The alarm each alarm card stands for, as it was when it rang, and whether it was late.
     private readonly Dictionary<string, (Alarm Alarm, bool Missed)> _ringing = [];
+    // The task each reminder card stands for, as it was when it came.
+    private readonly Dictionary<string, Todo> _reminders = [];
     private bool _demo;
     private string? _soundCard;
 
-    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms)
+    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos)
     {
         Media = media;
         Timers = timers;
         Alarms = alarms;
+        Todos = todos;
         _deadline.Tick += (_, _) =>
         {
             _deadline.Stop();
@@ -37,6 +41,8 @@ public sealed class IslandController : IDisposable
         {
             ScheduleDeadline();
             ViewChanged?.Invoke(view);
+            // A reminder that closed itself is gone from the queue; its task goes too.
+            foreach (var card in _reminders.Keys.Where(id => !_coordinator.HasCard(id)).ToList()) _reminders.Remove(card);
             if (view.Card?.Id == _soundCard) return;
             _soundCard = view.Card?.Id;
             CardShown?.Invoke(_soundCard);
@@ -54,6 +60,23 @@ public sealed class IslandController : IDisposable
         ApplyTimers();
         alarms.Ringing += (alarm, missed) => Ring(alarm, missed, AlarmCard(alarm.Id));
         alarms.Stale += id => DismissCard(AlarmCard(id));
+        todos.Reminding += todo => Remind(todo, TodoCard(todo.Id));
+        todos.Stale += id => DismissCard(TodoCard(id));
+    }
+
+    public TodoService Todos { get; }
+
+    /// <summary>The demo's task reminder, shown like a real one and never saved (F-BAR-09).</summary>
+    public void ShowDemoReminder(string title, TimeOnly time) =>
+        Remind(new Todo(0, title, null, time, null, null, 0, DateTimeOffset.UtcNow), Gili.Core.Demo.DemoReminder.CardId);
+
+    private static string TodoCard(long id) => $"todo:{id}";
+
+    /// <summary>A reminder card shows for 10 s, waits while a focus phase runs, and is dropped in fullscreen (PRD 6.3).</summary>
+    private void Remind(Todo todo, string cardId)
+    {
+        _reminders[cardId] = todo;
+        _coordinator.ShowCard(new IslandCard(cardId, CardPriority.Reminder, TimeSpan.FromSeconds(10)));
     }
 
     public TimerService Timers { get; }
@@ -123,9 +146,21 @@ public sealed class IslandController : IDisposable
             "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro),
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
+            _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
             _ => null,
         };
         return content is null ? null : WithMuteWarning(id, content);
+    }
+
+    /// <summary>The task, "Due 15:00 today", Snooze 10m and Done (mockup CARDS.todo).</summary>
+    private CardContent ReminderContent(string id, Todo todo, Color green)
+    {
+        var demo = todo.Id == 0;
+        return new("Icon.Todo", green, todo.Title, TodoText.CardSubtitle(todo, Todos.Today, Use24Hour()),
+            [
+                new("Snooze 10m", false, Card(id, () => { if (!demo) Todos.Snooze(todo.Id); })),
+                new("Done", true, Card(id, () => { if (!demo) Todos.SetDone(todo.Id, true); })),
+            ]);
     }
 
     /// <summary>"Alarm 14:30" or "Missed alarm 14:30", the label, Snooze 5m and Stop (mockup CARDS.alarm).</summary>
@@ -155,8 +190,7 @@ public sealed class IslandController : IDisposable
     private Action Card(string id, Action action) => () =>
     {
         action();
-        _coordinator.DismissCard(id);
-        _ringing.Remove(id);
+        DismissCard(id);
     };
 
     /// <summary>A running timer or pomodoro and a running stopwatch are activities; a focus phase holds reminders (F-TOOL-04).</summary>
@@ -207,6 +241,7 @@ public sealed class IslandController : IDisposable
     {
         _coordinator.DismissCard(id);
         _ringing.Remove(id);
+        _reminders.Remove(id);
     }
 
     /// <summary>The pointer went down outside the open island.</summary>

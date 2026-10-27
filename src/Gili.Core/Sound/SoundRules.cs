@@ -10,13 +10,14 @@ public static class SoundRules
 
     /// <summary>
     /// A timer rings the chosen timer sound until answered; an alarm rings its own sound (Radar by default) and rises
-    /// slowly; a pomodoro phase rings Bell once.
+    /// slowly; a pomodoro phase rings Bell once; a task reminder pings once.
     /// </summary>
     public static (string Voice, bool Loop, bool Ramp)? ForCard(string cardId, string timerSound, string? alarmSound = null) => cardId switch
     {
         _ when cardId.StartsWith("alarm:", StringComparison.Ordinal) => (Voices.Find(alarmSound ?? "Radar").Name, true, true),
         "timer" => (Voices.Find(timerSound).Name, true, false),
         "pomo-focus" or "pomo-break" => ("Bell", false, false),
+        _ when cardId.StartsWith("todo:", StringComparison.Ordinal) => ("Ping", false, false),
         _ => null,
     };
 }

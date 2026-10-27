@@ -163,4 +163,163 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- .field: 32 px, radius 16, #1C1C1E, 13 px, placeholder #636366 (from HelpText); a 1 px #636366 ring when focused.
+         Tag "Past" draws the yellow edge of a time that has gone today, "Invalid" a red one. -->
+    <Style x:Key="Field" TargetType="TextBox">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#F5F5F7" />
+        <Setter Property="CaretBrush" Value="#F5F5F7" />
+        <Setter Property="SelectionBrush" Value="#0A84FF" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="Bg" Height="32" CornerRadius="16" Background="#1C1C1E" BorderBrush="Transparent" BorderThickness="1" Padding="13,0">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <TextBlock x:Name="Hint" Text="{Binding (AutomationProperties.HelpText), RelativeSource={RelativeSource TemplatedParent}}"
+                                   Foreground="#636366" Margin="16,0" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#636366" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="Past">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#FFD60A" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="Invalid">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#FF453A" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- .pill.sm: 30 px, radius 15, padding 0 12, 13 px. -->
+    <Style x:Key="SmallPill" TargetType="Button" BasedOn="{StaticResource Pill}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Height="30" CornerRadius="15" Padding="12,0" Background="{TemplateBinding Background}" RenderTransformOrigin="0.5,0.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bg" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- .pill.pri.iconbtn in a form: a white 32 px circle holding the check. -->
+    <Style x:Key="CheckPill" TargetType="Button" BasedOn="{StaticResource PrimaryPill}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Width="32" Height="32" CornerRadius="16" Background="{TemplateBinding Background}" RenderTransformOrigin="0.5,0.5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bg" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- .chk: 24 px circle with a 2 px #636366 edge; done fills green and the black check pops in (280 ms pop curve). -->
+    <Style x:Key="CheckCircle" TargetType="ToggleButton">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Width="24" Height="24" Background="Transparent">
+                        <Ellipse x:Name="Ring" Stroke="#636366" StrokeThickness="2" Fill="Transparent" />
+                        <c:IconView x:Name="Tick" Glyph="{StaticResource Icon.Check}" Foreground="#000000" Width="14" Height="14" StrokeThickness="3.2"
+                                    Opacity="0" RenderTransformOrigin="0.5,0.5">
+                            <c:IconView.RenderTransform>
+                                <ScaleTransform x:Name="TickScale" ScaleX="0.3" ScaleY="0.3" />
+                            </c:IconView.RenderTransform>
+                        </c:IconView>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Ring" Property="Fill" Value="#30D158" />
+                            <Setter TargetName="Ring" Property="Stroke" Value="#30D158" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Tick" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="TickScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.28"
+                                                         EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                        <DoubleAnimation Storyboard.TargetName="TickScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.28"
+                                                         EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Tick" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="TickScale" Storyboard.TargetProperty="ScaleX" To="0.3" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="TickScale" Storyboard.TargetProperty="ScaleY" To="0.3" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- .tact button: 28 px circle, grey icon; #2C2C2E and white on hover. -->
+    <Style x:Key="RowAction" TargetType="Button">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#8E8E93" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Height="28" MinWidth="28" CornerRadius="14" Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                            <Setter Property="Foreground" Value="#F5F5F7" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

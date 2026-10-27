@@ -27,6 +27,14 @@ public class DemoTests
     }
 
     [Fact]
+    public void A_todo_reminder_shows_and_closes_itself()
+    {
+        var reminder = (DemoReminder)Steps.Single(s => s.Action is DemoReminder).Action;
+        Assert.Equal(("Prepare meeting slides", new TimeOnly(15, 0)), (reminder.Title, reminder.Time));
+        Assert.DoesNotContain(Steps, s => s.Action is DemoDismiss { Card: DemoReminder.CardId });
+    }
+
+    [Fact]
     public void An_alarm_card_shows_and_is_stopped()
     {
         var ring = Steps.Single(s => s.Action is DemoAlarm);

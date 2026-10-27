@@ -24,6 +24,10 @@ public class SoundRulesTests
     }
 
     [Fact]
+    public void Todo_reminders_ping_once() =>
+        Assert.Equal(("Ping", false, false), SoundRules.ForCard("todo:3", "Chime"));
+
+    [Fact]
     public void Alarm_cards_ring_on_repeat_with_the_ramp()
     {
         Assert.Equal(("Soft", true, true), SoundRules.ForCard("alarm:7", "Chime", alarmSound: "Soft"));

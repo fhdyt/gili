@@ -112,6 +112,7 @@
 
     <!-- Text field (mockup .tin): 30 px, radius 6, white at 6 % with an 8 % edge; blue edge when focused, red when invalid (Tag True). -->
     <Style x:Key="TextField" TargetType="TextBox">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Foreground" Value="#F5F5F7" />
         <Setter Property="CaretBrush" Value="#F5F5F7" />

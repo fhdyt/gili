@@ -135,8 +135,19 @@ public class IslandCoordinatorTests
         _island.ShowCard(Reminder("todo", 10));
         Advance(9.9);
         Assert.Equal(IslandMode.Card, _island.View.Mode);
+        Assert.True(_island.HasCard("todo"));
         Advance(0.1);
         Assert.Equal(IslandMode.Compact, _island.View.Mode);
+        Assert.False(_island.HasCard("todo"));
+    }
+
+    [Fact]
+    public void A_waiting_card_is_still_held()
+    {
+        _island.ShowCard(Urgent("alarm"));
+        _island.ShowCard(Reminder("todo", 10));
+        Assert.True(_island.HasCard("todo"));
+        Assert.False(_island.HasCard("other"));
     }
 
     [Fact]

@@ -97,6 +97,9 @@ public sealed class IslandCoordinator
         Update();
     }
 
+    /// <summary>Whether a card waits or shows.</summary>
+    public bool HasCard(string id) => _cards.Any(c => c.Id == id);
+
     public void DismissCard(string id)
     {
         if (_cards.RemoveAll(c => c.Id == id) > 0) Update();

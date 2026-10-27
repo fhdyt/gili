@@ -54,6 +54,7 @@ public sealed class DemoService
         if (_timerCardPending) _island.DismissCard("timer");
         _timerCardPending = false;
         _island.DismissCard(DemoAlarm.CardId);
+        _island.DismissCard(DemoReminder.CardId);
         _island.EndDemo();
         Changed?.Invoke();
     }
@@ -87,6 +88,9 @@ public sealed class DemoService
                 case DemoTimer timer:
                     _island.Timers.StartDemoTimer(timer.Seconds);
                     _timerCardPending = true;
+                    break;
+                case DemoReminder reminder:
+                    _island.ShowDemoReminder(reminder.Title, reminder.Time);
                     break;
                 case DemoAlarm alarm:
                     _island.ShowDemoAlarm(alarm.Time, alarm.Label);

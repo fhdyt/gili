@@ -15,6 +15,11 @@ public sealed class IconView : FrameworkElement
         nameof(Filled), typeof(bool), typeof(IconView),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>The pen width in icon units (24 across); 2 like the mockup's SVGs unless an icon asks for more.</summary>
+    public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
+        nameof(StrokeThickness), typeof(double), typeof(IconView),
+        new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public static readonly DependencyProperty ForegroundProperty = TextElement.ForegroundProperty.AddOwner(
         typeof(IconView),
         new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender));
@@ -29,6 +34,12 @@ public sealed class IconView : FrameworkElement
     {
         get => (bool)GetValue(FilledProperty);
         set => SetValue(FilledProperty, value);
+    }
+
+    public double StrokeThickness
+    {
+        get => (double)GetValue(StrokeThicknessProperty);
+        set => SetValue(StrokeThicknessProperty, value);
     }
 
     public Brush Foreground
@@ -49,7 +60,7 @@ public sealed class IconView : FrameworkElement
         }
         else
         {
-            var pen = new Pen(Foreground, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
+            var pen = new Pen(Foreground, StrokeThickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
             dc.DrawGeometry(null, pen, Glyph);
         }
         dc.Pop();

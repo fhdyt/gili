@@ -46,6 +46,8 @@ public partial class IslandWindow : Window
     private readonly PowerPage _powerPage;
     private readonly TimerViewModel _timerPage;
     private readonly AlarmsViewModel _alarmsPage;
+    private readonly CalendarViewModel _calendarPage;
+    private readonly TodoViewModel _todoPage;
     private string? _glowTimer;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
@@ -106,14 +108,17 @@ public partial class IslandWindow : Window
         gili.Register(MenuGiliEyes);
         _timerPage = new TimerViewModel(island.Timers);
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
-        settings.Changed += _ => _alarmsPage.Refresh();
-        // The island grows and shrinks with the number of alarms (PRD 6.3 page 3).
-        island.Alarms.Changed += () =>
+        _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
+        _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
+        settings.Changed += _ =>
         {
-            if (_island.View.Page != IslandPage.Alarms) return;
-            _pageHeight = PageHeight();
-            if (_mode == IslandMode.Expanded) Relayout(SpringParameters.Open);
+            _alarmsPage.Refresh();
+            _todoPage.Refresh();
         };
+        // The island grows and shrinks with what its page lists (PRD 6.3: alarms, the day's items, today's tasks).
+        island.Alarms.Changed += () => PageContentChanged(IslandPage.Alarms);
+        _calendarPage.ContentChanged += () => PageContentChanged(IslandPage.Calendar);
+        _todoPage.ContentChanged += () => PageContentChanged(IslandPage.Todo);
         // The Timer page's glow follows the segment and the pomodoro phase.
         island.Timers.Changed += () =>
         {
@@ -147,7 +152,8 @@ public partial class IslandWindow : Window
         _awayTimer.Tick += (_, _) =>
         {
             _awayTimer.Stop();
-            if (_mode == IslandMode.Expanded && !Body.IsMouseOver) _island.Close();
+            // Not while typing in the island (mockup armLeave).
+            if (_mode == IslandMode.Expanded && !Body.IsMouseOver && Keyboard.FocusedElement is not TextBox) _island.Close();
         };
         Deactivated += (_, _) =>
         {
@@ -507,7 +513,8 @@ public partial class IslandWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_mode != IslandMode.Expanded) return;
+        // A text field keeps its arrows, and its page decides what Esc does (cancel the form, not close the island).
+        if (_mode != IslandMode.Expanded || e.OriginalSource is TextBox) return;
         switch (e.Key)
         {
             case Key.Escape:
@@ -635,6 +642,14 @@ public partial class IslandWindow : Window
         }
     }
 
+    /// <summary>A page's list or form changed: once its bindings settle, the island fits it again if it is showing.</summary>
+    private void PageContentChanged(IslandPage page) => Dispatcher.InvokeAsync(() =>
+    {
+        if (_island.View.Page != page) return;
+        _pageHeight = PageHeight();
+        if (_mode == IslandMode.Expanded) Relayout(SpringParameters.Open);
+    }, DispatcherPriority.Loaded);
+
     /// <summary>The open page's full content height, so the island grows to show it without scrolling (PRD 6.3).</summary>
     private double PageHeight()
     {
@@ -659,6 +674,8 @@ public partial class IslandWindow : Window
         IslandPage.Media => new MediaPage(_island.Media),
         IslandPage.Timer => new TimerPage(_timerPage),
         IslandPage.Alarms => new AlarmsPage(_alarmsPage),
+        IslandPage.Calendar => new CalendarPage(_calendarPage),
+        IslandPage.Todo => new TodoPage(_todoPage),
         _ => Placeholder(tab),
     };
 
@@ -784,8 +801,10 @@ public partial class IslandWindow : Window
                 var animate = _mode == IslandMode.Expanded;
                 UpdateTabs(animate);
                 ShowPage(animate);
-                // Today and Tomorrow move on at midnight.
+                // Today and Tomorrow move on at midnight; the Calendar opens on the current month.
                 if (_island.View.Page == IslandPage.Alarms) _alarmsPage.Refresh();
+                if (_island.View.Page == IslandPage.Calendar) _calendarPage.ShowToday();
+                if (_island.View.Page == IslandPage.Todo) _todoPage.Refresh();
                 _pageHeight = PageHeight();
                 if (animate) Relayout(SpringParameters.Open);
                 UpdateGlow();

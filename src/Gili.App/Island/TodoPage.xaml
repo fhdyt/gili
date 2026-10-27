@@ -1,0 +1,133 @@
+<UserControl x:Class="Gili.App.Island.TodoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+
+        <!-- Delete (mockup .tact .del): the trash; "Delete?" white on red for 3 s after the first click. -->
+        <Style x:Key="DeleteAction" TargetType="Button" BasedOn="{StaticResource RowAction}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Height="28" MinWidth="28" CornerRadius="14" Background="Transparent">
+                            <Grid>
+                                <c:IconView x:Name="Trash" Glyph="{StaticResource Icon.Trash}" Width="14" Height="14" />
+                                <TextBlock x:Name="Ask" Text="Delete?" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="10,0"
+                                           VerticalAlignment="Center" Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                                <Setter Property="Foreground" Value="#FF453A" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsConfirming}" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#FF453A" />
+                                <Setter TargetName="Trash" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Ask" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- The Todo page (mockup section "Todo"): the count on the left, today's tasks on the right. -->
+    <Grid Margin="32,0" VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <!-- The gap takes what the list leaves: at least 24 px (mockup .page gap). -->
+            <ColumnDefinition Width="0.001*" MinWidth="24" />
+            <ColumnDefinition Width="1000*" MaxWidth="290" />
+        </Grid.ColumnDefinitions>
+        <!-- .tdl: 250 px. -->
+        <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding Count}" FontSize="46" FontWeight="Bold" Typography.NumeralAlignment="Tabular"
+                       LineStackingStrategy="BlockLineHeight" LineHeight="46" />
+            <TextBlock Text="Tasks done today" FontSize="15" Foreground="#8E8E93" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- .tlist: up to 290 px (6 of them padding) at the right, narrower when the island is (flex 0 1 290px); rows 6 px apart,
+             every task without scrolling. -->
+        <StackPanel Grid.Column="2" Margin="0,0,6,0" VerticalAlignment="Center">
+            <TextBlock Text="Nothing due today" FontSize="14" Foreground="#8E8E93" Padding="4,0" MinHeight="44" VerticalAlignment="Center"
+                       LineStackingStrategy="BlockLineHeight" LineHeight="44"
+                       Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
+            <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- One task (.tlist li): 44 px, radius 12, #1C1C1E; done #0F2A17 with the title crossed out. -->
+                        <Border x:Name="Row" MinHeight="44" CornerRadius="12" Padding="12,0" Margin="0,0,0,6" Background="#1C1C1E"
+                                Focusable="True" FocusVisualStyle="{x:Null}" KeyDown="OnRowKey">
+                            <Grid>
+                                <DockPanel x:Name="Shown" VerticalAlignment="Center">
+                                    <ToggleButton DockPanel.Dock="Left" Style="{StaticResource CheckCircle}" IsChecked="{Binding IsDone}"
+                                                  AutomationProperties.Name="{Binding Title}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <!-- Edit and Delete appear on hover or focus; the time moves left of them. -->
+                                    <StackPanel x:Name="Actions" DockPanel.Dock="Right" Orientation="Horizontal" Margin="10,0,0,0" MaxWidth="0" Opacity="0"
+                                                VerticalAlignment="Center">
+                                        <Button Style="{StaticResource RowAction}" Command="{Binding EditCommand}" ToolTip="Edit"
+                                                AutomationProperties.Name="{Binding Title, StringFormat='Edit {0}'}">
+                                            <c:IconView Glyph="{StaticResource Icon.Pencil}" Width="14" Height="14" />
+                                        </Button>
+                                        <Button Style="{StaticResource DeleteAction}" Margin="2,0,0,0" Command="{Binding DeleteCommand}" ToolTip="Delete"
+                                                AutomationProperties.Name="{Binding Title, StringFormat='Delete {0}'}" />
+                                    </StackPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Time}" FontSize="12" Foreground="#8E8E93" Margin="10,0,0,0"
+                                               Typography.NumeralAlignment="Tabular" VerticalAlignment="Center"
+                                               Visibility="{Binding HasTime, Converter={StaticResource VisibleWhen}}" />
+                                    <TextBlock x:Name="Title" Text="{Binding Title}" FontSize="15" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <!-- Edit in place (li.edit): title, an 86 px time and the white check. -->
+                                <Grid x:Name="Editing" Visibility="Collapsed" Margin="0,6,-4,6" PreviewKeyDown="OnEditKey">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="86" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Style="{StaticResource Field}" Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}" MaxLength="60"
+                                             AutomationProperties.Name="Task" Loaded="OnEditFieldLoaded" />
+                                    <TextBox Grid.Column="1" Style="{StaticResource Field}" Margin="6,0,0,0" Text="{Binding EditTime, UpdateSourceTrigger=PropertyChanged}"
+                                             Tag="{Binding EditTimeState}" MaxLength="5" Typography.NumeralAlignment="Tabular"
+                                             AutomationProperties.Name="Time" AutomationProperties.HelpText="Time" />
+                                    <Button Grid.Column="2" Style="{StaticResource CheckPill}" Margin="6,0,0,0" Command="{Binding SaveCommand}"
+                                            AutomationProperties.Name="Save">
+                                        <c:IconView Glyph="{StaticResource Icon.Check}" Width="14" Height="14" StrokeThickness="2.6" />
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="#0F2A17" />
+                                <Setter TargetName="Title" Property="TextDecorations" Value="Strikethrough" />
+                                <Setter TargetName="Title" Property="Foreground" Value="#AEAEB2" />
+                            </DataTrigger>
+                            <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Actions" Property="MaxWidth" Value="200" />
+                                <Setter TargetName="Actions" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Actions" Property="MaxWidth" Value="200" />
+                                <Setter TargetName="Actions" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsConfirming}" Value="True">
+                                <Setter TargetName="Actions" Property="MaxWidth" Value="200" />
+                                <Setter TargetName="Actions" Property="Opacity" Value="1" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                <Setter TargetName="Shown" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Editing" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Row" Property="Padding" Value="12,0,8,0" />
+                                <Setter TargetName="Row" Property="Background" Value="#1C1C1E" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Grid>
+</UserControl>

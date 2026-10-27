@@ -19,6 +19,12 @@ public sealed record DemoAlarm(TimeOnly Time, string Label) : DemoAction
     public const string CardId = "alarm:demo";
 }
 
+/// <summary>A task reminder for the demo only, never saved (F-TOOL-07); it closes itself after 10 s.</summary>
+public sealed record DemoReminder(string Title, TimeOnly Time) : DemoAction
+{
+    public const string CardId = "todo:demo";
+}
+
 /// <summary>Answers a card the demo raised.</summary>
 public sealed record DemoDismiss(string Card) : DemoAction;
 
@@ -72,7 +78,8 @@ public static class DemoScript
             Step(39, new DemoMedia(paused)),
             Step(40.5, new DemoDismiss(DemoAlarm.CardId)),
             Step(41.5, new DemoMedia(null)),
-            Step(43.5, new DemoEnd()),
+            Step(42, new DemoReminder("Prepare meeting slides", new TimeOnly(15, 0))),
+            Step(49, new DemoEnd()),
         ];
     }
 

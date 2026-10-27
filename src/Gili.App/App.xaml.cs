@@ -42,6 +42,7 @@ public partial class App : Application
     private Database? _database;
     private TimerService? _timers;
     private AlarmService? _alarms;
+    private TodoService? _todos;
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
@@ -95,7 +96,8 @@ public partial class App : Application
         _media = new MediaService(Dispatcher, _log);
         _timers = new TimerService(_database is null ? null : new TimerStore(_database));
         _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms)
+        _todos = new TodoService(_database is null ? null : new TodoStore(_database));
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
         };
@@ -129,6 +131,7 @@ public partial class App : Application
         _bar.TimeChanged += _clock.Refresh;
         _bar.TimeChanged += _timers.Reschedule;
         _bar.TimeChanged += _alarms.Reschedule;
+        _bar.TimeChanged += _todos.Reschedule;
         _bar.FullscreenChanged += _islandController.SetFullscreen;
         _bar.PollingChanged += poll =>
         {
@@ -152,6 +155,7 @@ public partial class App : Application
         _timers.Reschedule();
         // Likewise an alarm missed while Gili was closed or the laptop slept rings now, marked missed (F-TOOL-05).
         _alarms.Reschedule();
+        _todos.Reschedule();
         _stats.Start();
         _apps.Start();
         _right.Start();
@@ -170,6 +174,7 @@ public partial class App : Application
         _gili?.Dispose();
         _islandController?.Dispose();
         _alarms?.Dispose();
+        _todos?.Stop();
         _media?.Dispose();
         _bar?.ReleaseAppBar();
         _settings?.Flush();
