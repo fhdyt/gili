@@ -11,6 +11,9 @@ public sealed class BezierEase : IEasingFunction
     public static readonly BezierEase Expression = new(CubicBezier.Expression);
     public static readonly BezierEase Glow = new(CubicBezier.Glow);
 
+    /// <summary>The mockup's <c>--pop</c> curve, which overshoots a little: switches in Settings.</summary>
+    public static readonly BezierEase Pop = new(new CubicBezier(0.34, 1.3, 0.64, 1));
+
     /// <summary>CSS <c>ease-in</c> and <c>ease-out</c>, used by Gili's blink.</summary>
     public static readonly BezierEase In = new(new CubicBezier(0.42, 0, 1, 1));
     public static readonly BezierEase OutSoft = new(new CubicBezier(0, 0, 0.58, 1));

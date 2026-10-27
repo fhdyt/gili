@@ -3,65 +3,46 @@ using Gili.Core.Settings;
 
 namespace Gili.App.Settings;
 
-/// <summary>Phase 1 part of F-BAR-08: clock format, material, bar and island height, autostart. Every change applies at once.</summary>
+/// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
     private readonly SettingsHub _hub;
-    private bool _loading;
+    private readonly bool _transparencyEnabled;
+    private readonly bool _installedBuild;
 
-    [ObservableProperty] private double _barOpacity;
-    [ObservableProperty] private GlassLevel _glass;
-    [ObservableProperty] private double _barHeight;
-    [ObservableProperty] private double _islandHeight;
-    [ObservableProperty] private double _maxIslandHeight;
-    [ObservableProperty] private bool _use24HourClock;
-    [ObservableProperty] private bool _autostart;
+    [ObservableProperty] private SettingsSection _selectedSection;
+    [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
     public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, bool installedBuild)
     {
         _hub = hub;
-        TransparencyOff = !transparencyEnabled;
-        AutostartNeedsInstall = !installedBuild;
-        Load(hub.Current);
+        _transparencyEnabled = transparencyEnabled;
+        _installedBuild = installedBuild;
+        _selectedSection = Sections[0];
+        BuildRows();
+        hub.Changed += Reload;
     }
 
-    public GlassLevel[] GlassLevels { get; } = Enum.GetValues<GlassLevel>();
-    public bool TransparencyOff { get; }
-    public bool AutostartNeedsInstall { get; }
+    public IReadOnlyList<SettingsSection> Sections => SettingsCatalog.Sections;
 
-    partial void OnBarOpacityChanged(double value) => Push();
-    partial void OnGlassChanged(GlassLevel value) => Push();
-    partial void OnBarHeightChanged(double value) => Push();
-    partial void OnIslandHeightChanged(double value) => Push();
-    partial void OnUse24HourClockChanged(bool value) => Push();
-    partial void OnAutostartChanged(bool value) => Push();
+    /// <summary>Stops following the settings once the window has closed.</summary>
+    public void Detach() => _hub.Changed -= Reload;
 
-    private void Load(AppSettings settings)
+    partial void OnSelectedSectionChanged(SettingsSection value) => BuildRows();
+
+    private void BuildRows() =>
+        Rows = [.. SelectedSection.Rows.Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key)))];
+
+    /// <summary>Notes that depend on the machine instead of the row (plan 1f decision 5).</summary>
+    private string? NoteFor(string key) => key switch
     {
-        _loading = true;
-        BarOpacity = settings.BarOpacity;
-        Glass = settings.Glass;
-        BarHeight = settings.BarHeight;
-        MaxIslandHeight = AppSettings.MaxIslandHeight(settings.BarHeight);
-        IslandHeight = settings.IslandHeight;
-        Use24HourClock = settings.Use24HourClock;
-        Autostart = settings.Autostart;
-        _loading = false;
-    }
+        "auto" when !_installedBuild => "Only the installed copy starts with Windows",
+        "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
+        _ => null,
+    };
 
-    private void Push()
+    private void Reload(AppSettings settings)
     {
-        if (_loading) return;
-        _hub.Update(s => s with
-        {
-            BarOpacity = (int)Math.Round(BarOpacity),
-            Glass = Glass,
-            BarHeight = (int)Math.Round(BarHeight),
-            IslandHeight = (int)Math.Round(IslandHeight),
-            Use24HourClock = Use24HourClock,
-            Autostart = Autostart,
-        });
-        // Shows the clamped values, e.g. the island shrinking with a lower bar.
-        Load(_hub.Current);
+        foreach (var row in Rows) row.Reload(settings);
     }
 }

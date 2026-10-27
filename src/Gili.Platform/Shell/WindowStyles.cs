@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Gili.Platform.Interop;
 
 namespace Gili.Platform.Shell;
@@ -18,4 +19,18 @@ public static class WindowStyles
         style = noActivate ? style | Win32.WS_EX_NOACTIVATE : style & ~Win32.WS_EX_NOACTIVATE;
         Win32.SetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE, style);
     }
+
+    /// <summary>Windows 11's rounded corners (8 px) for a window that draws its own frame, like Settings.</summary>
+    public static void RoundCorners(IntPtr hwnd)
+    {
+        var round = DWMWCP_ROUND;
+        // Fails before Windows 11; the corners stay square.
+        _ = DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref round, sizeof(int));
+    }
+
+    private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    private const int DWMWCP_ROUND = 2;
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 }

@@ -133,12 +133,15 @@ public partial class App : Application
     {
         if (_settingsWindow is not null)
         {
+            if (_settingsWindow.WindowState == WindowState.Minimized) _settingsWindow.WindowState = WindowState.Normal;
             _settingsWindow.Activate();
             return;
         }
         _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, IsInstalledBuild));
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
+        // Show alone can leave it behind the active app, since the bar never takes focus (F-BAR-13).
+        _settingsWindow.Activate();
     }
 
     /// <summary>
