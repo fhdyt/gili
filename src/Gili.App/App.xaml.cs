@@ -21,6 +21,8 @@ public partial class App : Application
     private static readonly bool IsInstalledBuild =
         Environment.ProcessPath is { } exe && AppPaths.IsUnder(exe, AppPaths.InstallDirectory);
 
+    private static readonly DataFolders Data = AppPaths.Data(null);
+
     private FileLog? _log;
     private SingleInstance? _instance;
     private SettingsHub? _settings;
@@ -49,10 +51,10 @@ public partial class App : Application
             return;
         }
         UseEnglishFormatting();
-        Directory.CreateDirectory(AppPaths.Root);
-        _log = new FileLog(AppPaths.Logs);
+        Directory.CreateDirectory(Data.Root);
+        _log = new FileLog(Data.Logs);
         _log.DeleteOlderThan(TimeSpan.FromDays(7), DateTime.Now);
-        new CrashHandler(_log, AppPaths.CrashMarker, () => _bar?.ReleaseAppBar()).Attach(this);
+        new CrashHandler(_log, Data.CrashMarker, () => _bar?.ReleaseAppBar()).Attach(this);
 
         var restarted = e.Args.Contains("--restarted");
         _instance = SingleInstance.Acquire(restarted ? TimeSpan.FromSeconds(5) : TimeSpan.Zero,
@@ -64,7 +66,7 @@ public partial class App : Application
             return;
         }
 
-        var store = new SettingsStore(AppPaths.Root);
+        var store = new SettingsStore(Data.Root);
         var loaded = store.Load();
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
