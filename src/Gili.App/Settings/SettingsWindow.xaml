@@ -10,206 +10,91 @@
         <WindowChrome CaptionHeight="36" ResizeBorderThickness="0" GlassFrameThickness="0,0,0,1" CornerRadius="0" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/WindowControls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="VisibleWhen" />
 
+            <!-- Range (mockup input[type=range] with the green accent): 4 px track, 16 px thumb. -->
+            <Style x:Key="TrackPart" TargetType="RepeatButton">
+                <Setter Property="OverridesDefaultStyle" Value="True" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Grid Background="Transparent">
+                                <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="Range" TargetType="Slider">
+                <Setter Property="OverridesDefaultStyle" Value="True" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+                <Setter Property="Width" Value="150" />
+                <Setter Property="IsSnapToTickEnabled" Value="True" />
+                <Setter Property="TickFrequency" Value="1" />
+                <Setter Property="SmallChange" Value="1" />
+                <Setter Property="LargeChange" Value="5" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Track x:Name="PART_Track" Height="16">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource TrackPart}" Background="#30D158" Command="Slider.DecreaseLarge" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource TrackPart}" Background="#48484A" Command="Slider.IncreaseLarge" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="16" Height="16" Fill="#30D158" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
-        <Style x:Key="CloseButton" TargetType="Button">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="Foreground" Value="#C7C7CC" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Width="46" Background="Transparent">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#C42B1C" />
-                                <Setter Property="Foreground" Value="#FFFFFF" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Section list (mockup .setn button). -->
-        <Style x:Key="NavItem" TargetType="ListBoxItem">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="Foreground" Value="#8E8E93" />
-            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
-            <Setter Property="Margin" Value="0,0,0,2" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Bg" CornerRadius="6" Padding="10,7" Background="Transparent">
-                            <ContentPresenter />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#0FFFFFFF" />
-                                <Setter Property="Foreground" Value="#F5F5F7" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#17FFFFFF" />
-                                <Setter Property="Foreground" Value="#F5F5F7" />
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-
-        <!-- Segmented choice (mockup .seg). -->
-        <Style x:Key="Segments" TargetType="ListBox">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="ItemsPanel">
-                <Setter.Value>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBox">
-                        <Border Background="#1C1C1E" CornerRadius="9" Padding="2">
-                            <ItemsPresenter />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="OverridesDefaultStyle" Value="True" />
-                        <Setter Property="Foreground" Value="#8E8E93" />
-                        <Setter Property="FontSize" Value="12" />
-                        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Bg" CornerRadius="7" Padding="10,4" Background="Transparent">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Bg" Property="Background" Value="#3A3A3C" />
-                                            <Setter Property="Foreground" Value="#F5F5F7" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Range (mockup input[type=range] with the green accent): 4 px track, 16 px thumb. -->
-        <Style x:Key="TrackPart" TargetType="RepeatButton">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="IsTabStop" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RepeatButton">
-                        <Grid Background="Transparent">
-                            <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="Range" TargetType="Slider">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
-            <Setter Property="Width" Value="150" />
-            <Setter Property="IsSnapToTickEnabled" Value="True" />
-            <Setter Property="TickFrequency" Value="1" />
-            <Setter Property="SmallChange" Value="1" />
-            <Setter Property="LargeChange" Value="5" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Track x:Name="PART_Track" Height="16">
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Style="{StaticResource TrackPart}" Background="#30D158" Command="Slider.DecreaseLarge" />
-                            </Track.DecreaseRepeatButton>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Style="{StaticResource TrackPart}" Background="#48484A" Command="Slider.IncreaseLarge" />
-                            </Track.IncreaseRepeatButton>
-                            <Track.Thumb>
-                                <Thumb>
-                                    <Thumb.Template>
-                                        <ControlTemplate TargetType="Thumb">
-                                            <Ellipse Width="16" Height="16" Fill="#30D158" />
-                                        </ControlTemplate>
-                                    </Thumb.Template>
-                                </Thumb>
-                            </Track.Thumb>
-                        </Track>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Thin dark scroll bar (mockup scrollbar-width:thin, #48484A on transparent). -->
-        <Style TargetType="ScrollBar">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="Width" Value="8" />
-            <Setter Property="MinWidth" Value="8" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Track x:Name="PART_Track" IsDirectionReversed="True">
-                            <Track.Thumb>
-                                <Thumb>
-                                    <Thumb.Template>
-                                        <ControlTemplate TargetType="Thumb">
-                                            <Border Width="6" CornerRadius="3" Background="#48484A" />
-                                        </ControlTemplate>
-                                    </Thumb.Template>
-                                </Thumb>
-                            </Track.Thumb>
-                        </Track>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <DataTemplate x:Key="RowTemplate">
-            <!-- One row (mockup .srow): label and note on the left, its control on the right. -->
-            <Border x:Name="Row" MinHeight="46" Padding="12,6" Margin="0,0,0,4" CornerRadius="8" Background="#0AFFFFFF"
-                    IsEnabled="{Binding IsEnabled}">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IsOn}" AutomationProperties.Name="{Binding Label}"
-                                      Visibility="{Binding IsSwitch, Converter={StaticResource VisibleWhen}}" />
-                        <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding Options}" SelectedItem="{Binding Choice}"
-                                 AutomationProperties.Name="{Binding Label}" Visibility="{Binding IsSegment, Converter={StaticResource VisibleWhen}}" />
-                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
-                            <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
-                                    AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding ValueText}" Width="38" Margin="12,0,0,0" TextAlignment="Right"
-                                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+            <DataTemplate x:Key="RowTemplate">
+                <!-- One row (mockup .srow): label and note on the left, its control on the right. -->
+                <Border x:Name="Row" MinHeight="46" Padding="12,6" Margin="0,0,0,4" CornerRadius="8" Background="#0AFFFFFF"
+                        IsEnabled="{Binding IsEnabled}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IsOn}" AutomationProperties.Name="{Binding Label}"
+                                          Visibility="{Binding IsSwitch, Converter={StaticResource VisibleWhen}}" />
+                            <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding Options}" SelectedItem="{Binding Choice}"
+                                     AutomationProperties.Name="{Binding Label}" Visibility="{Binding IsSegment, Converter={StaticResource VisibleWhen}}" />
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
+                                <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
+                                        AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ValueText}" Width="38" Margin="12,0,0,0" TextAlignment="Right"
+                                           Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding Note}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2,0,0" TextWrapping="Wrap"
-                                   Visibility="{Binding HasNote, Converter={StaticResource VisibleWhen}}" />
-                    </StackPanel>
-                </DockPanel>
-            </Border>
-            <DataTemplate.Triggers>
-                <Trigger SourceName="Row" Property="IsEnabled" Value="False">
-                    <Setter TargetName="Row" Property="Opacity" Value="0.45" />
-                </Trigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Note}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2,0,0" TextWrapping="Wrap"
+                                       Visibility="{Binding HasNote, Converter={StaticResource VisibleWhen}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <DataTemplate.Triggers>
+                    <Trigger SourceName="Row" Property="IsEnabled" Value="False">
+                        <Setter TargetName="Row" Property="Opacity" Value="0.45" />
+                    </Trigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Border BorderBrush="#14FFFFFF" BorderThickness="1">

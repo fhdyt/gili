@@ -80,6 +80,9 @@ public partial class BarWindow : Window
 
     public event Action? SettingsRequested;
 
+    /// <summary>Open Tools in the bar menu (PRD 6.1).</summary>
+    public event Action? ToolsRequested;
+
     public event Action? ClockClicked;
 
     /// <summary>The Power icon toggles the Power island (PRD 6.4).</summary>
@@ -334,6 +337,8 @@ public partial class BarWindow : Window
     }
 
     private void OnSettings(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
+
+    private void OnTools(object sender, RoutedEventArgs e) => ToolsRequested?.Invoke();
 
     private void OnDemo(object sender, RoutedEventArgs e) => DemoRequested?.Invoke();
 

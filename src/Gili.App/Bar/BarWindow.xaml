@@ -105,6 +105,7 @@
     <Grid>
         <Grid.ContextMenu>
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
+                <MenuItem Header="Open Tools" Style="{StaticResource BarMenuItem}" Click="OnTools" />
                 <MenuItem Header="Settings" Style="{StaticResource BarMenuItem}" Click="OnSettings" />
                 <MenuItem x:Name="DemoItem" Header="Demo mode" Style="{StaticResource BarMenuItem}" Click="OnDemo" />
                 <Separator Style="{StaticResource BarMenuSeparator}" />

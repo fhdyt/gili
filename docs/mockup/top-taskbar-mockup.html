@@ -779,6 +779,32 @@ li.done .chk .ic{opacity:1;transform:none}
 .srow.dis{opacity:.45;pointer-events:none}
 .srow input[type=range]{width:150px;accent-color:var(--accent)}
 .srow .num{width:38px;text-align:right}
+/* Tools window (PRD 7.5): the Settings window's frame, resizable; tabs on the left */
+.toolw{width:720px;height:520px;min-width:560px;min-height:420px;resize:both;transform:none;left:calc(50% - 360px);top:calc(50% - 260px)}
+.toolw .setp h3{display:flex;align-items:center;gap:8px}
+.toolw .setp h3 .tbtn{margin-left:auto}
+.tbtn{height:30px;padding:0 12px;border-radius:6px;background:rgba(255,255,255,.08);font-size:12.5px;flex-shrink:0;transition:background 120ms}
+.tbtn:hover{background:rgba(255,255,255,.13)}
+.tbtn.pri{background:var(--text);color:#000}
+.tbtn.pri:hover{background:#d1d1d6}
+.tbtn.del{color:var(--danger)}
+.tbtn:disabled{opacity:.4;pointer-events:none}
+.tbtn.ic1{width:30px;padding:0;display:grid;place-items:center}
+.tbtn.ic1 .ic{width:12px;height:12px}
+.srow>.t{flex:0 0 52px;font-size:17px;font-weight:600}
+.tsoon{color:var(--text2);margin-top:4px}
+.aedit{background:rgba(255,255,255,.04);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:grid;grid-template-columns:64px 1fr;gap:10px 12px;align-items:center}
+.aedit>label{color:var(--text2)}
+.aedit .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tin{height:30px;padding:0 10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--text);font:inherit}
+.tin:focus{outline:none;border-color:var(--blue)}
+.tin.bad{border-color:var(--danger)}
+.tin.time{width:80px;font-variant-numeric:tabular-nums}
+.tin.lab{width:240px}
+.days{display:flex;gap:4px}
+.day{width:30px;height:30px;border-radius:15px;background:rgba(255,255,255,.06);font-size:11.5px;color:var(--text2)}
+.day[aria-pressed="true"]{background:var(--accent);color:#000;font-weight:600}
+.aedit .acts{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
 /* windows taskbar */
 .wtb{position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(28,28,30,.86);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);
   display:flex;align-items:center;justify-content:center;gap:4px;z-index:10;transition:transform 300ms var(--out)}
@@ -1022,7 +1048,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
               </div>
             </section>
             <section class="page" aria-label="Alarms">
-              <div><div class="sub">Next alarm</div><div class="big num">05:30</div><div class="sub">Tomorrow · Wake up</div></div>
+              <div><div class="sub">Next alarm</div><div class="big num">05:30</div><div class="sub">Tomorrow · Wake up</div><div class="chips"><button class="chip" id="manageAl">Manage alarms</button></div></div>
               <div class="alist">
                 <div class="arow"><span class="t num">05:30</span><span class="l">Wake up<br>Mon–Fri · Radar</span><button class="sw" role="switch" aria-checked="true" aria-label="Alarm 05:30"></button></div>
                 <div class="arow"><span class="t num">14:30</span><span class="l">Take medicine<br>Every day · <span id="alSnd">Radar</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Alarm 14:30"></button></div>
@@ -1139,6 +1165,11 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
   <div class="setw" id="setw" role="dialog" aria-label="Gili Settings" hidden>
     <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Gili Settings<button id="setX" aria-label="Close Settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="setb"><nav class="setn" id="setn" role="tablist" aria-label="Settings sections"></nav><div class="setp" id="setp" role="tabpanel"></div></div>
+  </div>
+
+  <div class="setw toolw" id="toolw" role="dialog" aria-label="Gili Tools" hidden>
+    <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg>Gili Tools<button id="toolX" aria-label="Close Tools"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="setb"><nav class="setn" id="tooln" role="tablist" aria-label="Tools sections"></nav><div class="setp" id="toolp" role="tabpanel"></div></div>
   </div>
 
   <div class="wtb">
@@ -1975,7 +2006,7 @@ function armLeave(){
 iw.addEventListener('pointerleave',()=>{setHover(false);armLeave()});
 document.addEventListener('pointerdown',e=>{
   // Bar icons that open island pages handle the click themselves (switch page or close).
-  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mBt,#mVol,#mBri,#mPower,#mWifi,#setw'))closeExpanded();
+  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mBt,#mVol,#mBri,#mPower,#mWifi,#setw,#toolw'))closeExpanded();
 });
 
 /* media */
@@ -2976,6 +3007,73 @@ $('#setp').addEventListener('input',e=>{
   if(isl){isl.max=S.barH-4;isl.value=S.islH;isl.nextElementSibling.textContent=S.islH+' px'}
 });
 
+
+/* Tools window (PRD 7.5): Alarms tab to add, edit and delete alarms (F-TOOL-05); the other tabs come later */
+const TOOL_TABS=['Timer','Stopwatch','Pomodoro','Alarms','Todo'];
+const WEEK=['Mo','Tu','We','Th','Fr','Sa','Su'],WEEK3=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const ALARMS=[
+  {t:'05:30',l:'Wake up',d:[1,1,1,1,1,0,0],s:'Radar',on:true},
+  {t:'14:30',l:'Take medicine',d:[1,1,1,1,1,1,1],s:'Radar',on:true},
+  {t:'21:00',l:'Pack the bag',d:[0,0,0,0,0,0,0],s:'Soft',on:false},
+];
+let toolTab='Alarms',alEdit=null,alDel=-1,alDelT=0;
+function alDays(d){
+  const n=d.filter(Boolean).length;
+  return !n?'Once':n===7?'Every day':d.join('')==='1111100'?'Mon–Fri':WEEK3.filter((_,i)=>d[i]).join(', ');
+}
+function alParse(v){
+  let t=v.trim().replace('.',':');if(/^\d{4}$/.test(t))t=t.slice(0,2)+':'+t.slice(2);
+  const m=/^(\d{1,2}):(\d{2})$/.exec(t);if(!m||+m[1]>23||+m[2]>59)return null;
+  return m[1].padStart(2,'0')+':'+m[2];
+}
+function renderTools(){
+  $('#tooln').innerHTML=TOOL_TABS.map(n=>`<button role="tab" aria-selected="${n===toolTab}" data-tab="${n}">${n}</button>`).join('');
+  if(toolTab!=='Alarms'){$('#toolp').innerHTML=`<h3>${toolTab}</h3><div class="tsoon">Coming in a later version</div>`;return}
+  const e=alEdit,ok=e&&alParse(e.t),key=e&&e.d.join(''),quick=e&&(key==='0000000'?'Once':key==='1111100'?'Weekdays':key==='1111111'?'Every day':'');
+  const editor=!e?'':`<div class="aedit" role="group" aria-label="${e.i<0?'New alarm':'Edit alarm'}">
+    <label for="alT">Time</label><div class="row"><input id="alT" class="tin time ${ok?'':'bad'}" value="${e.t}" placeholder="07:00" aria-invalid="${!ok}"></div>
+    <label for="alL">Label</label><div class="row"><input id="alL" class="tin lab" value="${e.l}" maxlength="40" placeholder="Alarm"></div>
+    <label>Repeat</label><div class="row"><span class="seg">${['Once','Weekdays','Every day'].map(o=>`<button data-rep="${o}" class="${quick===o?'on':''}">${o}</button>`).join('')}</span>
+      <span class="days">${WEEK.map((w,i)=>`<button class="day" data-day="${i}" aria-pressed="${!!e.d[i]}" aria-label="${WEEK3[i]}">${w}</button>`).join('')}</span></div>
+    <label>Sound</label><div class="row"><span class="seg">${['Radar','Chime','Bell','Soft','Ping'].map(o=>`<button data-snd="${o}" class="${e.s===o?'on':''}">${o}</button>`).join('')}</span>
+      <button class="tbtn ic1" id="alPlay" aria-label="Play ${e.s}"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></button></div>
+    <div class="acts"><button class="tbtn" id="alCancel">Cancel</button><button class="tbtn pri" id="alSave" ${ok?'':'disabled'}>Save</button></div></div>`;
+  const rows=ALARMS.length?ALARMS.map((a,i)=>`<div class="srow"><span class="t num">${a.t}</span><span>${a.l||'Alarm'}<small>${alDays(a.d)} · ${a.s}</small></span>
+    <button class="tbtn" data-edit="${i}">Edit</button><button class="tbtn del" data-del="${i}">${alDel===i?'Click again to delete':'Delete'}</button>
+    <button class="sw" role="switch" aria-checked="${a.on}" data-on="${i}" aria-label="Alarm ${a.t}"></button></div>`).join('')
+    :'<div class="tsoon">No alarms yet</div>';
+  $('#toolp').innerHTML=`<h3>Alarms<button class="tbtn" id="alNew" ${e?'disabled':''}>New alarm</button></h3>${editor}${rows}`;
+}
+function openTools(tab){if(tab)toolTab=tab;$('#toolw').hidden=false;renderTools();$('#tooln [aria-selected="true"]').focus()}
+function closeTools(){$('#toolw').hidden=true;alEdit=null}
+$('#manageAl').onclick=()=>{closeExpanded();openTools('Alarms')};
+$('#toolX').onclick=closeTools;
+$('#toolw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeTools()}});
+$('#tooln').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){toolTab=b.dataset.tab;renderTools()}};
+$('#toolp').addEventListener('input',e=>{
+  if(!alEdit)return;
+  if(e.target.id==='alL')alEdit.l=e.target.value;
+  if(e.target.id==='alT'){alEdit.t=e.target.value;const ok=!!alParse(alEdit.t);e.target.classList.toggle('bad',!ok);e.target.setAttribute('aria-invalid',!ok);$('#alSave').disabled=!ok}
+});
+$('#toolp').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='alNew')alEdit={i:-1,t:'07:00',l:'',d:[0,0,0,0,0,0,0],s:'Radar'};
+  else if(b.dataset.edit){const a=ALARMS[+b.dataset.edit];alEdit={i:+b.dataset.edit,t:a.t,l:a.l,d:[...a.d],s:a.s}}
+  else if(b.dataset.del){const i=+b.dataset.del;clearTimeout(alDelT);
+    if(alDel===i){ALARMS.splice(i,1);alDel=-1;if(alEdit&&alEdit.i===i)alEdit=null}
+    else{alDel=i;alDelT=setTimeout(()=>{alDel=-1;if(!$('#toolw').hidden)renderTools()},3000)}}
+  else if(b.dataset.on){const a=ALARMS[+b.dataset.on];a.on=!a.on}
+  else if(b.dataset.rep)alEdit.d={'Once':[0,0,0,0,0,0,0],'Weekdays':[1,1,1,1,1,0,0],'Every day':[1,1,1,1,1,1,1]}[b.dataset.rep];
+  else if(b.dataset.day){const i=+b.dataset.day;alEdit.d[i]=alEdit.d[i]?0:1}
+  else if(b.dataset.snd){alEdit.s=b.dataset.snd;chimeOnce(alEdit.s.toLowerCase())}
+  else if(b.id==='alPlay')chimeOnce(alEdit.s.toLowerCase());
+  else if(b.id==='alCancel')alEdit=null;
+  else if(b.id==='alSave'){const a={t:alParse(alEdit.t),l:alEdit.l.trim(),d:alEdit.d,s:alEdit.s,on:true};
+    if(alEdit.i<0)ALARMS.push(a);else ALARMS[alEdit.i]=a;ALARMS.sort((x,y)=>x.t.localeCompare(y.t));alEdit=null}
+  else return;
+  renderTools();
+  if(alEdit&&b.id==='alNew')$('#alT').select();
+});
 
 /* quick events */
 function showCaps(){showWide('caps'+S.caps,`${icon('caps')}<span>Caps Lock <b>${S.caps?'on':'off'}</b></span>`,1500)}

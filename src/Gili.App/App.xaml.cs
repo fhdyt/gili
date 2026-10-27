@@ -8,6 +8,7 @@ using Gili.App.Bar;
 using Gili.App.Island;
 using Gili.App.Mascot;
 using Gili.App.Settings;
+using Gili.App.Tools;
 using Gili.Core;
 using Gili.Core.Diagnostics;
 using Gili.Core.Settings;
@@ -44,6 +45,7 @@ public partial class App : Application
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
+    private ToolsWindow? _toolsWindow;
     private bool? _autostartApplied;
     private StartupState? _startup;
     private bool _quitting;
@@ -116,6 +118,8 @@ public partial class App : Application
         _bar = new BarWindow(_settings, _transparency, _stats, _clock, _apps, _right);
         _bar.PageRequested += _islandController.Toggle;
         _bar.SettingsRequested += ShowSettings;
+        _bar.ToolsRequested += () => ShowTools(ToolsViewModel.AlarmsTab);
+        _islandController.ToolsRequested += ShowTools;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
         _bar.PowerRequested += () => _islandController.Toggle(Core.Island.IslandPage.Controls);
         _demo = new DemoService(Dispatcher, _islandController, _media);
@@ -194,6 +198,27 @@ public partial class App : Application
         _settingsWindow.Show();
         // Show alone can leave it behind the active app, since the bar never takes focus (F-BAR-13).
         _settingsWindow.Activate();
+    }
+
+    /// <summary>
+    /// One Tools window (PRD 7.5), made when opened and let go when closed (PRD 8.1); opening it again brings it to the
+    /// front on the asked tab.
+    /// </summary>
+    private void ShowTools(string tab)
+    {
+        if (_toolsWindow is not null)
+        {
+            if (_toolsWindow.WindowState == WindowState.Minimized) _toolsWindow.WindowState = WindowState.Normal;
+            _toolsWindow.ShowTab(tab);
+            _toolsWindow.Activate();
+            return;
+        }
+        var alarms = new AlarmsTabViewModel(_alarms!, () => _settings!.Current.Use24HourClock, voice => _sound?.Preview(voice));
+        _toolsWindow = new ToolsWindow(new ToolsViewModel(alarms, tab));
+        _toolsWindow.Closed += (_, _) => _toolsWindow = null;
+        _toolsWindow.Show();
+        // The bar never takes focus, so Show alone can leave it behind the active app.
+        _toolsWindow.Activate();
     }
 
     /// <summary>

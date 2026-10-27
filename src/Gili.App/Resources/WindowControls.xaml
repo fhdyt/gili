@@ -1,0 +1,170 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The Settings and Tools windows' own controls (mockup .setw, .stb, .setn, .tbtn, .tin, .day). -->
+
+    <Style x:Key="CloseButton" TargetType="Button">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#C7C7CC" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Width="46" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#C42B1C" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Section list (mockup .setn button). -->
+    <Style x:Key="NavItem" TargetType="ListBoxItem">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#8E8E93" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Margin" Value="0,0,0,2" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bg" CornerRadius="6" Padding="10,7" Background="Transparent">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#0FFFFFFF" />
+                            <Setter Property="Foreground" Value="#F5F5F7" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#17FFFFFF" />
+                            <Setter Property="Foreground" Value="#F5F5F7" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Thin dark scroll bar (mockup scrollbar-width:thin, #48484A on transparent). -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Width" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.Thumb>
+                            <Thumb>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Width="6" CornerRadius="3" Background="#48484A" />
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+                    </Track>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Tools buttons (mockup .tbtn): 30 px, radius 6, white at 8 %, 13 % on hover; Primary white with black text; Danger red text. -->
+    <Style x:Key="ToolButton" TargetType="Button">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#F5F5F7" />
+        <Setter Property="Background" Value="#14FFFFFF" />
+        <Setter Property="Tag" Value="#21FFFFFF" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Height="30" MinWidth="30" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bg" Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Padding" Value="12,0" />
+    </Style>
+    <Style x:Key="PrimaryToolButton" TargetType="Button" BasedOn="{StaticResource ToolButton}">
+        <Setter Property="Foreground" Value="#000000" />
+        <Setter Property="Background" Value="#F5F5F7" />
+        <Setter Property="Tag" Value="#D1D1D6" />
+    </Style>
+    <Style x:Key="DangerToolButton" TargetType="Button" BasedOn="{StaticResource ToolButton}">
+        <Setter Property="Foreground" Value="#FF453A" />
+    </Style>
+
+    <!-- Text field (mockup .tin): 30 px, radius 6, white at 6 % with an 8 % edge; blue edge when focused, red when invalid (Tag True). -->
+    <Style x:Key="TextField" TargetType="TextBox">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#F5F5F7" />
+        <Setter Property="CaretBrush" Value="#F5F5F7" />
+        <Setter Property="SelectionBrush" Value="#0A84FF" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="Bg" Height="30" CornerRadius="6" Background="#0FFFFFFF" BorderBrush="#14FFFFFF" BorderThickness="1" Padding="8,0">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <TextBlock x:Name="Hint" Text="{Binding (AutomationProperties.HelpText), RelativeSource={RelativeSource TemplatedParent}}" Foreground="#8E8E93" Margin="11,0" VerticalAlignment="Center"
+                                   IsHitTestVisible="False" Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#0A84FF" />
+                        </Trigger>
+                        <Trigger Property="Tag" Value="True">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#FF453A" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Day of the week (mockup .day): 30 px circle, white at 6 % with grey text; green with black text when on. -->
+    <Style x:Key="DayToggle" TargetType="ToggleButton">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#8E8E93" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bg" Width="30" Height="30" CornerRadius="15" Background="#0FFFFFFF">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#30D158" />
+                            <Setter Property="Foreground" Value="#000000" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

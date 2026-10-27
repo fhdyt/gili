@@ -11,7 +11,7 @@
     pwsh scripts/mockup-shot.ps1 -State media-page -Out $env:TEMP\mockup-media.png
 #>
 param(
-    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card')] [string] $State,
+    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card', 'alarms-page', 'tools-alarms', 'tools-editor')] [string] $State,
     [Parameter(Mandatory)] [string] $Out,
     [double] $Scale = 0,
     [int] $Width = 0,
@@ -44,6 +44,9 @@ $clicks = @{
     'settings'   = @('#mSet')
     'timer-page' = @('[data-page="1"]')
     'timer-card' = @('[data-act="timer10"]')
+    'alarms-page' = @('[data-page="2"]')
+    'tools-alarms' = @('[data-page="2"]', '#manageAl')
+    'tools-editor' = @('[data-page="2"]', '#manageAl', '[data-edit="0"]')
 }[$State]
 $selectors = ($clicks | ForEach-Object { "'" + $_ + "'" }) -join ','
 

@@ -901,6 +901,8 @@ F-RIGHT-06 (suhu CPU lewat helper sensor admin) dihapus di revisi 6: helper itu 
 
 Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan tab di kiri: Timer, Stopwatch, Pomodoro, Alarms, Todo. Note dan riwayat clipboard tidak ada di Tools; keduanya ada di halaman Notes dan Clipboard di pulau (tab Clipboard di Tools dihapus di revisi 8).
 
+Tata letak Tools mengikuti jendela Settings di mockup: bilah judul `Gili Tools`, tab di kiri, 720 × 520 (minimal 560 × 420). Jendela dibuka dari "Manage alarms" di halaman Alarms dan dari Open Tools di menu klik kanan bar. Tab Alarms berisi tombol `New alarm` dan baris alarm (jam, label, hari · suara, `Edit`, `Delete`, saklar). `Delete` meminta klik kedua: teksnya menjadi `Click again to delete` dan kembali normal setelah 3 detik. Editor muncul di atas daftar dan berisi Time (jam yang tidak valid memberi garis merah dan mematikan Save), Label (maks. 40 karakter), Repeat (`Once` / `Weekdays` / `Every day` atau tombol hari `Mo`–`Su`), Sound (lima suara dan tombol putar), lalu `Cancel` dan `Save`. Tab yang belum dibuat menampilkan `Coming in a later version`.
+
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
 | F-TOOL-01 | Timer | Beberapa timer berlabel bisa jalan bersamaan; jeda/lanjut/reset; tetap benar setelah app atau laptop restart | 2 |
