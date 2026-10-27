@@ -24,6 +24,13 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
+    public void Database_syncs_every_commit()
+    {
+        using var db = Database.Open(_folder);
+        Assert.Equal(["2"], Column(db.Connection, "PRAGMA synchronous"));
+    }
+
+    [Fact]
     public void Opening_creates_every_prd_table()
     {
         using var db = Database.Open(_folder);

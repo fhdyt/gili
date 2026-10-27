@@ -7,8 +7,9 @@ namespace Gili.Data;
 public enum OpenOutcome { Normal, RestoredFromBackup, CreatedNew }
 
 /// <summary>
-/// gili.db in the data folder (PRD 10): WAL, so a forced shutdown loses at most the last moment of typing (F-TOOL-09),
-/// and migrated to the latest schema on open. A corrupt file is kept aside and replaced by the latest good backup.
+/// gili.db in the data folder (PRD 10): WAL with synchronous=FULL, so a forced shutdown loses at most the last moment of
+/// typing (F-TOOL-09). With NORMAL, WAL can lose commits made since the last checkpoint on power loss. The file is migrated
+/// to the latest schema on open. A corrupt file is kept aside and replaced by the latest good backup.
 /// </summary>
 public sealed class Database : IDisposable
 {
@@ -60,7 +61,7 @@ public sealed class Database : IDisposable
             using var command = connection.CreateCommand();
             command.CommandText = "PRAGMA quick_check";
             if (command.ExecuteScalar() as string != "ok") throw new SqliteException("quick_check failed", 11);
-            command.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;";
+            command.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;";
             command.ExecuteNonQuery();
             return connection;
         }
