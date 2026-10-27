@@ -13,11 +13,13 @@ public sealed class MediaService : IDisposable
 {
     private readonly FileLog _log;
     private readonly MediaSessionMonitor _monitor = new();
-    private readonly MediaPresence _presence = new();
+    private MediaPresence _presence = new();
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromSeconds(1) };
     private MediaState? _session;
     private MediaState? _vlc;
     private int _ticks;
+    private bool _demo;
+    private MediaState? _demoMedia;
 
     public MediaService(Dispatcher dispatcher, FileLog log)
     {
@@ -31,7 +33,7 @@ public sealed class MediaService : IDisposable
         _tick.Tick += (_, _) => OnTick();
     }
 
-    public MediaState? Current => _session ?? _vlc;
+    public MediaState? Current => _demo ? _demoMedia : _session ?? _vlc;
 
     /// <summary>Whether media holds the compact slot (see MediaPresence).</summary>
     public bool IsActive { get; private set; }
@@ -52,13 +54,33 @@ public sealed class MediaService : IDisposable
         }
     }
 
-    public Task TogglePlayPauseAsync() => _monitor.TogglePlayPauseAsync();
+    // During the demo the buttons do nothing, so the real player is never touched (plan 1g).
+    public Task TogglePlayPauseAsync() => _demo ? Task.CompletedTask : _monitor.TogglePlayPauseAsync();
 
-    public Task NextAsync() => _monitor.NextAsync();
+    public Task NextAsync() => _demo ? Task.CompletedTask : _monitor.NextAsync();
 
-    public Task PreviousAsync() => _monitor.PreviousAsync();
+    public Task PreviousAsync() => _demo ? Task.CompletedTask : _monitor.PreviousAsync();
 
-    public Task SeekAsync(TimeSpan position) => _monitor.SeekAsync(position);
+    public Task SeekAsync(TimeSpan position) => _demo ? Task.CompletedTask : _monitor.SeekAsync(position);
+
+    /// <summary>Shows the demo's fake media instead of the real session until <see cref="EndDemo"/>.</summary>
+    public void SetDemo(MediaState? state)
+    {
+        if (!_demo) _presence = new();
+        _demo = true;
+        _demoMedia = state;
+        Publish();
+    }
+
+    /// <summary>Back to the real session or VLC at once, without waiting for its next event.</summary>
+    public void EndDemo()
+    {
+        if (!_demo) return;
+        _demo = false;
+        _demoMedia = null;
+        _presence = new();
+        Publish();
+    }
 
     public void Dispose()
     {

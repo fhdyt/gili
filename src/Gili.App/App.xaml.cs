@@ -34,6 +34,7 @@ public partial class App : Application
     private BarWindow? _bar;
     private AppsService? _apps;
     private RightService? _right;
+    private DemoService? _demo;
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
     private bool _quitting;
@@ -87,6 +88,9 @@ public partial class App : Application
         _bar.SettingsRequested += ShowSettings;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
         _bar.PowerRequested += () => _islandController.Toggle(Core.Island.IslandPage.Controls);
+        _demo = new DemoService(Dispatcher, _islandController, _media);
+        _bar.DemoRequested += _demo.Toggle;
+        _demo.Changed += () => _bar.SetDemoRunning(_demo.IsRunning);
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _bar.FullscreenChanged += _islandController.SetFullscreen;
@@ -109,6 +113,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _demo?.Stop();
         _stats?.Dispose();
         _apps?.Dispose();
         _right?.Dispose();

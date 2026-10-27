@@ -11,6 +11,7 @@ public sealed class IslandController : IDisposable
     private readonly IslandCoordinator _coordinator = new(() => DateTimeOffset.Now);
     private readonly DispatcherTimer _deadline = new(DispatcherPriority.Normal);
     private readonly PowerMonitor _power = new();
+    private bool _demo;
 
     public IslandController(Dispatcher dispatcher, MediaService media)
     {
@@ -27,7 +28,11 @@ public sealed class IslandController : IDisposable
             ViewChanged?.Invoke(view);
         };
         media.Updated += () => _coordinator.SetActivity(ActivityKind.Media, media.IsActive);
-        _power.Changed += snapshot => dispatcher.InvokeAsync(() => ApplyPower(snapshot));
+        _power.Changed += snapshot => dispatcher.InvokeAsync(() =>
+        {
+            // During the demo real readings wait; EndDemo reads the charger again.
+            if (!_demo) ApplyPower(snapshot);
+        });
         ApplyPower(PowerMonitor.Read());
     }
 
@@ -53,6 +58,25 @@ public sealed class IslandController : IDisposable
 
     /// <summary>The pointer went down outside the open island.</summary>
     public void Dismiss() => _coordinator.Dismiss();
+
+    /// <summary>The demo's charger, shown like a real reading, wide notice included (F-BAR-09).</summary>
+    public void SetDemoPower(PowerSnapshot snapshot)
+    {
+        _demo = true;
+        ApplyPower(snapshot);
+    }
+
+    /// <summary>Closes the island and puts the real charger state back, without a wide notice for the change.</summary>
+    public void EndDemo()
+    {
+        Close();
+        if (!_demo) return;
+        _demo = false;
+        var real = PowerMonitor.Read();
+        Power = real;
+        PowerChanged?.Invoke();
+        _coordinator.SetActivity(ActivityKind.Charging, PowerRules.IsCharging(real));
+    }
 
     public void SetFullscreen(bool fullscreen) => _coordinator.SetFullscreen(fullscreen);
 

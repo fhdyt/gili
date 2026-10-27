@@ -29,11 +29,18 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
                         <Border x:Name="Bg" MinWidth="180" Padding="10,7" CornerRadius="8" Background="Transparent">
-                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                            <DockPanel>
+                                <c:IconView x:Name="Check" DockPanel.Dock="Right" Glyph="{StaticResource Icon.Check}" Width="14" Height="14"
+                                            Margin="12,0,0,0" Visibility="Collapsed" />
+                                <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                            </DockPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="Bg" Property="Background" Value="#3A3A3C" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -99,6 +106,7 @@
         <Grid.ContextMenu>
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
                 <MenuItem Header="Settings" Style="{StaticResource BarMenuItem}" Click="OnSettings" />
+                <MenuItem x:Name="DemoItem" Header="Demo mode" Style="{StaticResource BarMenuItem}" Click="OnDemo" />
                 <Separator Style="{StaticResource BarMenuSeparator}" />
                 <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
             </ContextMenu>

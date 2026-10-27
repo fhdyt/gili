@@ -73,6 +73,9 @@ public partial class BarWindow : Window
 
     public event Action? QuitRequested;
 
+    /// <summary>Demo mode in the bar menu starts or stops the demo (F-BAR-09).</summary>
+    public event Action? DemoRequested;
+
     public event Action? SettingsRequested;
 
     public event Action? ClockClicked;
@@ -316,6 +319,11 @@ public partial class BarWindow : Window
     }
 
     private void OnSettings(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
+
+    private void OnDemo(object sender, RoutedEventArgs e) => DemoRequested?.Invoke();
+
+    /// <summary>The menu's Demo mode item shows a check while the demo plays.</summary>
+    public void SetDemoRunning(bool running) => DemoItem.IsChecked = running;
 
     private void OnSettingsButton(object sender, MouseButtonEventArgs e) => SettingsRequested?.Invoke();
 
