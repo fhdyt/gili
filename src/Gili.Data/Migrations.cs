@@ -67,6 +67,8 @@ internal static class Migrations
             sort_order INTEGER NOT NULL,
             added_at TEXT NOT NULL);
         """,
+        // 2: a task's local time, kept apart from remind_at, which only holds a reminder still to come (plan 2e decision 5).
+        "ALTER TABLE todos ADD COLUMN due_time TEXT;",
     ];
 
     public static int Apply(SqliteConnection connection)

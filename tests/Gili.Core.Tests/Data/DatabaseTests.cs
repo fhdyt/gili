@@ -34,10 +34,10 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
-    public void Version_is_1_after_the_first_open()
+    public void Version_is_the_latest_after_the_first_open()
     {
         using var db = Database.Open(_folder);
-        Assert.Equal(1, db.Version);
+        Assert.Equal(2, db.Version);
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public sealed class DatabaseTests : IDisposable
     {
         Database.Open(_folder).Dispose();
         using var db = Database.Open(_folder);
-        Assert.Equal(1, db.Version);
-        Assert.Equal(["1"], Column(db.Connection, "SELECT version FROM schema_version"));
+        Assert.Equal(2, db.Version);
+        Assert.Equal(["2"], Column(db.Connection, "SELECT version FROM schema_version"));
     }
 
     [Fact]
