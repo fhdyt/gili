@@ -755,20 +755,20 @@ Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau se
 
 ### 6.5 Settings
 
-Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan bar, atau dengan menjalankan Gili saat sudah berjalan. Jendela gelap biasa dengan bagian di kiri. Semua perubahan berlaku langsung tanpa tombol Save.
+Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan bar, atau dengan menjalankan Gili saat sudah berjalan. Jendela gelap 640 × 460 dengan bilah judul sendiri dan bagian di kiri, urutannya seperti tabel di bawah (mockup). Semua perubahan berlaku langsung tanpa tombol Save.
 
 | Bagian | Isi |
 |---|---|
-| General | Bar position (Top / Bottom), Hide Windows taskbar, Start with Windows, Clock format (24-hour / 12-hour), Show seconds |
-| About | Versi dan jenis instalasi (`Microsoft Store` / `GitHub`), baris update (`Up to date` atau `Update available · <versi>` dengan Install update; 9.4), tautan Privacy policy dan Release notes, tombol Open logs folder, dan Prepare to uninstall (versi Store, 9.4) |
+| General | Bar position (Top / Bottom), Hide Windows taskbar, 12-hour clock (default mati), Show seconds, Start with Windows |
 | Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Clipboard, Shelf, Claude. Tiap saklar selain Start juga menyalakan/mematikan tab halaman yang sama di pulau, dengan keterangan `Turning it off also hides the <name> page in the island` |
 | Island | Show Gili; Show lyrics (default mati); saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System); saklar halaman yang ikon kirinya mati nonaktif dengan keterangan `Turned off in Left side` |
-| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Clock; kota cuaca; ambang baterai |
+| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date; **Weather city**; **Battery alert** (ambang baterai) |
 | Notifications | Show Windows notifications (default mati; meminta izin Windows), Show message text (default nyala), saklar per aplikasi yang pernah mengirim notifikasi, baris status izin, dan tips mematikan banner aplikasi di Windows (revisi 8) |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
-| Sounds | Suara timer, Alert volume, Gradually increase, contoh suara |
+| Sounds | Timer sound, Alert volume, Gradually increase, contoh suara |
 | Shortcuts | Hotkey (Fase 4) |
+| About | Versi dan jenis instalasi (`Microsoft Store` / `GitHub`), baris update (`Up to date` atau `Update available · <versi>` dengan Install update; 9.4), tautan Privacy policy dan Release notes, tombol Open logs folder, dan Prepare to uninstall (versi Store, 9.4) |
 
 - Bagian yang belum ada fasenya tetap tampil tapi nonaktif dengan keterangan `Coming in a later version` sampai fasenya selesai.
 - Saklar yang menyembunyikan sesuatu langsung menganimasikan bar (elemen mengecil dan deretan merapat), jadi hasilnya terlihat sambil mengatur.
