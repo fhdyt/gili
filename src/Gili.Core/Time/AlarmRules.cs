@@ -33,13 +33,19 @@ public static class AlarmRules
         {
             var date = start.AddDays(day);
             if (repeat != Days.None && !repeat.HasFlag(DayOf(date.DayOfWeek))) continue;
-            var local = date.ToDateTime(time, DateTimeKind.Unspecified);
-            while (zone.IsInvalidTime(local)) local = local.AddMinutes(1);
-            var offset = zone.IsAmbiguousTime(local) ? zone.GetAmbiguousTimeOffsets(local).Max() : zone.GetUtcOffset(local);
-            var candidate = new DateTimeOffset(local, offset);
-            if (candidate > afterUtc) return candidate.ToUniversalTime();
+            var candidate = At(date, time, zone);
+            if (candidate > afterUtc) return candidate;
         }
         throw new ArgumentException("No day is allowed", nameof(repeat));
+    }
+
+    /// <summary>A local date and time in UTC, with the same rules for skipped and repeated clock times.</summary>
+    public static DateTimeOffset At(DateOnly date, TimeOnly time, TimeZoneInfo zone)
+    {
+        var local = date.ToDateTime(time, DateTimeKind.Unspecified);
+        while (zone.IsInvalidTime(local)) local = local.AddMinutes(1);
+        var offset = zone.IsAmbiguousTime(local) ? zone.GetAmbiguousTimeOffsets(local).Max() : zone.GetUtcOffset(local);
+        return new DateTimeOffset(local, offset).ToUniversalTime();
     }
 
     public static DateTimeOffset Snooze(DateTimeOffset now) => now + SnoozeLength;
@@ -48,5 +54,5 @@ public static class AlarmRules
     public static TimeSpan Remaining(DateTimeOffset endsAtUtc, DateTimeOffset now) =>
         endsAtUtc > now ? endsAtUtc - now : TimeSpan.Zero;
 
-    private static Days DayOf(DayOfWeek day) => day == DayOfWeek.Sunday ? Days.Sunday : (Days)(1 << ((int)day - 1));
+    public static Days DayOf(DayOfWeek day) => day == DayOfWeek.Sunday ? Days.Sunday : (Days)(1 << ((int)day - 1));
 }
