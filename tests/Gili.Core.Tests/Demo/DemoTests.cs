@@ -14,9 +14,14 @@ public class DemoTests
     }
 
     [Fact]
-    public void Music_starts_first()
+    public void A_copy_comes_first() =>
+        Assert.Equal("Meeting at 3 in the Merapi room, bring a charger", Assert.IsType<DemoCopy>(Steps[0].Action).Text);
+
+    [Fact]
+    public void Music_starts_after_the_copy()
     {
-        var media = Assert.IsType<DemoMedia>(Steps[0].Action).State!;
+        Assert.True(Steps[1].At >= Steps[0].At + TimeSpan.FromSeconds(3));
+        var media = Assert.IsType<DemoMedia>(Steps[1].Action).State!;
         Assert.Equal(("Midnight City", "M83", "Spotify.exe"), (media.Title, media.Artist, media.AppId));
         Assert.True(media.IsPlaying);
         Assert.Equal(TimeSpan.FromSeconds(243), media.Duration);
@@ -48,7 +53,7 @@ public class DemoTests
     }
 
     [Fact]
-    public void Lasts_about_30_seconds() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 35);
+    public void Lasts_about_30_seconds() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 38);
 
     [Fact]
     public void Due_returns_each_step_once()

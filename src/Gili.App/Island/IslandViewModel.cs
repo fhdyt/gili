@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Gili.Core.Clipboard;
 using Gili.Core.Island;
 using Gili.Core.Layout;
 using Gili.Core.Media;
@@ -21,6 +22,7 @@ public sealed partial class IslandViewModel : ObservableObject
     private static readonly Brush Accent = Frozen("#30D158");
     private static readonly Brush VideoOrange = Frozen("#FF9F0A");
     private static readonly Brush Text = Frozen("#F5F5F7");
+    private static readonly Brush Blue = Frozen("#0A84FF");
 
     private readonly IslandController _island;
     private readonly SettingsHub _settings;
@@ -32,7 +34,7 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
 
     [ObservableProperty]
@@ -81,6 +83,16 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private bool _bubbleFilled;
     [ObservableProperty] private bool _bubbleIsMusic;
     [ObservableProperty] private int _selectedTab;
+    [ObservableProperty] private Geometry? _clipGlyph;
+    [ObservableProperty] private Brush _clipBrush = Text;
+    [ObservableProperty] private string _clipText = "";
+    [ObservableProperty] private string? _clipDetail;
+    [ObservableProperty] private string _clipTooltip = "";
+    [ObservableProperty] private int _clipTextColumn = 4;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasClipThumb))]
+    private ImageSource? _clipThumb;
 
     public IslandViewModel(IslandController island, SettingsHub settings)
     {
@@ -104,6 +116,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.ViewChanged += UpdateView;
         island.PowerChanged += UpdatePower;
         island.Media.Updated += UpdateMedia;
+        island.ClipboardChanged += UpdateClipboard;
         UpdateSettings();
         UpdatePower();
         UpdateMedia();
@@ -116,8 +129,34 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool ShowChargingSlot => Slot == ActivityKind.Charging;
 
+    public bool ShowClipboardSlot => Slot == ActivityKind.ClipboardSnippet;
+
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot;
+
+    public bool HasClipThumb => ClipThumb is not null;
+
+    /// <summary>
+    /// A copy's line (mockup <c>ACT.copy*</c>): clipboard, file, blue scissors or lock icon, or the image's thumbnail;
+    /// the text sits at the right end, or in the middle when an image's size follows it.
+    /// </summary>
+    private void UpdateClipboard()
+    {
+        if (_island.Clipboard is not var (snippet, thumb)) return;
+        ClipGlyph = Glyph(snippet.Kind switch
+        {
+            SnippetKind.Files or SnippetKind.Image => "Icon.File",
+            SnippetKind.Cut => "Icon.Scissors",
+            SnippetKind.Hidden => "Icon.Lock",
+            _ => "Icon.Copied",
+        });
+        ClipBrush = snippet.Kind == SnippetKind.Cut ? Blue : Text;
+        ClipThumb = thumb;
+        ClipText = snippet.Text;
+        ClipDetail = snippet.Detail;
+        ClipTextColumn = snippet.Detail is null ? 4 : 2;
+        ClipTooltip = snippet.Tooltip;
+    }
 
     public bool HasCover => Cover is not null;
 

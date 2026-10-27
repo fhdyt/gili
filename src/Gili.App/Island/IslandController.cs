@@ -1,4 +1,6 @@
+using System.Windows.Media;
 using System.Windows.Threading;
+using Gili.Core.Clipboard;
 using Gili.Core.Island;
 using Gili.Core.Power;
 using Gili.Platform.Power;
@@ -11,6 +13,7 @@ public sealed class IslandController : IDisposable
     private readonly IslandCoordinator _coordinator = new(() => DateTimeOffset.Now);
     private readonly DispatcherTimer _deadline = new(DispatcherPriority.Normal);
     private readonly PowerMonitor _power = new();
+    private readonly ClipboardService _clipboard = new();
     private bool _demo;
 
     public IslandController(Dispatcher dispatcher, MediaService media)
@@ -34,7 +37,16 @@ public sealed class IslandController : IDisposable
             if (!_demo) ApplyPower(snapshot);
         });
         ApplyPower(PowerMonitor.Read());
+        _clipboard.Copied += ShowClipboard;
     }
+
+    /// <summary>The latest copy's snippet and its thumbnail (images only), shown while it holds the slot (F-ISL-17).</summary>
+    public (ClipboardSnippet Snippet, ImageSource? Thumb)? Clipboard { get; private set; }
+
+    public event Action? ClipboardChanged;
+
+    /// <summary>The demo's copy, shown exactly like a real one (F-BAR-09).</summary>
+    public void ShowDemoClipboard(ClipboardSnippet snippet) => ShowClipboard(snippet, null);
 
     public IslandView View => _coordinator.View;
 
@@ -82,8 +94,16 @@ public sealed class IslandController : IDisposable
 
     public void Dispose()
     {
+        _clipboard.Dispose();
         _deadline.Stop();
         _power.Dispose();
+    }
+
+    private void ShowClipboard(ClipboardSnippet snippet, ImageSource? thumb)
+    {
+        Clipboard = (snippet, thumb);
+        ClipboardChanged?.Invoke();
+        _coordinator.ShowClipboard();
     }
 
     private void ApplyPower(PowerSnapshot snapshot)

@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Gili.App.Island;
+using Gili.Core.Clipboard;
 using Gili.Core.Demo;
 
 namespace Gili.App;
@@ -72,6 +73,10 @@ public sealed class DemoService
                     break;
                 case DemoMedia:
                     _media.SetDemo(null);
+                    break;
+                case DemoCopy copy:
+                    var content = new ClipboardContent(false, copy.Text, [], false, false, 0, 0, null, null, null);
+                    if (ClipboardSnippets.For(content, _ => null) is { } snippet) _island.ShowDemoClipboard(snippet);
                     break;
                 case DemoPower power:
                     _island.SetDemoPower(power.Power);

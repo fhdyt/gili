@@ -280,7 +280,7 @@ Setiap kali isi clipboard berubah, slot pulau menampilkan cuplikannya selama 3 d
 | Isi clipboard | Di slot |
 |---|---|
 | Teks | Ikon clipboard + `"rapat jam 3 di ruang Merapi, bawa…"` (baris pertama, maks. 40 karakter) |
-| Gambar | **Thumbnail gambar yang dicopy** (tinggi 20 px, rasio dipertahankan, sudut membulat) + **nama file** (maks. 32 karakter) + `1920 × 1080` |
+| Gambar | **Thumbnail gambar yang dicopy** (36 × 20 px, dipotong mengisi kotaknya, sudut 4 px, garis tipis putih 16%; mockup `.thumb`) + **nama file** (maks. 32 karakter) + `1920 × 1080` |
 | File (copy) | Ikon file + `3 files`; kalau hanya satu file, namanya (maks. 32 karakter). Satu file gambar tampil seperti baris Gambar, dengan thumbnail |
 | File (cut, Ctrl+X) | Ikon gunting + `3 files`; dibedakan dari copy lewat format clipboard `Preferred DropEffect` |
 | Isi sensitif | Ikon gembok + `Copied (hidden)` |

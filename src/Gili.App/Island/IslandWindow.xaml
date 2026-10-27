@@ -133,6 +133,36 @@
                                        Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             <Border />
                         </DockPanel>
+
+                        <!-- A copy holds the slot for 3 s (PRD 6.3 "Cuplikan clipboard", mockup showClip): icon or thumbnail
+                             at the left end, the text at the right end, or in the middle when an image's size follows it. -->
+                        <Grid MinWidth="172" Background="Transparent" ToolTip="{Binding ClipTooltip}"
+                              Visibility="{Binding ShowClipboardSlot, Converter={StaticResource VisibleWhen}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MinWidth="6" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MinWidth="6" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid VerticalAlignment="Center">
+                                <c:IconView Glyph="{Binding ClipGlyph}" Foreground="{Binding ClipBrush}" Width="14" Height="14"
+                                            Visibility="{Binding HasClipThumb, Converter={StaticResource VisibleWhenFalse}}" />
+                                <!-- Thumbnail 36 × 20, filled and cropped, with a faint white edge (mockup .thumb). -->
+                                <Grid Width="36" Height="20" Visibility="{Binding HasClipThumb, Converter={StaticResource VisibleWhen}}">
+                                    <Border CornerRadius="4">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{Binding ClipThumb}" Stretch="UniformToFill" />
+                                        </Border.Background>
+                                    </Border>
+                                    <Border CornerRadius="4" BorderBrush="#29FFFFFF" BorderThickness="1" />
+                                </Grid>
+                            </Grid>
+                            <TextBlock Grid.Column="{Binding ClipTextColumn}" Text="{Binding ClipText}" MaxWidth="260"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="4" Text="{Binding ClipDetail}" Foreground="#8E8E93"
+                                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                        </Grid>
                     </Grid>
                 </Grid>
 
