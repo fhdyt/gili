@@ -1251,6 +1251,7 @@ const fmtSize=b=>b>=1e9?(b/1e9).toFixed(1)+' GB':b>=1e6?(b/1e6).toFixed(1)+' MB'
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+// Card time rule: today = clock (nowHM); yesterday = 'Yesterday'; 2-6 days ago = 'Mon'; this year = '12 Oct'; else '12 Oct 2025'. Edited notes are always today.
 const nowHM=()=>{const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())};
 
 // Springs described the way Apple does: damping ratio + response (seconds).
@@ -2302,7 +2303,7 @@ function cardInner(n){
 function renderNotes(){
   const list=visibleNotes();
   nIn.innerHTML=list.length?list.map(n=>`<div class="ncard fs${noteSize(n)} ${S.editing&&n.id===S.noteSel?'src':''} ${n.c?'tinted':''}" style="--nc:${noteColor(n)}" tabindex="0" role="button" data-id="${n.id}" aria-label="${esc(noteTitle(n)||'Untitled note')}">${cardInner(n)}</div>`).join('')
-    :'<div class="none">No notes match.</div>';
+    :`<div class="none">${S.notes.some(n=>!n.f)?'No notes match.':'No notes yet.'}</div>`;
   layoutNotes(true);
 }
 function refreshCard(n){const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c){c.innerHTML=cardInner(n);layoutNotes()}}
@@ -2460,7 +2461,7 @@ addEventListener('pointermove',e=>{
   const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
   if(!d.moved){
     if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<6)return;
-    if(!d.ed&&$('#nSearch').value.trim()){noteDrag=null;hint('Clear the search to reorder notes');return}
+    if(!d.ed&&$('#nSearch').value.trim()){noteDrag=null;return}
     beginDrag(d,e);
   }
   d.px=e.clientX;d.py=e.clientY;
@@ -2504,7 +2505,7 @@ $('#nDel').onclick=e=>{
   const b=e.currentTarget;
   if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Click again to delete';delT=setTimeout(resetDel,3000);return}
   const id=S.noteSel,r=slotRect(id)||S.edFrom;
-  S.notes=S.notes.filter(n=>n.id!==id);S.editing=false;renderNotes();shutEditor(r,true);hint('Note deleted');
+  S.notes=S.notes.filter(n=>n.id!==id);S.editing=false;renderNotes();shutEditor(r,true);
 };
 // Float on top: the note leaves the island as a floating note at the top right of the work area, ready to type in,
 // and the island closes behind it.
