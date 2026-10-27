@@ -37,6 +37,8 @@ public partial class App : Application
     private AppsService? _apps;
     private RightService? _right;
     private DemoService? _demo;
+    private Database? _database;
+    private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
     private StartupState? _startup;
@@ -71,6 +73,7 @@ public partial class App : Application
         var loaded = store.Load();
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
+        OpenDatabase();
         _settings.Changed += SyncAutostart;
         if (Kind == InstallKind.Store) _ = AdoptStartupTaskAsync();
         else SyncAutostart(_settings.Current);
@@ -125,6 +128,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Stop();
+        _backupTimer.Stop();
+        _database?.Dispose();
         _stats?.Dispose();
         _apps?.Dispose();
         _right?.Dispose();
@@ -180,6 +185,40 @@ public partial class App : Application
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or SecurityException)
         {
             _log?.Write("Could not update the autostart entry", ex);
+        }
+    }
+
+    /// <summary>
+    /// gili.db (PRD 10): a corrupt file is replaced by the latest backup or a new database and kept aside (PRD 11; the
+    /// toast comes with the cards in plan 2b). Backed up at start and checked hourly, one copy a day.
+    /// </summary>
+    private void OpenDatabase()
+    {
+        try
+        {
+            _database = Database.Open(Data.Root);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
+        {
+            _log?.Write("Could not open gili.db", ex);
+            return;
+        }
+        if (_database.Outcome != OpenOutcome.Normal)
+            _log?.Write($"gili.db was corrupt ({_database.Outcome}); the broken file is kept at {_database.CorruptCopy}");
+        BackUp();
+        _backupTimer.Tick += (_, _) => BackUp();
+        _backupTimer.Start();
+    }
+
+    private void BackUp()
+    {
+        try
+        {
+            Backups.BackUpIfDue(_database!, Path.Combine(Data.Root, Backups.FolderName), DateOnly.FromDateTime(DateTime.Now));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            _log?.Write("Could not back up gili.db", ex);
         }
     }
 
