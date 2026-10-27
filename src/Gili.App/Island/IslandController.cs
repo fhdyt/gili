@@ -51,6 +51,9 @@ public sealed class IslandController : IDisposable
 
     public void Close() => _coordinator.Close();
 
+    /// <summary>The pointer went down outside the open island.</summary>
+    public void Dismiss() => _coordinator.Dismiss();
+
     public void SetFullscreen(bool fullscreen) => _coordinator.SetFullscreen(fullscreen);
 
     public void Dispose()

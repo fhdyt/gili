@@ -131,7 +131,7 @@ public partial class IslandWindow : Window
         };
         Deactivated += (_, _) =>
         {
-            if (_mode == IslandMode.Expanded) _island.Close();
+            if (_mode == IslandMode.Expanded) _island.Dismiss();
         };
         PreviewKeyDown += OnPreviewKeyDown;
     }

@@ -220,6 +220,37 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void Clicking_the_open_page_icon_closes_even_though_the_press_already_dismissed_the_island()
+    {
+        // Pressing a bar icon takes focus from the open island before the click arrives (PRD 6.3 buka/tutup).
+        _island.Toggle(IslandPage.Controls);
+        _island.Dismiss();
+        Advance(0.2);
+        _island.Toggle(IslandPage.Controls);
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
+    }
+
+    [Fact]
+    public void Another_page_icon_opens_its_page_right_after_a_dismiss()
+    {
+        _island.Toggle(IslandPage.Controls);
+        _island.Dismiss();
+        Advance(0.2);
+        _island.Toggle(IslandPage.Calendar);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Calendar), (_island.View.Mode, _island.View.Page));
+    }
+
+    [Fact]
+    public void The_same_icon_opens_again_once_the_dismiss_is_past()
+    {
+        _island.Toggle(IslandPage.Controls);
+        _island.Dismiss();
+        Advance(0.5);
+        _island.Toggle(IslandPage.Controls);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Controls), (_island.View.Mode, _island.View.Page));
+    }
+
+    [Fact]
     public void A_control_island_is_not_the_last_page_the_island_reopens()
     {
         _island.Open(IslandPage.Calendar);

@@ -18,6 +18,11 @@ public sealed class IslandCoordinator
     private bool _fullscreen;
     private IslandPage? _openPage;
     private IslandPage _lastPage = IslandPage.Media;
+    private IslandPage? _dismissedPage;
+    private DateTimeOffset _dismissedAt;
+
+    /// <summary>How long after a dismiss the same page's icon counts as the click that dismissed it.</summary>
+    private static readonly TimeSpan DismissClick = TimeSpan.FromMilliseconds(400);
 
     public IslandCoordinator(Func<DateTimeOffset> now)
     {
@@ -118,9 +123,23 @@ public sealed class IslandCoordinator
         Update();
     }
 
+    /// <summary>
+    /// Closes the island because the pointer went down outside it. A bar icon's press does this before its click
+    /// arrives, so <see cref="Toggle"/> of the same page just after leaves it closed.
+    /// </summary>
+    public void Dismiss()
+    {
+        _dismissedPage = _openPage;
+        _dismissedAt = _now();
+        Close();
+    }
+
     /// <summary>Bar icons and slots that open a page toggle it: the page that is already open closes the island.</summary>
     public void Toggle(IslandPage page)
     {
+        var dismissedByThisClick = _dismissedPage == page && _now() - _dismissedAt < DismissClick;
+        _dismissedPage = null;
+        if (dismissedByThisClick) return;
         if (_openPage == page) Close();
         else Open(page);
     }
