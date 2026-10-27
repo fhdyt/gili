@@ -18,6 +18,7 @@ public sealed class IslandCoordinator
     private DateTimeOffset _cardUntil;
     private bool _dropZone;
     private bool _fullscreen;
+    private bool _focus;
     private DateTimeOffset? _clipboardUntil;
     private IslandPage? _openPage;
     private IslandPage _lastPage = IslandPage.Media;
@@ -108,6 +109,17 @@ public sealed class IslandCoordinator
     }
 
     /// <summary>A fullscreen app hides the bar: only urgent cards still appear; wide notices and reminders are dropped.</summary>
+    /// <summary>
+    /// A pomodoro focus phase holds priority 2 (reminder cards) until it ends; alarms and timers still come through
+    /// (F-TOOL-04). A held reminder gets its full time once it shows.
+    /// </summary>
+    public void SetFocus(bool focus)
+    {
+        if (_focus == focus) return;
+        _focus = focus;
+        Update();
+    }
+
     public void SetFullscreen(bool fullscreen)
     {
         _fullscreen = fullscreen;
@@ -195,7 +207,7 @@ public sealed class IslandCoordinator
         }
 
         // Cards outrank everything; within a priority the oldest goes first (OrderBy is stable).
-        var card = _cards.Where(c => !_fullscreen || c.Priority == CardPriority.Urgent).OrderBy(c => c.Priority).FirstOrDefault();
+        var card = _cards.Where(c => !(_fullscreen || _focus) || c.Priority == CardPriority.Urgent).OrderBy(c => c.Priority).FirstOrDefault();
         if (card != _shownCard)
         {
             _shownCard = card;

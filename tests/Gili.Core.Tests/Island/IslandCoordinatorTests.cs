@@ -220,6 +220,25 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void Focus_holds_reminder_cards_until_it_ends()
+    {
+        _island.SetFocus(true);
+        _island.ShowCard(Reminder("todo"));
+        Assert.NotEqual(IslandMode.Card, _island.View.Mode);
+        Advance(60);
+        _island.SetFocus(false);
+        Assert.Equal(("todo", IslandMode.Card), (_island.View.Card!.Id, _island.View.Mode));
+    }
+
+    [Fact]
+    public void Focus_never_holds_urgent_cards()
+    {
+        _island.SetFocus(true);
+        _island.ShowCard(Urgent("timer"));
+        Assert.Equal(IslandMode.Card, _island.View.Mode);
+    }
+
+    [Fact]
     public void Clipboard_snippet_holds_the_slot_for_3_seconds()
     {
         _island.ShowClipboard();
