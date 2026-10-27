@@ -1,0 +1,18 @@
+namespace Gili.Core.Sound;
+
+/// <summary>Which sound a card makes, and when a card warns that nothing will be heard (PRD 6.6).</summary>
+public static class SoundRules
+{
+    public const string Warning = "Sound is off · Windows volume is muted";
+
+    /// <summary>Muted, or so low it would not be heard (under 5%).</summary>
+    public static bool WarnMuted(int volumePercent, bool muted) => muted || volumePercent < 5;
+
+    /// <summary>A timer rings the chosen timer sound until answered; a pomodoro phase rings Bell once.</summary>
+    public static (string Voice, bool Loop, bool Ramp)? ForCard(string cardId, string timerSound) => cardId switch
+    {
+        "timer" => (Voices.Find(timerSound).Name, true, false),
+        "pomo-focus" or "pomo-break" => ("Bell", false, false),
+        _ => null,
+    };
+}
