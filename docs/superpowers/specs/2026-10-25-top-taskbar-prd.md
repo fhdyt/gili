@@ -637,7 +637,7 @@ Riwayat teks yang dicopy, di pulau. Tujuannya menempel ulang tanpa berpindah jen
 - Klik pulau compact. Halaman yang dibuka sesuai aktivitas di slot (Media, Timer); kalau tidak ada, halaman terakhir yang dilihat. Slot Claude punya aturan sendiri (lihat "Sesi Claude").
 - Klik Gili saat tidak ada aktivitas: halaman terakhir yang dilihat.
 - Klik jam atau tanggal di kanan bar: halaman Calendar (sebelum Fase 2: halaman terakhir), dengan aturan buka/tutup yang sama seperti ikon bar lain.
-- Klik CPU/RAM/GPU/disk di kanan: halaman System (sebelum Fase 3: Task Manager).
+- Klik CPU/RAM/GPU/disk di kanan: halaman System (sebelum Fase 3 berisi `Coming in Phase 3`).
 - Modul Wi‑Fi, ikon Bluetooth, Volume, Brightness, dan tombol Power: pulau kontrolnya masing-masing, tanpa menu tab ("Pulau kontrol" di 6.4).
 - Ikon Timer / Alarms / Todo / Clipboard di launcher: halaman Timer / Alarms / Todo / Clipboard. `Ctrl+Alt+V`: halaman Clipboard dengan kolom cari langsung fokus (Fase 4).
 - Semua ikon bar yang membuka halaman pulau (launcher, Shelf, Claude, modul sistem, jam, Wi‑Fi, Bluetooth, Volume, Brightness, dan Power di kanan) bekerja sebagai tombol buka/tutup: saat pulau terbuka, klik berpindah ke halaman atau kontrolnya; klik saat halamannya sedang terbuka menutup pulau.
@@ -708,6 +708,12 @@ Urutan default dari kiri ke kanan:
 - Ikon baterai tidak ditampilkan di bar; status ngecas tampil di pulau, dan sisa baterai ada di pulau Power.
 - **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
 - Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil.
+- **Sampai Fase 3** (rencana 1e, keputusan pengguna 2026-10-27: tampilan bar lengkap dengan data asli dan fungsi dasar):
+  - Cuaca memakai kota default Jakarta (−6,2088, 106,8456) sampai Settings punya pilihan kota; nama kota tampil di tooltip.
+  - Klik Wi‑Fi, Bluetooth, Volume, dan Brightness membuka Quick Settings Windows (`Win+A`); klik Tray membuka ikon tersembunyi Windows (`Win+B` lalu `Enter`). Pulau kontrolnya dan panel tray menyusul di Fase 3.
+  - Power membuka pulau Power tanpa item `Update and …`, karena deteksi update yang menunggu baru diverifikasi di Fase 3.
+  - Tanpa izin Location, Wi‑Fi hanya menampilkan ikon dengan tooltip `Allow location access for Gili to show the Wi‑Fi name (Settings > Privacy & security > Location)`.
+  - Klik CPU dan RAM membuka tab System yang berisi `Coming in Phase 3`, seperti mockup.
 
 **Panel tray** (ikon aplikasi latar belakang)
 - Panel kecil yang turun dari tombol Tray (latar `#1C1C1E`, radius 12 px, bayangan lembut), berisi grid ikon notification area **semua** aplikasi latar belakang (yang di taskbar Windows tampil langsung maupun yang tersembunyi di overflow), 16 px dalam sel 32 × 32 px, maksimal 6 kolom.
@@ -733,7 +739,7 @@ Wi‑Fi, Bluetooth, volume, brightness, dan power masing-masing punya **pulau se
 | Brightness | 360 px, ± 88 px | Baris judul: ikon matahari, `Brightness`, persen. Slider 0–100 |
 | Wi‑Fi | 400 px, tinggi ikut daftar (maks. 6 jaringan, sisanya di-scroll) | Baris judul: ikon Wi‑Fi, `Wi‑Fi`, saklar. Baris **Airplane mode** dengan saklar (nyala mematikan Wi‑Fi dan Bluetooth). Daftar jaringan dari sinyal terkuat: tersambung paling atas dengan `Connected`, lalu `Saved` atau `Secured`. Klik jaringan tersimpan langsung menyambung (`Connecting…` lalu `Connected`); jaringan baru yang butuh password membuka daftar jaringan Windows (`ms-availablenetworks:`), karena Gili tidak menangani password. Baris terakhir **More Wi‑Fi settings** (`ms-settings:network-wifi`). Saat Wi‑Fi mati, daftar diganti `Wi‑Fi is off` |
 | Bluetooth | 400 px, tinggi ikut daftar (maks. 6 perangkat) | Baris judul: ikon Bluetooth, `Bluetooth`, saklar. Daftar perangkat ter-pair dengan ikon jenisnya dan status `Connected` / `Paired` (plus baterai bila dilaporkan); klik menyambung/memutus. Baris terakhir **Add device** (`ms-settings:bluetooth`). Saat Bluetooth mati: `Bluetooth is off` |
-| Power | 360 px, tinggi ikut isi | Tombol berurutan seperti Start menu Windows 11 (tabel di bawah), lalu baris bawah: baterai (`64% · 2 h 10 min`, `Charging · 64%`, atau kosong tanpa baterai), tombol **Windows Quick Settings** (panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility), dan **All settings** (`ms-settings:`) |
+| Power | 360 px, tinggi ikut isi | Baris judul: ikon power, `Power`, dan baterai di kanan (`64% · 2 h 10 min`, `Charging · 64%`, atau kosong tanpa baterai). Tombol berurutan seperti Start menu Windows 11 (tabel di bawah), lalu baris bawah dengan garis di atasnya: tombol **Windows Quick Settings** (panel bawaan Windows untuk hal lain seperti Night light, Cast, Accessibility) dan **All settings** (`ms-settings:`). Menekan tombol mana pun menutup pulau lalu menjalankan aksinya |
 
 | Tombol Power | Kapan tampil | Aksi |
 |---|---|---|
