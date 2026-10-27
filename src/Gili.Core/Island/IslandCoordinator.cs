@@ -1,3 +1,5 @@
+using Gili.Core.Clipboard;
+
 namespace Gili.Core.Island;
 
 /// <summary>
@@ -16,6 +18,7 @@ public sealed class IslandCoordinator
     private DateTimeOffset _cardUntil;
     private bool _dropZone;
     private bool _fullscreen;
+    private DateTimeOffset? _clipboardUntil;
     private IslandPage? _openPage;
     private IslandPage _lastPage = IslandPage.Media;
     private IslandPage? _dismissedPage;
@@ -40,6 +43,7 @@ public sealed class IslandCoordinator
         get
         {
             DateTimeOffset? next = _wide is null ? null : _wideUntil;
+            if (_clipboardUntil is { } clip && (next is null || clip < next)) next = clip;
             if (_shownCard is { Priority: CardPriority.Reminder } && (next is null || _cardUntil < next)) next = _cardUntil;
             return next;
         }
@@ -48,6 +52,15 @@ public sealed class IslandCoordinator
     public void SetActivity(ActivityKind kind, bool active)
     {
         if (active ? _activities.Add(kind) : _activities.Remove(kind)) Update();
+    }
+
+    /// <summary>A copy takes the slot for 3 s; another copy restarts the 3 s (PRD 6.3 "Cuplikan clipboard").</summary>
+    public void ShowClipboard()
+    {
+        if (_fullscreen) return;
+        _clipboardUntil = _now() + ClipboardSnippets.Duration;
+        _activities.Add(ActivityKind.ClipboardSnippet);
+        Update();
     }
 
     public void ShowWide(WideEvent wide)
@@ -152,6 +165,7 @@ public sealed class IslandCoordinator
     private static IslandPage? PageFor(ActivityKind? kind) => kind switch
     {
         ActivityKind.Media => IslandPage.Media,
+        ActivityKind.ClipboardSnippet => IslandPage.Clipboard,
         ActivityKind.Timer or ActivityKind.Stopwatch => IslandPage.Timer,
         ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking => IslandPage.Claude,
         _ => null,
@@ -169,6 +183,11 @@ public sealed class IslandCoordinator
     {
         var now = _now();
         if (_wide is not null && now >= _wideUntil) _wide = null;
+        if (_clipboardUntil is { } clip && now >= clip)
+        {
+            _clipboardUntil = null;
+            _activities.Remove(ActivityKind.ClipboardSnippet);
+        }
         if (_shownCard is { Priority: CardPriority.Reminder } && now >= _cardUntil)
         {
             _cards.Remove(_shownCard);

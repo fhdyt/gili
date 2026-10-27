@@ -220,6 +220,57 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void Clipboard_snippet_holds_the_slot_for_3_seconds()
+    {
+        _island.ShowClipboard();
+        Assert.Equal(ActivityKind.ClipboardSnippet, _island.View.Slot);
+        Advance(2.9);
+        Assert.Equal(ActivityKind.ClipboardSnippet, _island.View.Slot);
+        Advance(0.2);
+        Assert.Null(_island.View.Slot);
+    }
+
+    [Fact]
+    public void A_new_copy_restarts_the_3_seconds()
+    {
+        _island.ShowClipboard();
+        Advance(2);
+        _island.ShowClipboard();
+        Advance(2);
+        Assert.Equal(ActivityKind.ClipboardSnippet, _island.View.Slot);
+        Assert.Equal(_now.AddSeconds(1), _island.NextDeadline);
+    }
+
+    [Fact]
+    public void A_snippet_moves_media_to_the_bubble()
+    {
+        _island.SetActivity(ActivityKind.Media, true);
+        _island.ShowClipboard();
+        Assert.Equal((ActivityKind.ClipboardSnippet, ActivityKind.Media), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+        Advance(3.1);
+        Assert.Equal(ActivityKind.Media, _island.View.Slot);
+    }
+
+    [Fact]
+    public void Clicking_a_snippet_opens_the_clipboard_page()
+    {
+        _island.ShowClipboard();
+        _island.OpenFor(_island.View.Slot);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Clipboard), (_island.View.Mode, _island.View.Page));
+    }
+
+    [Fact]
+    public void No_snippet_in_fullscreen()
+    {
+        _island.SetFullscreen(true);
+        _island.ShowClipboard();
+        Assert.Equal(IslandMode.Hidden, _island.View.Mode);
+        _island.SetFullscreen(false);
+        Advance(3.1);
+        Assert.Null(_island.View.Slot);
+    }
+
+    [Fact]
     public void Clicking_the_open_page_icon_closes_even_though_the_press_already_dismissed_the_island()
     {
         // Pressing a bar icon takes focus from the open island before the click arrives (PRD 6.3 buka/tutup).
