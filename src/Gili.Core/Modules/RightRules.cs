@@ -97,6 +97,21 @@ public static class RightOverflow
     }
 }
 
+/// <summary>
+/// The width each right module takes in the bar. A module in "…" is collapsed, which WPF measures as 0, so it keeps
+/// the width it last had in the bar; otherwise it would come back, be hidden again, and flicker on every update.
+/// </summary>
+public sealed class ModuleWidths
+{
+    private readonly Dictionary<string, double> _last = [];
+
+    public double Width(string id, double measured, bool hidden)
+    {
+        if (!hidden) return _last[id] = measured;
+        return _last.TryGetValue(id, out var last) ? last : measured;
+    }
+}
+
 /// <summary>A failing provider is tried again after 5 s, 30 s, then every 2 minutes (PRD 11).</summary>
 public static class ProviderRetry
 {

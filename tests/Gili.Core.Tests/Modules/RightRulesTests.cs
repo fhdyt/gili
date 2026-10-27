@@ -86,6 +86,20 @@ public class RightRulesTests
     }
 
     [Fact]
+    public void A_module_in_the_more_menu_stays_there_though_it_measures_zero_while_hidden()
+    {
+        // WPF measures a collapsed element as 0 wide; the next fit must still count the module at its real width.
+        var widths = new ModuleWidths();
+        var shown = new[] { ("weather", 70.0), ("net", 66.0), ("cpu", 36.0), ("ram", 36.0), ("wifi", 90.0), ("clock", 60.0) };
+        var first = RightOverflow.Hide([.. shown.Select(m => (m.Item1, widths.Width(m.Item1, m.Item2, hidden: false)))], 340);
+        Assert.Equal(["weather"], first);
+
+        var second = RightOverflow.Hide(
+            [.. shown.Select(m => (m.Item1, widths.Width(m.Item1, m.Item1 == "weather" ? 0 : m.Item2, hidden: first.Contains(m.Item1))))], 340);
+        Assert.Equal(["weather"], second);
+    }
+
+    [Fact]
     public void Controls_never_overflow()
     {
         var modules = new[] { ("weather", 70.0), ("net", 66.0), ("cpu", 36.0), ("ram", 36.0), ("wifi", 90.0), ("clock", 60.0) };

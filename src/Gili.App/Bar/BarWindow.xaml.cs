@@ -117,7 +117,7 @@ public partial class BarWindow : Window
             {
                 if (id == "weather" && !_vm.HasWeather) continue;
                 element.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                modules.Add((id, element.DesiredSize.Width));
+                modules.Add((id, _moduleWidths.Width(id, element.DesiredSize.Width, _hiddenModules.Contains(id))));
             }
             else if (element.Visibility == Visibility.Visible)
             {
@@ -137,6 +137,7 @@ public partial class BarWindow : Window
     }
 
     private IReadOnlyList<string> _hiddenModules = [];
+    private readonly ModuleWidths _moduleWidths = new();
 
     /// <summary>"…" lists what moved there, with its current reading.</summary>
     private void OnMoreModules(object sender, MouseButtonEventArgs e)
