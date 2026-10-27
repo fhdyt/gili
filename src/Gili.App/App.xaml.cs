@@ -98,6 +98,13 @@ public partial class App : Application
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _bar.FullscreenChanged += _islandController.SetFullscreen;
+        _bar.PollingChanged += poll =>
+        {
+            _right.SetPaused(!poll);
+            _media.SetPaused(!poll);
+            _gili?.SetPaused(!poll);
+            _log?.Write(poll ? "Polling resumed" : $"Polling paused: {_bar.PollingReason}");
+        };
         _bar.Show();
 
         // Owned by the bar, so the island stays above it whenever the bar re-asserts its topmost place.

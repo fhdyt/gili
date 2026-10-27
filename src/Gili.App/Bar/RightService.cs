@@ -63,6 +63,18 @@ public sealed class RightService : IDisposable
         _ = RefreshWeatherAsync();
     }
 
+    /// <summary>The Wi‑Fi signal stops being read while the screen is off or the bar is hidden (PRD 8.1).</summary>
+    public void SetPaused(bool paused)
+    {
+        if (paused)
+        {
+            _wifiTimer.Stop();
+            return;
+        }
+        ReadWifi();
+        _wifiTimer.Start();
+    }
+
     /// <summary>Brightness is read when its tooltip opens, not polled.</summary>
     public int? ReadBrightness() => Brightness = BrightnessReader.Read();
 

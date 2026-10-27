@@ -9,6 +9,8 @@ namespace Gili.App.Bar;
 
 public sealed partial class BarViewModel : ObservableObject
 {
+    private readonly NetworkToday _today = new();
+
     [ObservableProperty] private Brush _tint = Brushes.Transparent;
     [ObservableProperty] private double _moduleHeight = 26;
     [ObservableProperty] private string _cpuText = "—";
@@ -129,6 +131,7 @@ public sealed partial class BarViewModel : ObservableObject
         var network = stats.Network.Value;
         UpText = "↑ " + (network is null ? "—" : StatText.Rate(network.UpBytesPerSecond));
         DownText = "↓ " + (network is null ? "—" : StatText.Rate(network.DownBytesPerSecond));
-        NetTooltip = network is null ? stats.Network.Error : network.Adapters;
+        if (network is not null) _today.Add(network.UpBytes, network.DownBytes, DateTime.Now);
+        NetTooltip = network is null ? stats.Network.Error : _today.Tooltip(network.Adapters);
     }
 }

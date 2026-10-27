@@ -63,6 +63,13 @@ public sealed class MediaService : IDisposable
 
     public Task SeekAsync(TimeSpan position) => _demo ? Task.CompletedTask : _monitor.SeekAsync(position);
 
+    /// <summary>The 1 s tick (progress, VLC title) stops while the screen is off or the bar is hidden (PRD 8.1).</summary>
+    public void SetPaused(bool paused)
+    {
+        if (paused) _tick.Stop();
+        else _tick.Start();
+    }
+
     /// <summary>Shows the demo's fake media instead of the real session until <see cref="EndDemo"/>.</summary>
     public void SetDemo(MediaState? state)
     {

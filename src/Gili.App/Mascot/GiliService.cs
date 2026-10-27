@@ -18,6 +18,8 @@ public sealed class GiliService : IDisposable
     private readonly DispatcherTimer _poll = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(33) };
     private readonly DispatcherTimer _second = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer _blink = new();
+    private bool _shown;
+    private bool _paused;
     private readonly Spring _x = new(0) { Parameters = GiliRules.EyeSpring };
     private readonly Spring _y = new(0) { Parameters = GiliRules.EyeSpring };
     private readonly Random _random = new();
@@ -60,6 +62,20 @@ public sealed class GiliService : IDisposable
     /// <summary>Gili shows (Show Gili on, bar visible, no fullscreen): only then are the pointer and the clock read.</summary>
     public void SetVisible(bool visible)
     {
+        _shown = visible;
+        Apply();
+    }
+
+    /// <summary>Nothing is seen while the screen is off or the laptop sleeps, so the eyes stop too (PRD 8.1).</summary>
+    public void SetPaused(bool paused)
+    {
+        _paused = paused;
+        Apply();
+    }
+
+    private void Apply()
+    {
+        var visible = _shown && !_paused;
         if (_visible == visible) return;
         _visible = visible;
         if (visible)

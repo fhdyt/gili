@@ -15,11 +15,13 @@ public sealed class NetworkSampler
     {
         long sent = 0, received = 0;
         var names = new List<string>();
-        foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+        var up = NetworkInterface.GetAllNetworkInterfaces()
+            .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                n.NetworkInterfaceType is not (NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel))
+            .ToList();
+        var counted = NetworkAdapters.Counted(up.Select(n => (n.Name, n.Description))).Select(a => a.Name).ToHashSet();
+        foreach (var nic in up.Where(n => counted.Contains(n.Name)))
         {
-            if (nic.OperationalStatus != OperationalStatus.Up ||
-                nic.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel)
-                continue;
             try
             {
                 var stats = nic.GetIPv4Statistics();
@@ -34,18 +36,20 @@ public sealed class NetworkSampler
         }
 
         var timestamp = Stopwatch.GetTimestamp();
-        double up = 0, down = 0;
+        double upRate = 0, downRate = 0, upBytes = 0, downBytes = 0;
         if (_lastSent >= 0)
         {
             var seconds = Stopwatch.GetElapsedTime(_lastTimestamp, timestamp).TotalSeconds;
             if (seconds > 0)
             {
                 // Counters drop when an adapter disconnects; never show a negative speed.
-                up = Math.Max(0, sent - _lastSent) / seconds;
-                down = Math.Max(0, received - _lastReceived) / seconds;
+                upBytes = Math.Max(0, sent - _lastSent);
+                downBytes = Math.Max(0, received - _lastReceived);
+                upRate = upBytes / seconds;
+                downRate = downBytes / seconds;
             }
         }
         (_lastSent, _lastReceived, _lastTimestamp) = (sent, received, timestamp);
-        return new NetworkReading(up, down, string.Join(", ", names));
+        return new NetworkReading(upRate, downRate, string.Join(", ", names), upBytes, downBytes);
     }
 }

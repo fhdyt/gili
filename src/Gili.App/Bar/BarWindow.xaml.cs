@@ -13,6 +13,7 @@ using Gili.Core.Modules;
 using System.Windows.Controls.Primitives;
 using Gili.Core.Settings;
 using Gili.Platform.Interop;
+using Gili.Platform.Power;
 using Gili.Platform.Shell;
 
 namespace Gili.App.Bar;
@@ -33,8 +34,8 @@ public partial class BarWindow : Window
     private AppBarService? _appBar;
     private IntPtr _hwnd;
     private bool _quitting;
-    private bool _hidden;
-    private bool _suspended;
+    private readonly PollingGate _polling = new();
+    private DisplayMonitor? _display;
     private bool _floating;
     private bool _glassOff;
 
@@ -60,6 +61,7 @@ public partial class BarWindow : Window
         _settings.Changed += OnSettingsChanged;
         _transparency.Changed += _ => Dispatcher.InvokeAsync(ApplyAppearance);
         _stats.Updated += _vm.ApplyStats;
+        _polling.Changed += OnPollingChanged;
         _clock.Ticked += () => _vm.ApplyClock(_clock.Now, _settings.Current);
         _clock.SecondTicked += () => _vm.ApplySecond(_clock.Now, _settings.Current);
         _clock.Seconds = _settings.Current.ShowSeconds;
@@ -181,6 +183,12 @@ public partial class BarWindow : Window
 
     public event Action<bool>? FullscreenChanged;
 
+    /// <summary>False while the screen is off, a fullscreen app hides the bar, or the laptop sleeps (PRD 8.1).</summary>
+    public event Action<bool>? PollingChanged;
+
+    /// <summary>What holds polling right now, for the log.</summary>
+    public string PollingReason => _polling.Reason;
+
     public void ReleaseAppBar() => _appBar?.Unregister();
 
     public void Reassert() => _appBar?.Reposition();
@@ -222,6 +230,7 @@ public partial class BarWindow : Window
         _appBar = new AppBarService(_hwnd);
         _appBar.FullscreenChanged += OnFullscreenChanged;
         _appBar.Register(_settings.Current.BarHeight);
+        _display = new DisplayMonitor(_hwnd);
         ApplyAppearance();
     }
 
@@ -261,7 +270,7 @@ public partial class BarWindow : Window
 
     private void OnSettingsChanged(AppSettings settings)
     {
-        _clock.Seconds = settings.ShowSeconds && !_hidden;
+        _clock.Seconds = settings.ShowSeconds && _polling.ShouldPoll;
         _vm.ApplyClock(DateTime.Now, settings);
         _appBar?.SetHeight(settings.BarHeight);
         ApplyAppearance();
@@ -276,9 +285,7 @@ public partial class BarWindow : Window
 
     private void OnFullscreenChanged(bool fullscreen)
     {
-        _hidden = fullscreen;
-        UpdatePolling();
-        _clock.Seconds = _settings.Current.ShowSeconds && !fullscreen;
+        _polling.SetFullscreen(fullscreen);
         FullscreenChanged?.Invoke(fullscreen);
         if (fullscreen)
         {
@@ -289,7 +296,14 @@ public partial class BarWindow : Window
         _appBar?.Reposition();
     }
 
-    private void UpdatePolling() => _stats.Paused = _hidden || _suspended;
+    /// <summary>Every timer on the bar and island stops while the screen is off, the bar is hidden, or the laptop sleeps.</summary>
+    private void OnPollingChanged(bool poll)
+    {
+        _stats.Paused = !poll;
+        _clock.Seconds = _settings.Current.ShowSeconds && poll;
+        if (poll) TimeChanged?.Invoke();
+        PollingChanged?.Invoke(poll);
+    }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
@@ -306,13 +320,14 @@ public partial class BarWindow : Window
                 TimeChanged?.Invoke();
                 break;
             case WindowMessages.WM_POWERBROADCAST when wParam == WindowMessages.PBT_APMSUSPEND:
-                _suspended = true;
-                UpdatePolling();
+                _polling.SetSuspended(true);
                 break;
             case WindowMessages.WM_POWERBROADCAST when wParam == WindowMessages.PBT_APMRESUMEAUTOMATIC:
-                _suspended = false;
-                UpdatePolling();
+                _polling.SetSuspended(false);
                 TimeChanged?.Invoke();
+                break;
+            case WindowMessages.WM_POWERBROADCAST when wParam == DisplayMonitor.PBT_POWERSETTINGCHANGE:
+                if (DisplayMonitor.TryRead(lParam, out var screenOn)) _polling.SetScreenOn(screenOn);
                 break;
         }
         return IntPtr.Zero;
