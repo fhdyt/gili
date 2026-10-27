@@ -3,5 +3,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <!-- MAJOR.MINOR.PATCH for both release paths; the MSIX adds .0 (PRD 9.4). -->
+    <Version>0.1.0</Version>
   </PropertyGroup>
 </Project>

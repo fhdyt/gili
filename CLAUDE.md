@@ -33,8 +33,8 @@ dotnet run --project src/Gili.App
 - Kalau proses dihentikan paksa (debugger, `Stop-Process`) tanpa melepas AppBar, ruang di atas layar bisa tertinggal kosong. Restart Explorer untuk memulihkannya.
 - Build Debug punya item "Simulate crash" di menu klik kanan bar untuk menguji restart otomatis (PRD 11).
 - Pasang build Release ke `%LOCALAPPDATA%\Programs\Gili\` lalu jalankan: `pwsh scripts/publish.ps1`. Salinan ini berperilaku seperti installer GitHub: hanya salinan terpasang yang menulis entri autostart (`HKCU\...\Run`); `dotnet run` tidak pernah mendaftarkan dirinya.
-- Paket MSIX (versi Store) dan installer GitHub dibangun oleh `scripts/package.ps1` (PRD 9.4, F-PUB-01; belum ada, masuk Fase 1). Versi MSIX autostart lewat `StartupTask`, bukan `HKCU\...\Run`, dan datanya di folder paket, bukan `%LOCALAPPDATA%\Gili\`. Uji perubahan yang menyentuh file, registry, autostart, toast, atau hook Claude di kedua bentuk.
-- Mode demo (klik kanan bar → Demo mode, F-BAR-09) memutar skenario palsu untuk mengecek tampilan semua keadaan pulau tanpa kejadian nyata. Belum ada; masuk rencana 1c.
+- Paket MSIX (versi Store): `pwsh scripts/package.ps1` membangun `artifacts/msix/Gili-<versi>.msix` (self-contained, butuh Windows SDK untuk `makeappx`); `-Install` mendaftarkan layout-nya di laptop ini lewat `Add-AppxPackage -Register` (butuh Developer Mode, tanpa admin dan tanpa sertifikat). Installer GitHub menyusul di Fase 5. Versi MSIX autostart lewat `StartupTask`, bukan `HKCU\...\Run`, dan datanya di folder paket (`%LOCALAPPDATA%\Packages\Gili_*\LocalState\`), bukan `%LOCALAPPDATA%\Gili\`. Uji perubahan yang menyentuh file, registry, autostart, toast, atau hook Claude di kedua bentuk. Versi ada di `Directory.Build.props`.
+- Mode demo (klik kanan bar → Demo mode, F-BAR-09) memutar skenario palsu ±30 detik (`Gili.Core.Demo.DemoScript`) untuk mengecek tampilan semua keadaan pulau tanpa kejadian nyata. Keadaan baru di pulau ditambahkan ke skenario itu.
 - `Gili.ClaudeHook` (Fase 3) dipublish NativeAOT, jadi butuh workload C++ Build Tools.
 
 ## Arsitektur
