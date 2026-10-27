@@ -34,7 +34,7 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
 
     [ObservableProperty]
@@ -94,6 +94,18 @@ public sealed partial class IslandViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasClipThumb))]
     private ImageSource? _clipThumb;
 
+    [ObservableProperty] private Geometry? _timerSlotGlyph;
+    [ObservableProperty] private Brush _timerSlotBrush = TimerViewModel.Orange;
+    [ObservableProperty] private string _timerSlotValue = "";
+    [ObservableProperty] private Geometry? _cardGlyph;
+    [ObservableProperty] private Brush _cardBrush = Text;
+    [ObservableProperty] private Brush _cardTint = Text;
+    [ObservableProperty] private string _cardTitle = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCardSubtitle))]
+    private string? _cardSubtitle;
+    [ObservableProperty] private IReadOnlyList<CardButton> _cardButtons = [];
+
     public IslandViewModel(IslandController island, SettingsHub settings)
     {
         _island = island;
@@ -102,7 +114,7 @@ public sealed partial class IslandViewModel : ObservableObject
         Tabs =
         [
             new(IslandPage.Media, "Media", Glyph("Icon.Music"), null),
-            new(IslandPage.Timer, "Timer", Glyph("Icon.Hourglass"), Phase2),
+            new(IslandPage.Timer, "Timer", Glyph("Icon.Hourglass"), null),
             new(IslandPage.Alarms, "Alarms", Glyph("Icon.Alarm"), Phase2),
             new(IslandPage.Calendar, "Calendar", Glyph("Icon.Calendar"), Phase2),
             new(IslandPage.Todo, "Todo", Glyph("Icon.Todo"), Phase2),
@@ -117,6 +129,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.PowerChanged += UpdatePower;
         island.Media.Updated += UpdateMedia;
         island.ClipboardChanged += UpdateClipboard;
+        island.Timers.Changed += UpdateTimerSlot;
         UpdateSettings();
         UpdatePower();
         UpdateMedia();
@@ -131,8 +144,48 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool ShowClipboardSlot => Slot == ActivityKind.ClipboardSnippet;
 
+    public bool ShowTimerSlot => Slot is ActivityKind.Timer or ActivityKind.Stopwatch;
+
+    public bool HasCardSubtitle => !string.IsNullOrEmpty(CardSubtitle);
+
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot;
+
+    /// <summary>
+    /// The slot for a timer, pomodoro or stopwatch (mockup ACT_ICON): an hourglass in orange (timer), red (focus) or green
+    /// (break), or an orange stopwatch, and the time at the right end. The pomodoro wins when both a timer and it run.
+    /// </summary>
+    private void UpdateTimerSlot()
+    {
+        var timers = _island.Timers;
+        var now = DateTimeOffset.UtcNow;
+        if (Slot == ActivityKind.Stopwatch || (Slot != ActivityKind.Timer && _island.View.Bubble == ActivityKind.Stopwatch))
+        {
+            TimerSlotGlyph = Glyph("Icon.Stopwatch");
+            TimerSlotBrush = TimerViewModel.Orange;
+            TimerSlotValue = Gili.Core.Timers.TimerText.Stopwatch(timers.Stopwatch.Elapsed(now), tenths: false);
+        }
+        if (Slot == ActivityKind.Timer)
+        {
+            var pomodoro = timers.Pomodoro.Clock.IsRunning;
+            TimerSlotGlyph = Glyph("Icon.Hourglass");
+            TimerSlotBrush = !pomodoro ? TimerViewModel.Orange
+                : timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green;
+            TimerSlotValue = Gili.Core.Timers.TimerText.Clock((pomodoro ? timers.Pomodoro.Clock : timers.Timer).Remaining(now));
+        }
+        UpdateBubble();
+    }
+
+    private void UpdateCard(IslandView view)
+    {
+        if (view.Card is not { } card || _island.CardFor(card.Id) is not { } content) return;
+        CardGlyph = Glyph(content.Glyph);
+        CardBrush = Frozen(content.Color);
+        CardTint = Frozen(Color.FromArgb(0x38, content.Color.R, content.Color.G, content.Color.B));
+        CardTitle = content.Title;
+        CardSubtitle = content.Subtitle;
+        CardButtons = content.Buttons;
+    }
 
     public bool HasClipThumb => ClipThumb is not null;
 
@@ -182,6 +235,8 @@ public sealed partial class IslandViewModel : ObservableObject
     private void UpdateView(IslandView view)
     {
         Slot = view.Slot;
+        UpdateTimerSlot();
+        UpdateCard(view);
         // The control island has no tab; the menu keeps its page for when a page opens again.
         var index = Tabs.ToList().FindIndex(t => t.Page == view.Page);
         if (index >= 0) SelectedTab = index;
@@ -203,6 +258,10 @@ public sealed partial class IslandViewModel : ObservableObject
         {
             ActivityKind.Media => (Glyph(IsVideo ? "Icon.Film" : "Icon.Music"), IsVideo ? VideoOrange : Accent, false),
             ActivityKind.Charging => (Glyph("Icon.Bolt"), Accent, true),
+            ActivityKind.Timer => (Glyph("Icon.Hourglass"), _island.Timers.Pomodoro.Clock.IsRunning
+                ? (_island.Timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green)
+                : TimerViewModel.Orange, false),
+            ActivityKind.Stopwatch => (Glyph("Icon.Stopwatch"), TimerViewModel.Orange, false),
             _ => ((Geometry?)null, Text, false),
         };
     }
@@ -295,9 +354,11 @@ public sealed partial class IslandViewModel : ObservableObject
 
     private static Geometry Glyph(string key) => (Geometry)Application.Current.FindResource(key);
 
-    private static SolidColorBrush Frozen(string hex)
+    private static SolidColorBrush Frozen(string hex) => Frozen((Color)ColorConverter.ConvertFromString(hex));
+
+    private static SolidColorBrush Frozen(Color color)
     {
-        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        var brush = new SolidColorBrush(color);
         brush.Freeze();
         return brush;
     }

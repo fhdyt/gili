@@ -11,7 +11,7 @@
     pwsh scripts/mockup-shot.ps1 -State media-page -Out $env:TEMP\mockup-media.png
 #>
 param(
-    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings')] [string] $State,
+    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card')] [string] $State,
     [Parameter(Mandatory)] [string] $Out,
     [double] $Scale = 0,
     [int] $Width = 0,
@@ -42,6 +42,8 @@ $clicks = @{
     'charging'   = @('[data-act="idle"]', '[data-act="charge"]')
     'power'      = @('#mPower')
     'settings'   = @('#mSet')
+    'timer-page' = @('[data-page="1"]')
+    'timer-card' = @('[data-act="timer10"]')
 }[$State]
 $selectors = ($clicks | ForEach-Object { "'" + $_ + "'" }) -join ','
 
@@ -59,7 +61,7 @@ try {
     $uri = ([System.Uri](Resolve-Path $page).Path).AbsoluteUri
     $target = [System.IO.Path]::GetFullPath($Out)
     & $edge --headless=new --hide-scrollbars --disable-gpu "--force-device-scale-factor=$Scale" "--window-size=$Width,$Height" `
-        --virtual-time-budget=3000 "--user-data-dir=$work\profile" "--screenshot=$target" $uri 2>$null | Out-Null
+        "--virtual-time-budget=$(if ($State -eq 'timer-card') { 14000 } else { 3000 })" "--user-data-dir=$work\profile" "--screenshot=$target" $uri 2>$null | Out-Null
     if (-not (Test-Path $target)) { throw "Edge did not write $target." }
     Write-Output $target
 }

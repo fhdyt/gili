@@ -10,6 +10,12 @@ public abstract record DemoAction;
 /// <summary>A copied text, shown as the clipboard snippet (F-ISL-17).</summary>
 public sealed record DemoCopy(string Text) : DemoAction;
 
+/// <summary>A timer that runs for the demo only and is never saved (F-TOOL-01).</summary>
+public sealed record DemoTimer(int Seconds) : DemoAction;
+
+/// <summary>Answers a card the demo raised.</summary>
+public sealed record DemoDismiss(string Card) : DemoAction;
+
 /// <summary>Fake media replaces the real session; null means nothing is playing.</summary>
 public sealed record DemoMedia(MediaState? State) : DemoAction;
 
@@ -24,7 +30,7 @@ public sealed record DemoEnd : DemoAction;
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
-/// The demo of every Phase 1 island state, about 30 s (plan 1g decision 2): a copy in the slot, music in the slot, the charger as a wide
+/// The demo of every Phase 1 island state, about 45 s (plan 1g decision 2): a copy in the slot, a 10 s timer and its card, music in the slot, the charger as a wide
 /// notice and a bubble, the Media page, a walk through the tabs, the Power island, the charger out, then the music
 /// pausing and leaving so Gili returns to the island.
 /// </summary>
@@ -35,29 +41,30 @@ public static class DemoScript
 
     public static IReadOnlyList<DemoStep> Phase1(DateTimeOffset start)
     {
-        // The copy goes first and keeps the slot 3 s; everything else follows it (plan 1i).
-        const double copy = 3.2;
-        var playAt = TimeSpan.FromSeconds(0.3 + copy);
-        var pauseAt = TimeSpan.FromSeconds(24.5 + copy);
+        // A copy, then a 10 s timer that ends in its card while music plays in the bubble; then the rest (plan 2b).
+        var playAt = TimeSpan.FromSeconds(6.7);
+        var pauseAt = TimeSpan.FromSeconds(39);
         var song = new MediaState("Midnight City", "M83", "Spotify.exe", MediaKind.Music, IsPlaying: true, StartPosition,
             Duration, start + playAt, CanSeek: true, CanSkip: true, Cover: null);
         var paused = song with { IsPlaying = false, Position = StartPosition + (pauseAt - playAt), PositionUpdatedAt = start + pauseAt };
         return
         [
             Step(0.3, new DemoCopy("Meeting at 3 in the Merapi room, bring a charger")),
-            Step(0.3 + copy, new DemoMedia(song)),
-            Step(3.5 + copy, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: true, Percent: 64))),
-            Step(7.5 + copy, new DemoOpen(IslandPage.Media)),
-            Step(10 + copy, new DemoOpen(IslandPage.Timer)),
-            Step(11.5 + copy, new DemoOpen(IslandPage.Calendar)),
-            Step(13 + copy, new DemoOpen(IslandPage.Todo)),
-            Step(15 + copy, new DemoClose()),
-            Step(16.5 + copy, new DemoOpen(IslandPage.Controls)),
-            Step(19.5 + copy, new DemoClose()),
-            Step(21 + copy, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 64))),
-            Step(24.5 + copy, new DemoMedia(paused)),
-            Step(27 + copy, new DemoMedia(null)),
-            Step(29 + copy, new DemoEnd()),
+            Step(3.5, new DemoTimer(10)),
+            Step(6.7, new DemoMedia(song)),
+            Step(16.5, new DemoDismiss("timer")),
+            Step(18, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: true, Percent: 64))),
+            Step(22, new DemoOpen(IslandPage.Media)),
+            Step(24.5, new DemoOpen(IslandPage.Timer)),
+            Step(26, new DemoOpen(IslandPage.Calendar)),
+            Step(27.5, new DemoOpen(IslandPage.Todo)),
+            Step(29.5, new DemoClose()),
+            Step(31, new DemoOpen(IslandPage.Controls)),
+            Step(34, new DemoClose()),
+            Step(35.5, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 64))),
+            Step(39, new DemoMedia(paused)),
+            Step(41.5, new DemoMedia(null)),
+            Step(43.5, new DemoEnd()),
         ];
     }
 

@@ -22,6 +22,7 @@ public sealed class DemoService
     private readonly Stopwatch _clock = new();
     private DemoPlayer? _player;
     private byte[]? _cover;
+    private bool _timerCardPending;
 
     public DemoService(Dispatcher dispatcher, IslandController island, MediaService media)
     {
@@ -48,6 +49,10 @@ public sealed class DemoService
         _clock.Reset();
         _player = null;
         _media.EndDemo();
+        _island.Timers.EndDemo();
+        // Only the demo's own card; a real timer's card stays.
+        if (_timerCardPending) _island.DismissCard("timer");
+        _timerCardPending = false;
         _island.EndDemo();
         Changed?.Invoke();
     }
@@ -77,6 +82,14 @@ public sealed class DemoService
                 case DemoCopy copy:
                     var content = new ClipboardContent(false, copy.Text, [], false, false, 0, 0, null, null, null);
                     if (ClipboardSnippets.For(content, _ => null) is { } snippet) _island.ShowDemoClipboard(snippet);
+                    break;
+                case DemoTimer timer:
+                    _island.Timers.StartDemoTimer(timer.Seconds);
+                    _timerCardPending = true;
+                    break;
+                case DemoDismiss dismiss:
+                    _island.DismissCard(dismiss.Card);
+                    _timerCardPending = false;
                     break;
                 case DemoPower power:
                     _island.SetDemoPower(power.Power);

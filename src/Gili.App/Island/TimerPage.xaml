@@ -1,0 +1,42 @@
+<UserControl x:Class="Gili.App.Island.TimerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The Timer page (mockup section "Timer"): segment, digits, line and presets on the left; ring and buttons on the right. -->
+    <DockPanel Margin="32,0" VerticalAlignment="Center">
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- 104 px ring, stroke 8: #1C1C1E behind, the time left in colour from the top, clockwise. -->
+            <Grid Width="104" Height="104">
+                <Ellipse Margin="4" Stroke="#1C1C1E" StrokeThickness="8" />
+                <Path x:Name="Ring" Stroke="{Binding RingBrush}" StrokeThickness="8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+            </Grid>
+            <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                <Button Style="{StaticResource PrimaryPill}" Content="{Binding ButtonText}" Command="{Binding StartOrPauseCommand}" />
+                <Button Style="{StaticResource Pill}" Margin="0,8,0,0" Content="Reset" Command="{Binding ResetCommand}" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel VerticalAlignment="Center">
+            <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding Modes}" SelectedItem="{Binding ModeName}"
+                     AutomationProperties.Name="Timer mode" />
+            <TextBlock Text="{Binding Big}" Margin="0,8,0,0" FontSize="44" FontWeight="Bold" Typography.NumeralAlignment="Tabular"
+                       LineStackingStrategy="BlockLineHeight" LineHeight="47.5" />
+            <TextBlock Text="{Binding Sub}" FontSize="13" Foreground="#8E8E93" />
+            <!-- Presets only on the Timer segment; their space stays so the page doesn't jump (mockup visibility:hidden). -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowPresets}" Value="False">
+                                <Setter Property="Visibility" Value="Hidden" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <Button Style="{StaticResource Chip}" Content="10 s" Command="{Binding PresetCommand}" CommandParameter="10" />
+                <Button Style="{StaticResource Chip}" Content="5 min" Margin="6,0,0,0" Command="{Binding PresetCommand}" CommandParameter="300" />
+                <Button Style="{StaticResource Chip}" Content="10 min" Margin="6,0,0,0" Command="{Binding PresetCommand}" CommandParameter="600" />
+                <Button Style="{StaticResource Chip}" Content="25 min" Margin="6,0,0,0" Command="{Binding PresetCommand}" CommandParameter="1500" />
+            </StackPanel>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

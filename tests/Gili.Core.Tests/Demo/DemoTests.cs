@@ -18,10 +18,20 @@ public class DemoTests
         Assert.Equal("Meeting at 3 in the Merapi room, bring a charger", Assert.IsType<DemoCopy>(Steps[0].Action).Text);
 
     [Fact]
+    public void A_ten_second_timer_runs_and_its_card_is_closed()
+    {
+        var start = Steps.Single(s => s.Action is DemoTimer);
+        Assert.Equal(10, ((DemoTimer)start.Action).Seconds);
+        var close = Steps.Single(s => s.Action is DemoDismiss { Card: "timer" });
+        Assert.True(close.At >= start.At + TimeSpan.FromSeconds(12));
+    }
+
+    [Fact]
     public void Music_starts_after_the_copy()
     {
-        Assert.True(Steps[1].At >= Steps[0].At + TimeSpan.FromSeconds(3));
-        var media = Assert.IsType<DemoMedia>(Steps[1].Action).State!;
+        var music = Steps.First(s => s.Action is DemoMedia);
+        Assert.True(music.At >= Steps[0].At + TimeSpan.FromSeconds(3));
+        var media = Assert.IsType<DemoMedia>(music.Action).State!;
         Assert.Equal(("Midnight City", "M83", "Spotify.exe"), (media.Title, media.Artist, media.AppId));
         Assert.True(media.IsPlaying);
         Assert.Equal(TimeSpan.FromSeconds(243), media.Duration);
@@ -53,7 +63,7 @@ public class DemoTests
     }
 
     [Fact]
-    public void Lasts_about_30_seconds() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 38);
+    public void Lasts_under_a_minute() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 50);
 
     [Fact]
     public void Due_returns_each_step_once()

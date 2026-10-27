@@ -3,6 +3,7 @@ using System.Windows.Threading;
 using Gili.Core.Clipboard;
 using Gili.Core.Island;
 using Gili.Core.Power;
+using Gili.Core.Timers;
 using Gili.Platform.Power;
 
 namespace Gili.App.Island;
@@ -16,9 +17,10 @@ public sealed class IslandController : IDisposable
     private readonly ClipboardService _clipboard = new();
     private bool _demo;
 
-    public IslandController(Dispatcher dispatcher, MediaService media)
+    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers)
     {
         Media = media;
+        Timers = timers;
         _deadline.Tick += (_, _) =>
         {
             _deadline.Stop();
@@ -38,6 +40,46 @@ public sealed class IslandController : IDisposable
         });
         ApplyPower(PowerMonitor.Read());
         _clipboard.Copied += ShowClipboard;
+        timers.Changed += ApplyTimers;
+        timers.Finished += id => _coordinator.ShowCard(new IslandCard(id, CardPriority.Urgent, TimeSpan.Zero));
+        ApplyTimers();
+    }
+
+    public TimerService Timers { get; }
+
+    /// <summary>
+    /// What a card shows and what its buttons do (PRD 6.3 "Kartu notifikasi", mockup CARDS). Each button closes the card
+    /// after its action.
+    /// </summary>
+    public CardContent? CardFor(string id)
+    {
+        var red = Color.FromRgb(0xFF, 0x45, 0x3A);
+        var orange = Color.FromRgb(0xFF, 0x9F, 0x0A);
+        var green = Color.FromRgb(0x30, 0xD1, 0x58);
+        return id switch
+        {
+            "timer" => new("Icon.Hourglass", orange, TimerText.TimerDone(Timers.Timer.TotalSeconds), null,
+                [new("Repeat", false, Card(id, Timers.Repeat)), new("Close", true, Card(id, () => { }))]),
+            "pomo-focus" => new("Icon.Hourglass", red, "Focus session done", TimerText.FocusDone(Timers.Pomodoro),
+                [new("Skip", false, Card(id, Timers.SkipBreak)), new("Start break", true, Card(id, Timers.StartBreak))]),
+            "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro),
+                [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
+            _ => null,
+        };
+    }
+
+    private Action Card(string id, Action action) => () =>
+    {
+        action();
+        _coordinator.DismissCard(id);
+    };
+
+    /// <summary>A running timer or pomodoro and a running stopwatch are activities; a focus phase holds reminders (F-TOOL-04).</summary>
+    private void ApplyTimers()
+    {
+        _coordinator.SetActivity(ActivityKind.Timer, Timers.Timer.IsRunning || Timers.Pomodoro.Clock.IsRunning);
+        _coordinator.SetActivity(ActivityKind.Stopwatch, Timers.Stopwatch.IsRunning);
+        _coordinator.SetFocus(Timers.Pomodoro.IsFocusRunning);
     }
 
     /// <summary>The latest copy's snippet and its thumbnail (images only), shown while it holds the slot (F-ISL-17).</summary>
@@ -58,15 +100,25 @@ public sealed class IslandController : IDisposable
 
     public event Action? PowerChanged;
 
-    public void OpenFromIsland() => _coordinator.OpenFor(View.Slot);
+    public void OpenFromIsland() => OpenActivity(View.Slot);
 
-    public void OpenBubble() => _coordinator.OpenFor(View.Bubble);
+    public void OpenBubble() => OpenActivity(View.Bubble);
+
+    /// <summary>A timer or stopwatch opens the Timer page on its own segment.</summary>
+    private void OpenActivity(ActivityKind? kind)
+    {
+        if (kind == ActivityKind.Stopwatch) Timers.Mode = TimerMode.Stopwatch;
+        else if (kind == ActivityKind.Timer) Timers.Mode = Timers.Pomodoro.Clock.IsRunning ? TimerMode.Pomodoro : TimerMode.Timer;
+        _coordinator.OpenFor(kind);
+    }
 
     public void Open(IslandPage page) => _coordinator.Open(page);
 
     public void Toggle(IslandPage page) => _coordinator.Toggle(page);
 
     public void Close() => _coordinator.Close();
+
+    public void DismissCard(string id) => _coordinator.DismissCard(id);
 
     /// <summary>The pointer went down outside the open island.</summary>
     public void Dismiss() => _coordinator.Dismiss();

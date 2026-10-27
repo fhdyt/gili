@@ -134,6 +134,13 @@
                             <Border />
                         </DockPanel>
 
+                        <!-- A timer, pomodoro or stopwatch: its icon at the left end, the time at the right (mockup ACT_ICON). -->
+                        <DockPanel MinWidth="172" Visibility="{Binding ShowTimerSlot, Converter={StaticResource VisibleWhen}}">
+                            <c:IconView DockPanel.Dock="Left" Glyph="{Binding TimerSlotGlyph}" Foreground="{Binding TimerSlotBrush}" Width="14" Height="14" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding TimerSlotValue}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                            <Border />
+                        </DockPanel>
+
                         <!-- A copy holds the slot for 3 s (PRD 6.3 "Cuplikan clipboard", mockup showClip): icon or thumbnail
                              at the left end, the text at the right end, or in the middle when an image's size follows it. -->
                         <Grid MinWidth="172" Background="Transparent" ToolTip="{Binding ClipTooltip}"
@@ -207,6 +214,9 @@
                         </StackPanel>
                     </Canvas>
                 </Grid>
+
+                <!-- A notification card (PRD 6.3): 560 × 104, as wide as the screen allows. -->
+                <i:CardView x:Name="CardLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False" />
 
                 <!-- A control island (PRD 6.4): one control alone, 16 px from every edge, without the menu or Gili. -->
                 <Border x:Name="ControlLayer" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Top"

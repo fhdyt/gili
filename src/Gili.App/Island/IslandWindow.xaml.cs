@@ -44,6 +44,8 @@ public partial class IslandWindow : Window
     private readonly Spring[] _springs;
     private readonly GiliService _gili;
     private readonly PowerPage _powerPage;
+    private readonly TimerViewModel _timerPage;
+    private string? _glowTimer;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
     private readonly ScaleTransform _giliCircleScale = new(0.6, 0.6);
@@ -66,7 +68,6 @@ public partial class IslandWindow : Window
     /// <summary>Glow colours per page (PRD 6.3 "Ambient glow"); Media takes the artwork's colours instead.</summary>
     private static readonly Dictionary<IslandPage, Color> PageGlow = new()
     {
-        [IslandPage.Timer] = Color.FromRgb(0xFF, 0x9F, 0x0A),
         [IslandPage.Alarms] = Color.FromRgb(0xFF, 0xD6, 0x0A),
         [IslandPage.Calendar] = Color.FromRgb(0xFF, 0x45, 0x3A),
         [IslandPage.Todo] = Color.FromRgb(0x0A, 0x84, 0xFF),
@@ -102,6 +103,15 @@ public partial class IslandWindow : Window
         gili.Register(GiliInside);
         gili.Register(GiliCircleEyes);
         gili.Register(MenuGiliEyes);
+        _timerPage = new TimerViewModel(island.Timers);
+        // The Timer page's glow follows the segment and the pomodoro phase.
+        island.Timers.Changed += () =>
+        {
+            var key = $"{island.Timers.Mode}{island.Timers.Pomodoro.Phase}";
+            if (key == _glowTimer) return;
+            _glowTimer = key;
+            UpdateGlow();
+        };
         BuildTabs();
         BuildPages();
         ControlLayer.Child = _powerPage = new PowerPage(island);
@@ -225,6 +235,11 @@ public partial class IslandWindow : Window
         else if (_mode == IslandMode.Expanded)
         {
             SizePages(target.Height);
+        }
+        else if (_mode == IslandMode.Card)
+        {
+            CardLayer.Width = target.Width;
+            CardLayer.Height = target.Height;
         }
         NotifyCompact(content);
         if (_floatingEnvelope) GrowEnvelope(target.Top + target.Height);
@@ -352,6 +367,7 @@ public partial class IslandWindow : Window
         var page = _island.View.Page;
         var paused = page == IslandPage.Media && !_vm.IsPlaying;
         if (page == IslandPage.Media) Glow.SetColors(_vm.GlowPrimary, _vm.GlowSecondary, paused);
+        else if (page == IslandPage.Timer) Glow.SetColors(TimerGlow(), TimerGlow(), dim: false);
         else Glow.SetColors(PageGlow[page], PageGlow[page], dim: false);
         if (_mode != IslandMode.Expanded || !s.AmbientGlow)
         {
@@ -399,6 +415,9 @@ public partial class IslandWindow : Window
 
     private void ShowLayers(IslandMode mode)
     {
+        Reveal(CardLayer, mode == IslandMode.Card);
+        CardLayer.SetPulsing(mode == IslandMode.Card);
+        _timerPage.SetPageOpen(mode == IslandMode.Expanded && _island.View.Page == IslandPage.Timer);
         Fade(CompactLayer, mode == IslandMode.Compact);
         Fade(WideLayer, mode == IslandMode.Wide);
         Reveal(ExpandedLayer, mode == IslandMode.Expanded && !ShowsControl);
@@ -624,8 +643,21 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>Real pages replace their placeholders here as they are built (Media in Task 11, the rest in Phases 2–3).</summary>
-    private FrameworkElement CreatePage(IslandTab tab) =>
-        tab.Page == IslandPage.Media ? new MediaPage(_island.Media) : Placeholder(tab);
+    private FrameworkElement CreatePage(IslandTab tab) => tab.Page switch
+    {
+        IslandPage.Media => new MediaPage(_island.Media),
+        IslandPage.Timer => new TimerPage(_timerPage),
+        _ => Placeholder(tab),
+    };
+
+    /// <summary>Orange for the timer, light blue for the stopwatch, red while focusing and green on a break (PRD 6.3 glow).</summary>
+    private Color TimerGlow() => _island.Timers.Mode switch
+    {
+        TimerMode.Stopwatch => Color.FromRgb(0x64, 0xD2, 0xFF),
+        TimerMode.Pomodoro => _island.Timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus
+            ? Color.FromRgb(0xFF, 0x45, 0x3A) : Color.FromRgb(0x30, 0xD1, 0x58),
+        _ => Color.FromRgb(0xFF, 0x9F, 0x0A),
+    };
 
     private static FrameworkElement Placeholder(IslandTab tab)
     {

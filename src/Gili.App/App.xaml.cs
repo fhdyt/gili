@@ -38,6 +38,7 @@ public partial class App : Application
     private RightService? _right;
     private DemoService? _demo;
     private Database? _database;
+    private TimerService? _timers;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
@@ -86,7 +87,8 @@ public partial class App : Application
 
         _clock = new ClockService();
         _media = new MediaService(Dispatcher, _log);
-        _islandController = new IslandController(Dispatcher, _media);
+        _timers = new TimerService(_database is null ? null : new TimerStore(_database));
+        _islandController = new IslandController(Dispatcher, _media, _timers);
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
         _right = new RightService(Dispatcher, _settings, _log);
@@ -100,6 +102,7 @@ public partial class App : Application
         _demo.Changed += () => _bar.SetDemoRunning(_demo.IsRunning);
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
+        _bar.TimeChanged += _timers.Reschedule;
         _bar.FullscreenChanged += _islandController.SetFullscreen;
         _bar.PollingChanged += poll =>
         {
@@ -119,6 +122,8 @@ public partial class App : Application
         _islandWindow.FloatingChanged += _bar.SetIslandFloating;
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
         _islandWindow.Show();
+        // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
+        _timers.Reschedule();
         _stats.Start();
         _apps.Start();
         _right.Start();
