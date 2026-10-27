@@ -22,6 +22,11 @@ public sealed record AppSettings
     public bool AmbientGlow { get; init; } = true;
     public bool AmbientMotion { get; init; } = true;
 
+    /// <summary>The timer's sound, the volume of Gili's own sounds (0–100) and the alarm's slow rise (PRD 6.6).</summary>
+    public string TimerSound { get; init; } = "Chime";
+    public int AlertVolume { get; init; } = 80;
+    public bool GraduallyIncrease { get; init; } = true;
+
     /// <summary>The weather city until Settings offers a choice (plan 1e decision 1).</summary>
     public string WeatherCity { get; init; } = "Jakarta";
     public double WeatherLatitude { get; init; } = -6.2088;
@@ -39,6 +44,8 @@ public sealed record AppSettings
             IslandHeight = Math.Clamp(IslandHeight, MinIslandHeight, MaxIslandHeight(barHeight)),
             BarOpacity = Math.Clamp(BarOpacity, MinBarOpacity, MaxBarOpacity),
             Glass = Enum.IsDefined(Glass) ? Glass : GlassLevel.Strong,
+            AlertVolume = Math.Clamp(AlertVolume, 0, 100),
+            TimerSound = Sound.Voices.Find(TimerSound).Name,
         };
     }
 }

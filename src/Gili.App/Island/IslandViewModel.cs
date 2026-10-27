@@ -106,6 +106,10 @@ public sealed partial class IslandViewModel : ObservableObject
     private string? _cardSubtitle;
     [ObservableProperty] private IReadOnlyList<CardButton> _cardButtons = [];
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCardWarning))]
+    private string? _cardWarning;
+
     public IslandViewModel(IslandController island, SettingsHub settings)
     {
         _island = island;
@@ -130,6 +134,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.Media.Updated += UpdateMedia;
         island.ClipboardChanged += UpdateClipboard;
         island.Timers.Changed += UpdateTimerSlot;
+        island.CardChanged += () => UpdateCard(_island.View);
         UpdateSettings();
         UpdatePower();
         UpdateMedia();
@@ -147,6 +152,8 @@ public sealed partial class IslandViewModel : ObservableObject
     public bool ShowTimerSlot => Slot is ActivityKind.Timer or ActivityKind.Stopwatch;
 
     public bool HasCardSubtitle => !string.IsNullOrEmpty(CardSubtitle);
+
+    public bool HasCardWarning => CardWarning is not null;
 
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
     public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot;
@@ -185,6 +192,7 @@ public sealed partial class IslandViewModel : ObservableObject
         CardTitle = content.Title;
         CardSubtitle = content.Subtitle;
         CardButtons = content.Buttons;
+        CardWarning = content.Warning;
     }
 
     public bool HasClipThumb => ClipThumb is not null;

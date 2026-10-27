@@ -83,9 +83,9 @@ public static class SettingsCatalog
         ]),
         new("Sounds",
         [
-            new("snd", "Timer sound", SettingKind.Segment, Options: ["Radar", "Chime", "Bell", "Soft", "Ping"], Default: "Chime"),
-            new("alertVol", "Alert volume", SettingKind.Range, Unit: "%", Default: 80),
-            new("ramp", "Gradually increase", SettingKind.Switch, Default: true),
+            new("snd", "Timer sound", SettingKind.Segment, Available: true, Options: ["Radar", "Chime", "Bell", "Soft", "Ping"]),
+            new("alertVol", "Alert volume", SettingKind.Range, Available: true, Unit: "%"),
+            new("ramp", "Gradually increase", SettingKind.Switch, Available: true),
         ]),
         new("Shortcuts", [new("keys", "Keyboard shortcuts", SettingKind.Switch, Default: true)]),
         new("About",
@@ -108,6 +108,9 @@ public static class SettingsCatalog
         "glow" => s.AmbientGlow,
         "motion" => s.AmbientMotion,
         "gili" => s.ShowGili,
+        "snd" => s.TimerSound,
+        "alertVol" => s.AlertVolume,
+        "ramp" => s.GraduallyIncrease,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     };
 
@@ -124,6 +127,9 @@ public static class SettingsCatalog
         "glow" => s with { AmbientGlow = (bool)value },
         "motion" => s with { AmbientMotion = (bool)value },
         "gili" => s with { ShowGili = (bool)value },
+        "snd" => s with { TimerSound = (string)value },
+        "alertVol" => s with { AlertVolume = Number(value) },
+        "ramp" => s with { GraduallyIncrease = (bool)value },
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     }).Normalize();
 

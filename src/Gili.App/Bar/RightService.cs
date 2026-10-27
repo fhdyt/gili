@@ -50,6 +50,8 @@ public sealed class RightService : IDisposable
 
     public (int Percent, bool Muted)? Volume => _audio.Current;
 
+    public void Unmute() => _audio.Unmute();
+
     /// <summary>Null when the display has no brightness control, so the module hides.</summary>
     public int? Brightness { get; private set; }
 

@@ -3,6 +3,7 @@ using System.Windows.Threading;
 using Gili.Core.Clipboard;
 using Gili.Core.Island;
 using Gili.Core.Power;
+using Gili.Core.Sound;
 using Gili.Core.Timers;
 using Gili.Platform.Power;
 
@@ -16,6 +17,7 @@ public sealed class IslandController : IDisposable
     private readonly PowerMonitor _power = new();
     private readonly ClipboardService _clipboard = new();
     private bool _demo;
+    private string? _soundCard;
 
     public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers)
     {
@@ -31,6 +33,9 @@ public sealed class IslandController : IDisposable
         {
             ScheduleDeadline();
             ViewChanged?.Invoke(view);
+            if (view.Card?.Id == _soundCard) return;
+            _soundCard = view.Card?.Id;
+            CardShown?.Invoke(_soundCard);
         };
         media.Updated += () => _coordinator.SetActivity(ActivityKind.Media, media.IsActive);
         _power.Changed += snapshot => dispatcher.InvokeAsync(() =>
@@ -47,6 +52,23 @@ public sealed class IslandController : IDisposable
 
     public TimerService Timers { get; }
 
+    /// <summary>The card now showing, or null when none: what plays its sound (PRD 6.6).</summary>
+    public event Action<string?>? CardShown;
+
+    /// <summary>The volume or mute changed while a card shows: its warning and Unmute button follow.</summary>
+    public event Action? CardChanged;
+
+    /// <summary>The default speaker's volume and mute, for the card's warning (F-SND-05).</summary>
+    public Func<(int Percent, bool Muted)?>? Volume { get; set; }
+
+    /// <summary>Unmutes Windows, only from the card's button.</summary>
+    public Action? Unmute { get; set; }
+
+    public void RefreshCard()
+    {
+        if (View.Card is not null) CardChanged?.Invoke();
+    }
+
     /// <summary>
     /// What a card shows and what its buttons do (PRD 6.3 "Kartu notifikasi", mockup CARDS). Each button closes the card
     /// after its action.
@@ -56,7 +78,7 @@ public sealed class IslandController : IDisposable
         var red = Color.FromRgb(0xFF, 0x45, 0x3A);
         var orange = Color.FromRgb(0xFF, 0x9F, 0x0A);
         var green = Color.FromRgb(0x30, 0xD1, 0x58);
-        return id switch
+        CardContent? content = id switch
         {
             "timer" => new("Icon.Hourglass", orange, TimerText.TimerDone(Timers.Timer.TotalSeconds), null,
                 [new("Repeat", false, Card(id, Timers.Repeat)), new("Close", true, Card(id, () => { }))]),
@@ -66,6 +88,19 @@ public sealed class IslandController : IDisposable
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ => null,
         };
+        return content is null ? null : WithMuteWarning(id, content);
+    }
+
+    /// <summary>
+    /// A card that rings until answered says when nothing will be heard (muted or under 5%), with Unmute first when
+    /// Windows is muted (PRD 6.6, plan 2c decision 3).
+    /// </summary>
+    private CardContent WithMuteWarning(string id, CardContent card)
+    {
+        if (SoundRules.ForCard(id, "Chime") is not { Loop: true } || Volume?.Invoke() is not { } volume) return card;
+        if (!SoundRules.WarnMuted(volume.Percent, volume.Muted)) return card;
+        var buttons = volume.Muted ? [new CardButton("Unmute", false, () => Unmute?.Invoke()), .. card.Buttons] : card.Buttons;
+        return card with { Warning = SoundRules.Warning, Buttons = buttons };
     }
 
     private Action Card(string id, Action action) => () =>

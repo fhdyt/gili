@@ -39,6 +39,7 @@ public partial class App : Application
     private DemoService? _demo;
     private Database? _database;
     private TimerService? _timers;
+    private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
     private bool? _autostartApplied;
@@ -92,6 +93,19 @@ public partial class App : Application
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
         _right = new RightService(Dispatcher, _settings, _log);
+        _sound = new SoundService(Dispatcher, _settings, _log);
+        _islandController.CardShown += _sound.PlayForCard;
+        _islandController.Volume = () => _right.Volume;
+        _islandController.Unmute = _right.Unmute;
+        _right.Changed += _islandController.RefreshCard;
+        var timerSound = _settings.Current.TimerSound;
+        _settings.Changed += s =>
+        {
+            // Picking a timer sound in Settings plays it once (PRD 6.6).
+            if (s.TimerSound == timerSound) return;
+            timerSound = s.TimerSound;
+            _sound.Preview(timerSound);
+        };
         _bar = new BarWindow(_settings, _transparency, _stats, _clock, _apps, _right);
         _bar.PageRequested += _islandController.Toggle;
         _bar.SettingsRequested += ShowSettings;
@@ -133,6 +147,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _demo?.Stop();
+        _sound?.Dispose();
         _backupTimer.Stop();
         _database?.Dispose();
         _stats?.Dispose();

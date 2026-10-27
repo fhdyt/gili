@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili" },
+            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -80,6 +80,17 @@ public class SettingsCatalogTests
         Assert.Equal("%", AllRows.Single(r => r.Key == "opacity").Unit);
         Assert.Equal((28, 44), SettingsCatalog.Range(s, "barH"));
         Assert.Equal(" px", AllRows.Single(r => r.Key == "barH").Unit);
+    }
+
+    [Fact]
+    public void Sound_settings_read_and_write()
+    {
+        var s = new AppSettings();
+        Assert.Equal(("Chime", 80, true), (SettingsCatalog.Read(s, "snd"), SettingsCatalog.Read(s, "alertVol"), SettingsCatalog.Read(s, "ramp")));
+        Assert.Equal("Bell", SettingsCatalog.Write(s, "snd", "Bell").TimerSound);
+        Assert.Equal(55, SettingsCatalog.Write(s, "alertVol", 55).AlertVolume);
+        Assert.False(SettingsCatalog.Write(s, "ramp", false).GraduallyIncrease);
+        Assert.Equal((0, 100), SettingsCatalog.Range(s, "alertVol"));
     }
 
     [Fact]

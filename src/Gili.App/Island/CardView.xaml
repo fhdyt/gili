@@ -45,6 +45,12 @@
             <TextBlock Text="{Binding CardTitle}" FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding CardSubtitle}" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                        Visibility="{Binding HasCardSubtitle, Converter={StaticResource VisibleWhen}}" />
+            <!-- Sound is off (mockup .cs.wrn): a yellow line with the muted speaker, 4 px below. -->
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding HasCardWarning, Converter={StaticResource VisibleWhen}}">
+                <c:IconView Glyph="{StaticResource Icon.Volume.Mute}" Foreground="#FFD60A" Width="13" Height="13" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding CardWarning}" Margin="5,0,0,0" FontSize="13" Foreground="#FFD60A" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding CardWarning}" />
+            </StackPanel>
         </StackPanel>
     </DockPanel>
 </UserControl>

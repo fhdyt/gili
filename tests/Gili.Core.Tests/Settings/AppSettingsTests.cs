@@ -25,6 +25,21 @@ public class AppSettingsTests
         Assert.Equal(("Jakarta", -6.2088, 106.8456), (s.WeatherCity, s.WeatherLatitude, s.WeatherLongitude));
     }
 
+    [Fact]
+    public void Sound_defaults_match_the_prd()
+    {
+        var s = new AppSettings();
+        Assert.Equal(("Chime", 80, true), (s.TimerSound, s.AlertVolume, s.GraduallyIncrease));
+    }
+
+    [Fact]
+    public void Alert_volume_is_clamped_to_0_100_and_the_sound_is_known()
+    {
+        Assert.Equal(100, new AppSettings { AlertVolume = 150 }.Normalize().AlertVolume);
+        Assert.Equal(0, new AppSettings { AlertVolume = -5 }.Normalize().AlertVolume);
+        Assert.Equal("Chime", new AppSettings { TimerSound = "Gong" }.Normalize().TimerSound);
+    }
+
     [Theory]
     [InlineData(10, 28)]
     [InlineData(28, 28)]
