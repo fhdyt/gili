@@ -314,20 +314,21 @@ public partial class IslandWindow : Window
         var h = _height.Value;
         var r = Math.Max(0, _radius.Value);
         var left = (Width - w) / 2;
-        foreach (var (plate, inset) in new[] { (Body, 0.0), (ShadowPlate, 14.0), (ShadowPlateNear, 10.0) })
-        {
-            Canvas.SetLeft(plate, left + inset);
-            Canvas.SetTop(plate, _top.Value + inset);
-            plate.Width = Math.Max(0, w - 2 * inset);
-            plate.Height = Math.Max(0, h - 2 * inset);
-            plate.CornerRadius = new CornerRadius(Math.Max(0, r - inset));
-        }
+        Canvas.SetLeft(Body, left);
+        Canvas.SetTop(Body, _top.Value);
+        Body.Width = Math.Max(0, w);
+        Body.Height = Math.Max(0, h);
+        Body.CornerRadius = new CornerRadius(r);
+        Canvas.SetLeft(Shadow, left);
+        Canvas.SetTop(Shadow, _top.Value);
+        Shadow.Width = Math.Max(0, w);
+        Shadow.Height = Math.Max(0, h);
+        Shadow.CornerRadius = r;
         _clip.Rect = new Rect(0, 0, w, h);
         _clip.RadiusX = r;
         _clip.RadiusY = r;
         var floating = Math.Clamp(_float.Value, 0, 1);
-        ShadowPlate.Opacity = floating;
-        ShadowPlateNear.Opacity = floating;
+        Shadow.Opacity = floating;
         TopHighlight.CornerRadius = new CornerRadius(r);
         TopHighlight.Opacity = floating;
 
