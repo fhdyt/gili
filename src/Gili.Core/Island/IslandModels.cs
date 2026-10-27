@@ -2,8 +2,11 @@ namespace Gili.Core.Island;
 
 public enum IslandMode { Hidden, Compact, Wide, Expanded, Card, DropZone }
 
-/// <summary>Pages of the expanded island, in menu order (PRD 6.3).</summary>
-public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System }
+/// <summary>
+/// Pages of the expanded island, in menu order (PRD 6.3). Controls has no tab: the Power icon (and from Phase 3 Wi-Fi,
+/// Bluetooth, volume and brightness) opens it alone, without the menu (PRD 6.4 "Pulau kontrol").
+/// </summary>
+public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System, Controls }
 
 /// <summary>Activities that can hold the compact slot, best first (PRD 6.3 activity order).</summary>
 public enum ActivityKind { ClipboardSnippet, ClaudeAttention, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging }

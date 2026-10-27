@@ -43,6 +43,7 @@ public partial class IslandWindow : Window
     private readonly Spring _giliCircle = new(0) { Parameters = GiliRules.ShapeSpring };
     private readonly Spring[] _springs;
     private readonly GiliService _gili;
+    private readonly PowerPage _powerPage;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
     private readonly ScaleTransform _giliCircleScale = new(0.6, 0.6);
@@ -74,6 +75,7 @@ public partial class IslandWindow : Window
         [IslandPage.Shelf] = Color.FromRgb(0x64, 0xD2, 0xFF),
         [IslandPage.Claude] = Color.FromRgb(0xD9, 0x77, 0x57),
         [IslandPage.System] = Color.FromRgb(0xBF, 0x5A, 0xF2),
+        [IslandPage.Controls] = Color.FromRgb(0x0A, 0x84, 0xFF),
     };
     private readonly List<(Button Button, IconView Icon, Border Name, LevelMeter? Meter)> _tabs = [];
     private TabName[] _names = [];
@@ -102,6 +104,7 @@ public partial class IslandWindow : Window
         gili.Register(MenuGiliEyes);
         BuildTabs();
         BuildPages();
+        ControlLayer.Child = _powerPage = new PowerPage(island);
         SizeExpanded();
         vm.PropertyChanged += OnViewModelChanged;
         island.ViewChanged += OnViewChanged;
@@ -182,15 +185,30 @@ public partial class IslandWindow : Window
         }
         if (!IsVisible) Show();
         if (Floats(view.Mode) && !_floatingEnvelope) SetEnvelope(true);
+        if (ShowsControl) _powerPage.Refresh();
         _hovered = view.Mode == IslandMode.Compact && Body.IsMouseOver;
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
         UpdateGili();
         UpdateGlow();
-        var width = Floats(view.Mode)
-            ? IslandLayout.For(view.Mode, Screen(), 0, false, ExpandedLayer.Width, _pageHeight).Width
-            : 0;
-        FloatingChanged?.Invoke(Floats(view.Mode), width);
+        FloatingChanged?.Invoke(Floats(view.Mode), Floats(view.Mode) ? Target(0, false).Width : 0);
+    }
+
+    /// <summary>The control island is open: the island shows one control instead of the menu and its pages.</summary>
+    private bool ShowsControl => _mode == IslandMode.Expanded && _island.View.Page == IslandPage.Controls;
+
+    private IslandGeometry Target(double content, bool hovered)
+    {
+        var page = _island.View.Page;
+        var height = page == IslandPage.Controls ? ControlHeight() : _pageHeight;
+        return IslandLayout.For(_mode, Screen(), content, hovered, ExpandedLayer.Width, height, page);
+    }
+
+    /// <summary>The control's full height at the control island's inner width.</summary>
+    private double ControlHeight()
+    {
+        _powerPage.Measure(new Size(IslandLayout.ControlWidth - 2 * IslandLayout.ControlPadding, double.PositiveInfinity));
+        return _powerPage.DesiredSize.Height;
     }
 
     /// <summary>Sets the springs' targets for the current mode. Without explicit parameters, a floating island keeps its own.</summary>
@@ -198,8 +216,16 @@ public partial class IslandWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
         var content = _mode == IslandMode.Wide ? WideContent.ActualWidth : CompactContent.ActualWidth;
-        var target = IslandLayout.For(_mode, Screen(), content, _hovered, ExpandedLayer.Width, _pageHeight);
-        if (_mode == IslandMode.Expanded) SizePages(target.Height);
+        var target = Target(content, _hovered);
+        if (ShowsControl)
+        {
+            ControlLayer.Width = target.Width;
+            ControlLayer.Height = target.Height;
+        }
+        else if (_mode == IslandMode.Expanded)
+        {
+            SizePages(target.Height);
+        }
         NotifyCompact(content);
         if (_floatingEnvelope) GrowEnvelope(target.Top + target.Height);
         var spring = parameters ?? (Floats(_mode) ? null : SpringParameters.Resize);
@@ -323,7 +349,7 @@ public partial class IslandWindow : Window
     {
         var s = _settings.Current;
         Glow.Visibility = s.AmbientGlow ? Visibility.Visible : Visibility.Collapsed;
-        var page = _vm.Tabs[_vm.SelectedTab].Page;
+        var page = _island.View.Page;
         var paused = page == IslandPage.Media && !_vm.IsPlaying;
         if (page == IslandPage.Media) Glow.SetColors(_vm.GlowPrimary, _vm.GlowSecondary, paused);
         else Glow.SetColors(PageGlow[page], PageGlow[page], dim: false);
@@ -332,7 +358,7 @@ public partial class IslandWindow : Window
             Glow.Hide();
             return;
         }
-        Glow.Show(ExpandedLayer.Width, _height.Target, s.AmbientMotion && SystemParameters.ClientAreaAnimation && !paused);
+        Glow.Show(_width.Target, _height.Target, s.AmbientMotion && SystemParameters.ClientAreaAnimation && !paused);
     }
 
     /// <summary>
@@ -344,7 +370,7 @@ public partial class IslandWindow : Window
         var show = _settings.Current.ShowGili && _mode != IslandMode.Hidden;
         var insideOn = show && _mode == IslandMode.Compact && !_vm.HasActivity;
         var circleOn = show && ((_mode == IslandMode.Compact && _vm.HasActivity) || _mode == IslandMode.Wide);
-        var menuOn = show && _mode == IslandMode.Expanded;
+        var menuOn = show && _mode == IslandMode.Expanded && !ShowsControl;
         var instant = !SystemParameters.ClientAreaAnimation;
         if (insideOn != _giliInsideOn)
         {
@@ -375,7 +401,8 @@ public partial class IslandWindow : Window
     {
         Fade(CompactLayer, mode == IslandMode.Compact);
         Fade(WideLayer, mode == IslandMode.Wide);
-        Reveal(ExpandedLayer, mode == IslandMode.Expanded);
+        Reveal(ExpandedLayer, mode == IslandMode.Expanded && !ShowsControl);
+        Reveal(ControlLayer, ShowsControl);
     }
 
     /// <summary>Slot content cross-fades: out in 90 ms, in over 180 ms once the old content is gone (PRD 8.3).</summary>
@@ -738,8 +765,10 @@ public partial class IslandWindow : Window
         }
     }
 
+    /// <summary>Arrow keys and swipes walk the menu; a control island has none (PRD 6.4).</summary>
     private void StepPage(int direction)
     {
+        if (ShowsControl) return;
         var next = Math.Clamp(_vm.SelectedTab + direction, 0, _vm.Tabs.Count - 1);
         if (next != _vm.SelectedTab) _island.Open(_vm.Tabs[next].Page);
     }

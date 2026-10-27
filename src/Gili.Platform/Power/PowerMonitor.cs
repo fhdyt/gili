@@ -22,6 +22,13 @@ public sealed class PowerMonitor : IDisposable
         Charging: PowerManager.BatteryStatus == BatteryStatus.Charging,
         Percent: PowerManager.RemainingChargePercent);
 
+    /// <summary>Windows' estimate of the time left on battery, or null while it has none.</summary>
+    public static TimeSpan? RemainingDischargeTime()
+    {
+        var left = PowerManager.RemainingDischargeTime;
+        return left > TimeSpan.Zero && left < TimeSpan.FromDays(2) ? left : null;
+    }
+
     public void Dispose()
     {
         PowerManager.BatteryStatusChanged -= OnChanged;

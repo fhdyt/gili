@@ -143,8 +143,9 @@ public sealed partial class IslandViewModel : ObservableObject
     private void UpdateView(IslandView view)
     {
         Slot = view.Slot;
+        // The control island has no tab; the menu keeps its page for when a page opens again.
         var index = Tabs.ToList().FindIndex(t => t.Page == view.Page);
-        SelectedTab = index >= 0 ? index : 0;
+        if (index >= 0) SelectedTab = index;
         if (view.Wide is { } wide)
         {
             WideText = wide.Text;

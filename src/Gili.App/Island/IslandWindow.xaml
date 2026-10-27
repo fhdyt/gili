@@ -177,6 +177,10 @@
                         </StackPanel>
                     </Canvas>
                 </Grid>
+
+                <!-- A control island (PRD 6.4): one control alone, 16 px from every edge, without the menu or Gili. -->
+                <Border x:Name="ControlLayer" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Top"
+                        Opacity="0" IsHitTestVisible="False" />
             </Grid>
         </Border>
 

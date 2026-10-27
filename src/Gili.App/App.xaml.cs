@@ -86,6 +86,7 @@ public partial class App : Application
         _bar.PageRequested += _islandController.Toggle;
         _bar.SettingsRequested += ShowSettings;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
+        _bar.PowerRequested += () => _islandController.Toggle(Core.Island.IslandPage.Controls);
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _bar.FullscreenChanged += _islandController.SetFullscreen;

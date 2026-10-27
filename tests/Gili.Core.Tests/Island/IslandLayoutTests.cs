@@ -5,8 +5,9 @@ namespace Gili.Core.Tests.Island;
 public class IslandLayoutTests
 {
     private static IslandGeometry Layout(
-        IslandMode mode, double content = 120, bool hovered = false, double screen = 1920, double expandedWidth = 560, double pageHeight = 112) =>
-        IslandLayout.For(mode, new IslandScreen(32, 24, screen, 1080), content, hovered, expandedWidth, pageHeight);
+        IslandMode mode, double content = 120, bool hovered = false, double screen = 1920, double expandedWidth = 560, double pageHeight = 112,
+        IslandPage page = IslandPage.Media) =>
+        IslandLayout.For(mode, new IslandScreen(32, 24, screen, 1080), content, hovered, expandedWidth, pageHeight, page);
 
     [Fact]
     public void Compact_is_never_narrower_than_200() => Assert.Equal(200, Layout(IslandMode.Compact, content: 100).Width);
@@ -43,6 +44,18 @@ public class IslandLayoutTests
     [Fact]
     public void Expanded_stops_at_the_screen_height_less_the_top_gap_twice() =>
         Assert.Equal(1080 - 8, Layout(IslandMode.Expanded, pageHeight: 2000).Height);
+
+    [Fact]
+    public void Control_island_is_360_wide_radius_28_and_as_tall_as_its_content() =>
+        Assert.Equal(new IslandGeometry(360, 229 + 32, 4, 28), Layout(IslandMode.Expanded, expandedWidth: 578, pageHeight: 229, page: IslandPage.Controls));
+
+    [Fact]
+    public void Control_island_leaves_12_each_side_on_a_narrow_screen() =>
+        Assert.Equal(300 - 24, Layout(IslandMode.Expanded, screen: 300, page: IslandPage.Controls).Width);
+
+    [Fact]
+    public void Control_island_stops_at_the_screen_height_less_the_top_gap_twice() =>
+        Assert.Equal(1080 - 8, Layout(IslandMode.Expanded, pageHeight: 2000, page: IslandPage.Controls).Height);
 
     [Fact]
     public void Expanded_takes_the_menu_width() => Assert.Equal(578, Layout(IslandMode.Expanded, expandedWidth: 578).Width);

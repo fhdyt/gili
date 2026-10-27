@@ -107,7 +107,8 @@ public sealed class IslandCoordinator
     {
         if (_fullscreen) return;
         _openPage = page;
-        _lastPage = page;
+        // A control island is opened from its bar icon only; clicking the island reopens the last real page.
+        if (page != IslandPage.Controls) _lastPage = page;
         Update();
     }
 

@@ -21,21 +21,33 @@ public static class IslandLayout
     public const double PageTop = 58;
     public const double PageBottom = 20;
 
+    /// <summary>A control island (PRD 6.4) is 360 wide, its content 16 from every edge.</summary>
+    public const double ControlWidth = 360;
+    public const double ControlPadding = 16;
+
     /// <summary>
     /// The open island is <paramref name="expandedWidth"/> wide (from the tab menu) and as tall as its page, up to the
-    /// screen with the same gap below as above. Every floating state keeps the compact island's top edge.
+    /// screen with the same gap below as above; a control island has no menu and is as tall as its control. Every
+    /// floating state keeps the compact island's top edge.
     /// </summary>
     public static IslandGeometry For(
-        IslandMode mode, IslandScreen screen, double contentWidth, bool hovered, double expandedWidth, double pageHeight)
+        IslandMode mode, IslandScreen screen, double contentWidth, bool hovered, double expandedWidth, double pageHeight,
+        IslandPage page = IslandPage.Media)
     {
         var top = (screen.BarHeight - screen.IslandHeight) / 2.0;
         var radius = screen.IslandHeight / 2.0;
+        var maxHeight = screen.Height - 2 * top;
         return mode switch
         {
+            IslandMode.Expanded when page == IslandPage.Controls => new(
+                Math.Min(ControlWidth, screen.Width - ScreenMargin),
+                Math.Min(pageHeight + 2 * ControlPadding, maxHeight),
+                top,
+                28),
             IslandMode.Wide => new(Math.Max(MinCompactWidth, contentWidth + WidePadding), screen.IslandHeight, top, radius),
             IslandMode.Expanded => new(
                 expandedWidth,
-                Math.Clamp(PageTop + pageHeight + PageBottom, ExpandedMinHeight, screen.Height - 2 * top),
+                Math.Clamp(PageTop + pageHeight + PageBottom, ExpandedMinHeight, maxHeight),
                 top,
                 32),
             IslandMode.Card => new(Math.Min(560, screen.Width - ScreenMargin), 104, top, 28),

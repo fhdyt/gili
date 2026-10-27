@@ -220,6 +220,18 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void A_control_island_is_not_the_last_page_the_island_reopens()
+    {
+        _island.Open(IslandPage.Calendar);
+        _island.Toggle(IslandPage.Controls);
+        Assert.Equal(IslandPage.Controls, _island.View.Page);
+        _island.Close();
+
+        _island.OpenFor(_island.View.Slot);
+        Assert.Equal(IslandPage.Calendar, _island.View.Page);
+    }
+
+    [Fact]
     public void Clicking_the_island_opens_the_slot_activity_page_or_the_last_page()
     {
         _island.OpenFor(_island.View.Slot);
