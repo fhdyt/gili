@@ -10,6 +10,20 @@ public static class PackageInfo
 
     public static bool IsPackaged { get; } = Detect();
 
+    /// <summary>The Store copy was started by its StartupTask at sign-in rather than by the user.</summary>
+    public static bool StartedByStartupTask()
+    {
+        if (!IsPackaged) return false;
+        try
+        {
+            return Windows.ApplicationModel.AppInstance.GetActivatedEventArgs()?.Kind == Windows.ApplicationModel.Activation.ActivationKind.StartupTask;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>%LOCALAPPDATA%\Packages\&lt;package&gt;\LocalState, or null outside a package.</summary>
     public static string? LocalFolder() => IsPackaged ? ApplicationData.Current.LocalFolder.Path : null;
 

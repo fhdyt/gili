@@ -40,7 +40,8 @@ internal sealed class SingleInstance : IDisposable
     /// Returns null when another instance is running. <paramref name="wait"/> lets a restart after a crash wait
     /// for the dying instance to let go of the mutex instead of giving up at once.
     /// </summary>
-    public static SingleInstance? Acquire(TimeSpan wait, Action onActivateRequest, Action onQuitRequest)
+    /// <param name="signalExisting">False for a launch at sign-in: the running copy is left alone (LaunchRules).</param>
+    public static SingleInstance? Acquire(TimeSpan wait, bool signalExisting, Action onActivateRequest, Action onQuitRequest)
     {
         var mutex = new Mutex(initiallyOwned: false, MutexName);
         bool owned;
@@ -56,7 +57,7 @@ internal sealed class SingleInstance : IDisposable
         var signal = new EventWaitHandle(false, EventResetMode.AutoReset, SignalName);
         if (owned) return new SingleInstance(mutex, signal, onActivateRequest, onQuitRequest);
 
-        signal.Set();
+        if (signalExisting) signal.Set();
         signal.Dispose();
         mutex.Dispose();
         return null;

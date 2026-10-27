@@ -63,6 +63,7 @@ public partial class App : Application
 
         var restarted = e.Args.Contains("--restarted");
         _instance = SingleInstance.Acquire(restarted ? TimeSpan.FromSeconds(5) : TimeSpan.Zero,
+            LaunchRules.SignalsRunningCopy(e.Args, PackageInfo.StartedByStartupTask()),
             () => Dispatcher.InvokeAsync(ShowSettings),
             () => Dispatcher.InvokeAsync(Quit));
         if (_instance is null)
