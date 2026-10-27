@@ -43,6 +43,7 @@ public partial class App : Application
     private TimerService? _timers;
     private AlarmService? _alarms;
     private TodoService? _todos;
+    private NoteService? _notes;
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
     private SettingsWindow? _settingsWindow;
@@ -97,7 +98,8 @@ public partial class App : Application
         _timers = new TimerService(_database is null ? null : new TimerStore(_database));
         _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
         _todos = new TodoService(_database is null ? null : new TodoStore(_database));
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos)
+        _notes = new NoteService(OpenNotes());
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
         };
@@ -164,6 +166,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Before the database closes: what was typed in the last half second is written too (F-TOOL-09).
+        _notes?.Flush();
         _demo?.Stop();
         _sound?.Dispose();
         _backupTimer.Stop();
@@ -185,6 +189,7 @@ public partial class App : Application
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
+        _notes?.Flush();
         _bar?.ReleaseAppBar();
         _settings?.Flush();
         base.OnSessionEnding(e);
@@ -269,6 +274,16 @@ public partial class App : Application
         BackUp();
         _backupTimer.Tick += (_, _) => BackUp();
         _backupTimer.Start();
+    }
+
+    /// <summary>The notes table, without the empty notes a crash left behind while one was open (plan 2f decision 4).</summary>
+    private NoteStore? OpenNotes()
+    {
+        if (_database is null) return null;
+        var store = new NoteStore(_database);
+        var dropped = store.DeleteBlank();
+        if (dropped > 0) _log?.Write($"Dropped {dropped} empty note(s) left from the last run");
+        return store;
     }
 
     private void BackUp()
