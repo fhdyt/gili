@@ -48,6 +48,8 @@ public partial class IslandWindow : Window
     private readonly AlarmsViewModel _alarmsPage;
     private readonly CalendarViewModel _calendarPage;
     private readonly TodoViewModel _todoPage;
+    private readonly NotesViewModel _notesPage;
+    private NotesPage? _notesView;
     private string? _glowTimer;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
@@ -110,15 +112,18 @@ public partial class IslandWindow : Window
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
+        _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
         settings.Changed += _ =>
         {
             _alarmsPage.Refresh();
             _todoPage.Refresh();
+            _notesPage.Refresh();
         };
         // The island grows and shrinks with what its page lists (PRD 6.3: alarms, the day's items, today's tasks).
         island.Alarms.Changed += () => PageContentChanged(IslandPage.Alarms);
         _calendarPage.ContentChanged += () => PageContentChanged(IslandPage.Calendar);
         _todoPage.ContentChanged += () => PageContentChanged(IslandPage.Todo);
+        _notesPage.ContentChanged += () => PageContentChanged(IslandPage.Notes);
         // The Timer page's glow follows the segment and the pomodoro phase.
         island.Timers.Changed += () =>
         {
@@ -152,8 +157,8 @@ public partial class IslandWindow : Window
         _awayTimer.Tick += (_, _) =>
         {
             _awayTimer.Stop();
-            // Not while typing in the island (mockup armLeave).
-            if (_mode == IslandMode.Expanded && !Body.IsMouseOver && Keyboard.FocusedElement is not TextBox) _island.Close();
+            // Not while typing in the island or dragging a note (mockup armLeave).
+            if (_mode == IslandMode.Expanded && !Body.IsMouseOver && Keyboard.FocusedElement is not TextBox && !_notesPage.IsDragging) _island.Close();
         };
         Deactivated += (_, _) =>
         {
@@ -498,12 +503,17 @@ public partial class IslandWindow : Window
     {
         if (mode == IslandMode.Expanded && previous != IslandMode.Expanded)
         {
+            // Card times move on while the island is closed ("19:20" becomes "Yesterday").
+            if (_island.View.Page == IslandPage.Notes) _notesPage.Refresh();
             _previousForeground = ForegroundWindow.Get();
             WindowStyles.SetNoActivate(_hwnd, false);
             Activate();
         }
         else if (mode != IslandMode.Expanded && previous == IslandMode.Expanded)
         {
+            // What was typed is written, and the island opens on the grid next time (plan 2f decision 12).
+            _notesPage.CloseEditorNow();
+            _island.Notes.Flush();
             _awayTimer.Stop();
             WindowStyles.SetNoActivate(_hwnd, true);
             if (IsActive) ForegroundWindow.Restore(_previousForeground);
@@ -513,8 +523,15 @@ public partial class IslandWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (_mode != IslandMode.Expanded) return;
+        // The Notes page answers Esc in its editor and search, and the editor's own keys, first (plan 2f decision 11).
+        if (_island.View.Page == IslandPage.Notes && _notesView?.HandleKey(e) == true)
+        {
+            e.Handled = true;
+            return;
+        }
         // A text field keeps its arrows, and its page decides what Esc does (cancel the form, not close the island).
-        if (_mode != IslandMode.Expanded || e.OriginalSource is TextBox) return;
+        if (e.OriginalSource is TextBox) return;
         switch (e.Key)
         {
             case Key.Escape:
@@ -676,6 +693,7 @@ public partial class IslandWindow : Window
         IslandPage.Alarms => new AlarmsPage(_alarmsPage),
         IslandPage.Calendar => new CalendarPage(_calendarPage),
         IslandPage.Todo => new TodoPage(_todoPage),
+        IslandPage.Notes => _notesView = new NotesPage(_notesPage),
         _ => Placeholder(tab),
     };
 
@@ -805,6 +823,9 @@ public partial class IslandWindow : Window
                 if (_island.View.Page == IslandPage.Alarms) _alarmsPage.Refresh();
                 if (_island.View.Page == IslandPage.Calendar) _calendarPage.ShowToday();
                 if (_island.View.Page == IslandPage.Todo) _todoPage.Refresh();
+                if (_island.View.Page == IslandPage.Notes) _notesPage.Refresh();
+                // Leaving Notes writes what waits (mockup goPage flushNote).
+                else _island.Notes.Flush();
                 _pageHeight = PageHeight();
                 if (animate) Relayout(SpringParameters.Open);
                 UpdateGlow();

@@ -1,0 +1,361 @@
+<UserControl x:Class="Gili.App.Island.NotesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls"
+             xmlns:i="clr-namespace:Gili.App.Island">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+
+        <!-- A named group for screen readers (role="group" / "radiogroup" / "dialog"), drawing nothing itself. -->
+        <Style x:Key="Group" TargetType="GroupBox">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GroupBox">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Thin dark scroll bar (mockup scrollbar-width:thin, #48484A on transparent). -->
+        <Style x:Key="ThinBar" TargetType="ScrollBar">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Width" Value="8" />
+            <Setter Property="MinWidth" Value="8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Width="6" CornerRadius="3" Background="#48484A" />
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The grid and the note text scroll under a thin bar that sits in the padding beside them, so it never covers text. -->
+        <Style x:Key="ThinScroller" TargetType="ScrollViewer">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid>
+                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}" />
+                            <ScrollBar x:Name="PART_VerticalScrollBar" Style="{StaticResource ThinBar}" HorizontalAlignment="Right" Margin="0,0,-10,0"
+                                       Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Value="{TemplateBinding VerticalOffset}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Search notes (mockup .ntop .field): 32 px, radius 10, padding 0 12, #1C1C1E, a 1 px #636366 ring when focused. -->
+        <Style x:Key="SearchField" TargetType="TextBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#F5F5F7" />
+            <Setter Property="CaretBrush" Value="#F5F5F7" />
+            <Setter Property="SelectionBrush" Value="#0A84FF" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <!-- 9 + the 1 px ring + the text view's own 2 px = the mockup's 12 px. -->
+                            <Border x:Name="Bg" Height="32" CornerRadius="10" Background="#1C1C1E" BorderBrush="Transparent" BorderThickness="1" Padding="9,0">
+                                <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Focusable="False"
+                                              HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                            </Border>
+                            <TextBlock x:Name="Hint" Text="Search notes" Foreground="#636366" Margin="12,0" VerticalAlignment="Center"
+                                       IsHitTestVisible="False" Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#636366" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- New note (mockup .ntop .nnew): 32 px, radius 10, padding 0 12, #F5F5F7 (#D1D1D6 on hover), black 13 semibold, 0.97 pressed. -->
+        <Style x:Key="NewNote" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Height="32" CornerRadius="10" Padding="12,0" Background="#F5F5F7" RenderTransformOrigin="0.5,0.5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#D1D1D6" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The note text (mockup .ned textarea): no box, white text at line height 1.6, placeholder #636366. -->
+        <Style x:Key="NoteBox" TargetType="TextBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#F5F5F7" />
+            <Setter Property="CaretBrush" Value="#F5F5F7" />
+            <Setter Property="SelectionBrush" Value="#0A84FF" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <!-- The text view keeps 2 px on each side; the text lines up with the swatches 14 px in. -->
+                        <ScrollViewer x:Name="PART_ContentHost" Style="{StaticResource ThinScroller}" Margin="-2,0,0,0" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- A colour (mockup .nsw button): 20 px, a 20% white inner line, 1.12 on hover; chosen: 2 px black, then 2 px #F5F5F7. -->
+        <Style x:Key="Swatch" TargetType="ToggleButton">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style>
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <Ellipse Margin="-5" Stroke="#0A84FF" StrokeThickness="2" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid Width="20" Height="20" RenderTransformOrigin="0.5,0.5" Background="Transparent">
+                            <Grid.RenderTransform>
+                                <ScaleTransform x:Name="Grow" />
+                            </Grid.RenderTransform>
+                            <Ellipse x:Name="Outer" Margin="-4" Fill="#F5F5F7" Visibility="Collapsed" />
+                            <Ellipse x:Name="Inner" Margin="-2" Fill="#000000" Visibility="Collapsed" />
+                            <Ellipse Fill="{TemplateBinding Background}" />
+                            <Ellipse Margin="0.5" Stroke="#33FFFFFF" StrokeThickness="1" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Outer" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Inner" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Grow" Storyboard.TargetProperty="ScaleX" To="1.12" Duration="0:0:0.15"
+                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                            <DoubleAnimation Storyboard.TargetName="Grow" Storyboard.TargetProperty="ScaleY" To="1.12" Duration="0:0:0.15"
+                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Grow" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.15"
+                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                            <DoubleAnimation Storyboard.TargetName="Grow" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.15"
+                                                             EasingFunction="{x:Static c:BezierEase.Pop}" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- A text size (mockup .nfs button): 26 × 22, radius 7, grey "A"; white on hover; chosen: white 18% behind it. -->
+        <Style x:Key="SizeOption" TargetType="RadioButton">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" Width="26" Height="22" CornerRadius="7" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#F5F5F7" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#2EFFFFFF" />
+                                <Setter Property="Foreground" Value="#F5F5F7" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Delete (mockup .ndel): padding 4 10, radius 8, grey; #1C1C1E and red on hover; asking: red with white text. -->
+        <Style x:Key="NoteDelete" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" CornerRadius="8" Padding="10,4" Background="Transparent">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#1C1C1E" />
+                                <Setter Property="Foreground" Value="#FF453A" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsConfirmingDelete}" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#FF453A" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Done (mockup .pill.pri.sm): 30 px white pill with black text. -->
+        <Style x:Key="DonePill" TargetType="Button" BasedOn="{StaticResource SmallPill}">
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="Background" Value="#F5F5F7" />
+            <Setter Property="Tag" Value="#D1D1D6" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        </Style>
+    </UserControl.Resources>
+
+    <!-- The Notes page (mockup section "Notes"): padding 2 24 4, the search row, the grid; the editor floats over both. -->
+    <Grid x:Name="Wrap" Margin="24,2,24,4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="SearchBox" Style="{StaticResource SearchField}" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Search notes" TextChanged="OnSearchChanged" />
+            <Button Grid.Column="1" Style="{StaticResource NewNote}" Margin="8,0,0,0" Click="OnNewNote">
+                <StackPanel Orientation="Horizontal">
+                    <c:IconView Glyph="{StaticResource Icon.Plus}" Width="16" Height="16" StrokeThickness="2.6" Foreground="#000000" />
+                    <TextBlock Text="New note" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- The grid scrolls only once the island is as tall as the screen; while a note is open it holds still. -->
+        <ScrollViewer x:Name="Scroller" Grid.Row="2" Style="{StaticResource ThinScroller}"
+                      PreviewMouseLeftButtonDown="OnGridPress" PreviewMouseWheel="OnGridWheel">
+            <Grid x:Name="GridContent" VerticalAlignment="Top" SizeChanged="OnGridSizeChanged">
+                <TextBlock Text="{Binding EmptyText}" FontSize="12" Foreground="#8E8E93" Margin="2,8"
+                           Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
+                <GroupBox Style="{StaticResource Group}" AutomationProperties.Name="Notes. Drag a note, or press Alt and an arrow key, to reorder.">
+                    <i:NoteGridPanel x:Name="Cards" />
+                </GroupBox>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- The open note: its own card grown in place (mockup .ned). Frame and radius come from springs in code; the
+             content is laid out once at the final size and pinned to the corner the frame grows from. -->
+        <Canvas x:Name="EditorLayer" Grid.RowSpan="3" Visibility="Collapsed" Opacity="0">
+            <c:SoftShadowView x:Name="EditorShadow" IsHitTestVisible="False" />
+            <Border x:Name="Editor" MouseWheel="OnEditorWheel">
+                <Grid>
+                    <Canvas>
+                        <GroupBox x:Name="EditorContent" Style="{StaticResource Group}" AutomationProperties.Name="Edit note" Opacity="0">
+                            <Grid Margin="14,12,14,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid>
+                                    <TextBlock x:Name="Placeholder" Text="Write something. The first line becomes the title." Foreground="#636366"
+                                               TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" IsHitTestVisible="False"
+                                               Visibility="Collapsed" />
+                                    <TextBox x:Name="EditorText" Style="{StaticResource NoteBox}" AutomationProperties.Name="Note text"
+                                             Text="{Binding Body, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+
+                                <!-- Colours, then the text size at the end of the row (mockup .nrow: 8 px above, 12 apart). -->
+                                <DockPanel Grid.Row="1" Margin="0,8,0,0">
+                                    <GroupBox DockPanel.Dock="Right" Style="{StaticResource Group}" Margin="12,0,0,0" AutomationProperties.Name="Text size">
+                                        <Border CornerRadius="9" Background="#14FFFFFF" Padding="2">
+                                            <StackPanel x:Name="SizePicker" Orientation="Horizontal" />
+                                        </Border>
+                                    </GroupBox>
+                                    <GroupBox Style="{StaticResource Group}" AutomationProperties.Name="Note color" VerticalAlignment="Center">
+                                        <StackPanel x:Name="Swatches" Orientation="Horizontal" Margin="2,0" />
+                                    </GroupBox>
+                                </DockPanel>
+
+                                <!-- Saved, Delete and Done (mockup .nfoot: 6 px above, 12 px grey). -->
+                                <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Style="{StaticResource NoteDelete}" Command="{Binding DeleteCommand}" Content="{Binding DeleteText}" />
+                                        <Button Style="{StaticResource DonePill}" Margin="6,0,0,0" Command="{Binding DoneCommand}" Content="Done" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse x:Name="SaveDot" Width="6" Height="6" Fill="#30D158" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding SaveText}" FontSize="12" Foreground="#8E8E93" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Grid>
+                        </GroupBox>
+                    </Canvas>
+                    <Border x:Name="EditorEdge" BorderBrush="#1AFFFFFF" BorderThickness="1" IsHitTestVisible="False" />
+                </Grid>
+            </Border>
+        </Canvas>
+    </Grid>
+</UserControl>

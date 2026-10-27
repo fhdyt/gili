@@ -1,0 +1,23 @@
+<UserControl x:Class="Gili.App.Island.NoteCardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls"
+             Focusable="True" IsTabStop="True" Cursor="Hand" FocusVisualStyle="{x:Null}">
+
+    <!-- One note card (mockup .ncard): padding 10 × 12, radius 12, the note's colour, a 5% white inner line. -->
+    <Grid>
+        <Border x:Name="Fill" CornerRadius="12" Padding="12,10" Background="#1C1C1E">
+            <StackPanel>
+                <TextBlock x:Name="Title" FontWeight="SemiBold" Foreground="#F5F5F7" TextWrapping="Wrap" />
+                <!-- At most 8 lines at 1.45, cut with "…". -->
+                <c:ClampedText x:Name="Body" MaxLines="8" />
+                <TextBlock x:Name="Time" FontSize="11" Margin="0,8,0,0" Typography.NumeralAlignment="Tabular" />
+            </StackPanel>
+        </Border>
+        <Border CornerRadius="12" BorderBrush="#0DFFFFFF" BorderThickness="1" IsHitTestVisible="False" />
+        <!-- Hover: white 6% over the card, in place of the mockup's brightness(1.15) (plan 2f decision 9). -->
+        <Border x:Name="Hover" CornerRadius="12" Background="#0FFFFFFF" Opacity="0" IsHitTestVisible="False" />
+        <!-- The mockup's :focus-visible outline, 2 px blue 2 px outside the corners; part of the card, so it moves with it. -->
+        <Border x:Name="Ring" Margin="-4" CornerRadius="16" BorderBrush="#0A84FF" BorderThickness="2" IsHitTestVisible="False" Visibility="Collapsed" />
+    </Grid>
+</UserControl>

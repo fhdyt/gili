@@ -15,7 +15,6 @@ public sealed record IslandTab(IslandPage Page, string Name, Geometry Glyph, str
 
 public sealed partial class IslandViewModel : ObservableObject
 {
-    private const string Phase2 = "Coming in Phase 2";
     private const string Phase3 = "Coming in Phase 3";
     private const string Phase4 = "Coming in Phase 4";
     private static readonly Color FallbackGlow = Color.FromRgb(0x30, 0xD1, 0x58);
@@ -123,7 +122,7 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Alarms, "Alarms", Glyph("Icon.Alarm"), null),
             new(IslandPage.Calendar, "Calendar", Glyph("Icon.Calendar"), null),
             new(IslandPage.Todo, "Todo", Glyph("Icon.Todo"), null),
-            new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), Phase2),
+            new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), null),
             new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), Phase3),
             new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), Phase3),

@@ -16,8 +16,10 @@ public sealed class SoftShadowView : FrameworkElement
     public static readonly DependencyProperty CornerRadiusProperty = DependencyProperty.Register(
         nameof(CornerRadius), typeof(double), typeof(SoftShadowView), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private static readonly IReadOnlyList<(ShadowLayer Layer, Brush Brush)> Layers =
-        [.. SoftShadow.Island.SelectMany(s => SoftShadow.Layers(s, Steps)).Select(l => (l, Black(l.Alpha)))];
+    private static readonly IReadOnlyList<(ShadowLayer Layer, Brush Brush)> IslandLayers = LayersOf(SoftShadow.Island, Steps);
+
+    private IReadOnlyList<(ShadowLayer Layer, Brush Brush)> _layers = IslandLayers;
+    private IReadOnlyList<ShadowSpec> _shadows = SoftShadow.Island;
 
     public double CornerRadius
     {
@@ -25,9 +27,22 @@ public sealed class SoftShadowView : FrameworkElement
         set => SetValue(CornerRadiusProperty, value);
     }
 
+    /// <summary>The shadows drawn; the floating island's unless set.</summary>
+    public IReadOnlyList<ShadowSpec> Shadows
+    {
+        get => _shadows;
+        set
+        {
+            _shadows = value;
+            // A wider blur needs more rectangles, or their edges show as bands (about one per 2 px of blur).
+            _layers = LayersOf(value, Math.Max(Steps, (int)Math.Ceiling(value.Max(s => s.Blur) / 2)));
+            InvalidateVisual();
+        }
+    }
+
     protected override void OnRender(DrawingContext dc)
     {
-        foreach (var (layer, brush) in Layers)
+        foreach (var (layer, brush) in _layers)
         {
             var width = ActualWidth + 2 * layer.Inflate;
             var height = ActualHeight + 2 * layer.Inflate;
@@ -36,6 +51,9 @@ public sealed class SoftShadowView : FrameworkElement
             dc.DrawRoundedRectangle(brush, null, new Rect(-layer.Inflate, -layer.Inflate + layer.OffsetY, width, height), radius, radius);
         }
     }
+
+    private static IReadOnlyList<(ShadowLayer Layer, Brush Brush)> LayersOf(IReadOnlyList<ShadowSpec> shadows, int steps) =>
+        [.. shadows.SelectMany(s => SoftShadow.Layers(s, steps)).Select(l => (l, Black(l.Alpha)))];
 
     private static Brush Black(double alpha)
     {

@@ -15,6 +15,9 @@ public static class SoftShadow
     /// <summary>The floating island's two shadows (mockup .island.float: 0 22 44 −14 black 70%, 0 8 18 −10 black 50%).</summary>
     public static readonly IReadOnlyList<ShadowSpec> Island = [new(22, 44, -14, 0.7), new(8, 18, -10, 0.5)];
 
+    /// <summary>The open note editor over the grid (mockup .ned: 0 24 48 −12 black 85%).</summary>
+    public static readonly IReadOnlyList<ShadowSpec> NoteEditor = [new(24, 48, -12, 0.85)];
+
     /// <summary>
     /// <paramref name="steps"/> rectangles spread evenly across the blur around the spread edge; where they all overlap
     /// they add up to the shadow's opacity, and toward the outside fewer overlap, so the edge fades.
