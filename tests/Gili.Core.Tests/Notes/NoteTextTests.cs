@@ -55,6 +55,14 @@ public class NoteTextTests
     }
 
     [Fact]
+    public void Edited_names_the_day_up_to_6_days_back_then_the_date()
+    {
+        // Now is Tuesday 27 Oct: Wednesday 21 Oct is 6 days back, Tuesday 20 Oct is 7.
+        Assert.Equal("Wed", NoteText.Edited(new DateTimeOffset(2026, 10, 21, 0, 0, 0, Wib), Now, Jakarta, true));
+        Assert.Equal("20 Oct", NoteText.Edited(new DateTimeOffset(2026, 10, 20, 23, 59, 0, Wib), Now, Jakarta, true));
+    }
+
+    [Fact]
     public void Edited_uses_the_zone_not_the_offset()
     {
         // 17:30 UTC on 26 Oct is 00:30 on 27 Oct in WIB.

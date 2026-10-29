@@ -1,9 +1,12 @@
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using Gili.Core.Notes;
 
 namespace Gili.App.Island;
@@ -134,10 +137,28 @@ public partial class NoteCardView : UserControl
         e.Handled = true;
     }
 
+    /// <summary>Screen readers meet the card as a button named by its title, which Invoke opens like Enter does.</summary>
+    protected override AutomationPeer OnCreateAutomationPeer() => new CardPeer(this);
+
     private static SolidColorBrush Frozen(byte a, byte r, byte g, byte b)
     {
         var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b));
         brush.Freeze();
         return brush;
+    }
+
+    private sealed class CardPeer(NoteCardView card) : UserControlAutomationPeer(card), IInvokeProvider
+    {
+        protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Button;
+
+        public override object GetPattern(PatternInterface patternInterface) =>
+            patternInterface == PatternInterface.Invoke ? this : base.GetPattern(patternInterface);
+
+        // Like ButtonAutomationPeer: the click runs after the call returns, so the screen reader is not kept waiting.
+        void IInvokeProvider.Invoke()
+        {
+            if (!IsEnabled()) throw new ElementNotEnabledException();
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, () => card.Opening?.Invoke(card));
+        }
     }
 }

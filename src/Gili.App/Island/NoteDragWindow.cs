@@ -27,6 +27,7 @@ public sealed class NoteDragWindow : Window
     private readonly Grid _lift;
     private IntPtr _hwnd;
     private Point _at;
+    private Point _to;
     private EventHandler? _landing;
     private TaskCompletionSource? _landed;
 
@@ -123,7 +124,7 @@ public sealed class NoteDragWindow : Window
     {
         SetLifted(false);
         var from = _at;
-        var to = screenSlot.TopLeft;
+        var to = _to = screenSlot.TopLeft;
         if (!SystemParameters.ClientAreaAnimation || _hwnd == IntPtr.Zero)
         {
             MoveTo(to);
@@ -141,6 +142,14 @@ public sealed class NoteDragWindow : Window
         };
         CompositionTarget.Rendering += _landing;
         return landed.Task;
+    }
+
+    /// <summary>A landing still in flight ends in its slot at once.</summary>
+    public void Land()
+    {
+        if (_landing is null) return;
+        StopLanding();
+        MoveTo(_to);
     }
 
     protected override void OnClosed(EventArgs e)

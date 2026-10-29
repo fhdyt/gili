@@ -45,6 +45,7 @@ public partial class NotesPage : UserControl
     private bool _shutting;
     private long? _source;
     private bool _sourceIsNew;
+    private bool _sourceHidden;
     private NoteRect _from;
     private GrowX _growX;
     private GrowY _growY;
@@ -215,7 +216,8 @@ public partial class NotesPage : UserControl
             return;
         }
         if (_press is not { } press) return;
-        if (e.LeftButton != MouseButtonState.Pressed)
+        // Released, or the card lost the mouse it took on the press (Windows took it away): no drag comes of it.
+        if (e.LeftButton != MouseButtonState.Pressed || !press.Card.IsMouseCaptured)
         {
             _press = null;
             return;
@@ -243,8 +245,32 @@ public partial class NotesPage : UserControl
         if (_drag is { Landing: false }) LetGo(instant: false);
     }
 
-    /// <summary>The island closes: a lifted card is let go at once, in the order it reached.</summary>
-    public void EndDrag() => LetGo(instant: true);
+    /// <summary>The island closes: a lifted card is let go at once, in the order it reached, and a landing ends in its slot.</summary>
+    public void EndDrag()
+    {
+        if (_drag is not { Landing: true } landing)
+        {
+            LetGo(instant: true);
+            return;
+        }
+        landing.Window.Land();
+        Landed(landing);
+    }
+
+    /// <summary>
+    /// The wheel while a card is lifted (the page holds the mouse, so the grid never sees it): the grid scrolls as it
+    /// would under the pointer, the card stays under the pointer, and the order follows the slot now under it.
+    /// </summary>
+    public bool ScrollLifted(MouseWheelEventArgs e)
+    {
+        if (_drag is not { Landing: false } drag) return false;
+        var offset = WheelScroll.Offset(Scroller.VerticalOffset, Scroller.ScrollableHeight, e.Delta, SystemParameters.WheelScrollLines, Scroller.ViewportHeight);
+        if (offset == Scroller.VerticalOffset) return true;
+        Scroller.ScrollToVerticalOffset(offset);
+        UpdateLayout();
+        Follow(drag, e);
+        return true;
+    }
 
     /// <summary>
     /// The card lifts (PRD 6.3 "Satu benda dari awal sampai akhir"): from now on it is a window above the island that
@@ -303,11 +329,16 @@ public partial class NotesPage : UserControl
         _vm.Reorder(drag.Order);
         var kept = _cards.TryGetValue(drag.Card.Id, out var card) && ReferenceEquals(card, drag.Card);
         if (!instant && kept && IsVisible && LandingRect(drag.Card) is { } slot) await drag.Window.LandAsync(slot);
+        Landed(drag);
+    }
+
+    /// <summary>The card takes the window's place; the window goes once the frame with the card in it is on screen.</summary>
+    private void Landed(CardDrag drag)
+    {
         if (!ReferenceEquals(_drag, drag)) return;
         _drag = null;
         Dim(drag.Card, animate: false);
         _vm.IsDragging = false;
-        // The window goes once the frame with the card in it is on screen, so nothing blinks in between.
         AfterFrame(drag.Window.Close);
     }
 
@@ -352,9 +383,11 @@ public partial class NotesPage : UserControl
     {
         _vm.Open(id);
         if (!_vm.IsEditing) return;
+        // A new note's card hides now, so it never shows as "Empty note"; an existing card stays until the editor stands
+        // in its place (Grow), so no frame shows neither. The others start to dim now.
+        _sourceHidden = isNew || (_live && _source == id);
         _source = id;
         _sourceIsNew = isNew;
-        // Its card hides and the others start to dim now, before the editor grows, so no frame shows them as they were.
         DimAll(animate: true);
         ShowColor(animate: _live);
         Scroller.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
@@ -379,6 +412,8 @@ public partial class NotesPage : UserControl
         EditorContent.Height = frame.Height;
         var animated = SystemParameters.ClientAreaAnimation;
         _shutting = false;
+        _sourceHidden = true;
+        if (_source is { } id && _cards.TryGetValue(id, out var card)) Dim(card, animate: false);
         if (!_live)
         {
             _live = true;
@@ -450,6 +485,7 @@ public partial class NotesPage : UserControl
         EditorContent.BeginAnimation(OpacityProperty, null);
         EditorContent.Opacity = 0;
         _source = null;
+        _sourceHidden = false;
         DimAll(animate: false);
         Reserve(false);
     }
@@ -462,7 +498,7 @@ public partial class NotesPage : UserControl
 
     private void Dim(NoteCardView card, bool animate)
     {
-        var hidden = card.Id == _source || ReferenceEquals(card, _drag?.Card);
+        var hidden = (_sourceHidden && card.Id == _source) || ReferenceEquals(card, _drag?.Card);
         card.IsHitTestVisible = !hidden;
         var target = hidden ? 0 : _vm.IsEditing ? 0.3 : 1;
         if (hidden || !animate)

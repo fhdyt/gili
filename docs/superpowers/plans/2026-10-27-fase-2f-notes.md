@@ -32,7 +32,7 @@
 7. **Belum ada note sama sekali**: grid menampilkan `No notes yet.` (mockup menampilkan `No notes match.` untuk dua keadaan itu). Ditambahkan ke mockup dan PRD di Task 3.
 8. **`hint()` mockup tidak dibawa.** `Note deleted` diganti gerak memudar dan merapat. Selama pencarian aktif, kartu tidak terangkat (klik tetap membuka). Mockup diubah sama di Task 3.
 9. **Hover kartu.** WPF tidak punya `filter: brightness(1.15)`, jadi lapisan putih 6% di atas kartu saat hover dipakai sebagai gantinya (dibandingkan lewat potret di Task 5).
-10. **Roda mouse.** Selama grid (atau area teks editor) bisa di-scroll, roda di atasnya menggulir isi itu dan tidak pindah halaman. Aturan ini berlaku untuk semua halaman: `OnPagesWheel` tidak pindah halaman kalau `ScrollViewer` di bawah pointer masih bisa bergerak ke arah itu.
+10. **Roda mouse.** Selama grid (atau area teks editor) bisa di-scroll, roda di atasnya menggulir isi itu dan tidak pindah halaman. Aturan ini berlaku untuk semua halaman: `OnPagesWheel` tidak pindah halaman kalau `ScrollViewer` di bawah pointer bisa di-scroll sama sekali, juga saat sudah di ujungnya (PRD 6.4 dan mockup; semula "masih bisa bergerak ke arah itu", diganti di perbaikan review akhir).
 11. **Esc.** Di editor: menutup editor, fokus ke kartunya; Esc berikutnya menutup pulau (PRD). Di kolom cari: mengosongkan teks; kalau sudah kosong, menutup pulau.
 12. **Pulau menutup saat editor terbuka**: isi disimpan, editor tertutup tanpa animasi (note kosong dibuang), dan pulau dibuka lagi dengan grid saja (PRD 6.4: ikon Notes membuka grid dengan editor tertutup).
 

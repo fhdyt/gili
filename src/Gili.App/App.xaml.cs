@@ -167,7 +167,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         // Before the database closes: what was typed in the last half second is written too (F-TOOL-09).
-        _notes?.Flush();
+        FlushNotes();
         _demo?.Stop();
         _sound?.Dispose();
         _backupTimer.Stop();
@@ -189,10 +189,23 @@ public partial class App : Application
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
-        _notes?.Flush();
+        FlushNotes();
         _bar?.ReleaseAppBar();
         _settings?.Flush();
         base.OnSessionEnding(e);
+    }
+
+    /// <summary>A note that cannot be written is logged, so quitting still releases the AppBar and never turns into a crash and restart.</summary>
+    private void FlushNotes()
+    {
+        try
+        {
+            _notes?.Flush();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
+        {
+            _log?.Write("Could not write the notes before closing", ex);
+        }
     }
 
     private void ShowSettings()

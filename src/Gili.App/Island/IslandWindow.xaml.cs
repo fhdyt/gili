@@ -865,22 +865,28 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>
-    /// The wheel over a page (plan 2f decision 10): a list under the pointer that can still move that way scrolls, and
-    /// only otherwise does the page switch; on Notes the vertical wheel only ever scrolls the cards (PRD 6.4 "Pindah
-    /// halaman"). Decided as the wheel tunnels down, because a ScrollViewer takes it even when it cannot move.
+    /// The wheel over a page (PRD 6.4 "Pindah halaman"): over a list that can scroll at all it only scrolls the list,
+    /// even at its ends, and only elsewhere does the page switch; on Notes the vertical wheel only ever scrolls the
+    /// cards, also under a lifted card. Decided as the wheel tunnels down, before a ScrollViewer takes it.
     /// </summary>
     private void OnPagesWheel(object sender, MouseWheelEventArgs e)
     {
-        if (CanScrollUnder(e.OriginalSource as DependencyObject, e.Delta)) return;
+        // A lifted card holds the mouse, so the wheel comes from the page itself rather than the grid under it.
+        if (_island.View.Page == IslandPage.Notes && _notesView?.ScrollLifted(e) == true)
+        {
+            e.Handled = true;
+            return;
+        }
+        if (ListUnder(e.OriginalSource as DependencyObject)) return;
         e.Handled = true;
         if (_island.View.Page != IslandPage.Notes) Scroll(-e.Delta);
     }
 
-    private bool CanScrollUnder(DependencyObject? element, int delta)
+    private bool ListUnder(DependencyObject? element)
     {
         for (; element is not null && !ReferenceEquals(element, PageArea); element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
         {
-            if (element is ScrollViewer list && WheelScroll.CanScroll(list.VerticalOffset, list.ScrollableHeight, delta)) return true;
+            if (element is ScrollViewer list && WheelScroll.KeepsWheel(list.ScrollableHeight)) return true;
         }
         return false;
     }
