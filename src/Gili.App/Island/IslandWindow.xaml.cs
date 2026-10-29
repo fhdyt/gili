@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using Gili.App.Controls;
 using Gili.App.Mascot;
 using Gili.Core.Island;
+using Gili.Core.Layout;
 using Gili.Core.Mascot;
 using Gili.Core.Motion;
 using Gili.Platform.Interop;
@@ -511,7 +512,8 @@ public partial class IslandWindow : Window
         }
         else if (mode != IslandMode.Expanded && previous == IslandMode.Expanded)
         {
-            // What was typed is written, and the island opens on the grid next time (plan 2f decision 12).
+            // A dragged card is let go, what was typed is written, and the island opens on the grid next time (plan 2f decision 12).
+            _notesView?.EndDrag();
             _notesPage.CloseEditorNow();
             _island.Notes.Flush();
             _awayTimer.Stop();
@@ -854,18 +856,33 @@ public partial class IslandWindow : Window
         }
     }
 
-    /// <summary>Arrow keys and swipes walk the menu; a control island has none (PRD 6.4).</summary>
+    /// <summary>Arrow keys and swipes walk the menu; a control island has none (PRD 6.4), and a dragged note holds the page.</summary>
     private void StepPage(int direction)
     {
-        if (ShowsControl) return;
+        if (ShowsControl || _notesPage.IsDragging) return;
         var next = Math.Clamp(_vm.SelectedTab + direction, 0, _vm.Tabs.Count - 1);
         if (next != _vm.SelectedTab) _island.Open(_vm.Tabs[next].Page);
     }
 
+    /// <summary>
+    /// The wheel over a page (plan 2f decision 10): a list under the pointer that can still move that way scrolls, and
+    /// only otherwise does the page switch; on Notes the vertical wheel only ever scrolls the cards (PRD 6.4 "Pindah
+    /// halaman"). Decided as the wheel tunnels down, because a ScrollViewer takes it even when it cannot move.
+    /// </summary>
     private void OnPagesWheel(object sender, MouseWheelEventArgs e)
     {
-        Scroll(-e.Delta);
+        if (CanScrollUnder(e.OriginalSource as DependencyObject, e.Delta)) return;
         e.Handled = true;
+        if (_island.View.Page != IslandPage.Notes) Scroll(-e.Delta);
+    }
+
+    private bool CanScrollUnder(DependencyObject? element, int delta)
+    {
+        for (; element is not null && !ReferenceEquals(element, PageArea); element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
+        {
+            if (element is ScrollViewer list && WheelScroll.CanScroll(list.VerticalOffset, list.ScrollableHeight, delta)) return true;
+        }
+        return false;
     }
 
     /// <summary>Wheel and touchpad deltas add up to one page per notch (120), then pause while the page slides.</summary>

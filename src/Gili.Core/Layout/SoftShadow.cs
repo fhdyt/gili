@@ -18,6 +18,9 @@ public static class SoftShadow
     /// <summary>The open note editor over the grid (mockup .ned: 0 24 48 −12 black 85%).</summary>
     public static readonly IReadOnlyList<ShadowSpec> NoteEditor = [new(24, 48, -12, 0.85)];
 
+    /// <summary>A note card lifted by a drag (mockup .fnote.proxy: 0 16 32 −10 black 75%).</summary>
+    public static readonly IReadOnlyList<ShadowSpec> LiftedNote = [new(16, 32, -10, 0.75)];
+
     /// <summary>
     /// <paramref name="steps"/> rectangles spread evenly across the blur around the spread edge; where they all overlap
     /// they add up to the shadow's opacity, and toward the outside fewer overlap, so the edge fades.

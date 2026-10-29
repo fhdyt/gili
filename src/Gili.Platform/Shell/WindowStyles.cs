@@ -12,6 +12,20 @@ public static class WindowStyles
         Win32.SetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE, style | Win32.WS_EX_TOOLWINDOW | Win32.WS_EX_NOACTIVATE);
     }
 
+    /// <summary>
+    /// A window the pointer goes through and that never takes focus, like a dragged note: clicks and the wheel reach
+    /// whatever is below it, and the window that holds the mouse keeps it.
+    /// </summary>
+    public static void MakeClickThrough(IntPtr hwnd)
+    {
+        var style = Win32.GetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE);
+        Win32.SetWindowLongPtr(hwnd, Win32.GWL_EXSTYLE, style | Win32.WS_EX_TOOLWINDOW | Win32.WS_EX_NOACTIVATE | Win32.WS_EX_TRANSPARENT);
+    }
+
+    /// <summary>Moves a window to a point in screen pixels, keeping its size and place in the z-order, without activating it.</summary>
+    public static void MoveTo(IntPtr hwnd, int x, int y) =>
+        Win32.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE);
+
     /// <summary>The island takes focus only while it is open, so Esc and the arrow keys reach it.</summary>
     public static void SetNoActivate(IntPtr hwnd, bool noActivate)
     {

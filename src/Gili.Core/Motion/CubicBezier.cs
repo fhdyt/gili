@@ -11,6 +11,9 @@ public sealed class CubicBezier(double x1, double y1, double x2, double y2)
     /// <summary>Gili's eyes changing shape, with a small overshoot.</summary>
     public static readonly CubicBezier Expression = new(0.32, 1.18, 0.5, 1);
 
+    /// <summary>The mockup's <c>--pop</c> curve, which overshoots a little: switches, and a dragged note landing in its slot.</summary>
+    public static readonly CubicBezier Pop = new(0.34, 1.3, 0.64, 1);
+
     /// <summary>The ambient glow drifting from one point to the next.</summary>
     public static readonly CubicBezier Glow = new(0.37, 0, 0.63, 1);
 

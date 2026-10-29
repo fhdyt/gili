@@ -8,6 +8,9 @@ internal static class Win32
     public const int GWL_EXSTYLE = -20;
     public const nint WS_EX_TOOLWINDOW = 0x00000080;
     public const nint WS_EX_NOACTIVATE = 0x08000000;
+    public const nint WS_EX_TRANSPARENT = 0x00000020;
+    public const uint SWP_NOSIZE = 0x0001;
+    public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint MONITOR_DEFAULTTOPRIMARY = 0x00000001;
     public const int VK_LBUTTON = 0x01;

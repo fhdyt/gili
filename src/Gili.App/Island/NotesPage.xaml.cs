@@ -49,6 +49,9 @@ public partial class NotesPage : UserControl
     private GrowX _growX;
     private GrowY _growY;
     private int _growing;
+    // A press on a card that may still become a drag, and the drag: lifted, then landing (PRD 6.3 "Mengatur urutan").
+    private (NoteCardView Card, Point At)? _press;
+    private CardDrag? _drag;
 
     public NotesPage(NotesViewModel vm)
     {
@@ -84,8 +87,8 @@ public partial class NotesPage : UserControl
 
     /// <summary>
     /// Keys the page answers before the island does (plan 2f decision 11): Esc closes the editor and then the island,
-    /// Esc in the search clears it and then closes the island, arrows in the size picker change the size, and
-    /// Ctrl+= / Ctrl+- / Ctrl+0 in the note text step it.
+    /// Esc in the search clears it and then closes the island, Alt + arrow on a card moves it, arrows in the size picker
+    /// change the size, and Ctrl+= / Ctrl+- / Ctrl+0 in the note text step it.
     /// </summary>
     public bool HandleKey(KeyEventArgs e)
     {
@@ -104,6 +107,13 @@ public partial class NotesPage : UserControl
             if (!ReferenceEquals(source, SearchBox)) return false;
             if (SearchBox.Text.Length > 0) _vm.Search = "";
             else _vm.CloseIsland();
+            return true;
+        }
+        // Left and up move the card one place earlier, right and down later; nothing at either end, but always
+        // handled, so Alt never opens the window menu. The card keeps the focus after it slides.
+        if (e.Key == Key.System && e.SystemKey is (Key.Left or Key.Right or Key.Up or Key.Down) && source is NoteCardView moved)
+        {
+            if (_drag is null && _vm.Step(moved.Id, e.SystemKey is Key.Left or Key.Up ? -1 : 1)) moved.Focus();
             return true;
         }
         if (!_vm.IsEditing || source is null || !Editor.IsAncestorOf(source)) return false;
@@ -134,7 +144,7 @@ public partial class NotesPage : UserControl
     /// <summary>The cards follow the visible notes: the same view per note, so a card that moves slides.</summary>
     private void SyncCards()
     {
-        var visible = _vm.Visible;
+        var visible = Ordered(_vm.Visible);
         var ids = visible.Select(n => n.Id).ToHashSet();
         foreach (var gone in _cards.Keys.Where(id => !ids.Contains(id)).ToList())
         {
@@ -152,6 +162,7 @@ public partial class NotesPage : UserControl
             {
                 card = new NoteCardView(note, _vm.Edited(note));
                 card.Opening += OnCardOpening;
+                card.Pressing += OnCardPressing;
                 _cards[note.Id] = card;
                 Dim(card, animate: false);
             }
@@ -159,6 +170,15 @@ public partial class NotesPage : UserControl
             Cards.Children.Remove(card);
             Cards.Children.Insert(i, card);
         }
+    }
+
+    /// <summary>During a drag the cards keep the order it gave them, which is written when the card is let go.</summary>
+    private IReadOnlyList<Note> Ordered(IReadOnlyList<Note> visible)
+    {
+        if (_drag is null) return visible;
+        var rank = new Dictionary<long, int>();
+        for (var i = 0; i < _drag.Order.Count; i++) rank[_drag.Order[i]] = i;
+        return [.. visible.OrderBy(n => rank.GetValueOrDefault(n.Id, int.MaxValue))];
     }
 
     /// <summary>A keystroke in the editor changes only its own card.</summary>
@@ -169,7 +189,152 @@ public partial class NotesPage : UserControl
 
     private void OnCardOpening(NoteCardView card)
     {
-        if (!_vm.IsEditing) Open(card.Id, isNew: false);
+        _press = null;
+        if (!_vm.IsEditing && _drag is null) Open(card.Id, isNew: false);
+    }
+
+    private void OnCardPressing(NoteCardView card, MouseButtonEventArgs e)
+    {
+        if (_drag is null && !_vm.IsEditing) _press = (card, e.GetPosition(this));
+    }
+
+    protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnPreviewMouseLeftButtonDown(e);
+        // A card under the pointer sets it again as the press reaches it.
+        _press = null;
+    }
+
+    /// <summary>A press that moves 6 px lifts the card, unless a search is on (it then no longer opens either).</summary>
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (_drag is { Landing: false } drag)
+        {
+            Follow(drag, e);
+            return;
+        }
+        if (_press is not { } press) return;
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            _press = null;
+            return;
+        }
+        var at = e.GetPosition(this);
+        if (!NoteDrag.Lifts(at.X - press.At.X, at.Y - press.At.Y)) return;
+        _press = null;
+        press.Card.CancelPress();
+        if (_vm.CanLift) Lift(press.Card, e);
+    }
+
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        _press = null;
+        if (_drag is not { Landing: false }) return;
+        LetGo(instant: false);
+        e.Handled = true;
+    }
+
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        // Windows took the mouse away mid-drag: the card is let go where it is.
+        if (_drag is { Landing: false }) LetGo(instant: false);
+    }
+
+    /// <summary>The island closes: a lifted card is let go at once, in the order it reached.</summary>
+    public void EndDrag() => LetGo(instant: true);
+
+    /// <summary>
+    /// The card lifts (PRD 6.3 "Satu benda dari awal sampai akhir"): from now on it is a window above the island that
+    /// follows the pointer 1:1 from where it is held. The card hides in the same frame; its slot still takes part in
+    /// the order. The page holds the mouse, so the island stays active and every move reaches it.
+    /// </summary>
+    private void Lift(NoteCardView card, MouseEventArgs e)
+    {
+        var topLeft = card.PointToScreen(new Point(0, 0));
+        var window = new NoteDragWindow(card.Note, _vm.Edited(card.Note), card.ActualWidth, card.ActualHeight, e.GetPosition(card))
+        {
+            Owner = Window.GetWindow(this),
+        };
+        _drag = new CardDrag(card, PointToScreen(e.GetPosition(this)) - topLeft, window, [.. Cards.Children.OfType<NoteCardView>().Select(c => c.Id)]);
+        _vm.IsDragging = true;
+        window.ShowAt(topLeft);
+        window.SetLifted(true);
+        Dim(card, animate: false);
+        Cursor = Cursors.Hand;
+        CaptureMouse();
+    }
+
+    /// <summary>
+    /// The window follows the pointer; over another card's resting slot in the visible grid the dragged note takes its
+    /// place, the cards slide 320 ms, and the next swap waits 260 ms. Outside the grid nothing moves.
+    /// </summary>
+    private void Follow(CardDrag drag, MouseEventArgs e)
+    {
+        drag.Window.MoveTo(PointToScreen(e.GetPosition(this)) - drag.Grab);
+        if (DateTime.UtcNow < drag.PausedUntil) return;
+        var view = e.GetPosition(Scroller);
+        if (view.X < 0 || view.Y < 0 || view.X >= Scroller.ActualWidth || view.Y >= Scroller.ActualHeight) return;
+        var at = e.GetPosition(Cards);
+        var order = NoteDrag.Reorder(drag.Order, Cards.Layout.Slots, drag.Card.Id, at.X, at.Y);
+        if (ReferenceEquals(order, drag.Order)) return;
+        drag.Order = order;
+        drag.PausedUntil = DateTime.UtcNow + NoteDrag.SwapPause;
+        for (var i = 0; i < order.Count; i++)
+        {
+            if (!_cards.TryGetValue(order[i], out var card) || ReferenceEquals(Cards.Children[i], card)) continue;
+            Cards.Children.Remove(card);
+            Cards.Children.Insert(i, card);
+        }
+    }
+
+    /// <summary>
+    /// Let go anywhere, inside the island or not: the order is written once, the window lands in the card's slot
+    /// (340 ms with a little bounce) and the card takes its place as it goes. The island closing lets go at once.
+    /// </summary>
+    private async void LetGo(bool instant)
+    {
+        if (_drag is not { Landing: false } drag) return;
+        drag.Landing = true;
+        ClearValue(CursorProperty);
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        _vm.Reorder(drag.Order);
+        var kept = _cards.TryGetValue(drag.Card.Id, out var card) && ReferenceEquals(card, drag.Card);
+        if (!instant && kept && IsVisible && LandingRect(drag.Card) is { } slot) await drag.Window.LandAsync(slot);
+        if (!ReferenceEquals(_drag, drag)) return;
+        _drag = null;
+        Dim(drag.Card, animate: false);
+        _vm.IsDragging = false;
+        // The window goes once the frame with the card in it is on screen, so nothing blinks in between.
+        AfterFrame(drag.Window.Close);
+    }
+
+    /// <summary>The card's resting slot in screen pixels, moved into the visible grid when it is scrolled out of view.</summary>
+    private Rect? LandingRect(NoteCardView card)
+    {
+        UpdateLayout();
+        if (Cards.SlotOf(card) is not { } slot) return null;
+        var at = Cards.TranslatePoint(new Point(slot.X, slot.Y), Scroller);
+        var land = NoteDrag.Landing(new NoteRect(at.X, at.Y, slot.Width, slot.Height), new NoteRect(0, 0, Scroller.ActualWidth, Scroller.ActualHeight));
+        return new Rect(Scroller.PointToScreen(new Point(land.X, land.Y)), Scroller.PointToScreen(new Point(land.Right, land.Bottom)));
+    }
+
+    /// <summary>Runs once the next frame has been drawn.</summary>
+    private static void AfterFrame(Action action)
+    {
+        var first = TimeSpan.MinValue;
+        EventHandler? tick = null;
+        tick = (_, e) =>
+        {
+            var now = ((RenderingEventArgs)e).RenderingTime;
+            if (first == TimeSpan.MinValue) first = now;
+            if (now == first) return;
+            CompositionTarget.Rendering -= tick;
+            action();
+        };
+        CompositionTarget.Rendering += tick;
     }
 
     private void OnNewNote(object sender, RoutedEventArgs e)
@@ -297,7 +462,7 @@ public partial class NotesPage : UserControl
 
     private void Dim(NoteCardView card, bool animate)
     {
-        var hidden = card.Id == _source;
+        var hidden = card.Id == _source || ReferenceEquals(card, _drag?.Card);
         card.IsHitTestVisible = !hidden;
         var target = hidden ? 0 : _vm.IsEditing ? 0.3 : 1;
         if (hidden || !animate)
@@ -529,6 +694,17 @@ public partial class NotesPage : UserControl
     }
 
     private static TimeSpan Ms(int milliseconds) => TimeSpan.FromMilliseconds(milliseconds);
+
+    /// <summary>A card being dragged: where it is held (screen pixels from its top-left), its window, and the order so far.</summary>
+    private sealed class CardDrag(NoteCardView card, Vector grab, NoteDragWindow window, IReadOnlyList<long> order)
+    {
+        public NoteCardView Card { get; } = card;
+        public Vector Grab { get; } = grab;
+        public NoteDragWindow Window { get; } = window;
+        public IReadOnlyList<long> Order { get; set; } = order;
+        public DateTime PausedUntil { get; set; }
+        public bool Landing { get; set; }
+    }
 
     private static SolidColorBrush Frozen(byte r, byte g, byte b)
     {

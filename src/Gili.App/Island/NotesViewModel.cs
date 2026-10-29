@@ -30,6 +30,9 @@ public sealed partial class NotesViewModel : ObservableObject
     [ObservableProperty] private bool _isSaving;
     [ObservableProperty] private string _saveText = "Saved";
 
+    /// <summary>A card is lifted or still landing: the island does not close on its own meanwhile.</summary>
+    [ObservableProperty] private bool _isDragging;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DeleteText))]
     private bool _isConfirmingDelete;
@@ -55,8 +58,8 @@ public sealed partial class NotesViewModel : ObservableObject
     /// <summary>The note in the editor; null while it is closed.</summary>
     public long? EditingId { get; private set; }
 
-    /// <summary>A card is being dragged (Task 5): the island does not close on its own meanwhile.</summary>
-    public bool IsDragging => false;
+    /// <summary>A card lifts only while nothing is searched and no note is open (PRD 6.3 "Mengatur urutan").</summary>
+    public bool CanLift => !IsEditing && NoteText.IsBlank(Search);
 
     public string DeleteText => IsConfirmingDelete ? "Click again to delete" : "Delete";
 
@@ -135,6 +138,21 @@ public sealed partial class NotesViewModel : ObservableObject
         if (index < 0) return;
         _visible[index] = note;
         CardChanged?.Invoke(note);
+    }
+
+    /// <summary>Puts the cards in this order (a drag); the order is written once, and not at all when nothing moved.</summary>
+    public void Reorder(IReadOnlyList<long> ids) => _notes.Reorder(ids);
+
+    /// <summary>
+    /// Alt + arrow: the note swaps places with the card next to it on screen (left and up are earlier), within the
+    /// whole order, so notes hidden by a search keep theirs. False at either end.
+    /// </summary>
+    public bool Step(long id, int delta)
+    {
+        if (NoteOrder.Neighbor([.. _visible.Select(n => n.Id)], id, delta) is not { } neighbor) return false;
+        List<long> order = [.. _notes.Notes.Select(n => n.Id)];
+        _notes.Reorder(NoteOrder.Move(order, id, order.IndexOf(neighbor)));
+        return true;
     }
 
     partial void OnSearchChanged(string value)

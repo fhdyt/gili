@@ -36,6 +36,9 @@ public partial class NoteCardView : UserControl
     /// <summary>Asked to open: pressed and released on the card, or Enter or Space.</summary>
     public event Action<NoteCardView>? Opening;
 
+    /// <summary>Pressed with the left button: the page turns it into a drag once the pointer moves 6 px.</summary>
+    public event Action<NoteCardView, MouseButtonEventArgs>? Pressing;
+
     public static Brush FillOf(int color) => Fills[NoteStyle.ClampColor(color)];
 
     public void Show(Note note, string edited)
@@ -88,20 +91,39 @@ public partial class NoteCardView : UserControl
         Hover.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(150)));
     }
 
-    // Task 5 turns a press that moves 6 px into a drag; a press released in place opens the note.
+    /// <summary>The press became a drag (or a move that is not one, while searching): letting go does not open the note.</summary>
+    public void CancelPress()
+    {
+        _pressed = false;
+        if (IsMouseCaptured) ReleaseMouseCapture();
+    }
+
+    // The card holds the mouse from the press, so the page sees every move, and a press let go anywhere before it has
+    // become a drag opens the note (mockup endNoteDrag).
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
         _pressed = true;
+        CaptureMouse();
+        Pressing?.Invoke(this, e);
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
-        if (!_pressed) return;
+        var open = _pressed;
         _pressed = false;
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        if (!open) return;
         Opening?.Invoke(this);
         e.Handled = true;
+    }
+
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        // The page took the mouse for a drag, or Windows took it away.
+        _pressed = false;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
