@@ -3203,7 +3203,7 @@ function dispDate(k){
   if(!k)return 'No date';
   if(k===dayOffset(0))return 'Today';
   if(k===dayOffset(1))return 'Tomorrow';
-  const d=keyDate(k);return `${cap(DOW[d.getDay()])} ${d.getDate()} ${cap(MON[d.getMonth()])}`;
+  const d=keyDate(k),yr=d.getFullYear()===new Date().getFullYear()?"":" "+d.getFullYear();return `${cap(DOW[d.getDay()])} ${d.getDate()} ${cap(MON[d.getMonth()])}${yr}`;
 }
 // '' = no date, null = not a date. Without a year it is this year.
 function dateParse(v){

@@ -9,6 +9,12 @@ public static class TodoText
 {
     public const int TitleLimit = 60;
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
+    public const string CalendarNote = "New tasks are added from Calendar in the island.";
+
+    private static readonly string[] Months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    private static readonly string[] Weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    private static readonly Regex IsoDate = new(@"^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})$", RegexOptions.Compiled);
+    private static readonly Regex NamedDate = new(@"^(?:([a-z]{3}) )?([0-9]{1,2}) ([a-z]{3})(?: ([0-9]{4}))?$", RegexOptions.Compiled);
 
     /// <summary>The title as saved: trimmed and at most 60 characters; null when nothing is left.</summary>
     public static string? Title(string text)
@@ -39,13 +45,6 @@ public static class TodoText
         var day = todo.DueDate is not { } due || due == today ? "today" : Day(due);
         return todo.DueTime is { } time ? $"Due {AlarmText.Time(time, use24Hour)} {day}" : $"Due {day}";
     }
-
-    public const string CalendarNote = "New tasks are added from Calendar in the island.";
-
-    private static readonly string[] Months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-    private static readonly string[] Weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-    private static readonly Regex IsoDate = new(@"^(\d{4})-(\d{1,2})-(\d{1,2})$", RegexOptions.Compiled);
-    private static readonly Regex NamedDate = new(@"^(?:([a-z]{3}) )?(\d{1,2}) ([a-z]{3})(?: (\d{4}))?$", RegexOptions.Compiled);
 
     /// <summary>
     /// The Date field (mockup dateParse): yyyy-MM-dd, d MMM, d MMM yyyy, ddd d MMM, today or tomorrow in any case; no year
@@ -78,19 +77,22 @@ public static class TodoText
         return true;
     }
 
-    /// <summary>The Date field filled from a task: the shown form (Thu 30 Oct), or blank without a date.</summary>
-    public static string DateInput(DateOnly? date) => date is { } d ? Day(d) : "";
+    /// <summary>The Date field filled from a task: the shown form (Thu 30 Oct, with the year when it is not this year), or blank without a date.</summary>
+    public static string DateInput(DateOnly? date, DateOnly today) => date is { } d ? DayWithYear(d, today) : "";
 
     /// <summary>The date on a Todo tab row: Today, Tomorrow or the day, or No date, plus " · 15:00" when it has a time.</summary>
     public static string Due(Todo todo, DateOnly today, bool use24Hour)
     {
-        var day = todo.DueDate is not { } due ? "No date" : due == today ? "Today" : due == today.AddDays(1) ? "Tomorrow" : Day(due);
+        var day = todo.DueDate is not { } due ? "No date" : due == today ? "Today" : due == today.AddDays(1) ? "Tomorrow" : DayWithYear(due, today);
         return todo.DueTime is { } time ? $"{day} · {AlarmText.Time(time, use24Hour)}" : day;
     }
+
+    private static string DayWithYear(DateOnly date, DateOnly today) => date.Year == today.Year ? Day(date) : $"{Day(date)} {date.Year}";
 
     /// <summary>An open task whose day has passed shows Overdue instead of its date.</summary>
     public static bool IsOverdue(Todo todo, DateOnly today) => !todo.IsDone && todo.DueDate is { } due && due < today;
 
+    /// <summary>The text under an empty Todo list.</summary>
     public static string Empty(TodoFilter filter) => filter switch
     {
         TodoFilter.Today => "No tasks for today",

@@ -66,17 +66,18 @@ public class TodoTextTests
     [InlineData("30 Oct 2027", 2027, 10, 30)]
     [InlineData("today", 2026, 10, 27)]
     [InlineData("Tomorrow", 2026, 10, 28)]
-    public void Date_input_reads_the_shown_form_and_rejects_nonsense(string text, int y, int m, int d)
+    public void Date_input_reads_the_shown_forms(string text, int y, int m, int d)
     {
         Assert.True(TodoText.TryDate(text, Tuesday, out var date));
         Assert.Equal(new DateOnly(y, m, d), date);
     }
 
     [Theory]
+    [InlineData("٣٠ Oct")]
     [InlineData("31 Feb")]
     [InlineData("abc")]
     [InlineData("30/10")]
-    public void Date_input_refuses_nonsense(string text)
+    public void Date_input_refuses_nonsense_and_non_ascii_digits(string text)
     {
         Assert.False(TodoText.TryDate(text, Tuesday, out _));
     }
@@ -88,8 +89,8 @@ public class TodoTextTests
         Assert.Null(date);
         Assert.True(TodoText.TryDate("  ", Tuesday, out date));
         Assert.Null(date);
-        Assert.Equal("", TodoText.DateInput(null));
-        Assert.Equal("Fri 30 Oct", TodoText.DateInput(new DateOnly(2026, 10, 30)));
+        Assert.Equal("", TodoText.DateInput(null, Tuesday));
+        Assert.Equal("Fri 30 Oct", TodoText.DateInput(new DateOnly(2026, 10, 30), Tuesday));
     }
 
     [Fact]
@@ -126,5 +127,23 @@ public class TodoTextTests
         Assert.Equal("No tasks yet", TodoText.Empty(TodoFilter.All));
         Assert.Equal("No finished tasks", TodoText.Empty(TodoFilter.Done));
         Assert.Equal("New tasks are added from Calendar in the island.", TodoText.CalendarNote);
+    }
+
+    [Theory]
+    [InlineData(2027, 11, 3)]
+    [InlineData(2028, 2, 29)]
+    [InlineData(2026, 10, 30)]
+    public void Another_years_date_round_trips_through_the_editor(int y, int m, int d)
+    {
+        var original = new DateOnly(y, m, d);
+        Assert.True(TodoText.TryDate(TodoText.DateInput(original, Tuesday), Tuesday, out var date));
+        Assert.Equal(original, date);
+    }
+
+    [Fact]
+    public void Another_years_date_shows_its_year()
+    {
+        Assert.Equal("Wed 3 Nov 2027", TodoText.DateInput(new DateOnly(2027, 11, 3), Tuesday));
+        Assert.Equal("Wed 3 Nov 2027 · 15:00", TodoText.Due(Task("a", new TimeOnly(15, 0), new DateOnly(2027, 11, 3)), Tuesday, true));
     }
 }
