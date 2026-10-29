@@ -75,4 +75,12 @@ public class NoteTextTests
         Assert.Equal("No notes match.", NoteText.NoMatch);
         Assert.Equal("No notes yet.", NoteText.NoNotes);
     }
+
+    [Fact]
+    public void Stored_bodies_break_lines_with_newlines_only()
+    {
+        Assert.Equal("Groceries\nmilk\n\neggs", NoteText.Stored("Groceries\r\nmilk\r\n\neggs"));
+        Assert.Equal("a\nb", NoteText.Stored("a\rb"));
+        Assert.Equal("plain", NoteText.Stored("plain"));
+    }
 }

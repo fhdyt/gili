@@ -285,7 +285,7 @@
             </Grid.ColumnDefinitions>
             <TextBox x:Name="SearchBox" Style="{StaticResource SearchField}" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
                      AutomationProperties.Name="Search notes" TextChanged="OnSearchChanged" />
-            <Button Grid.Column="1" Style="{StaticResource NewNote}" Margin="8,0,0,0" Click="OnNewNote">
+            <Button x:Name="NewNoteButton" Grid.Column="1" Style="{StaticResource NewNote}" Margin="8,0,0,0" Click="OnNewNote">
                 <StackPanel Orientation="Horizontal">
                     <c:IconView Glyph="{StaticResource Icon.Plus}" Width="16" Height="16" StrokeThickness="2.6" Foreground="#000000" />
                     <TextBlock Text="New note" Margin="6,0,0,0" VerticalAlignment="Center" />

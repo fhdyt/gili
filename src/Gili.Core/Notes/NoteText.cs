@@ -24,6 +24,9 @@ public static class NoteText
         return end < 0 ? "" : body[(end + 1)..].Trim();
     }
 
+    /// <summary>The body as it is kept: every line break a single \n (the editor's TextBox types \r\n).</summary>
+    public static string Stored(string body) => body.ReplaceLineEndings("\n");
+
     public static bool IsBlank(string body) => string.IsNullOrWhiteSpace(body);
 
     /// <summary>The card's accessible name: its title, or "Untitled note".</summary>

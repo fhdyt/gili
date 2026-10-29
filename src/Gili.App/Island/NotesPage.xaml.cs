@@ -61,6 +61,7 @@ public partial class NotesPage : UserControl
         BuildSwatches();
         BuildSizes();
         vm.CardsChanged += SyncCards;
+        vm.CardChanged += ShowCard;
         vm.EditorClosed += Shut;
         vm.PropertyChanged += OnChanged;
         SyncCards();
@@ -95,7 +96,9 @@ public partial class NotesPage : UserControl
             {
                 var id = _vm.EditingId;
                 _vm.CloseEditor();
+                // An emptied note is gone with its card; New note takes the focus, so the next Esc closes the island.
                 if (id is { } open && _cards.TryGetValue(open, out var card)) card.Focus();
+                else NewNoteButton.Focus();
                 return true;
             }
             if (!ReferenceEquals(source, SearchBox)) return false;
@@ -158,6 +161,12 @@ public partial class NotesPage : UserControl
         }
     }
 
+    /// <summary>A keystroke in the editor changes only its own card.</summary>
+    private void ShowCard(Note note)
+    {
+        if (_cards.TryGetValue(note.Id, out var card)) card.Show(note, _vm.Edited(note));
+    }
+
     private void OnCardOpening(NoteCardView card)
     {
         if (!_vm.IsEditing) Open(card.Id, isNew: false);
@@ -180,6 +189,8 @@ public partial class NotesPage : UserControl
         if (!_vm.IsEditing) return;
         _source = id;
         _sourceIsNew = isNew;
+        // Its card hides and the others start to dim now, before the editor grows, so no frame shows them as they were.
+        DimAll(animate: true);
         ShowColor(animate: _live);
         Scroller.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
         Reserve(true);
@@ -218,7 +229,6 @@ public partial class NotesPage : UserControl
         EditorContent.BeginAnimation(OpacityProperty, animated
             ? new DoubleAnimation(1, Ms(180)) { BeginTime = Ms(140) }
             : new DoubleAnimation(1, Ms(100)));
-        DimAll(animate: true);
         if (animated) MoveFrame(frame, 16, SpringParameters.Open);
         else SnapFrame(frame, 16);
         Dispatcher.InvokeAsync(() =>
@@ -279,7 +289,7 @@ public partial class NotesPage : UserControl
         Reserve(false);
     }
 
-    /// <summary>While a note is open the other cards step back to 30% in 220 ms; its own card is the editor, so it is hidden.</summary>
+    /// <summary>While a note is open the other cards step back to 30% in 220 ms; its own card is the editor, so it is hidden until it lands.</summary>
     private void DimAll(bool animate)
     {
         foreach (var card in _cards.Values) Dim(card, animate);
@@ -287,7 +297,7 @@ public partial class NotesPage : UserControl
 
     private void Dim(NoteCardView card, bool animate)
     {
-        var hidden = _live && card.Id == _source;
+        var hidden = card.Id == _source;
         card.IsHitTestVisible = !hidden;
         var target = hidden ? 0 : _vm.IsEditing ? 0.3 : 1;
         if (hidden || !animate)

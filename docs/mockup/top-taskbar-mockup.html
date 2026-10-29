@@ -543,7 +543,8 @@ li.done .chk .ic{opacity:1;transform:none}
 .nleft{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px}
 .ntop{display:flex;gap:8px;flex-shrink:0}
 .ntop .field{flex:1;min-width:0;height:32px;border-radius:10px;padding:0 12px}
-.ngrid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#48484a transparent}
+/* The grid's and the note text's scroll bars sit in the page's right padding, so they never take width from the cards or the text. */
+.ngrid{flex:1;min-height:0;margin-right:-12px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#48484a transparent}
 .ngin{position:relative}
 .ncard{position:absolute;left:0;top:0;padding:10px 12px;border-radius:12px;background:var(--nc,var(--surface));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
   cursor:grab;user-select:none;touch-action:none;transition:transform 320ms var(--out),box-shadow 150ms,background 200ms,filter 150ms,opacity 220ms}
@@ -594,8 +595,8 @@ li.done .chk .ic{opacity:1;transform:none}
 .nedin{position:absolute;display:flex;flex-direction:column;padding:12px 14px 10px;opacity:0;transition:opacity 120ms}
 .ned.open .nedin{opacity:1;transition:opacity 180ms ease 140ms}
 .nact{display:flex;align-items:center;gap:6px}
-.ned textarea{flex:1;resize:none;border:0;background:none;color:var(--text);padding:0;font:inherit;font-size:14px;line-height:1.6;outline:none;
-  scrollbar-width:thin;scrollbar-color:#48484a transparent}
+.ned textarea{flex:1;resize:none;border:0;background:none;color:var(--text);padding:0;margin-right:-12px;font:inherit;font-size:14px;line-height:1.6;outline:none;
+  scrollbar-width:thin;scrollbar-color:#48484a transparent;scrollbar-gutter:stable}
 .ned textarea::placeholder{color:var(--text3)}
 /* Grip along the editor's top edge: drag the open note out of the island to float it (PRD 6.3 "Note mengambang"). */
 .nedgrip{height:16px;margin:-6px -14px 2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab;touch-action:none;color:rgba(255,255,255,.3);transition:color 150ms}
@@ -2300,11 +2301,14 @@ function cardInner(n){
   return (t?`<div class="nt">${esc(t)}</div>`:'')+(b?`<div class="nb">${esc(b)}</div>`:'')+(!t&&!b?'<div class="nb">Empty note</div>':'')
     +`<div class="nm2">${esc(n.t)}</div>`;
 }
-function renderNotes(){
-  const list=visibleNotes();
+// slide: the cards already on screen move to their new slots (a note made or gone); otherwise all are placed at once.
+function renderNotes(slide){
+  const list=visibleNotes(),was={};
+  if(slide)nIn.querySelectorAll('.ncard').forEach(c=>{if(c.dataset.x!==undefined)was[c.dataset.id]=[c.dataset.x,c.dataset.y]});
   nIn.innerHTML=list.length?list.map(n=>`<div class="ncard fs${noteSize(n)} ${S.editing&&n.id===S.noteSel?'src':''} ${n.c?'tinted':''}" style="--nc:${noteColor(n)}" tabindex="0" role="button" data-id="${n.id}" aria-label="${esc(noteTitle(n)||'Untitled note')}">${cardInner(n)}</div>`).join('')
     :`<div class="none">${S.notes.some(n=>!n.f)?'No notes match.':'No notes yet.'}</div>`;
-  layoutNotes(true);
+  for(const c of nIn.querySelectorAll('.ncard')){const w=was[c.dataset.id];if(w){[c.dataset.x,c.dataset.y]=w;c.style.transform=`translate(${w[0]}px,${w[1]}px)`}}
+  layoutNotes(!slide);
 }
 function refreshCard(n){const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(c){c.innerHTML=cardInner(n);layoutNotes()}}
 // Masonry: each card goes into the shortest column, in the user's order. Positions are transforms, so reorders animate.
@@ -2314,9 +2318,10 @@ function layoutNotes(instant){
   for(const n of visibleNotes()){
     const c=nIn.querySelector(`.ncard[data-id="${n.id}"]`);if(!c)continue;
     c.style.width=cw+'px';
-    const i=h.indexOf(Math.min(...h)),x=i*(cw+NGAP),y=h[i];
+    const i=h.indexOf(Math.min(...h)),x=i*(cw+NGAP),y=h[i],fresh=c.dataset.x===undefined;
     c.dataset.x=x;c.dataset.y=y;h[i]+=c.offsetHeight+NGAP;
-    if(instant||S.reduce){c.style.transition='none';c.style.transform=`translate(${x}px,${y}px)`;c.offsetWidth;c.style.transition=''}
+    // A card not placed before appears in its slot; it never slides in from the corner.
+    if(instant||fresh||S.reduce){c.style.transition='none';c.style.transform=`translate(${x}px,${y}px)`;c.offsetWidth;c.style.transition=''}
     else c.style.transform=`translate(${x}px,${y}px)`;
   }
   nIn.style.height=Math.max(0,...h)+'px';
@@ -2328,6 +2333,8 @@ function resetDel(){const b=$('#nDel');b.classList.remove('confirm');b.textConte
 // The open note's own card is hidden: the editor is that card, grown.
 function markEditing(){nIn.querySelectorAll('.ncard').forEach(c=>c.classList.toggle('src',S.editing&&+c.dataset.id===S.noteSel))}
 function relRect(el){const w=nWrap.getBoundingClientRect(),r=el.getBoundingClientRect();return{l:r.left-w.left,t:r.top-w.top,w:r.width,h:r.height}}
+// The visible grid: as wide as the cards, without the scroll bar that sits in the padding beside them.
+function gridRect(){const g=relRect(nGrid);g.w=nWrap.clientWidth;return g}
 // Where a card rests in the grid (not where it is mid-animation), in editor coordinates.
 function slotRect(id){
   const c=nIn.querySelector(`.ncard[data-id="${id}"]`);if(!c)return null;
@@ -2337,7 +2344,7 @@ function slotRect(id){
 // Grow from the card toward the free space: a card on the left grows right, on the right grows left, in the middle both ways;
 // down unless there is no room below, then up. The editor always stays inside the visible grid.
 function edTarget(o){
-  const g=relRect(nGrid),w=Math.min(EDW,g.w),h=Math.min(EDH,g.h),cx=o.l+o.w/2-g.l;
+  const g=gridRect(),w=Math.min(EDW,g.w),h=Math.min(EDH,g.h),cx=o.l+o.w/2-g.l;
   const ax=cx<g.w/3?'l':cx>g.w*2/3?'r':'c';
   let l=ax==='l'?o.l:ax==='r'?o.l+o.w-w:o.l+o.w/2-w/2;
   l=Math.max(g.l,Math.min(l,g.l+g.w-w));
@@ -2382,7 +2389,7 @@ function closeEditor(){
   if(!S.editing)return;
   flushNote();S.editing=false;
   const n=noteById(S.noteSel);
-  if(n&&!n.b.trim()&&!n.f){S.notes=S.notes.filter(x=>x!==n);renderNotes();shutEditor(S.edFrom,true);return}
+  if(n&&!n.b.trim()&&!n.f){S.notes=S.notes.filter(x=>x!==n);renderNotes(true);shutEditor(S.edFrom,true);return}
   shutEditor(slotRect(S.noteSel)||S.edFrom,false);
 }
 // A new note is born as an empty card at the top right, under New note, and grows down and to the left.
@@ -2392,8 +2399,8 @@ function newNote(){
   $('#nSearch').value='';
   const top=S.notes[0];
   if(!(top&&!top.b.trim()&&!top.f))S.notes.unshift({id:S.nextId++,b:'',t:nowHM()});
-  renderNotes();nGrid.scrollTop=0;
-  const g=relRect(nGrid),c=nIn.querySelector('.ncard'),cw=c?c.offsetWidth:NMIN;
+  renderNotes(true);nGrid.scrollTop=0;
+  const g=gridRect(),c=nIn.querySelector('.ncard'),cw=c?c.offsetWidth:NMIN;
   openEditor(S.notes[0].id,{l:g.l+g.w-cw,t:g.t,w:cw,h:64});
 }
 function flushNote(){if(saveT){clearTimeout(saveT);saveT=0;setSaved(false)}}
@@ -2481,7 +2488,7 @@ addEventListener('pointermove',e=>{
 function endNoteDrag(e){
   const d=noteDrag;if(!d||e.pointerId!==d.pid)return;
   noteDrag=null;
-  if(!d.moved){if(!d.ed)openEditor(d.id);return}
+  if(!d.moved){if(!d.ed){openEditor(d.id);nEd.focus()}return}
   if(d.tear)landTear(d);else dropBack(d);
 }
 addEventListener('pointerup',endNoteDrag);
@@ -2505,7 +2512,7 @@ $('#nDel').onclick=e=>{
   const b=e.currentTarget;
   if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Click again to delete';delT=setTimeout(resetDel,3000);return}
   const id=S.noteSel,r=slotRect(id)||S.edFrom;
-  S.notes=S.notes.filter(n=>n.id!==id);S.editing=false;renderNotes();shutEditor(r,true);
+  S.notes=S.notes.filter(n=>n.id!==id);S.editing=false;renderNotes(true);shutEditor(r,true);
 };
 // Float on top: the note leaves the island as a floating note at the top right of the work area, ready to type in,
 // and the island closes behind it.

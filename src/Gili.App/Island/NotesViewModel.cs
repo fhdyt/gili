@@ -18,6 +18,7 @@ public sealed partial class NotesViewModel : ObservableObject
     private readonly Func<bool> _use24Hour;
     private readonly Action _closeIsland;
     private readonly DispatcherTimer _confirm = new() { Interval = TimeSpan.FromSeconds(3) };
+    private List<Note> _visible = [];
     private bool _loading;
     private bool _reservesEditor;
 
@@ -43,12 +44,13 @@ public sealed partial class NotesViewModel : ObservableObject
         _closeIsland = closeIsland;
         _confirm.Tick += (_, _) => ResetDelete();
         notes.Changed += Refresh;
+        notes.Edited += OnEdited;
         notes.SaveState += OnSaveState;
         Refresh();
     }
 
     /// <summary>The cards to show: every note matching the search, in the user's order.</summary>
-    public IReadOnlyList<Note> Visible { get; private set; } = [];
+    public IReadOnlyList<Note> Visible => _visible;
 
     /// <summary>The note in the editor; null while it is closed.</summary>
     public long? EditingId { get; private set; }
@@ -73,8 +75,11 @@ public sealed partial class NotesViewModel : ObservableObject
     /// <summary>Raised when the page needs a new height: the cards or the editor's room changed.</summary>
     public event Action? ContentChanged;
 
-    /// <summary>The cards to show changed, or one of them did.</summary>
+    /// <summary>The cards to show changed: which, their order, or how they look.</summary>
     public event Action? CardsChanged;
+
+    /// <summary>One note's text changed while typing; only its card follows.</summary>
+    public event Action<Note>? CardChanged;
 
     /// <summary>The editor closed; raised before the note is written or dropped, so its card is still in the grid.</summary>
     public event Action<EditorClose>? EditorClosed;
@@ -83,7 +88,7 @@ public sealed partial class NotesViewModel : ObservableObject
 
     public void Refresh()
     {
-        Visible = [.. _notes.Notes.Where(n => NoteText.Matches(n.Body, Search))];
+        _visible = [.. _notes.Notes.Where(n => NoteText.Matches(n.Body, Search))];
         IsEmpty = Visible.Count == 0;
         EmptyText = _notes.Notes.Count == 0 ? NoteText.NoNotes : NoteText.NoMatch;
         CardsChanged?.Invoke();
@@ -117,9 +122,19 @@ public sealed partial class NotesViewModel : ObservableObject
         return _notes.Create().Id;
     }
 
+    // The service keeps the text with \n line breaks; the TextBox keeps its own, so the caret never moves.
     partial void OnBodyChanged(string value)
     {
         if (!_loading && EditingId is { } id) _notes.Edit(id, value);
+    }
+
+    /// <summary>Typing keeps the card where it is, even when it no longer matches the search (mockup refreshCard).</summary>
+    private void OnEdited(Note note)
+    {
+        var index = _visible.FindIndex(n => n.Id == note.Id);
+        if (index < 0) return;
+        _visible[index] = note;
+        CardChanged?.Invoke(note);
     }
 
     partial void OnSearchChanged(string value)

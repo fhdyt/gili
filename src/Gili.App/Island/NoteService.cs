@@ -28,8 +28,11 @@ public sealed class NoteService
 
     public IReadOnlyList<Note> Notes => _notes;
 
-    /// <summary>A note came, went, moved or changed.</summary>
+    /// <summary>A note came, went, moved, or took a new colour or size.</summary>
     public event Action? Changed;
+
+    /// <summary>A note's text changed while typing: only its card needs to show it.</summary>
+    public event Action<Note>? Edited;
 
     /// <summary>Whether a save is waiting, and when the last one was written (null before any).</summary>
     public event Action<bool, DateTimeOffset?>? SaveState;
@@ -49,9 +52,10 @@ public sealed class NoteService
         return note;
     }
 
-    /// <summary>The text changes in memory now and is written once typing pauses for 0.5 s.</summary>
+    /// <summary>The text changes in memory now, line breaks as \n, and is written once typing pauses for 0.5 s.</summary>
     public void Edit(long id, string body)
     {
+        body = NoteText.Stored(body);
         var index = IndexOf(id);
         if (index < 0 || _notes[index].Body == body) return;
         var now = _clock();
@@ -62,7 +66,7 @@ public sealed class NoteService
         _pause.Interval = wait > TimeSpan.Zero ? wait : TimeSpan.FromMilliseconds(1);
         _pause.Start();
         SaveState?.Invoke(true, _savedAt);
-        Changed?.Invoke();
+        Edited?.Invoke(_notes[index]);
     }
 
     public void SetColor(long id, int color) => Restyle(id, n => n with { Color = NoteStyle.ClampColor(color) });
