@@ -813,6 +813,33 @@ li.done .chk .ic{opacity:1;transform:none}
 .day{width:30px;height:30px;border-radius:15px;background:rgba(255,255,255,.06);font-size:11.5px;color:var(--text2)}
 .day[aria-pressed="true"]{background:var(--accent);color:#000;font-weight:600}
 .aedit .acts{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.aedit.lg{grid-template-columns:76px 1fr}
+.tin.date{width:140px}
+.tin.warn{border-color:var(--warn)}
+.tn{font-variant-numeric:tabular-nums}
+.srow>.t.w{flex-basis:76px}
+.tbig{font-size:44px;font-weight:700;line-height:1.1;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.tsub{color:var(--text2)}
+.tctl{display:flex;gap:8px;margin:12px 0 16px}
+.tsec{margin:16px 0 8px;font-size:13px;font-weight:600;color:var(--text2)}
+.srow .stp{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+.stp b{min-width:84px;text-align:center;font-weight:600}
+.stp button{width:28px;height:28px;border-radius:14px;background:rgba(255,255,255,.08);font-size:16px;line-height:1}
+.stp button:hover{background:rgba(255,255,255,.13)}
+.stp button:disabled{opacity:.4;pointer-events:none}
+.srow .r{flex:0 0 76px;text-align:right}
+.srow .r.dim{color:var(--text2)}
+.tdhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.tdhead .tsoon{margin:0;font-size:12px}
+.srow.td{user-select:none;transition:transform 200ms var(--out)}
+.srow.td.lift{transition:none;position:relative;z-index:2;box-shadow:0 8px 24px rgba(0,0,0,.5);background:#2c2c2e}
+.reduce .srow.td{transition:none}
+.srow.td .tt2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow.td .tdd{flex:0 0 auto;color:var(--text2);font-size:12px}
+.srow.td .tdd.over{color:#ff453a}
+.srow.done .chk{background:var(--accent);border-color:var(--accent)}
+.srow.done .chk .ic{opacity:1;transform:none}
+.srow.done .tt2{color:var(--text3);text-decoration:line-through}
 /* windows taskbar */
 .wtb{position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(28,28,30,.86);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);
   display:flex;align-items:center;justify-content:center;gap:4px;z-index:10;transition:transform 300ms var(--out)}
@@ -1202,7 +1229,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Clipboard</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
-    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false">Lyrics</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false">Lyrics</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="teacard">Labeled timer card (Tea)</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat80">80% reached</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
     <p class="note">Clipboard: click the VS Code window first, then the Clipboard icon (or Ctrl+Alt+V) and pick an item. It is pasted where the cursor was.</p>
@@ -1481,7 +1508,7 @@ function activities(){
   // The 5-hour window jumps up once the limit is hit; otherwise it is the quietest activity.
   if(S.limOn&&S.lim&&S.lim.hit)a.push('lim');
   if(S.xop||S.xopEnd)a.push('xop');
-  if(S.pomo.running)a.push('pomo');else if(S.timer.running)a.push('timer');
+  if(S.pomo.running)a.push('pomo');else if(S.timer.running||LT.some(t=>t.run))a.push('timer');
   if(S.sw.running)a.push('sw');
   if(!a.includes('cl')&&clBy('work').length)a.push('cl');
   if(S.media.active)a.push('media');
@@ -1774,11 +1801,12 @@ const CARDS={
   alarm:{c:'var(--orange)',i:'alarm',cls:'pulse shake',t:'Alarm 14:30',s:'Take medicine',b:[['Snooze 5m','snooze'],['Stop','dismiss',1]],ring:'loop',snd:()=>Sound.alarm,ramp:true},
   timer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`Timer ${mmss(S.timer.total)} done`,s:'Bring in the laundry',b:[['Repeat','repeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   todo:{c:'var(--accent)',i:'todo',cls:'',t:'Prepare meeting slides',s:'Due 15:00 today',b:[['Snooze 10m','snooze'],['Done','done',1]],ring:'once',snd:'ping'},
-  pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`5-minute break · session ${S.pomo.round} of 4`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
+  pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`5-minute break · session ${S.pomo.round} of ${PLAN.rounds}`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
   conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
+  ltimer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`${esc(LC.l)} done`,s:()=>`Timer ${fmtT(LC.total)}`,b:[['Repeat','ltrepeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
-  pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${Math.min(4,S.pomo.round+1)} of 4 ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
+  pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${Math.min(PLAN.rounds,S.pomo.round+1)} of ${PLAN.rounds} ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
 };
 const val=v=>typeof v==='function'?v():v;
 function showCard(k){
@@ -1806,11 +1834,12 @@ lcard.addEventListener('click',e=>{
   if(a==='limopen')hint('Opening Claude');
   if(a==='snooze')hint(S.card==='todo'?'Reminder snoozed for 10 minutes':'Alarm snoozed for 5 minutes');
   if(a==='repeat')Object.assign(S.timer,{left:S.timer.total,running:true});
+  if(a==='ltrepeat'){const t=LT.find(x=>x.id===LC.id)||LT.find(x=>x.l===LC.l);if(t)Object.assign(t,{left:t.total,run:true})}
   if(a==='done'){const t=S.todos.find(x=>x.t==='Prepare meeting slides');if(t)t.d=1;renderTodos()}
   if(a==='break'){Object.assign(S.pomo,{phase:'break',left:300,len:300,running:true});setTimeout(clHeld,600)}
-  if(a==='focus')Object.assign(S.pomo,{phase:'focus',left:1500,len:1500,running:true,round:Math.min(4,S.pomo.round+1)});
+  if(a==='focus')Object.assign(S.pomo,{phase:'focus',left:1500,len:1500,running:true,round:Math.min(PLAN.rounds,S.pomo.round+1)});
   if(a==='stop')Object.assign(S.pomo,{running:false,phase:'focus',left:1500,len:1500,round:1,fast:false});
-  closeCard();renderSlot();renderTimerPage();
+  closeCard();renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
 });
 
 /* ---------- compact: clock and activity slot ---------- */
@@ -1821,7 +1850,7 @@ const pct=()=>Math.min(100,S.media.pos/cur().d*100);
 function swMs(){return S.sw.acc+(S.sw.running?Date.now()-S.sw.start:0)}
 function swText(tenths){const ms=swMs();return mmss(Math.floor(ms/1000))+(tenths?'.'+Math.floor(ms%1000/100):'')}
 function slotValue(k){
-  if(k==='timer')return mmss(S.timer.left);
+  if(k==='timer'){const l=ltSlot();return l?fmtT(l.left):mmss(S.timer.left)}
   if(k==='pomo')return mmss(S.pomo.left);
   if(k==='sw')return swText(false);
   if(k==='charge')return Math.round(S.battery)+'%';
@@ -1894,6 +1923,7 @@ $('#lc').addEventListener('click',e=>{
     if(k==='xop'){xopClick();return}
     if(k==='cl'){clClick();return}
     if(k==='clip'){openClipboard();return}
+    if(k==='timer'&&ltSlot()){openTools('Timer');return}
     openExpanded(pageFor(k));return;
   }
   openExpanded();
@@ -2111,7 +2141,7 @@ function renderTimerPage(){
     big=swText(true);sub=S.sw.running?'Running':'Stopwatch';frac=(swMs()/1000%60)/60;
     btn=S.sw.running?'Pause':swMs()>0?'Resume':'Start';
   }else{
-    big=mmss(S.pomo.left);sub=`${S.pomo.phase==='focus'?'Focus':'Break'} · session ${S.pomo.round} of 4`;
+    big=mmss(S.pomo.left);sub=pomoSub();
     frac=S.pomo.left/S.pomo.len;btn=S.pomo.running?'Pause':'Start';
   }
   $('#tBig').textContent=big;$('#tSub').textContent=sub;$('#tStart').textContent=btn;
@@ -2122,7 +2152,7 @@ function renderTimerPage(){
 }
 function toggleSw(){
   if(S.sw.running){S.sw.acc+=Date.now()-S.sw.start;S.sw.running=false}else{S.sw.start=Date.now();S.sw.running=true}
-  setPressed('sw',S.sw.running);renderSlot();renderTimerPage();
+  setPressed('sw',S.sw.running);renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
 }
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(b){S.timer.mode=b.dataset.m;renderTimerPage()}};
 $('#chips').onclick=e=>{const b=e.target.closest('button');if(b){Object.assign(S.timer,{total:+b.dataset.s,left:+b.dataset.s,running:false});renderTimerPage();renderSlot()}};
@@ -2136,8 +2166,8 @@ $('#tStart').onclick=()=>{
 $('#tReset').onclick=()=>{
   const m=S.timer.mode;
   if(m==='timer')Object.assign(S.timer,{left:S.timer.total,running:false});
-  else if(m==='sw'){Object.assign(S.sw,{running:false,acc:0});setPressed('sw',false)}
-  else Object.assign(S.pomo,{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false});
+  else if(m==='sw'){Object.assign(S.sw,{running:false,acc:0});SWL.length=0;setPressed('sw',false)}
+  else Object.assign(S.pomo,{running:false,left:PLAN.focus*60,len:PLAN.focus*60,phase:'focus',round:1,fast:false});
   renderTimerPage();renderSlot();
 };
 $$('.sw').forEach(s=>s.onclick=()=>s.setAttribute('aria-checked',s.getAttribute('aria-checked')!=='true'));
@@ -3031,7 +3061,7 @@ $('#setp').addEventListener('input',e=>{
 });
 
 
-/* Tools window (PRD 7.5): Alarms tab to add, edit and delete alarms (F-TOOL-05); the other tabs come later */
+/* Tools window (PRD 7.5): Timer, Stopwatch, Pomodoro, Alarms and Todo tabs (F-TOOL-01/02/03/05/06) */
 const TOOL_TABS=['Timer','Stopwatch','Pomodoro','Alarms','Todo'];
 const WEEK=['Mo','Tu','We','Th','Fr','Sa','Su'],WEEK3=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const ALARMS=[
@@ -3049,9 +3079,216 @@ function alParse(v){
   const m=/^(\d{1,2}):(\d{2})$/.exec(t);if(!m||+m[1]>23||+m[2]>59)return null;
   return m[1].padStart(2,'0')+':'+m[2];
 }
-function renderTools(){
-  $('#tooln').innerHTML=TOOL_TABS.map(n=>`<button role="tab" aria-selected="${n===toolTab}" data-tab="${n}">${n}</button>`).join('');
-  if(toolTab!=='Alarms'){$('#toolp').innerHTML=`<h3>${toolTab}</h3><div class="tsoon">Coming in a later version</div>`;return}
+
+/* Timer tab: labeled timers that run side by side (the island keeps its single timer). The sample rows appear the
+   first time the tab opens, so the slot does not show a timer before that. */
+const LT=[];let ltSeeded=false,ltId=1,ltEdit=null,ltDel=-1,ltDelT=0,ltEnded=false,LC={l:'Tea',total:600};
+const fmtT=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600);return h?h+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60):mmss(s)};
+function durParse(v){
+  const t=v.trim();if(!/^\d{1,4}(:\d{1,2}){0,2}$/.test(t))return 0;
+  const p=t.split(':').map(Number);let s;
+  if(p.length===1)s=p[0]*60;
+  else if(p.length===2){if(p[1]>59)return 0;s=p[0]*60+p[1]}
+  else{if(p[1]>59||p[2]>59)return 0;s=p[0]*3600+p[1]*60+p[2]}
+  return s>=1&&s<86400?s:0;
+}
+const ltState=t=>t.run?'Running':t.left<t.total?'Paused':'Ready';
+function ltSeed(){
+  if(ltSeeded)return;ltSeeded=true;
+  LT.push({id:ltId++,l:'Tea',total:600,left:192,run:true},{id:ltId++,l:'Laundry',total:3600,left:2700,run:false},{id:ltId++,l:'Pasta',total:600,left:600,run:false});
+  renderSlot();
+}
+// The slot shows the labeled timer that ends first, unless the island timer ends sooner.
+function ltSlot(){let b=null;for(const t of LT)if(t.run&&(!b||t.left<b.left))b=t;return b&&(!S.timer.running||b.left<S.timer.left)?b:null}
+function ltTick(){
+  let ch=false;
+  for(const t of LT)if(t.run){
+    t.left-=.1;ch=true;
+    if(t.left<=0){t.left=t.total;t.run=false;ltEnded=true;LC={id:t.id,l:t.l,total:t.total};showCard('ltimer')}
+  }
+  return ch;
+}
+function ltTab(){
+  ltSeed();
+  const e=ltEdit,ok=e&&durParse(e.d);
+  const editor=!e?'':`<div class="aedit lg" role="group" aria-label="${e.id<0?'New timer':'Edit timer'}">
+    <label for="ltL">Label</label><div class="row"><input id="ltL" class="tin lab" value="${esc(e.l)}" maxlength="40" placeholder="Timer"></div>
+    <label for="ltD">Duration</label><div class="row"><input id="ltD" class="tin time ${ok?'':'bad'}" value="${esc(e.d)}" placeholder="5:00" aria-invalid="${!ok}"></div>
+    <div class="acts"><button class="tbtn" id="ltCancel">Cancel</button><button class="tbtn pri" id="ltSave" ${ok?'':'disabled'}>Save</button></div></div>`;
+  const rows=LT.length?LT.map(t=>{
+    const st=ltState(t);
+    return `<div class="srow"><span class="t w tn" data-lt="${t.id}">${fmtT(t.left)}</span><span>${esc(t.l)}<small>${st} · ${fmtT(t.total)}</small></span>
+      <button class="tbtn" data-ltgo="${t.id}">${t.run?'Pause':st==='Paused'?'Resume':'Start'}</button><button class="tbtn" data-ltreset="${t.id}" ${st==='Ready'?'disabled':''}>Reset</button>
+      <button class="tbtn" data-ltedit="${t.id}">Edit</button><button class="tbtn del" data-ltdel="${t.id}">${ltDel===t.id?'Click again to delete':'Delete'}</button></div>`}).join('')
+    :'<div class="tsoon">No timers yet</div>';
+  return `<h3>Timer<button class="tbtn" id="ltNew" ${e||LT.length>=10?'disabled':''}>New timer</button></h3>${editor}${rows}`;
+}
+function ltClick(b){
+  const d=b.dataset,find=k=>LT.find(t=>t.id===+d[k]);
+  if(b.id==='ltNew')ltEdit={id:-1,l:'',d:''};
+  else if(d.ltgo){const t=find('ltgo');t.run=!t.run;renderSlot()}
+  else if(d.ltreset){const t=find('ltreset');Object.assign(t,{left:t.total,run:false});renderSlot()}
+  else if(d.ltedit){const t=find('ltedit');ltEdit={id:t.id,l:t.l,d:fmtT(t.total)}}
+  else if(d.ltdel){const id=+d.ltdel;clearTimeout(ltDelT);
+    if(ltDel===id){LT.splice(LT.findIndex(t=>t.id===id),1);ltDel=-1;if(ltEdit&&ltEdit.id===id)ltEdit=null;if(S.card==='ltimer'&&LC.id===id)closeCard();renderSlot()}
+    else{ltDel=id;ltDelT=setTimeout(()=>{ltDel=-1;if(!$('#toolw').hidden)renderTools()},3000)}}
+  else if(b.id==='ltCancel')ltEdit=null;
+  else if(b.id==='ltSave'){const s=durParse(ltEdit.d),l=ltEdit.l.trim()||'Timer';
+    if(ltEdit.id<0)LT.push({id:ltId++,l,total:s,left:s,run:false});
+    else{const t=LT.find(x=>x.id===ltEdit.id);t.l=l;if(s!==t.total){Object.assign(t,{total:s,left:s,run:false});if(S.card==='ltimer'&&LC.id===t.id)closeCard()}}
+    ltEdit=null;renderSlot()}
+  else return false;
+}
+
+/* Stopwatch tab: the same stopwatch as the island, plus laps (the island page has no Lap button) */
+const SWL=[];
+const swFmt=ms=>mmss(Math.floor(ms/1000))+'.'+Math.floor(ms%1000/100);
+function swTab(){
+  const run=S.sw.running,ms=swMs();
+  const laps=SWL.length?SWL.map((t,i)=>`<div class="srow"><span>Lap ${i+1}</span><span class="r tn">${swFmt(t-(SWL[i-1]||0))}</span><span class="r tn dim">${swFmt(t)}</span></div>`).reverse().join('')
+    :'<div class="tsoon">No laps yet</div>';
+  return `<h3>Stopwatch</h3><div class="tbig" id="swBig">${swText(true)}</div>
+    <div class="tctl"><button class="tbtn pri" id="swGo">${run?'Pause':ms>0?'Resume':'Start'}</button><button class="tbtn" id="swLap" ${run&&SWL.length<99?'':'disabled'}>Lap</button><button class="tbtn" id="swReset" ${ms>0?'':'disabled'}>Reset</button></div>${laps}`;
+}
+function swClick(b){
+  if(b.id==='swGo'){toggleSw();return false}
+  else if(b.id==='swLap'){if(S.sw.running&&SWL.length<99)SWL.push(Math.round(swMs()))}
+  else if(b.id==='swReset'){Object.assign(S.sw,{running:false,acc:0});SWL.length=0;setPressed('sw',false);renderSlot();renderTimerPage()}
+  else return false;
+}
+
+/* Pomodoro tab: the same pomodoro as the island; the lengths live in settings */
+const PLAN={focus:25,short:5,long:15,rounds:4};
+const PLAN_ROWS=[['Focus','focus',1,120,'min'],['Short break','short',1,60,'min'],['Long break','long',1,60,'min'],['Long break after','rounds',2,8,'sessions']];
+const pomoSub=()=>`${S.pomo.phase==='focus'?'Focus':'Break'} · session ${S.pomo.round} of ${PLAN.rounds}`;
+const pomoBtn=()=>S.pomo.running?'Pause':S.pomo.left<S.pomo.len?'Resume':'Start';
+function pmTab(){
+  const rows=PLAN_ROWS.map(([n,k,lo,hi,u])=>`<div class="srow"><span>${n}</span><span class="stp"><button data-pm="${k}" data-dir="-1" aria-label="Decrease ${n}" ${PLAN[k]<=lo?'disabled':''}>−</button>
+    <b class="tn">${PLAN[k]} ${u}</b><button data-pm="${k}" data-dir="1" aria-label="Increase ${n}" ${PLAN[k]>=hi?'disabled':''}>+</button></span></div>`).join('');
+  return `<h3>Pomodoro</h3><div class="tsub" id="pSub">${pomoSub()}</div><div class="tbig" id="pBig">${mmss(S.pomo.left)}</div>
+    <div class="tctl"><button class="tbtn pri" id="pGo">${pomoBtn()}</button><button class="tbtn" id="pReset">Reset</button></div>
+    <h4 class="tsec">Lengths</h4>${rows}`;
+}
+function pmClick(b){
+  if(b.id==='pGo')S.pomo.running=!S.pomo.running;
+  else if(b.id==='pReset')Object.assign(S.pomo,{running:false,left:PLAN.focus*60,len:PLAN.focus*60,phase:'focus',round:1,fast:false});
+  else if(b.dataset.pm){
+    const[,k,lo,hi]=PLAN_ROWS.find(r=>r[1]===b.dataset.pm);PLAN[k]=Math.max(lo,Math.min(hi,PLAN[k]+ +b.dataset.dir));
+    // A running or paused phase keeps its length; one that has not started takes the new one at once.
+    if(k==='focus'&&S.pomo.phase==='focus'&&!S.pomo.running&&S.pomo.left===S.pomo.len)S.pomo.left=S.pomo.len=PLAN.focus*60;
+    if(k==='rounds')S.pomo.round=Math.min(S.pomo.round,PLAN.rounds);
+  }else return false;
+  renderTimerPage();renderSlot();
+}
+
+/* Todo tab: Today / All / Done in the user's order; new tasks come only from Calendar, so there is no add button */
+const MON=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'],DOW=['sun','mon','tue','wed','thu','fri','sat'];
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const keyDate=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m,d)};
+const dayOffset=n=>{const d=new Date();d.setDate(d.getDate()+n);return dkey(d)};
+function dispDate(k){
+  if(!k)return 'No date';
+  if(k===dayOffset(0))return 'Today';
+  if(k===dayOffset(1))return 'Tomorrow';
+  const d=keyDate(k);return `${cap(DOW[d.getDay()])} ${d.getDate()} ${cap(MON[d.getMonth()])}`;
+}
+// '' = no date, null = not a date. Without a year it is this year.
+function dateParse(v){
+  const t=v.trim().toLowerCase();if(!t)return '';
+  if(t==='today')return dayOffset(0);
+  if(t==='tomorrow')return dayOffset(1);
+  let y,m,d,x;
+  if(x=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t)){y=+x[1];m=+x[2]-1;d=+x[3]}
+  else if(x=/^(?:([a-z]{3}) )?(\d{1,2}) ([a-z]{3})(?: (\d{4}))?$/.exec(t)){
+    if(x[1]&&!DOW.includes(x[1]))return null;
+    m=MON.indexOf(x[3]);d=+x[2];y=x[4]?+x[4]:new Date().getFullYear();
+  }else return null;
+  const r=new Date(y,m,d);
+  return m>=0&&r.getFullYear()===y&&r.getMonth()===m&&r.getDate()===d?dkey(r):null;
+}
+const timeOk=v=>!v.trim()||!!alParse(v);
+function pastToday(dt,tm){
+  const k=dateParse(dt),t=alParse(tm||'');if(k!==dayOffset(0)||!t)return false;
+  const n=new Date();return t<pad(n.getHours())+':'+pad(n.getMinutes());
+}
+// Sample tasks with dates (the island's Today list only shows undated tasks and tasks due today)
+S.todos.push({t:'Renew motorbike tax',d:0,due:dayOffset(-2)},{t:'Book the dentist',d:0,due:dayOffset(1)},{t:'Buy a birthday gift',d:0,due:dayOffset(4),tm:'16:00'});
+let tdFilter='Today',tdEdit=null,tdDel=-1,tdDelT=0,tdDrag=null;
+const tdRows=()=>S.todos.map((t,i)=>({t,i})).filter(({t})=>tdFilter==='Done'?t.d:tdFilter==='Today'?isToday(t):true);
+function tdLabel(t){
+  const tm=t.tm?' · '+t.tm:'';
+  if(!t.d&&t.due&&keyDate(t.due)<keyDate(dayOffset(0)))return `<span class="tdd over" title="${dispDate(t.due)}${tm}">Overdue</span>`;
+  return `<span class="tdd">${dispDate(t.due)}${tm}</span>`;
+}
+function tdTab(){
+  const e=tdEdit,dOk=e&&dateParse(e.dt)!==null,tOk=e&&timeOk(e.tm),ok=e&&e.t.trim()&&dOk&&tOk;
+  const editor=!e?'':`<div class="aedit lg" role="group" aria-label="Edit task">
+    <label for="tdT">Title</label><div class="row"><input id="tdT" class="tin lab" value="${esc(e.t)}" maxlength="60"></div>
+    <label for="tdDt">Date</label><div class="row"><input id="tdDt" class="tin date ${dOk?'':'bad'}" value="${esc(e.dt)}" placeholder="No date" aria-invalid="${!dOk}"></div>
+    <label for="tdTm">Time</label><div class="row"><input id="tdTm" class="tin time ${tOk?(pastToday(e.dt,e.tm)?'warn':''):'bad'}" value="${esc(e.tm)}" placeholder="No time" aria-invalid="${!tOk}"></div>
+    <div class="acts"><button class="tbtn" id="tdCancel">Cancel</button><button class="tbtn pri" id="tdSave" ${ok?'':'disabled'}>Save</button></div></div>`;
+  const rows=tdRows().map(({t,i})=>`<div class="srow td ${t.d?'done':''}" data-i="${i}" tabindex="0"><button class="chk" role="checkbox" aria-checked="${!!t.d}" aria-label="${esc(t.t)}">${icon('check')}</button>
+    <span class="tt2">${esc(t.t)}</span>${tdLabel(t)}<button class="tbtn" data-tedit="${i}">Edit</button><button class="tbtn del" data-tdel="${i}">${tdDel===i?'Click again to delete':'Delete'}</button></div>`).join('')
+    ||`<div class="tsoon">${{Today:'No tasks for today',All:'No tasks yet',Done:'No finished tasks'}[tdFilter]}</div>`;
+  return `<h3>Todo</h3><div class="tdhead"><span class="seg">${['Today','All','Done'].map(f=>`<button data-tf="${f}" class="${f===tdFilter?'on':''}">${f}</button>`).join('')}</span>
+    <span class="tsoon">New tasks are added from Calendar in the island.</span></div>${editor}${rows}`;
+}
+function tdClick(b){
+  const d=b.dataset;
+  if(d.tf){tdFilter=d.tf;tdEdit=null}
+  else if(b.classList.contains('chk')){const t=S.todos[+b.closest('.srow').dataset.i];t.d=t.d?0:1;renderTodos();refreshCalDots()}
+  else if(d.tedit!==undefined){const t=S.todos[+d.tedit];tdEdit={i:+d.tedit,t:t.t,dt:t.due?dispDate(t.due):'',tm:t.tm||''}}
+  else if(d.tdel!==undefined){const i=+d.tdel;clearTimeout(tdDelT);
+    if(tdDel===i){S.todos.splice(i,1);tdDel=-1;tdEdit=null;renderTodos();refreshCalDots()}
+    else{tdDel=i;tdDelT=setTimeout(()=>{tdDel=-1;if(!$('#toolw').hidden)renderTools()},3000)}}
+  else if(b.id==='tdCancel')tdEdit=null;
+  else if(b.id==='tdSave'){const t=S.todos[tdEdit.i],k=dateParse(tdEdit.dt);
+    t.t=tdEdit.t.trim();if(k)t.due=k;else delete t.due;t.tm=alParse(tdEdit.tm)||'';tdEdit=null;renderTodos();refreshCalDots()}
+  else return false;
+}
+// Moving a task in a filtered list puts it where the target task is in the full order, so hidden tasks stay put.
+function tdMove(from,to){const[x]=S.todos.splice(from,1);S.todos.splice(to,0,x);renderTodos();refreshCalDots()}
+function tdDragEnd(commit){
+  const g=tdDrag;tdDrag=null;if(!g||!g.moved)return;
+  g.rows.forEach(r=>{r.classList.remove('lift');r.style.transform=''});
+  if(commit&&g.to!==g.from){
+    const vis=tdRows();
+    if(S.reduce){tdMove(vis[g.from].i,vis[g.to].i);renderTools();return}
+    g.row.style.transform=`translateY(${(g.to-g.from)*g.h}px)`;
+    setTimeout(()=>{tdMove(vis[g.from].i,vis[g.to].i);renderTools()},200);
+  }
+}
+$('#toolp').addEventListener('pointerdown',e=>{
+  if(toolTab!=='Todo'||tdFilter==='Done'||tdEdit||e.button)return;
+  const row=e.target.closest('.srow.td');if(!row||e.target.closest('button'))return;
+  const rows=$$('#toolp .srow.td'),k=rows.indexOf(row);
+  tdDrag={row,rows,from:k,to:k,y0:e.clientY,h:row.offsetHeight+4,moved:false};
+  row.setPointerCapture(e.pointerId);
+});
+$('#toolp').addEventListener('pointermove',e=>{
+  const g=tdDrag;if(!g)return;
+  const dy=e.clientY-g.y0;if(!g.moved&&Math.abs(dy)<4)return;
+  g.moved=true;if(S.reduce)return;
+  g.row.classList.add('lift');g.row.style.transform=`translateY(${dy}px) scale(1.02)`;
+  g.to=Math.max(0,Math.min(g.rows.length-1,Math.round(g.from+dy/g.h)));
+  g.rows.forEach((r,k)=>{if(r===g.row)return;
+    const s=g.from<g.to&&k>g.from&&k<=g.to?-g.h:g.from>g.to&&k<g.from&&k>=g.to?g.h:0;r.style.transform=s?`translateY(${s}px)`:''});
+});
+$('#toolp').addEventListener('pointerup',e=>{
+  const g=tdDrag;if(g&&S.reduce&&g.moved){const dy=e.clientY-g.y0;g.to=Math.max(0,Math.min(g.rows.length-1,Math.round(g.from+dy/g.h)))}
+  tdDragEnd(true);
+});
+$('#toolp').addEventListener('pointercancel',()=>tdDragEnd(false));
+$('#toolp').addEventListener('keydown',e=>{
+  if(toolTab!=='Todo'||!e.altKey||tdFilter==='Done'||tdEdit||(e.key!=='ArrowUp'&&e.key!=='ArrowDown'))return;
+  const row=e.target.closest('.srow.td');if(!row)return;
+  const vis=tdRows(),k=vis.findIndex(v=>v.i===+row.dataset.i),n=k+(e.key==='ArrowUp'?-1:1);
+  if(n<0||n>=vis.length)return;
+  e.preventDefault();tdMove(vis[k].i,vis[n].i);renderTools();
+  const moved=$(`#toolp .srow.td[data-i="${vis[n].i}"]`);if(moved)moved.focus();
+});
+
+function alTab(){
   const e=alEdit,ok=e&&alParse(e.t),key=e&&e.d.join(''),quick=e&&(key==='0000000'?'Once':key==='1111100'?'Weekdays':key==='1111111'?'Every day':'');
   const editor=!e?'':`<div class="aedit" role="group" aria-label="${e.i<0?'New alarm':'Edit alarm'}">
     <label for="alT">Time</label><div class="row"><input id="alT" class="tin time ${ok?'':'bad'}" value="${e.t}" placeholder="07:00" aria-invalid="${!ok}"></div>
@@ -3065,21 +3302,47 @@ function renderTools(){
     <button class="tbtn" data-edit="${i}">Edit</button><button class="tbtn del" data-del="${i}">${alDel===i?'Click again to delete':'Delete'}</button>
     <button class="sw" role="switch" aria-checked="${a.on}" data-on="${i}" aria-label="Alarm ${a.t}"></button></div>`).join('')
     :'<div class="tsoon">No alarms yet</div>';
-  $('#toolp').innerHTML=`<h3>Alarms<button class="tbtn" id="alNew" ${e?'disabled':''}>New alarm</button></h3>${editor}${rows}`;
+  return `<h3>Alarms<button class="tbtn" id="alNew" ${e?'disabled':''}>New alarm</button></h3>${editor}${rows}`;
+}
+function renderTools(){
+  $('#tooln').innerHTML=TOOL_TABS.map(n=>`<button role="tab" aria-selected="${n===toolTab}" data-tab="${n}">${n}</button>`).join('');
+  $('#toolp').innerHTML={Timer:ltTab,Stopwatch:swTab,Pomodoro:pmTab,Alarms:alTab,Todo:tdTab}[toolTab]();
+}
+// Called every 100 ms: only the numbers change, so a row being edited or hovered is left alone.
+function toolsTick(){
+  if($('#toolw').hidden)return;
+  if(toolTab==='Timer'){if(ltEnded){ltEnded=false;renderTools();return}LT.forEach(t=>{const n=$(`[data-lt="${t.id}"]`);if(n)n.textContent=fmtT(t.left)})}
+  else if(toolTab==='Stopwatch'){const n=$('#swBig');if(n)n.textContent=swText(true)}
+  else if(toolTab==='Pomodoro'){
+    if($('#pGo').textContent!==pomoBtn()){renderTools();return}
+    $('#pBig').textContent=mmss(S.pomo.left);$('#pSub').textContent=pomoSub();
+  }
 }
 function openTools(tab){if(tab)toolTab=tab;$('#toolw').hidden=false;renderTools();$('#tooln [aria-selected="true"]').focus()}
-function closeTools(){$('#toolw').hidden=true;alEdit=null}
+function closeTools(){$('#toolw').hidden=true;alEdit=ltEdit=tdEdit=null}
 $('#manageAl').onclick=()=>{closeExpanded();openTools('Alarms')};
 $('#toolX').onclick=closeTools;
 $('#toolw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeTools()}});
 $('#tooln').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){toolTab=b.dataset.tab;renderTools()}};
 $('#toolp').addEventListener('input',e=>{
-  if(!alEdit)return;
-  if(e.target.id==='alL')alEdit.l=e.target.value;
-  if(e.target.id==='alT'){alEdit.t=e.target.value;const ok=!!alParse(alEdit.t);e.target.classList.toggle('bad',!ok);e.target.setAttribute('aria-invalid',!ok);$('#alSave').disabled=!ok}
+  const id=e.target.id,bad=(ok)=>{e.target.classList.toggle('bad',!ok);e.target.setAttribute('aria-invalid',!ok)};
+  if(toolTab==='Alarms'&&alEdit){
+    if(id==='alL')alEdit.l=e.target.value;
+    if(id==='alT'){alEdit.t=e.target.value;const ok=!!alParse(alEdit.t);bad(ok);$('#alSave').disabled=!ok}
+  }else if(toolTab==='Timer'&&ltEdit){
+    if(id==='ltL')ltEdit.l=e.target.value;
+    if(id==='ltD'){ltEdit.d=e.target.value;const ok=!!durParse(ltEdit.d);bad(ok);$('#ltSave').disabled=!ok}
+  }else if(toolTab==='Todo'&&tdEdit){
+    if(id==='tdT')tdEdit.t=e.target.value;
+    if(id==='tdDt')tdEdit.dt=e.target.value;
+    if(id==='tdTm')tdEdit.tm=e.target.value;
+    const dOk=dateParse(tdEdit.dt)!==null,tOk=timeOk(tdEdit.tm);
+    $('#tdDt').classList.toggle('bad',!dOk);$('#tdDt').setAttribute('aria-invalid',!dOk);
+    $('#tdTm').classList.toggle('bad',!tOk);$('#tdTm').setAttribute('aria-invalid',!tOk);$('#tdTm').classList.toggle('warn',tOk&&pastToday(tdEdit.dt,tdEdit.tm));
+    $('#tdSave').disabled=!(tdEdit.t.trim()&&dOk&&tOk);
+  }
 });
-$('#toolp').addEventListener('click',e=>{
-  const b=e.target.closest('button');if(!b)return;
+function alClick(b){
   if(b.id==='alNew')alEdit={i:-1,t:'07:00',l:'',d:[0,0,0,0,0,0,0],s:'Radar'};
   else if(b.dataset.edit){const a=ALARMS[+b.dataset.edit];alEdit={i:+b.dataset.edit,t:a.t,l:a.l,d:[...a.d],s:a.s}}
   else if(b.dataset.del){const i=+b.dataset.del;clearTimeout(alDelT);
@@ -3093,9 +3356,14 @@ $('#toolp').addEventListener('click',e=>{
   else if(b.id==='alCancel')alEdit=null;
   else if(b.id==='alSave'){const a={t:alParse(alEdit.t),l:alEdit.l.trim(),d:alEdit.d,s:alEdit.s,on:true};
     if(alEdit.i<0)ALARMS.push(a);else ALARMS[alEdit.i]=a;ALARMS.sort((x,y)=>x.t.localeCompare(y.t));alEdit=null}
-  else return;
+  else return false;
+}
+$('#toolp').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if({Alarms:alClick,Timer:ltClick,Stopwatch:swClick,Pomodoro:pmClick,Todo:tdClick}[toolTab](b)===false)return;
   renderTools();
-  if(alEdit&&b.id==='alNew')$('#alT').select();
+  const f=b.id==='alNew'?'alT':b.id==='ltNew'||b.dataset.ltedit?'ltL':b.dataset.tedit!==undefined?'tdT':'';
+  if(f&&$('#'+f))$('#'+f).select();
 });
 
 /* quick events */
@@ -3354,6 +3622,7 @@ const ACT={
   idle:()=>{
     Object.assign(S.media,{active:false,playing:false});setPressed('music',false);
     Object.assign(S.timer,{running:false,left:S.timer.total});
+    LT.forEach(t=>{t.run=false;t.left=t.total});
     Object.assign(S.pomo,{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false});
     if(S.sw.running)toggleSw();
     if(S.charging){S.charging=false;setPressed('charge',false)}
@@ -3369,6 +3638,7 @@ const ACT={
   song:()=>nextSong(1),
   video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack()},
   lyrics:()=>$('#mLyr').click(),
+  teacard:()=>{LC={l:'Tea',total:600};showCard('ltimer')},
   timer10:()=>{Object.assign(S.timer,{mode:'timer',total:10,left:10,running:true});renderTimerPage();renderSlot()},
   pomo:()=>{Object.assign(S.pomo,{running:true,left:1500,len:1500,phase:'focus',round:1,fast:true});S.timer.mode='pomo';renderTimerPage();renderSlot()},
   sw:toggleSw,
@@ -3526,8 +3796,9 @@ function tick100(){
   if(S.timer.running){S.timer.left-=0.1;ch=true;if(S.timer.left<=0){S.timer.left=0;S.timer.running=false;showCard('timer')}}
   if(S.pomo.running){S.pomo.left-=S.pomo.fast?15:0.1;ch=true;
     if(S.pomo.left<=0){S.pomo.left=0;S.pomo.running=false;showCard(S.pomo.phase==='focus'?'pomo':'pomo2')}}
+  if(ltTick())ch=true;
   if(S.sw.running)ch=true;
-  if(ch){renderSlot();if(S.page===PAGE.timer)renderTimerPage()}
+  if(ch){renderSlot();if(S.page===PAGE.timer)renderTimerPage();toolsTick()}
 }
 function sample(){
   S.cpu=rw(S.cpu,3,78,7);S.gpu=rw(S.gpu,0,45,5);S.ram=rw(S.ram,45,72,1.5);

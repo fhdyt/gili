@@ -11,7 +11,7 @@
     pwsh scripts/mockup-shot.ps1 -State media-page -Out $env:TEMP\mockup-media.png
 #>
 param(
-    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card', 'alarms-page', 'tools-alarms', 'tools-editor', 'calendar-page', 'todo-page', 'notes-page')] [string] $State,
+    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card', 'alarms-page', 'tools-alarms', 'tools-editor', 'tools-timer', 'tools-stopwatch', 'tools-pomodoro', 'tools-todo', 'calendar-page', 'todo-page', 'notes-page')] [string] $State,
     [Parameter(Mandatory)] [string] $Out,
     [double] $Scale = 0,
     [int] $Width = 0,
@@ -47,6 +47,10 @@ $clicks = @{
     'alarms-page' = @('[data-page="2"]')
     'tools-alarms' = @('[data-page="2"]', '#manageAl')
     'tools-editor' = @('[data-page="2"]', '#manageAl', '[data-edit="0"]')
+    'tools-timer' = @('[data-page="2"]', '#manageAl', '[data-tab="Timer"]')
+    'tools-stopwatch' = @('[data-page="2"]', '#manageAl', '[data-tab="Stopwatch"]', '#swGo', 'wait:900', '#swLap', 'wait:700', '#swLap')
+    'tools-pomodoro' = @('[data-page="2"]', '#manageAl', '[data-tab="Pomodoro"]')
+    'tools-todo' = @('[data-page="2"]', '#manageAl', '[data-tab="Todo"]', '[data-tf="All"]')
     'calendar-page' = @('[data-page="3"]')
     'todo-page' = @('[data-page="4"]')
     'notes-page' = @('[data-page="5"]')
@@ -54,7 +58,7 @@ $clicks = @{
 $selectors = ($clicks | ForEach-Object { "'" + $_ + "'" }) -join ','
 
 $freeze = '<style>*,*::before,*::after{transition:none!important;animation:none!important}#ctl{display:none!important}</style>'
-$press = "<script>addEventListener('load',()=>setTimeout(()=>{for(const s of [$selectors]){const b=document.querySelector(s);if(b)b.click()}},300));</script>"
+$press = "<script>addEventListener('load',()=>setTimeout(async()=>{for(const s of [$selectors]){if(s.startsWith('wait:')){await new Promise(r=>setTimeout(r,+s.slice(5)));continue}const b=document.querySelector(s);if(b)b.click()}},300));</script>"
 
 $source = Join-Path $PSScriptRoot '..\docs\mockup\top-taskbar-mockup.html'
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ('gili-mockup-' + [guid]::NewGuid().ToString('N'))

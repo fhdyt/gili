@@ -180,7 +180,7 @@ Keadaan mengambang memakai bayangan lembut dan garis cahaya tipis di tepi atas, 
   1. Cuplikan clipboard, 3 detik (lihat "Cuplikan clipboard" di bawah)
   2. Sesi Claude yang butuh jawaban, atau hasil `Done` selama 4 detik (lihat "Sesi Claude" di bawah)
   3. Operasi file Explorer (copy, move, delete): ikon berwarna + nama file + garis progres 44 px + persen (lihat "Operasi file Explorer" di bawah)
-  4. Timer atau pomodoro berjalan: ikon + sisa waktu `12:04`
+  4. Timer atau pomodoro berjalan: ikon + sisa waktu `12:04`. Pomodoro yang berjalan menang; kalau tidak ada, slot menampilkan timer yang paling cepat habis di antara timer pulau dan timer berlabel dari jendela Tools (7.5, Keputusan 2)
   5. Stopwatch berjalan: ikon + waktu berjalan
   6. Sesi Claude yang sedang bekerja: ikon Claude berdenyut + nama sesi + waktu berjalan `2:14`
   7. Sesi media:
@@ -635,6 +635,7 @@ Riwayat teks yang dicopy, di pulau. Tujuannya menempel ulang tanpa berpindah jen
 
 **Membuka pulau**
 - Klik pulau compact. Halaman yang dibuka sesuai aktivitas di slot (Media, Timer); kalau tidak ada, halaman terakhir yang dilihat. Slot Claude punya aturan sendiri (lihat "Sesi Claude").
+- Kalau slot menampilkan **timer berlabel** (timer dari tab Timer di Tools, bukan timer pulau), klik slot membuka jendela Tools di tab Timer dan pulau tetap compact, karena halaman Timer di pulau hanya mengenal satu timer. Timer pulau tetap membuka halaman Timer.
 - Klik Gili saat tidak ada aktivitas: halaman terakhir yang dilihat.
 - Klik jam atau tanggal di kanan bar: halaman Calendar (sebelum Fase 2: halaman terakhir), dengan aturan buka/tutup yang sama seperti ikon bar lain.
 - Klik CPU/RAM/GPU/disk di kanan: halaman System (sebelum Fase 3 berisi `Coming in Phase 3`).
@@ -654,6 +655,7 @@ Riwayat teks yang dicopy, di pulau. Tujuannya menempel ulang tanpa berpindah jen
 |---|---|---|
 | Alarm | Ikon alarm, jam, label | Snooze 5m, Stop |
 | Timer habis | `Timer 10:00 done`, label | Repeat, Close |
+| Timer berlabel habis | Judul `<label> done` (contoh `Tea done`), baris kedua `Timer 10:00`; ikon jam pasir oranye seperti kartu timer | Repeat, Close |
 | Jendela Claude 5 jam berakhir | `Claude usage reset`, `Your 5-hour limit is available again` | Close, Open Claude |
 | Pengingat todo | Judul tugas, waktu jatuh tempo | Snooze 10m, Done |
 | Fokus selesai | `Focus session done`, `5-minute break · session 1 of 4` | Skip, Start break |
@@ -901,7 +903,27 @@ F-RIGHT-06 (suhu CPU lewat helper sensor admin) dihapus di revisi 6: helper itu 
 
 Jendela Tools: jendela gelap biasa (bisa dipindah dan diubah ukurannya) dengan tab di kiri: Timer, Stopwatch, Pomodoro, Alarms, Todo. Note dan riwayat clipboard tidak ada di Tools; keduanya ada di halaman Notes dan Clipboard di pulau (tab Clipboard di Tools dihapus di revisi 8).
 
-Tata letak Tools mengikuti jendela Settings di mockup: bilah judul `Gili Tools`, tab di kiri, 720 × 520 (minimal 560 × 420). Jendela dibuka dari "Manage alarms" di halaman Alarms dan dari Open Tools di menu klik kanan bar. Tab Alarms berisi tombol `New alarm` dan baris alarm (jam, label, hari · suara, `Edit`, `Delete`, saklar). `Delete` meminta klik kedua: teksnya menjadi `Click again to delete` dan kembali normal setelah 3 detik. Editor muncul di atas daftar dan berisi Time (jam yang tidak valid memberi garis merah dan mematikan Save), Label (maks. 40 karakter), Repeat (`Once` / `Weekdays` / `Every day` atau tombol hari `Mo`–`Su`), Sound (lima suara dan tombol putar), lalu `Cancel` dan `Save`. Tab yang belum dibuat menampilkan `Coming in a later version`.
+Tata letak Tools mengikuti jendela Settings di mockup: bilah judul `Gili Tools`, tab di kiri, 720 × 520 (minimal 560 × 420). Jendela dibuka dari "Manage alarms" di halaman Alarms dan dari Open Tools di menu klik kanan bar. Tab Alarms berisi tombol `New alarm` dan baris alarm (jam, label, hari · suara, `Edit`, `Delete`, saklar). `Delete` meminta klik kedua: teksnya menjadi `Click again to delete` dan kembali normal setelah 3 detik. Editor muncul di atas daftar dan berisi Time (jam yang tidak valid memberi garis merah dan mematikan Save), Label (maks. 40 karakter), Repeat (`Once` / `Weekdays` / `Every day` atau tombol hari `Mo`–`Su`), Sound (lima suara dan tombol putar), lalu `Cancel` dan `Save`. Keempat tab lain memakai tata letak yang sama: judul tab 18 px semibold dengan tombol di kanan, editor di atas daftar (kolom nama 76 px, jarak baris 10 px), baris berlatar `#0AFFFFFF` radius 8 px, padding 12 × 6, jarak antarbaris 4 px. Angka besar (Stopwatch dan Pomodoro) 44 px bold dengan digit tabular, angka baris 17 px semibold.
+
+**Tab Timer** (F-TOOL-01). Tombol `New timer` di judul; daftar kosong menampilkan `No timers yet`. Setiap baris berisi sisa waktu, label dengan detail di bawahnya (`Ready · 10:00`, `Running · 10:00`, atau `Paused · 10:00`, durasi penuhnya), lalu `Start` / `Pause` / `Resume`, `Reset` (mati saat sudah siap), `Edit`, dan `Delete` (dua klik, `Click again to delete`, 3 detik). Editor (`New timer` / `Edit timer`) berisi Label (maks. 40 karakter, placeholder `Timer`) dan Duration (placeholder `5:00`), lalu `Cancel` dan `Save`; durasi yang tidak valid memberi garis merah dan mematikan Save. Durasi ditulis `m`, `m:ss`, atau `h:mm:ss` (angka tunggal = menit), 1 detik sampai 23:59:59. Maksimal 10 timer berlabel; `New timer` mati di batas itu. Contoh di mockup: `Tea` 03:12 berjalan, `Laundry` 45:00 dijeda, `Pasta` 10:00 siap.
+
+**Tab Stopwatch** (F-TOOL-02). Angka 44 px (`00:02.6`; tetap utuh lewat 99 menit, `100:00.0`), tombol `Start` / `Pause` / `Resume`, `Lap` (aktif hanya saat berjalan), dan `Reset`. Daftar lap dengan yang terbaru di atas: `Lap 3`, waktu split, lalu waktu total; kosong menampilkan `No laps yet`. Maksimal 99 lap, `Reset` menghapus semuanya.
+
+**Tab Pomodoro** (F-TOOL-03). Sub `Focus · session 1 of 4` (sama dengan halaman Timer di pulau), angka 44 px, tombol `Start` / `Pause` / `Resume` dan `Reset`. Bagian `Lengths` berisi empat baris dengan stepper `−` nilai `+` (tombol bernama `Decrease Focus` / `Increase Focus`, dan seterusnya): `Focus`, `Short break`, `Long break` (`25 min`, `5 min`, `15 min`) dan `Long break after` (`4 sessions`). Rentang fokus 1–120 menit, istirahat 1–60 menit, sesi 2–8; tombol mati di batasnya.
+
+**Tab Todo** (F-TOOL-06). Segmen `Today` / `All` / `Done` dan catatan `New tasks are added from Calendar in the island.`; tidak ada tombol atau kolom tambah todo di sini. Kosong menampilkan `No tasks for today` / `No tasks yet` / `No finished tasks`. Baris berisi centang, judul, tanggal di kanan (`Today`, `Tomorrow`, `Tue 28 Oct`, atau `No date`, ditambah ` · 15:00` bila ada jam), `Edit`, dan `Delete` (dua klik). Tugas belum selesai yang tanggalnya sudah lewat menampilkan `Overdue` merah `#FF453A` sebagai pengganti tanggal. Editor `Edit task` berisi Title (maks. 60 karakter), Date (placeholder `No date`), dan Time (placeholder `No time`). Baris bisa diseret untuk mengubah urutan (juga Alt + ↑/↓) di Today dan All; di Done tidak. Baris yang diseret terangkat (skala 1,02, bayangan) dan mengikuti pointer, baris lain bergeser 200 ms, lepas mendarat 200 ms; kalau "Animation effects" Windows mati, tanpa geser dan tanpa angkat.
+
+**Keputusan untuk keempat tab**
+1. **Pulau tetap satu timer.** Timer berlabel hanya ada di Tools; halaman Timer di pulau tidak berubah.
+2. **Slot** menampilkan pomodoro bila berjalan. Kalau tidak, slot menampilkan timer yang paling cepat habis di antara timer pulau dan timer berlabel. Klik slot saat yang tampil timer berlabel membuka Tools di tab Timer dan pulau tetap compact; timer pulau tetap membuka halaman Timer (6.3 "Membuka pulau").
+3. **Kartu per timer berlabel**: judul `<label> done`, prioritas 1 seperti kartu timer, dengan suara timer yang berulang (6.6). Beberapa timer yang habis di detik yang sama memunculkan kartu berurutan, yang paling dulu habis tampil lebih dulu. Mengedit durasi atau menghapus timer yang kartunya tampil menutup kartu itu dan menghentikan suaranya.
+4. **Label kosong** disimpan sebagai `Timer`. Mengubah label tidak menghentikan timer; mengubah durasi mengembalikan timer ke keadaan siap.
+5. **Stopwatch dan pomodoro di Tools sama dengan yang di pulau** (satu stopwatch, satu pomodoro). Lap hanya ada di Tools, karena halaman Timer di pulau tidak punya tombol Lap.
+6. **Durasi pomodoro disimpan di `settings.json`.** Perubahan berlaku untuk fase berikutnya: fase yang berjalan atau dijeda tidak berubah, fase yang belum dimulai langsung memakai durasi baru. Menurunkan jumlah sesi di bawah sesi yang sedang berjalan membuat fokus itu berakhir dengan long break.
+7. **Filter**: Today sama dengan halaman Todo di pulau (tanpa tanggal atau jatuh tempo hari ini), All berisi semua tugas, Done berisi tugas selesai, semuanya dalam urutan pengguna. Memindahkan tugas di daftar yang tersaring menaruhnya di posisi tugas tujuan dalam urutan penuh, seperti Notes, sehingga tugas yang tersembunyi tetap di tempatnya.
+8. **Kolom Date** menerima `yyyy-MM-dd`, `d MMM`, `d MMM yyyy`, `ddd d MMM` (bentuk yang tampil), `today`, dan `tomorrow`, tanpa membedakan huruf besar/kecil; tanpa tahun berarti tahun ini. Kosong berarti tanpa tanggal; isi yang tidak valid memberi garis merah dan mematikan Save. Kolom Time memakai aturan jam editor alarm; jam yang sudah lewat hari ini diberi garis kuning, seperti di 6.3.
+
+Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 detik yang sudah ada, hanya selama ada yang berjalan; tab Stopwatch punya satu timer 100 ms yang hanya jalan selama tab itu tampil dan stopwatch berjalan. Semua langganan dilepas saat Tools ditutup.
 
 | ID | Kebutuhan | Kriteria terima | Fase |
 |---|---|---|---|
@@ -1186,7 +1208,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 | `notes` | `id`, `body`, `color` (0–7, default 0), `text_size` (0–3: Extra small, Small, Medium, Large; default 2), `sort_order`, `created_at`, `updated_at`, `float_x`, `float_y`, `float_w`, `float_h` (posisi dan ukuran note mengambang dalam piksel tanpa skala DPI; kosong bila tidak mengambang) |
 | `todos` | `id`, `title`, `due_date` (opsional), `due_time` (opsional, jam lokal `HH:mm`), `remind_at` (opsional, pengingat yang masih menunggu), `done_at` (opsional), `sort_order`, `created_at` |
 | `alarms` | `id`, `time_of_day`, `repeat_days` (bitmask, 0 = sekali), `label`, `sound` (default `radar`), `enabled`, `next_fire_at` |
-| `timers` | `id`, `kind` (timer/pomodoro), `label`, `duration_s`, `ends_at` (saat jalan), `remaining_s` (saat dijeda), `pomodoro_phase`, `pomodoro_round` |
+| `timers` | `id`, `kind` (timer/pomodoro), `label` (kosong untuk timer pulau; timer berlabel dari Tools selalu berlabel tidak kosong), `duration_s`, `ends_at` (saat jalan), `remaining_s` (saat dijeda), `pomodoro_phase`, `pomodoro_round` |
 | `stopwatch` | `id`, `started_at`, `accumulated_ms`, `laps` (JSON) |
 | `clipboard_history` | `id`, `text`, `source_app`, `copied_at` (dibatasi 50 baris) |
 | `claude_window` | `id`, `started_at`, `resets_at`, `source` (official/estimated), `limit_hit_at` (opsional), `notified` (1 baris aktif) |
@@ -1194,7 +1216,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan.
 - Migrasi skema lewat tabel `schema_version`.
-- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, lirik nyala/mati, ambang baterai, kota cuaca (nama, lat, lon), hotkey, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase.
+- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows beserta status asli taskbar, format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, lirik nyala/mati, ambang baterai, kota cuaca (nama, lat, lon), hotkey, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase, durasi pomodoro (fokus, istirahat pendek, istirahat panjang, jumlah sesi).
 
 ## 11. Penanganan error
 
