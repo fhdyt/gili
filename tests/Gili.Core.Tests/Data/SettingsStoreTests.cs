@@ -1,4 +1,5 @@
 using Gili.Core.Settings;
+using Gili.Core.Timers;
 using Gili.Data;
 
 namespace Gili.Core.Tests.Data;
@@ -75,5 +76,13 @@ public sealed class SettingsStoreTests : IDisposable
     {
         Store.Save(new AppSettings { Glass = GlassLevel.Light });
         Assert.Contains("\"glass\": \"light\"", File.ReadAllText(SettingsFile));
+    }
+
+    [Fact]
+    public void Pomodoro_lengths_survive_a_restart()
+    {
+        var saved = new AppSettings { PomodoroFocus = 50, PomodoroBreak = 10, PomodoroLongBreak = 30, PomodoroRounds = 3 };
+        Store.Save(saved);
+        Assert.Equal(new PomodoroPlan(50, 10, 30, 3), Store.Load().Settings.Pomodoro);
     }
 }

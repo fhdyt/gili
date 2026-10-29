@@ -80,4 +80,18 @@ public sealed class TodoStoreTests : IDisposable
         var old = Assert.Single(new TodoStore(db).All());
         Assert.Equal(("Old task", new DateOnly(2026, 10, 20), (TimeOnly?)null), (old.Title, old.DueDate!.Value, old.DueTime));
     }
+
+    [Fact]
+    public void Todo_reorder_writes_every_place()
+    {
+        using var db = Database.Open(_folder);
+        var store = new TodoStore(db);
+        var a = store.Add(Slides);
+        var b = store.Add(Slides);
+        var c = store.Add(Slides);
+        store.Reorder([c.Id, a.Id, b.Id]);
+        var all = store.All();
+        Assert.Equal(new[] { c.Id, a.Id, b.Id }, all.Select(todo => todo.Id));
+        Assert.Equal(new[] { 0, 1, 2 }, all.Select(todo => todo.SortOrder));
+    }
 }

@@ -48,6 +48,24 @@ public sealed class TodoStore(Database db)
         command.ExecuteNonQuery();
     }
 
+    /// <summary>Numbers the tasks 0..n-1 in the given order, in one transaction.</summary>
+    public void Reorder(IReadOnlyList<long> ids)
+    {
+        using var transaction = db.Connection.BeginTransaction();
+        using var command = db.Connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "UPDATE todos SET sort_order = $order WHERE id = $id";
+        var order = command.Parameters.Add("$order", SqliteType.Integer);
+        var id = command.Parameters.Add("$id", SqliteType.Integer);
+        for (var i = 0; i < ids.Count; i++)
+        {
+            order.Value = i;
+            id.Value = ids[i];
+            command.ExecuteNonQuery();
+        }
+        transaction.Commit();
+    }
+
     public void Delete(long id)
     {
         using var command = db.Connection.CreateCommand();

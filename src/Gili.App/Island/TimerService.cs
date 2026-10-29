@@ -21,7 +21,7 @@ public sealed class TimerService
     {
         _store = store;
         _timer = store?.LoadTimer() ?? CountdownTimer.Default;
-        Pomodoro = store?.LoadPomodoro() ?? PomodoroState.Default;
+        Pomodoro = store?.LoadPomodoro(PomodoroPlan.Default) ?? PomodoroState.Default;
         Stopwatch = store?.LoadStopwatch() ?? StopwatchState.Default;
         _tick.Tick += (_, _) => Changed?.Invoke();
         _deadline.Tick += (_, _) => Reschedule();
