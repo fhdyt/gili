@@ -1,6 +1,7 @@
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Gili.Core.Layout;
 using Gili.Core.Notes;
 
 namespace Gili.App.Island;
@@ -149,9 +150,9 @@ public sealed partial class NotesViewModel : ObservableObject
     /// </summary>
     public bool Step(long id, int delta)
     {
-        if (NoteOrder.Neighbor([.. _visible.Select(n => n.Id)], id, delta) is not { } neighbor) return false;
+        if (ListOrder.Neighbor([.. _visible.Select(n => n.Id)], id, delta) is not { } neighbor) return false;
         List<long> order = [.. _notes.Notes.Select(n => n.Id)];
-        _notes.Reorder(NoteOrder.Move(order, id, order.IndexOf(neighbor)));
+        _notes.Reorder(ListOrder.Move(order, id, order.IndexOf(neighbor)));
         return true;
     }
 

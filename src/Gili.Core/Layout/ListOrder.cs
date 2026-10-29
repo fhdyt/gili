@@ -1,7 +1,7 @@
-namespace Gili.Core.Notes;
+namespace Gili.Core.Layout;
 
-/// <summary>Reordering the notes by drag or by Alt + arrow key.</summary>
-public static class NoteOrder
+/// <summary>Reordering a list (notes, tasks) by drag or by Alt + arrow key.</summary>
+public static class ListOrder
 {
     /// <summary>The order with <paramref name="id"/> moved to <paramref name="toIndex"/>; the same list when nothing would change.</summary>
     public static IReadOnlyList<long> Move(IReadOnlyList<long> order, long id, int toIndex)
@@ -14,7 +14,7 @@ public static class NoteOrder
         return moved;
     }
 
-    /// <summary>The note next to <paramref name="id"/> in the visible order (left/up is -1); null at either end or when id is not shown.</summary>
+    /// <summary>The item next to <paramref name="id"/> in the visible order (left/up is -1); null at either end or when id is not shown.</summary>
     public static long? Neighbor(IReadOnlyList<long> visible, long id, int delta)
     {
         var from = IndexOf(visible, id);

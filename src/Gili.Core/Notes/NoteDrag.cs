@@ -1,3 +1,5 @@
+using Gili.Core.Layout;
+
 namespace Gili.Core.Notes;
 
 /// <summary>
@@ -24,7 +26,7 @@ public static class NoteDrag
         for (var i = 0; i < order.Count; i++)
             if (order[i] == id) from = i;
         if (from < 0 || NoteGrid.HitTest(slots, x, y, from) is not { } over) return order;
-        return NoteOrder.Move(order, id, over);
+        return ListOrder.Move(order, id, over);
     }
 
     /// <summary>Where a released card lands: its slot, moved into the visible grid when it is scrolled out of view.</summary>

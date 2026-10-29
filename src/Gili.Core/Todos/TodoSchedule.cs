@@ -43,6 +43,14 @@ public static class TodoSchedule
     public static IReadOnlyList<Todo> Today(IReadOnlyList<Todo> todos, DateOnly today) =>
         [.. todos.Where(t => t.DueDate is null || t.DueDate == today).OrderBy(t => t.SortOrder).ThenBy(t => t.Id)];
 
+    /// <summary>The Todo tab: Today is the island list, All every task, Done the finished ones; always in the user's order.</summary>
+    public static IReadOnlyList<Todo> Filter(IReadOnlyList<Todo> todos, TodoFilter filter, DateOnly today) => filter switch
+    {
+        TodoFilter.Today => Today(todos, today),
+        TodoFilter.Done => [.. todos.Where(t => t.IsDone).OrderBy(t => t.SortOrder).ThenBy(t => t.Id)],
+        _ => [.. todos.OrderBy(t => t.SortOrder).ThenBy(t => t.Id)],
+    };
+
     public static IReadOnlyList<Todo> On(IReadOnlyList<Todo> todos, DateOnly date) =>
         [.. todos.Where(t => t.DueDate == date).OrderBy(t => t.DueTime ?? TimeOnly.MaxValue).ThenBy(t => t.SortOrder)];
 

@@ -57,4 +57,74 @@ public class TodoTextTests
         Assert.Equal("Due 15:00 today", TodoText.CardSubtitle(Task("x", new TimeOnly(15, 0)), Tuesday, use24Hour: true));
         Assert.Equal("Due 15:00 Wed 28 Oct", TodoText.CardSubtitle(Task("x", new TimeOnly(15, 0), new DateOnly(2026, 10, 28)), Tuesday, use24Hour: true));
     }
+
+    [Theory]
+    [InlineData("2026-10-30", 2026, 10, 30)]
+    [InlineData("30 Oct", 2026, 10, 30)]
+    [InlineData("30 oct", 2026, 10, 30)]
+    [InlineData("Thu 30 Oct", 2026, 10, 30)]
+    [InlineData("30 Oct 2027", 2027, 10, 30)]
+    [InlineData("today", 2026, 10, 27)]
+    [InlineData("Tomorrow", 2026, 10, 28)]
+    public void Date_input_reads_the_shown_form_and_rejects_nonsense(string text, int y, int m, int d)
+    {
+        Assert.True(TodoText.TryDate(text, Tuesday, out var date));
+        Assert.Equal(new DateOnly(y, m, d), date);
+    }
+
+    [Theory]
+    [InlineData("31 Feb")]
+    [InlineData("abc")]
+    [InlineData("30/10")]
+    public void Date_input_refuses_nonsense(string text)
+    {
+        Assert.False(TodoText.TryDate(text, Tuesday, out _));
+    }
+
+    [Fact]
+    public void A_blank_date_input_means_no_date()
+    {
+        Assert.True(TodoText.TryDate("", Tuesday, out var date));
+        Assert.Null(date);
+        Assert.True(TodoText.TryDate("  ", Tuesday, out date));
+        Assert.Null(date);
+        Assert.Equal("", TodoText.DateInput(null));
+        Assert.Equal("Fri 30 Oct", TodoText.DateInput(new DateOnly(2026, 10, 30)));
+    }
+
+    [Fact]
+    public void A_date_without_a_year_stays_in_this_year()
+    {
+        Assert.True(TodoText.TryDate("20 Oct", new DateOnly(2026, 10, 29), out var date));
+        Assert.Equal(new DateOnly(2026, 10, 20), date);
+    }
+
+    [Fact]
+    public void Due_reads_today_tomorrow_or_the_day_with_its_time()
+    {
+        Assert.Equal("Today · 15:00", TodoText.Due(Task("a", new TimeOnly(15, 0)), Tuesday, true));
+        Assert.Equal("Today · 3:00 PM", TodoText.Due(Task("a", new TimeOnly(15, 0)), Tuesday, false));
+        Assert.Equal("Today", TodoText.Due(Task("a"), Tuesday, true));
+        Assert.Equal("Tomorrow", TodoText.Due(Task("a", due: Tuesday.AddDays(1)), Tuesday, true));
+        Assert.Equal("Tue 3 Nov", TodoText.Due(Task("a", due: Tuesday.AddDays(7)), Tuesday, true));
+        Assert.Equal("No date", TodoText.Due(Task("a") with { DueDate = null }, Tuesday, true));
+    }
+
+    [Fact]
+    public void Overdue_only_for_open_tasks_before_today()
+    {
+        Assert.True(TodoText.IsOverdue(Task("a", due: Tuesday.AddDays(-1)), Tuesday));
+        Assert.False(TodoText.IsOverdue(Task("a", due: Tuesday), Tuesday));
+        Assert.False(TodoText.IsOverdue(Task("a", due: Tuesday.AddDays(-1), done: true), Tuesday));
+        Assert.False(TodoText.IsOverdue(Task("a") with { DueDate = null }, Tuesday));
+    }
+
+    [Fact]
+    public void Empty_texts_per_filter()
+    {
+        Assert.Equal("No tasks for today", TodoText.Empty(TodoFilter.Today));
+        Assert.Equal("No tasks yet", TodoText.Empty(TodoFilter.All));
+        Assert.Equal("No finished tasks", TodoText.Empty(TodoFilter.Done));
+        Assert.Equal("New tasks are added from Calendar in the island.", TodoText.CalendarNote);
+    }
 }

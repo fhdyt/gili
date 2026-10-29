@@ -81,4 +81,20 @@ public class TodoScheduleTests
         Assert.False(TodoSchedule.HasDot([], alarms, Tuesday, Jakarta));
         Assert.True(TodoSchedule.HasDot([Task(9, Tuesday)], alarms, Tuesday, Jakarta));
     }
+
+    [Fact]
+    public void Filters_split_today_all_and_done()
+    {
+        Todo[] todos =
+        [
+            Task(4, Tuesday.AddDays(3), order: 0),
+            Task(3, null, order: 1),
+            Task(2, Tuesday, order: 1),
+            Task(1, Tuesday.AddDays(-2), done: true, order: 3),
+            Task(5, Tuesday, done: true, order: 4),
+        ];
+        Assert.Equal([2L, 3L, 5L], TodoSchedule.Filter(todos, TodoFilter.Today, Tuesday).Select(t => t.Id));
+        Assert.Equal([4L, 2L, 3L, 1L, 5L], TodoSchedule.Filter(todos, TodoFilter.All, Tuesday).Select(t => t.Id));
+        Assert.Equal([1L, 5L], TodoSchedule.Filter(todos, TodoFilter.Done, Tuesday).Select(t => t.Id));
+    }
 }
