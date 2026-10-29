@@ -1801,12 +1801,12 @@ const CARDS={
   alarm:{c:'var(--orange)',i:'alarm',cls:'pulse shake',t:'Alarm 14:30',s:'Take medicine',b:[['Snooze 5m','snooze'],['Stop','dismiss',1]],ring:'loop',snd:()=>Sound.alarm,ramp:true},
   timer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`Timer ${mmss(S.timer.total)} done`,s:'Bring in the laundry',b:[['Repeat','repeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   todo:{c:'var(--accent)',i:'todo',cls:'',t:'Prepare meeting slides',s:'Due 15:00 today',b:[['Snooze 10m','snooze'],['Done','done',1]],ring:'once',snd:'ping'},
-  pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`5-minute break · session ${S.pomo.round} of ${PLAN.rounds}`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
+  pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`${breakLen()/60}-minute break · session ${S.pomo.round} of ${PLAN.rounds}`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
   conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
   ltimer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`${esc(LC.l)} done`,s:()=>`Timer ${fmtT(LC.total)}`,b:[['Repeat','ltrepeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
-  pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${Math.min(PLAN.rounds,S.pomo.round+1)} of ${PLAN.rounds} ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
+  pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${nextRound()} of ${PLAN.rounds} ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
 };
 const val=v=>typeof v==='function'?v():v;
 function showCard(k){
@@ -1827,7 +1827,7 @@ function showCard(k){
 function closeCard(){clearTimeout(S.cardT);stopSound();S.card=null;setState(S.cardReturn)}
 lcard.addEventListener('click',e=>{
   const b=e.target.closest('[data-card]');if(!b)return;
-  const a=b.dataset.card;
+  const a=b.dataset.card,wasLt=S.card==='ltimer';
   if(a==='unmute'){S.winMuted=false;setPressed('winmute',false);showCard(S.card);return}
   if(a==='xskip'||a==='xreplace')resolveConflict(a);
   if(a==='clopen')clFocus(clById(S.clCard));
@@ -1836,10 +1836,10 @@ lcard.addEventListener('click',e=>{
   if(a==='repeat')Object.assign(S.timer,{left:S.timer.total,running:true});
   if(a==='ltrepeat'){const t=LT.find(x=>x.id===LC.id)||LT.find(x=>x.l===LC.l);if(t)Object.assign(t,{left:t.total,run:true})}
   if(a==='done'){const t=S.todos.find(x=>x.t==='Prepare meeting slides');if(t)t.d=1;renderTodos()}
-  if(a==='break'){Object.assign(S.pomo,{phase:'break',left:300,len:300,running:true});setTimeout(clHeld,600)}
-  if(a==='focus')Object.assign(S.pomo,{phase:'focus',left:1500,len:1500,running:true,round:Math.min(PLAN.rounds,S.pomo.round+1)});
-  if(a==='stop')Object.assign(S.pomo,{running:false,phase:'focus',left:1500,len:1500,round:1,fast:false});
-  closeCard();renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
+  if(a==='break'){Object.assign(S.pomo,{phase:'break',left:breakLen(),len:breakLen(),running:true});setTimeout(clHeld,600)}
+  if(a==='focus')Object.assign(S.pomo,{phase:'focus',left:PLAN.focus*60,len:PLAN.focus*60,running:true,round:nextRound()});
+  if(a==='stop')Object.assign(S.pomo,{running:false,phase:'focus',left:PLAN.focus*60,len:PLAN.focus*60,round:1,fast:false});
+  closeCard();if(wasLt){LQ.shift();ltPump()}renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
 });
 
 /* ---------- compact: clock and activity slot ---------- */
@@ -3082,7 +3082,7 @@ function alParse(v){
 
 /* Timer tab: labeled timers that run side by side (the island keeps its single timer). The sample rows appear the
    first time the tab opens, so the slot does not show a timer before that. */
-const LT=[];let ltSeeded=false,ltId=1,ltEdit=null,ltDel=-1,ltDelT=0,ltEnded=false,LC={l:'Tea',total:600};
+const LT=[];let ltSeeded=false,ltId=1,ltEdit=null,ltDel=-1,ltDelT=0,ltEnded=false,LC={l:'Tea',total:600},LQ=[];
 const fmtT=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600);return h?h+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60):mmss(s)};
 function durParse(v){
   const t=v.trim();if(!/^\d{1,4}(:\d{1,2}){0,2}$/.test(t))return 0;
@@ -3101,12 +3101,22 @@ function ltSeed(){
 // The slot shows the labeled timer that ends first, unless the island timer ends sooner.
 function ltSlot(){let b=null;for(const t of LT)if(t.run&&(!b||t.left<b.left))b=t;return b&&(!S.timer.running||b.left<S.timer.left)?b:null}
 function ltTick(){
-  let ch=false;
+  let ch=false;const ended=[];
   for(const t of LT)if(t.run){
     t.left-=.1;ch=true;
-    if(t.left<=0){t.left=t.total;t.run=false;ltEnded=true;LC={id:t.id,l:t.l,total:t.total};showCard('ltimer')}
+    if(t.left<=0)ended.push({t,over:t.left});
   }
+  // Timers that end in the same tick queue in end order (the one that ran over most ended first).
+  ended.sort((a,b)=>a.over-b.over).forEach(({t})=>{LQ.push({id:t.id,l:t.l,total:t.total});t.left=t.total;t.run=false;ltEnded=true});
+  ltPump();
   return ch;
+}
+// One card at a time; Repeat or Close on it brings up the next one in the queue.
+function ltPump(){if(LQ.length&&!(S.state==='card'&&S.card==='ltimer')){LC=LQ[0];showCard('ltimer')}}
+function ltDrop(id){
+  const was=S.card==='ltimer'&&LQ[0]&&LQ[0].id===id;
+  for(let i=LQ.length-1;i>=0;i--)if(LQ[i].id===id)LQ.splice(i,1);
+  if(was){closeCard();ltPump()}
 }
 function ltTab(){
   ltSeed();
@@ -3130,12 +3140,12 @@ function ltClick(b){
   else if(d.ltreset){const t=find('ltreset');Object.assign(t,{left:t.total,run:false});renderSlot()}
   else if(d.ltedit){const t=find('ltedit');ltEdit={id:t.id,l:t.l,d:fmtT(t.total)}}
   else if(d.ltdel){const id=+d.ltdel;clearTimeout(ltDelT);
-    if(ltDel===id){LT.splice(LT.findIndex(t=>t.id===id),1);ltDel=-1;if(ltEdit&&ltEdit.id===id)ltEdit=null;if(S.card==='ltimer'&&LC.id===id)closeCard();renderSlot()}
+    if(ltDel===id){LT.splice(LT.findIndex(t=>t.id===id),1);ltDel=-1;if(ltEdit&&ltEdit.id===id)ltEdit=null;ltDrop(id);renderSlot()}
     else{ltDel=id;ltDelT=setTimeout(()=>{ltDel=-1;if(!$('#toolw').hidden)renderTools()},3000)}}
   else if(b.id==='ltCancel')ltEdit=null;
   else if(b.id==='ltSave'){const s=durParse(ltEdit.d),l=ltEdit.l.trim()||'Timer';
     if(ltEdit.id<0)LT.push({id:ltId++,l,total:s,left:s,run:false});
-    else{const t=LT.find(x=>x.id===ltEdit.id);t.l=l;if(s!==t.total){Object.assign(t,{total:s,left:s,run:false});if(S.card==='ltimer'&&LC.id===t.id)closeCard()}}
+    else{const t=LT.find(x=>x.id===ltEdit.id);t.l=l;if(s!==t.total){Object.assign(t,{total:s,left:s,run:false});ltDrop(t.id)}}
     ltEdit=null;renderSlot()}
   else return false;
 }
@@ -3161,6 +3171,9 @@ function swClick(b){
 const PLAN={focus:25,short:5,long:15,rounds:4};
 const PLAN_ROWS=[['Focus','focus',1,120,'min'],['Short break','short',1,60,'min'],['Long break','long',1,60,'min'],['Long break after','rounds',2,8,'sessions']];
 const pomoSub=()=>`${S.pomo.phase==='focus'?'Focus':'Break'} · session ${S.pomo.round} of ${PLAN.rounds}`;
+// The break after the last session is the long one; the card and the next phase read the lengths from here.
+const breakLen=()=>(S.pomo.round>=PLAN.rounds?PLAN.long:PLAN.short)*60;
+const nextRound=()=>S.pomo.round>=PLAN.rounds?1:S.pomo.round+1;
 const pomoBtn=()=>S.pomo.running?'Pause':S.pomo.left<S.pomo.len?'Resume':'Start';
 function pmTab(){
   const rows=PLAN_ROWS.map(([n,k,lo,hi,u])=>`<div class="srow"><span>${n}</span><span class="stp"><button data-pm="${k}" data-dir="-1" aria-label="Decrease ${n}" ${PLAN[k]<=lo?'disabled':''}>−</button>
@@ -3250,13 +3263,13 @@ function tdClick(b){
 function tdMove(from,to){const[x]=S.todos.splice(from,1);S.todos.splice(to,0,x);renderTodos();refreshCalDots()}
 function tdDragEnd(commit){
   const g=tdDrag;tdDrag=null;if(!g||!g.moved)return;
-  g.rows.forEach(r=>{r.classList.remove('lift');r.style.transform=''});
-  if(commit&&g.to!==g.from){
-    const vis=tdRows();
-    if(S.reduce){tdMove(vis[g.from].i,vis[g.to].i);renderTools();return}
-    g.row.style.transform=`translateY(${(g.to-g.from)*g.h}px)`;
-    setTimeout(()=>{tdMove(vis[g.from].i,vis[g.to].i);renderTools()},200);
-  }
+  const moves=commit&&g.to!==g.from,vis=tdRows();
+  if(moves&&S.reduce){g.rows.forEach(r=>{r.classList.remove('lift');r.style.transform=''});tdMove(vis[g.from].i,vis[g.to].i);renderTools();return}
+  // The other rows keep their offsets until the re-render; only the dragged row lands (200 ms) in its new slot.
+  if(!moves)g.rows.forEach(r=>{if(r!==g.row)r.style.transform=''});
+  g.row.classList.remove('lift');g.row.offsetWidth;
+  g.row.style.transform=moves?`translateY(${(g.to-g.from)*g.h}px)`:'';
+  if(moves)setTimeout(()=>{tdMove(vis[g.from].i,vis[g.to].i);renderTools()},200);
 }
 $('#toolp').addEventListener('pointerdown',e=>{
   if(toolTab!=='Todo'||tdFilter==='Done'||tdEdit||e.button)return;
@@ -3623,7 +3636,7 @@ const ACT={
     Object.assign(S.media,{active:false,playing:false});setPressed('music',false);
     Object.assign(S.timer,{running:false,left:S.timer.total});
     LT.forEach(t=>{t.run=false;t.left=t.total});
-    Object.assign(S.pomo,{running:false,left:1500,len:1500,phase:'focus',round:1,fast:false});
+    Object.assign(S.pomo,{running:false,left:PLAN.focus*60,len:PLAN.focus*60,phase:'focus',round:1,fast:false});
     if(S.sw.running)toggleSw();
     if(S.charging){S.charging=false;setPressed('charge',false)}
     if(S.xop){clearInterval(S.xop.t);S.xop=null}
@@ -3638,9 +3651,9 @@ const ACT={
   song:()=>nextSong(1),
   video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack()},
   lyrics:()=>$('#mLyr').click(),
-  teacard:()=>{LC={l:'Tea',total:600};showCard('ltimer')},
+  teacard:()=>{LQ.push({l:'Tea',total:600});ltPump()},
   timer10:()=>{Object.assign(S.timer,{mode:'timer',total:10,left:10,running:true});renderTimerPage();renderSlot()},
-  pomo:()=>{Object.assign(S.pomo,{running:true,left:1500,len:1500,phase:'focus',round:1,fast:true});S.timer.mode='pomo';renderTimerPage();renderSlot()},
+  pomo:()=>{Object.assign(S.pomo,{running:true,left:PLAN.focus*60,len:PLAN.focus*60,phase:'focus',round:1,fast:true});S.timer.mode='pomo';renderTimerPage();renderSlot()},
   sw:toggleSw,
   charge:toggleCharge,
   caps:()=>{S.caps=!S.caps;showCaps()},
