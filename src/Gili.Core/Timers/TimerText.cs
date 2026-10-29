@@ -39,7 +39,7 @@ public static class TimerText
     }
 
     public static string BreakOver(PomodoroState rest, PomodoroPlan plan) =>
-        $"Session {(rest.Phase == PomodoroPhase.LongBreak ? 1 : rest.Round + 1)} of {plan.Rounds} ready";
+        $"Session {(rest.Phase == PomodoroPhase.LongBreak || rest.Round >= plan.Rounds ? 1 : rest.Round + 1)} of {plan.Rounds} ready";
 
     /// <summary>Clock, with hours (h:mm:ss) from one hour on.</summary>
     public static string Long(TimeSpan time)

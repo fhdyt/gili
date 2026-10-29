@@ -204,6 +204,18 @@ public class TimerModelsTests
     }
 
     [Fact]
+    public void A_break_after_lowering_rounds_starts_session_one()
+    {
+        var plan = PomodoroPlan.Default with { Rounds = 3 };
+        var rest = new PomodoroState(PomodoroPhase.Break, 3, CountdownTimer.Default.WithTotal(300));
+        var running = rest.Start(Now).WithPlan(plan).NextPhase(Now.AddMinutes(5), startNow: true, plan);
+        var unstarted = rest.WithPlan(plan).NextPhase(Now, startNow: false, plan);
+        Assert.Equal((PomodoroPhase.Focus, 1), (running.Phase, running.Round));
+        Assert.Equal((PomodoroPhase.Focus, 1), (unstarted.Phase, unstarted.Round));
+        Assert.Equal("Session 1 of 3 ready", TimerText.BreakOver(rest, plan));
+    }
+
+    [Fact]
     public void Plan_is_clamped_to_its_ranges()
     {
         Assert.Equal(new PomodoroPlan(1, 1, 1, 2), new PomodoroPlan(0, -5, 0, 1).Normalize());

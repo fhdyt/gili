@@ -56,7 +56,10 @@ public static class TimerSchedule
     public static IReadOnlyList<long> Finished(IReadOnlyList<LabeledTimer> timers, DateTimeOffset now) =>
         [.. timers.Where(t => t.Clock.IsDone(now)).OrderBy(t => t.Clock.EndsAt).ThenBy(t => t.Id).Select(t => t.Id)];
 
-    /// <summary>The running timer with the earliest end, or null when none runs (paused timers do not count).</summary>
+    /// <summary>
+    /// The running timer with the earliest end, or null when none runs (paused timers do not count). <c>now</c> is unused
+    /// because only running timers have an end.
+    /// </summary>
     public static CountdownTimer? Soonest(IEnumerable<CountdownTimer> running, DateTimeOffset now) =>
         running.Where(t => t.IsRunning).MinBy(t => t.EndsAt);
 }
@@ -138,7 +141,7 @@ public sealed record PomodoroState(PomodoroPhase Phase, int Round, CountdownTime
         var (phase, round) = Phase switch
         {
             PomodoroPhase.Focus => (Round >= plan.Rounds ? PomodoroPhase.LongBreak : PomodoroPhase.Break, Round),
-            PomodoroPhase.Break => (PomodoroPhase.Focus, Round + 1),
+            PomodoroPhase.Break => (PomodoroPhase.Focus, Round >= plan.Rounds ? 1 : Round + 1),
             _ => (PomodoroPhase.Focus, 1),
         };
         var clock = Timer(plan, phase);
@@ -162,4 +165,3 @@ public sealed record PomodoroState(PomodoroPhase Phase, int Round, CountdownTime
     private static CountdownTimer Timer(PomodoroPlan plan, PomodoroPhase phase) =>
         CountdownTimer.Default.WithTotal((int)plan.Length(phase).TotalSeconds);
 }
-
