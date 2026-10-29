@@ -21,7 +21,7 @@ public class DemoTests
     public void A_ten_second_timer_runs_and_its_card_is_closed()
     {
         var start = Steps.Single(s => s.Action is DemoTimer);
-        Assert.Equal(10, ((DemoTimer)start.Action).Seconds);
+        Assert.Equal((10, "Tea"), (((DemoTimer)start.Action).Seconds, ((DemoTimer)start.Action).Label));
         var close = Steps.Single(s => s.Action is DemoDismiss { Card: "timer" });
         Assert.True(close.At >= start.At + TimeSpan.FromSeconds(12));
     }

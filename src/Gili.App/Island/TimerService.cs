@@ -90,7 +90,7 @@ public sealed class TimerService
         {
             case TimerMode.Timer: Timer = Timer.Reset(); break;
             case TimerMode.Stopwatch: Stopwatch = Stopwatch.Reset(); break;
-            default: Pomodoro = Pomodoro.Reset(); break;
+            default: Pomodoro = PomodoroState.Reset(PomodoroPlan.Default); break;
         }
         Save();
     }
@@ -122,13 +122,13 @@ public sealed class TimerService
         Save();
     }
 
-    public void StartBreak() => SetPomodoro(Pomodoro.NextPhase(Now, startNow: true));
+    public void StartBreak() => SetPomodoro(Pomodoro.NextPhase(Now, startNow: true, PomodoroPlan.Default));
 
-    public void SkipBreak() => SetPomodoro(Pomodoro.Skip(Now));
+    public void SkipBreak() => SetPomodoro(Pomodoro.Skip(Now, PomodoroPlan.Default));
 
     public void StopPomodoro() => SetPomodoro(PomodoroState.Default);
 
-    public void StartFocus() => SetPomodoro(Pomodoro.NextPhase(Now, startNow: true));
+    public void StartFocus() => SetPomodoro(Pomodoro.NextPhase(Now, startNow: true, PomodoroPlan.Default));
 
     /// <summary>
     /// Ends whatever has reached its end, raising its card, then waits for the next end. Called at start (a timer may

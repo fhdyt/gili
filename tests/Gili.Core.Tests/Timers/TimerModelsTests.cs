@@ -60,9 +60,9 @@ public class TimerModelsTests
     {
         var focus = PomodoroState.Default.Start(Now);
         Assert.Equal((PomodoroPhase.Focus, 1, TimeSpan.FromMinutes(25)), (focus.Phase, focus.Round, focus.Clock.Remaining(Now)));
-        var rest = focus.NextPhase(Now.AddMinutes(25), startNow: true);
+        var rest = focus.NextPhase(Now.AddMinutes(25), startNow: true, PomodoroPlan.Default);
         Assert.Equal((PomodoroPhase.Break, 1, TimeSpan.FromMinutes(5)), (rest.Phase, rest.Round, rest.Clock.Remaining(Now.AddMinutes(25))));
-        var next = rest.NextPhase(Now.AddMinutes(30), startNow: false);
+        var next = rest.NextPhase(Now.AddMinutes(30), startNow: false, PomodoroPlan.Default);
         Assert.Equal((PomodoroPhase.Focus, 2, false), (next.Phase, next.Round, next.Clock.IsRunning));
     }
 
@@ -70,7 +70,7 @@ public class TimerModelsTests
     public void Fourth_focus_leads_to_a_long_break()
     {
         var fourth = PomodoroState.Default with { Round = 4 };
-        var rest = fourth.NextPhase(Now, startNow: true);
+        var rest = fourth.NextPhase(Now, startNow: true, PomodoroPlan.Default);
         Assert.Equal((PomodoroPhase.LongBreak, TimeSpan.FromMinutes(15)), (rest.Phase, rest.Clock.Remaining(Now)));
     }
 
@@ -78,14 +78,137 @@ public class TimerModelsTests
     public void Long_break_starts_over_at_session_1()
     {
         var longBreak = new PomodoroState(PomodoroPhase.LongBreak, 4, CountdownTimer.Default.WithTotal(900));
-        Assert.Equal((PomodoroPhase.Focus, 1), (longBreak.NextPhase(Now, true).Phase, longBreak.NextPhase(Now, true).Round));
+        var next = longBreak.NextPhase(Now, true, PomodoroPlan.Default);
+        Assert.Equal((PomodoroPhase.Focus, 1), (next.Phase, next.Round));
     }
 
     [Fact]
     public void Skip_starts_the_next_focus()
     {
-        var skipped = PomodoroState.Default.Skip(Now);
+        var skipped = PomodoroState.Default.Skip(Now, PomodoroPlan.Default);
         Assert.Equal((PomodoroPhase.Focus, 2, true), (skipped.Phase, skipped.Round, skipped.Clock.IsRunning));
-        Assert.Equal(1, (PomodoroState.Default with { Round = 4 }).Skip(Now).Round);
+        Assert.Equal(1, (PomodoroState.Default with { Round = 4 }).Skip(Now, PomodoroPlan.Default).Round);
+    }
+
+    private static LabeledTimer Labeled(long id, string label, int seconds, int endsInSeconds) =>
+        new(id, label, CountdownTimer.Default.WithTotal(seconds) with { EndsAt = Now.AddSeconds(endsInSeconds) });
+
+    [Fact]
+    public void Timers_ending_together_finish_in_end_order()
+    {
+        var timers = new[] { Labeled(3, "C", 60, 10), Labeled(1, "A", 60, 10), Labeled(2, "B", 30, 5), Labeled(4, "D", 60, 99) };
+        Assert.Equal([2L, 1L, 3L], TimerSchedule.Finished(timers, Now.AddSeconds(10)));
+        Assert.Empty(TimerSchedule.Finished(timers, Now));
+    }
+
+    [Fact]
+    public void Soonest_is_the_earliest_end_and_ignores_paused()
+    {
+        var late = CountdownTimer.Default.Start(Now);
+        var early = CountdownTimer.Default.WithTotal(60).Start(Now);
+        var paused = CountdownTimer.Default.WithTotal(5).Start(Now).Pause(Now.AddSeconds(1));
+        Assert.Equal(early, TimerSchedule.Soonest([late, paused, early], Now));
+        Assert.Null(TimerSchedule.Soonest([paused, CountdownTimer.Default], Now));
+        Assert.Null(TimerSchedule.Soonest([], Now));
+    }
+
+    [Fact]
+    public void Empty_label_reads_timer_and_long_labels_are_cut()
+    {
+        Assert.Equal("Timer", LabeledTimer.CleanLabel("   "));
+        Assert.Equal("Tea", LabeledTimer.CleanLabel("  Tea "));
+        Assert.Equal(new string('a', 40), LabeledTimer.CleanLabel(new string('a', 60)));
+        Assert.Equal((10, 40), (LabeledTimer.MaxCount, LabeledTimer.LabelLimit));
+    }
+
+    [Fact]
+    public void Lap_adds_the_total_and_only_while_running()
+    {
+        Assert.False(StopwatchState.Default.CanLap);
+        Assert.Empty(StopwatchState.Default.Lap(Now).Laps);
+        var sw = StopwatchState.Default.Start(Now);
+        Assert.True(sw.CanLap);
+        var lapped = sw.Lap(Now.AddSeconds(12)).Lap(Now.AddSeconds(20));
+        Assert.Equal([12_000L, 20_000L], lapped.Laps);
+        var paused = lapped.Pause(Now.AddSeconds(30));
+        Assert.Equal([12_000L, 20_000L], paused.Laps);
+        Assert.Equal(30_000, paused.AccumulatedMs);
+        Assert.Equal(lapped.Laps, paused.Start(Now.AddSeconds(40)).Laps);
+    }
+
+    [Fact]
+    public void Laps_stop_at_99()
+    {
+        var sw = StopwatchState.Default.Start(Now);
+        for (var i = 1; i <= 120; i++) sw = sw.Lap(Now.AddSeconds(i));
+        Assert.Equal(99, sw.Laps.Count);
+        Assert.False(sw.CanLap);
+        Assert.Equal(99_000, sw.Laps[^1]);
+    }
+
+    [Fact]
+    public void Reset_clears_laps()
+    {
+        var lapped = StopwatchState.Default.Start(Now).Lap(Now.AddSeconds(3));
+        var reset = lapped.Reset();
+        Assert.Empty(reset.Laps);
+        Assert.Equal(StopwatchState.Default, reset);
+        Assert.Equal(lapped, StopwatchState.Default.Start(Now).Lap(Now.AddSeconds(3)));
+        Assert.NotEqual(lapped, StopwatchState.Default.Start(Now).Lap(Now.AddSeconds(4)));
+    }
+
+    [Fact]
+    public void Plan_lengths_drive_each_phase()
+    {
+        var plan = new PomodoroPlan(20, 4, 12, 3);
+        var focus = PomodoroState.Initial(plan);
+        Assert.Equal(TimeSpan.FromMinutes(20), focus.Clock.Total);
+        var rest = focus.NextPhase(Now, startNow: true, plan);
+        Assert.Equal((PomodoroPhase.Break, TimeSpan.FromMinutes(4)), (rest.Phase, rest.Clock.Total));
+        var third = new PomodoroState(PomodoroPhase.Focus, 3, focus.Clock).NextPhase(Now, startNow: false, plan);
+        Assert.Equal((PomodoroPhase.LongBreak, TimeSpan.FromMinutes(12)), (third.Phase, third.Clock.Total));
+        Assert.Equal(TimeSpan.FromMinutes(12), plan.Length(PomodoroPhase.LongBreak));
+        Assert.Equal(1, third.NextPhase(Now, true, plan).Round);
+        Assert.Equal(1, new PomodoroState(PomodoroPhase.Focus, 3, focus.Clock).Skip(Now, plan).Round);
+        Assert.Equal(TimeSpan.FromMinutes(20), PomodoroState.Reset(plan).Clock.Total);
+    }
+
+    [Fact]
+    public void A_plan_change_leaves_a_running_phase_alone()
+    {
+        var plan = new PomodoroPlan(50, 10, 30, 4);
+        var running = PomodoroState.Default.Start(Now);
+        Assert.Equal(running, running.WithPlan(plan));
+        var paused = running.Pause(Now.AddMinutes(5));
+        Assert.Equal(paused, paused.WithPlan(plan));
+    }
+
+    [Fact]
+    public void A_plan_change_resizes_an_unstarted_phase()
+    {
+        var plan = new PomodoroPlan(50, 10, 30, 4);
+        Assert.Equal(TimeSpan.FromMinutes(50), PomodoroState.Default.WithPlan(plan).Clock.Total);
+        var rest = PomodoroState.Default.NextPhase(Now, startNow: false, PomodoroPlan.Default);
+        Assert.Equal(TimeSpan.FromMinutes(5), rest.Clock.Total);
+        Assert.Equal(TimeSpan.FromMinutes(10), rest.WithPlan(plan).Clock.Total);
+    }
+
+    [Fact]
+    public void Lowering_rounds_below_the_session_ends_in_a_long_break()
+    {
+        var plan = PomodoroPlan.Default with { Rounds = 3 };
+        var lowered = (PomodoroState.Default with { Round = 4 }).Start(Now).WithPlan(plan);
+        Assert.Equal(3, lowered.Round);
+        Assert.True(lowered.Clock.IsRunning);
+        Assert.Equal(PomodoroPhase.LongBreak, lowered.NextPhase(Now.AddMinutes(25), startNow: true, plan).Phase);
+    }
+
+    [Fact]
+    public void Plan_is_clamped_to_its_ranges()
+    {
+        Assert.Equal(new PomodoroPlan(1, 1, 1, 2), new PomodoroPlan(0, -5, 0, 1).Normalize());
+        Assert.Equal(new PomodoroPlan(120, 60, 60, 8), new PomodoroPlan(500, 90, 99, 20).Normalize());
+        Assert.Equal(PomodoroPlan.Default, PomodoroPlan.Default.Normalize());
+        Assert.Equal(new PomodoroPlan(25, 5, 15, 4), PomodoroPlan.Default);
     }
 }

@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using Gili.Core.Timers;
+
 namespace Gili.Core.Settings;
 
 public enum GlassLevel { Off, Light, Strong }
@@ -32,12 +35,22 @@ public sealed record AppSettings
     public double WeatherLatitude { get; init; } = -6.2088;
     public double WeatherLongitude { get; init; } = 106.8456;
 
+    /// <summary>The pomodoro lengths in minutes and the sessions before the long break (F-TOOL-03).</summary>
+    public int PomodoroFocus { get; init; } = 25;
+    public int PomodoroBreak { get; init; } = 5;
+    public int PomodoroLongBreak { get; init; } = 15;
+    public int PomodoroRounds { get; init; } = 4;
+
+    [JsonIgnore]
+    public PomodoroPlan Pomodoro => new(PomodoroFocus, PomodoroBreak, PomodoroLongBreak, PomodoroRounds);
+
     public static int MaxIslandHeight(int barHeight) => barHeight - 4;
 
     /// <summary>Clamps every value to the ranges in PRD 6.1 and F-BAR-08.</summary>
     public AppSettings Normalize()
     {
         var barHeight = Math.Clamp(BarHeight, MinBarHeight, MaxBarHeight);
+        var plan = Pomodoro.Normalize();
         return this with
         {
             BarHeight = barHeight,
@@ -46,6 +59,10 @@ public sealed record AppSettings
             Glass = Enum.IsDefined(Glass) ? Glass : GlassLevel.Strong,
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),
             TimerSound = Sound.Voices.Find(TimerSound).Name,
+            PomodoroFocus = plan.FocusMinutes,
+            PomodoroBreak = plan.BreakMinutes,
+            PomodoroLongBreak = plan.LongBreakMinutes,
+            PomodoroRounds = plan.Rounds,
         };
     }
 }

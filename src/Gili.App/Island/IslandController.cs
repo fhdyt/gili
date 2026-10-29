@@ -144,9 +144,9 @@ public sealed class IslandController : IDisposable
         {
             "timer" => new("Icon.Hourglass", orange, TimerText.TimerDone(Timers.Timer.TotalSeconds), null,
                 [new("Repeat", false, Card(id, Timers.Repeat)), new("Close", true, Card(id, () => { }))]),
-            "pomo-focus" => new("Icon.Hourglass", red, "Focus session done", TimerText.FocusDone(Timers.Pomodoro),
+            "pomo-focus" => new("Icon.Hourglass", red, "Focus session done", TimerText.FocusDone(Timers.Pomodoro, PomodoroPlan.Default),
                 [new("Skip", false, Card(id, Timers.SkipBreak)), new("Start break", true, Card(id, Timers.StartBreak))]),
-            "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro),
+            "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro, PomodoroPlan.Default),
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),

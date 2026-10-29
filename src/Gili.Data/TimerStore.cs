@@ -30,7 +30,7 @@ public sealed class TimerStore(Database db)
 
     public StopwatchState LoadStopwatch() =>
         Read("SELECT started_at, accumulated_ms FROM stopwatch LIMIT 1",
-            reader => reader.Read() ? new StopwatchState(Time(reader, 0), reader.GetInt64(1)) : StopwatchState.Default);
+            reader => reader.Read() ? new StopwatchState(Time(reader, 0), reader.GetInt64(1), []) : StopwatchState.Default);
 
     public void SaveStopwatch(StopwatchState stopwatch)
     {

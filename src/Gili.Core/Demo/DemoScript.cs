@@ -11,7 +11,7 @@ public abstract record DemoAction;
 public sealed record DemoCopy(string Text) : DemoAction;
 
 /// <summary>A timer that runs for the demo only and is never saved (F-TOOL-01).</summary>
-public sealed record DemoTimer(int Seconds) : DemoAction;
+public sealed record DemoTimer(int Seconds, string? Label = null) : DemoAction;
 
 /// <summary>An alarm that rings for the demo only and is never saved (F-TOOL-05).</summary>
 public sealed record DemoAlarm(TimeOnly Time, string Label) : DemoAction
@@ -62,7 +62,7 @@ public static class DemoScript
         return
         [
             Step(0.3, new DemoCopy("Meeting at 3 in the Merapi room, bring a charger")),
-            Step(3.5, new DemoTimer(10)),
+            Step(3.5, new DemoTimer(10, "Tea")),
             Step(6.7, new DemoMedia(song)),
             Step(16.5, new DemoDismiss("timer")),
             Step(18, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: true, Percent: 64))),

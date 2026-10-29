@@ -41,7 +41,7 @@ public sealed class TimerStoreTests : IDisposable
     [Fact]
     public void Pomodoro_phase_and_round_survive()
     {
-        var pomodoro = PomodoroState.Default.NextPhase(Now, startNow: true);
+        var pomodoro = PomodoroState.Default.NextPhase(Now, startNow: true, PomodoroPlan.Default);
         Assert.Equal(pomodoro, AfterRestart(s => s.SavePomodoro(pomodoro), s => s.LoadPomodoro()));
     }
 

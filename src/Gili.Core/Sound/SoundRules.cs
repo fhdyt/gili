@@ -16,6 +16,7 @@ public static class SoundRules
     {
         _ when cardId.StartsWith("alarm:", StringComparison.Ordinal) => (Voices.Find(alarmSound ?? "Radar").Name, true, true),
         "timer" => (Voices.Find(timerSound).Name, true, false),
+        _ when cardId.StartsWith("timer:", StringComparison.Ordinal) => (Voices.Find(timerSound).Name, true, false),
         "pomo-focus" or "pomo-break" => ("Bell", false, false),
         _ when cardId.StartsWith("todo:", StringComparison.Ordinal) => ("Ping", false, false),
         _ => null,

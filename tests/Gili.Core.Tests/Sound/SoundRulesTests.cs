@@ -14,6 +14,13 @@ public class SoundRulesTests
     }
 
     [Fact]
+    public void Labeled_timer_cards_ring_like_the_timer()
+    {
+        Assert.Equal(("Soft", true, false), SoundRules.ForCard("timer:7", "Soft"));
+        Assert.Null(SoundRules.ForCard("timers", "Soft"));
+    }
+
+    [Fact]
     public void Card_sounds_follow_the_prd()
     {
         Assert.Equal(("Chime", true, false), SoundRules.ForCard("timer", "Chime"));

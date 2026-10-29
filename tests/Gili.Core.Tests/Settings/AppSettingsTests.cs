@@ -1,4 +1,5 @@
 using Gili.Core.Settings;
+using Gili.Core.Timers;
 
 namespace Gili.Core.Tests.Settings;
 
@@ -23,6 +24,17 @@ public class AppSettingsTests
         Assert.Equal(100, s.BarOpacity);
         Assert.True(s.ShowGili && s.ShowSeconds && s.AmbientGlow && s.AmbientMotion);
         Assert.Equal(("Jakarta", -6.2088, 106.8456), (s.WeatherCity, s.WeatherLatitude, s.WeatherLongitude));
+    }
+
+    [Fact]
+    public void Settings_keep_pomodoro_lengths_and_clamp_them()
+    {
+        var s = new AppSettings();
+        Assert.Equal((25, 5, 15, 4), (s.PomodoroFocus, s.PomodoroBreak, s.PomodoroLongBreak, s.PomodoroRounds));
+        Assert.Equal(PomodoroPlan.Default, s.Pomodoro);
+        var clamped = (s with { PomodoroFocus = 500, PomodoroBreak = 0, PomodoroLongBreak = 99, PomodoroRounds = 1 }).Normalize();
+        Assert.Equal((120, 1, 60, 2), (clamped.PomodoroFocus, clamped.PomodoroBreak, clamped.PomodoroLongBreak, clamped.PomodoroRounds));
+        Assert.Equal(new PomodoroPlan(120, 1, 60, 2), clamped.Pomodoro);
     }
 
     [Fact]
