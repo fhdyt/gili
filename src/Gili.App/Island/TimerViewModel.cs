@@ -87,7 +87,7 @@ public sealed partial class TimerViewModel : ObservableObject
             default:
                 var pomodoro = _timers.Pomodoro;
                 Big = TimerText.Clock(pomodoro.Clock.Remaining(now));
-                Sub = TimerText.PomodoroSub(pomodoro, PomodoroPlan.Default);
+                Sub = TimerText.PomodoroSub(pomodoro, _timers.Plan);
                 ButtonText = TimerText.Button(pomodoro.Clock.IsRunning, started: false);
                 Fraction = pomodoro.Clock.Remaining(now).TotalSeconds / Math.Max(1, pomodoro.Clock.TotalSeconds);
                 RingBrush = Red;

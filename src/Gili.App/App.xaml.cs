@@ -95,7 +95,7 @@ public partial class App : Application
 
         _clock = new ClockService();
         _media = new MediaService(Dispatcher, _log);
-        _timers = new TimerService(_database is null ? null : new TimerStore(_database));
+        _timers = new TimerService(_database is null ? null : new TimerStore(_database), () => _settings.Current.Pomodoro);
         _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
         _todos = new TodoService(_database is null ? null : new TodoStore(_database));
         _notes = new NoteService(OpenNotes());
@@ -131,6 +131,7 @@ public partial class App : Application
         _demo.Changed += () => _bar.SetDemoRunning(_demo.IsRunning);
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
+        _settings.Changed += _ => _timers.ApplyPlan();
         _bar.TimeChanged += _timers.Reschedule;
         _bar.TimeChanged += _alarms.Reschedule;
         _bar.TimeChanged += _todos.Reschedule;

@@ -178,7 +178,8 @@ public sealed partial class IslandViewModel : ObservableObject
             TimerSlotGlyph = Glyph("Icon.Hourglass");
             TimerSlotBrush = !pomodoro ? TimerViewModel.Orange
                 : timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green;
-            TimerSlotValue = Gili.Core.Timers.TimerText.Clock((pomodoro ? timers.Pomodoro.Clock : timers.Timer).Remaining(now));
+            var clock = pomodoro ? timers.Pomodoro.Clock : timers.SoonestTimer ?? timers.Timer;
+            TimerSlotValue = Gili.Core.Timers.TimerText.Clock(clock.Remaining(now));
         }
         UpdateBubble();
     }

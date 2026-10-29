@@ -86,7 +86,7 @@ public sealed class DemoService
                     if (ClipboardSnippets.For(content, _ => null) is { } snippet) _island.ShowDemoClipboard(snippet);
                     break;
                 case DemoTimer timer:
-                    _island.Timers.StartDemoTimer(timer.Seconds);
+                    _island.Timers.StartDemoTimer(timer.Seconds, timer.Label);
                     _timerCardPending = true;
                     break;
                 case DemoReminder reminder:

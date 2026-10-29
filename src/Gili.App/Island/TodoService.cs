@@ -58,6 +58,26 @@ public sealed class TodoService
         Stale?.Invoke(id);
     }
 
+    /// <summary>Title, day and time from Tools; the reminder is armed again for the new time and the old card closes.</summary>
+    public void Edit(long id, string title, DateOnly? date, TimeOnly? time)
+    {
+        if (Find(id) is not { } todo) return;
+        Replace(TodoSchedule.Arm(todo with { Title = title, DueDate = date, DueTime = time }, Now, TimeZoneInfo.Local));
+        Stale?.Invoke(id);
+    }
+
+    /// <summary>
+    /// Saves a new order; <c>ids</c> must hold every task. Tasks missing from it keep their relative place at the end.
+    /// </summary>
+    public void Reorder(IReadOnlyList<long> ids)
+    {
+        var place = ids.Select((id, i) => (id, i)).ToDictionary(p => p.id, p => p.i);
+        _todos = [.. _todos.OrderBy(t => place.GetValueOrDefault(t.Id, int.MaxValue))
+            .Select((t, i) => t with { SortOrder = i })];
+        _store?.Reorder([.. _todos.Select(t => t.Id)]);
+        Saved();
+    }
+
     public void SetDone(long id, bool done)
     {
         if (Find(id) is not { } todo || todo.IsDone == done) return;

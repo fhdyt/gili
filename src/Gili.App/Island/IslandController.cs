@@ -58,6 +58,7 @@ public sealed class IslandController : IDisposable
         _clipboard.Copied += ShowClipboard;
         timers.Changed += ApplyTimers;
         timers.Finished += id => _coordinator.ShowCard(new IslandCard(id, CardPriority.Urgent, TimeSpan.Zero));
+        timers.Stale += id => DismissCard(id);
         ApplyTimers();
         alarms.Ringing += (alarm, missed) => Ring(alarm, missed, AlarmCard(alarm.Id));
         alarms.Stale += id => DismissCard(AlarmCard(id));
@@ -142,11 +143,17 @@ public sealed class IslandController : IDisposable
         var green = Color.FromRgb(0x30, 0xD1, 0x58);
         CardContent? content = id switch
         {
+            "timer" when Timers.DemoLabel is { } label => new("Icon.Hourglass", orange, TimerText.LabeledDone(label),
+                TimerText.LabeledSub(Timers.Timer.TotalSeconds),
+                [new("Repeat", false, Card(id, Timers.Repeat)), new("Close", true, Card(id, () => { }))]),
             "timer" => new("Icon.Hourglass", orange, TimerText.TimerDone(Timers.Timer.TotalSeconds), null,
                 [new("Repeat", false, Card(id, Timers.Repeat)), new("Close", true, Card(id, () => { }))]),
-            "pomo-focus" => new("Icon.Hourglass", red, "Focus session done", TimerText.FocusDone(Timers.Pomodoro, PomodoroPlan.Default),
+            _ when LabeledTimerOf(id) is { } labeled => new("Icon.Hourglass", orange, TimerText.LabeledDone(labeled.Label),
+                TimerText.LabeledSub(labeled.Clock.TotalSeconds),
+                [new("Repeat", false, Card(id, () => Timers.RepeatTimer(labeled.Id))), new("Close", true, Card(id, () => { }))]),
+            "pomo-focus" => new("Icon.Hourglass", red, "Focus session done", TimerText.FocusDone(Timers.Pomodoro, Timers.Plan),
                 [new("Skip", false, Card(id, Timers.SkipBreak)), new("Start break", true, Card(id, Timers.StartBreak))]),
-            "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro, PomodoroPlan.Default),
+            "pomo-break" => new("Icon.Hourglass", green, "Break over", TimerText.BreakOver(Timers.Pomodoro, Timers.Plan),
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
@@ -154,6 +161,9 @@ public sealed class IslandController : IDisposable
         };
         return content is null ? null : WithMuteWarning(id, content);
     }
+
+    private Gili.Core.Timers.LabeledTimer? LabeledTimerOf(string cardId) =>
+        Timers.Labeled.FirstOrDefault(t => TimerService.CardId(t.Id) == cardId);
 
     /// <summary>The task, "Due 15:00 today", Snooze 10m and Done (mockup CARDS.todo).</summary>
     private CardContent ReminderContent(string id, Todo todo, Color green)
@@ -199,7 +209,7 @@ public sealed class IslandController : IDisposable
     /// <summary>A running timer or pomodoro and a running stopwatch are activities; a focus phase holds reminders (F-TOOL-04).</summary>
     private void ApplyTimers()
     {
-        _coordinator.SetActivity(ActivityKind.Timer, Timers.Timer.IsRunning || Timers.Pomodoro.Clock.IsRunning);
+        _coordinator.SetActivity(ActivityKind.Timer, Timers.Timer.IsRunning || Timers.Pomodoro.Clock.IsRunning || Timers.SoonestTimer is not null);
         _coordinator.SetActivity(ActivityKind.Stopwatch, Timers.Stopwatch.IsRunning);
         _coordinator.SetFocus(Timers.Pomodoro.IsFocusRunning);
     }
@@ -226,9 +236,17 @@ public sealed class IslandController : IDisposable
 
     public void OpenBubble() => OpenActivity(View.Bubble);
 
-    /// <summary>A timer or stopwatch opens the Timer page on its own segment.</summary>
+    /// <summary>
+    /// A timer or stopwatch opens the Timer page on its own segment. A labeled timer in the slot opens Tools on its Timer
+    /// tab instead, and the island stays compact (plan 2g decision 2).
+    /// </summary>
     private void OpenActivity(ActivityKind? kind)
     {
+        if (kind == ActivityKind.Timer && !Timers.Pomodoro.Clock.IsRunning && Timers.SoonestLabeled is not null)
+        {
+            ToolsRequested?.Invoke("Timer");
+            return;
+        }
         if (kind == ActivityKind.Stopwatch) Timers.Mode = TimerMode.Stopwatch;
         else if (kind == ActivityKind.Timer) Timers.Mode = Timers.Pomodoro.Clock.IsRunning ? TimerMode.Pomodoro : TimerMode.Timer;
         _coordinator.OpenFor(kind);
