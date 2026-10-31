@@ -379,6 +379,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 **Sumber waktu** (urutan dipakai; diverifikasi di awal Fase 3, lihat bagian 12):
 1. Waktu reset resmi dari Claude Code bila tersedia di data yang bisa dibaca Gili (misalnya field `rate_limits.five_hour.resets_at` dan `used_percentage`, atau pesan batas di file sesi yang memuat waktu reset). Dengan sumber ini, persentase terpakai ikut ditampilkan.
 2. Perkiraan dari hook: jendela dimulai pada `UserPromptSubmit` pertama dari sesi mana pun ketika tidak ada jendela yang berjalan, dibulatkan ke bawah ke jam penuh, dan berakhir 5 jam kemudian. Tooltip menambahkan `Estimated`.
+- Hasil verifikasi Fase 3j (Claude Code 2.1.316): tidak ada input hook yang memuat `rate_limits`/`resets_at`, jadi jendela memakai sumber 2. Hook `StopFailure` dengan error `rate_limit` menandai batas tercapai; bila teks errornya memuat waktu reset (`|<epoch>`, `resets 7pm`, `resets at 19:00`), waktu itu dipakai dan tooltip tidak lagi `Estimated`. Persen terpakai tidak tersedia. Jendela yang berakhir lebih dari 1 menit sebelum Gili sempat melihatnya (Gili mati, laptop tidur) berakhir tanpa kartu.
 
 **Di slot pulau**
 
@@ -1175,6 +1176,7 @@ Semua hook memanggil `"<path helper>" <NamaEvent>` (path absolut di folder insta
 | `Notification` | — | `session_id`, `notification_type`, `message` | `permission_prompt` → Needs input (izin); jenis lain diabaikan |
 | `PostToolUse` | `*` | `session_id` | Needs input → Working |
 | `Stop` | — | `session_id` | Done |
+| `StopFailure` | `rate_limit` | `session_id`, `error`, teks error yang tampil (`last_assistant_message`, maks. 200 karakter; tidak dikirim untuk `Stop`) | Idle tanpa Done; jendela 5 jam ditandai `Limit reached`, dengan waktu reset dari teks itu bila ada (Fase 3j) |
 | `SessionEnd` | — | `session_id` | Sesi dihapus dari daftar |
 
 - Izin yang ditolak tidak memicu `PostToolUse`; status kembali ke Working saat tool berikutnya selesai, atau langsung Done saat Claude berhenti.

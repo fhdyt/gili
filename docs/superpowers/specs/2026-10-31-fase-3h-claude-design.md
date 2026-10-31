@@ -198,3 +198,12 @@ Fitur: F-CLD-08 (jendela pemakaian 5 jam). Semua bagian **(keputusan Claude)** a
 ### Anggaran (PRD 8.1)
 
 Satu timer tenggat di waktu reset; teks slot 1 detik hanya saat tampil di slot; satu baris SQLite saat jendela mulai, batas tercapai, dan berakhir.
+
+## Hasil verifikasi 3j
+
+- Build dan `dotnet format` bersih, 937 unit test lulus (baru: `ClaudeUsageTests` 19 termasuk store SQLite, coordinator 2, papan 1, settings 1, demo 1).
+- Salinan terpasang: hook `StopFailure` (matcher `rate_limit`) masuk ke `~/.claude/settings.json` saat Gili mulai; hook wmux tetap ada.
+- Satu prompt `claude -p` memulai jendela 23:00–04:00: gelembung jam pasir oranye di kanan slot (urutan 9), dan halaman Claude (dibuka lewat UIA Invoke) menampilkan baris `5-hour window · Resets 04:00 · 4:40:30` dengan ring di atas daftar sesi. Setelah Gili dimulai ulang, jendelanya masih ada (`claude_window`).
+- **Paket MSIX** (didaftarkan lalu dilepas lagi): hook ditulis ulang ke alias `gili-claude-hook.exe`, termasuk `StopFailure`. Waktu helper lewat alias saat Gili mendengarkan, 40 kali: median 27 ms, p95 33 ms, maks 41 ms (target ≤ 50 ms; ini menutup verifikasi alias yang tertunda sejak 3h).
+- **Bug lama ditemukan di MSIX dan diperbaiki**: paket yang baru didaftarkan tidak menampilkan bar sama sekali. `WlanOpenHandle` di konstruktor `WifiMonitor` (thread UI, sebelum bar dibuat) menunggu jawaban dialog Windows "Let Gili access your precise location?". Sekarang handle dibuka di thread pool; Wi‑Fi terbaca kosong sampai siap. Diverifikasi: bar tampil sementara dialog menunggu.
+- Belum teruji langsung: `Limit reached` dari batas sungguhan, kartu `Claude usage reset` saat jendela sungguhan berakhir (keduanya ada di mode demo, detik 92–108), dan pertanyaan izin lokasi dijawab Yes/No di versi Store.
