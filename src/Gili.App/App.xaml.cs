@@ -202,6 +202,10 @@ public partial class App : Application
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
         _claude = new ClaudeService(Dispatcher, _settings, _log, Kind);
         _claude.Changed += ShowClaude;
+        _islandController.ClaudeSessionRequested += _claude.Focus;
+        _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
+        _apps.ForegroundChanged += _claude.OnForeground;
+        _demo.Claude = _claude;
         ShowClaude();
         _islandWindow.Show();
         // Notes that floated when Gili closed come back where they were (F-TOOL-12).
@@ -314,13 +318,30 @@ public partial class App : Application
         }
     }
 
-    /// <summary>Claude's sessions in the slot and on the left icon (F-CLD-02, F-LEFT-05).</summary>
+    /// <summary>
+    /// Claude's sessions in the slot, the green bubble, the page and on the left icon (F-CLD-02, F-CLD-04, F-LEFT-05), and
+    /// the Needs input card for a new wait (F-CLD-03).
+    /// </summary>
     private void ShowClaude()
     {
         var sessions = _claude!.Board.Sessions;
-        _islandController!.SetClaude(Core.Claude.ClaudeSlot.For(sessions, DateTimeOffset.Now));
+        _islandController!.SetClaude(Core.Claude.ClaudeSlot.For(sessions, DateTimeOffset.Now), [.. sessions]);
+        var cards = _claude.Cards;
+        switch (cards.Update(sessions, _islandController.IsFullscreen))
+        {
+            case Core.Claude.ClaudeCardChange.Show:
+                _islandController.ShowClaudeCard(cards.Current!);
+                break;
+            case Core.Claude.ClaudeCardChange.Refresh:
+                _islandController.RefreshClaudeCard(cards.Current!);
+                break;
+            case Core.Claude.ClaudeCardChange.Dismiss:
+                _islandController.DismissClaudeCard();
+                break;
+        }
         _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
-            sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.LauncherTooltip(sessions));
+            sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.Unseen(sessions).Count > 0,
+            Core.Claude.ClaudeSlot.LauncherTooltip(sessions));
     }
 
     /// <summary>A note that cannot be written is logged, so quitting still releases the AppBar and never turns into a crash and restart.</summary>

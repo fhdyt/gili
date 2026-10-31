@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using System.Windows.Threading;
 using Gili.Core.Alarms;
+using Gili.Core.Claude;
 using Gili.Core.Clipboard;
 using Gili.Core.Devices;
 using Gili.Core.Island;
@@ -324,6 +325,7 @@ public sealed class IslandController : IDisposable
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
+            ClaudeCards.CardId when _claudeCard is { } claude => ClaudeContent(id, claude),
             _ => null,
         };
         return content is null ? null : WithMuteWarning(id, content);
@@ -340,7 +342,28 @@ public sealed class IslandController : IDisposable
             [
                 new("Snooze 10m", false, Card(id, () => { if (!demo) Todos.Snooze(todo.Id); })),
                 new("Done", true, Card(id, () => { if (!demo) Todos.SetDone(todo.Id, true); })),
-            ]);
+            ],
+            Pulse: false);
+    }
+
+    /// <summary>
+    /// The Claude glyph in yellow without a pulse, the title for the wait, the session, its question or message, Later
+    /// and Open Claude / Open terminal (mockup CARDS.claude).
+    /// </summary>
+    private CardContent ClaudeContent(string id, ClaudeCardView card)
+    {
+        var yellow = Color.FromRgb(0xFF, 0xD6, 0x0A);
+        void Closed() => ClaudeCardClosed?.Invoke();
+        return new("Icon.Claude", yellow, card.Title, card.Name,
+            [
+                new("Later", false, Card(id, Closed)),
+                new(card.OpenLabel, true, Card(id, () =>
+                {
+                    Closed();
+                    OpenClaudeSession(card.SessionId);
+                })),
+            ],
+            Quote: card.Quote, Filled: true, Pulse: false);
     }
 
     /// <summary>"Alarm 14:30" or "Missed alarm 14:30", the label, Snooze 5m and Stop (mockup CARDS.alarm).</summary>
@@ -381,19 +404,77 @@ public sealed class IslandController : IDisposable
         _coordinator.SetFocus(Timers.Pomodoro.IsFocusRunning);
     }
 
-    /// <summary>The Claude activity in the slot (F-CLD-02); <see cref="ClaudeService"/> sets it.</summary>
-    public Gili.Core.Claude.ClaudeSlotView Claude { get; private set; } = Gili.Core.Claude.ClaudeSlotView.Empty;
+    /// <summary>The Claude activity in the slot (F-CLD-02); <see cref="ClaudeService"/> sets it through the App.</summary>
+    public ClaudeSlotView Claude { get; private set; } = ClaudeSlotView.Empty;
+
+    /// <summary>Every live session, for the Claude page (F-CLD-05).</summary>
+    public IReadOnlyList<ClaudeSession> ClaudeSessions { get; private set; } = [];
+
+    /// <summary>Sessions that finished unseen, for the green bubble (F-CLD-04).</summary>
+    public IReadOnlyList<ClaudeSession> ClaudeUnseen { get; private set; } = [];
 
     public event Action? ClaudeChanged;
 
+    /// <summary>A session's window should come forward and its finish count as seen (F-CLD-06).</summary>
+    public event Action<string>? ClaudeSessionRequested;
+
+    /// <summary>The Needs input card was closed by Later or Open (F-CLD-03).</summary>
+    public event Action? ClaudeCardClosed;
+
     /// <summary>All sessions are one activity: waiting or just done at order 2, working at order 6 (PRD 6.3).</summary>
-    public void SetClaude(Gili.Core.Claude.ClaudeSlotView view)
+    public void SetClaude(ClaudeSlotView view, IReadOnlyList<ClaudeSession> sessions)
     {
         Claude = view;
-        _coordinator.SetActivity(ActivityKind.ClaudeAttention, view.State is Gili.Core.Claude.ClaudeSlotState.NeedsInput or Gili.Core.Claude.ClaudeSlotState.Done);
-        _coordinator.SetActivity(ActivityKind.ClaudeWorking, view.State == Gili.Core.Claude.ClaudeSlotState.Working);
+        ClaudeSessions = sessions;
+        ClaudeUnseen = ClaudeSlot.Unseen(sessions);
+        _coordinator.SetActivity(ActivityKind.ClaudeAttention, view.State is ClaudeSlotState.NeedsInput or ClaudeSlotState.Done);
+        _coordinator.SetActivity(ActivityKind.ClaudeWorking, view.State == ClaudeSlotState.Working);
+        _coordinator.SetClaudeUnseen(ClaudeUnseen.Count > 0);
         ClaudeChanged?.Invoke();
     }
+
+    public void OpenClaudeSession(string id) => ClaudeSessionRequested?.Invoke(id);
+
+    private ClaudeCardView? _claudeCard;
+
+    /// <summary>The card for a new wait: 8 s, held during a focus phase, Ping once (PRD 6.3 "Kartu Needs input").</summary>
+    public void ShowClaudeCard(ClaudeCardView card)
+    {
+        _claudeCard = card;
+        _coordinator.ShowCard(new IslandCard(ClaudeCards.CardId, CardPriority.Reminder, TimeSpan.FromSeconds(8)));
+    }
+
+    /// <summary>The same wait with fuller text: the card on show changes without starting its 8 s again.</summary>
+    public void RefreshClaudeCard(ClaudeCardView card)
+    {
+        _claudeCard = card;
+        if (View.Card?.Id == ClaudeCards.CardId) CardChanged?.Invoke();
+    }
+
+    /// <summary>The session was answered, stopped or went away: its card goes with it.</summary>
+    public void DismissClaudeCard() => _coordinator.DismissCard(ClaudeCards.CardId);
+
+    /// <summary>
+    /// The Claude slot (mockup clClick): one session involved brings its window forward and the island stays closed;
+    /// more open the Claude page.
+    /// </summary>
+    private bool ClickClaudeSlot()
+    {
+        var involved = ClaudeSlot.Involved(ClaudeSessions);
+        if (involved.Count != 1) return false;
+        OpenClaudeSession(involved[0].Id);
+        return true;
+    }
+
+    /// <summary>The green bubble: one finished session comes forward, several open the Claude page (PRD 6.3).</summary>
+    public void OpenDoneBubble()
+    {
+        if (ClaudeUnseen.Count == 1) OpenClaudeSession(ClaudeUnseen[0].Id);
+        else _coordinator.Open(IslandPage.Claude);
+    }
+
+    /// <summary>Whether a fullscreen app hides the bar: a new Claude wait is skipped, not kept (PRD 6.3).</summary>
+    public bool IsFullscreen { get; private set; }
 
     /// <summary>The latest copy's snippet and its thumbnail (images only), shown while it holds the slot (F-ISL-17).</summary>
     public (ClipboardSnippet Snippet, ImageSource? Thumb)? Clipboard { get; private set; }
@@ -441,7 +522,11 @@ public sealed class IslandController : IDisposable
         else _updateCheck.Start();
     }
 
-    public void OpenFromIsland() => OpenActivity(View.Slot);
+    public void OpenFromIsland()
+    {
+        if (View.Slot is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking && ClickClaudeSlot()) return;
+        OpenActivity(View.Slot);
+    }
 
     public void OpenBubble() => OpenActivity(View.Bubble);
 
@@ -531,7 +616,11 @@ public sealed class IslandController : IDisposable
         SetPrivacy(_privacy.Current);
     }
 
-    public void SetFullscreen(bool fullscreen) => _coordinator.SetFullscreen(fullscreen);
+    public void SetFullscreen(bool fullscreen)
+    {
+        IsFullscreen = fullscreen;
+        _coordinator.SetFullscreen(fullscreen);
+    }
 
     public void Dispose()
     {

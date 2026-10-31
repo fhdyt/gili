@@ -62,18 +62,27 @@ public partial class LeftSide : UserControl
 
     /// <summary>The Shelf's file count beside its icon and in its tooltip (PRD 6.2); a new drop bounces the tray.</summary>
     /// <summary>
-    /// The Claude icon (F-LEFT-05, mockup renderClLauncher): a yellow dot pops in while a session waits, the icon breathes
-    /// while one works (at 20 fps, PRD 8.1), and the tooltip counts them.
+    /// The Claude icon (F-LEFT-05, mockup renderClLauncher): a yellow dot pops in while a session waits, a green one while a
+    /// finish is unseen and none waits, the icon breathes while one works (at 20 fps, PRD 8.1), and the tooltip counts them.
     /// </summary>
-    public void ShowClaude(bool waiting, bool working, string tooltip)
+    public void ShowClaude(bool waiting, bool working, bool unseen, string tooltip)
     {
         ClaudeButton.ToolTip = tooltip;
-        if (_claudeWaiting != waiting)
+        var dot = waiting ? ClaudeDotColor.Waiting : unseen ? ClaudeDotColor.Unseen : ClaudeDotColor.None;
+        if (dot != ClaudeDotColor.None) ClaudeDot.Fill = dot == ClaudeDotColor.Waiting ? WaitingDot : UnseenDot;
+        if (_claudeDot != dot)
         {
-            _claudeWaiting = waiting;
-            var pop = new DoubleAnimation(waiting ? 1 : 0, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 0)) { EasingFunction = Pop };
-            ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleXProperty, pop);
-            ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleYProperty, pop);
+            var shown = _claudeDot != ClaudeDotColor.None;
+            _claudeDot = dot;
+            if (shown != (dot != ClaudeDotColor.None))
+            {
+                var pop = new DoubleAnimation(dot != ClaudeDotColor.None ? 1 : 0, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 0))
+                {
+                    EasingFunction = Pop,
+                };
+                ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleXProperty, pop);
+                ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleYProperty, pop);
+            }
         }
         var pulse = working && !waiting && SystemParameters.ClientAreaAnimation;
         if (_claudePulse == pulse) return;
@@ -93,7 +102,19 @@ public partial class LeftSide : UserControl
         ClaudeIcon.BeginAnimation(OpacityProperty, breathe);
     }
 
-    private bool _claudeWaiting;
+    private enum ClaudeDotColor { None, Waiting, Unseen }
+
+    private static readonly SolidColorBrush WaitingDot = FrozenBrush(Color.FromRgb(0xFF, 0xD6, 0x0A));
+    private static readonly SolidColorBrush UnseenDot = FrozenBrush(Color.FromRgb(0x30, 0xD1, 0x58));
+
+    private static SolidColorBrush FrozenBrush(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+
+    private ClaudeDotColor _claudeDot;
     private bool _claudePulse;
 
     public void ShowShelf(int files, bool bounce)

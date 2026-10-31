@@ -44,6 +44,7 @@ public partial class IslandWindow : Window
     private readonly Spring _radius = new(12);
     private readonly Spring _float = new(0);
     private readonly Spring _bubble = new(0);
+    private readonly Spring _doneBubble = new(0);
     private readonly Spring _giliInside = new(1) { Parameters = GiliRules.ShapeSpring };
     private readonly Spring _giliCircle = new(0) { Parameters = GiliRules.ShapeSpring };
     private readonly Spring _cameraDot = new(0) { Parameters = GiliRules.ShapeSpring };
@@ -61,6 +62,7 @@ public partial class IslandWindow : Window
     private readonly TimerViewModel _timerPage;
     private readonly AlarmsViewModel _alarmsPage;
     private readonly ShelfViewModel _shelfPage;
+    private readonly ClaudePageViewModel _claudePage;
     private readonly CalendarViewModel _calendarPage;
     private readonly TodoViewModel _todoPage;
     private readonly NotesViewModel _notesPage;
@@ -74,6 +76,7 @@ public partial class IslandWindow : Window
     // Gili's circle stays beside a startling card, at its top left (PRD 6.3 "Saat pulau mengambang").
     private bool _startledCircle;
     private readonly ScaleTransform _bubbleScale = new(0, 0);
+    private readonly ScaleTransform _doneBubbleScale = new(0, 0);
     private readonly RectangleGeometry _clip = new();
     private readonly DispatcherTimer _awayTimer = new() { Interval = TimeSpan.FromSeconds(3) };
     private IslandMode _mode = IslandMode.Compact;
@@ -120,7 +123,7 @@ public partial class IslandWindow : Window
         _vm = vm;
         _settings = settings;
         _gili = gili;
-        _springs = [_width, _height, _top, _radius, _float, _bubble, _giliInside, _giliCircle, _cameraDot, _microphoneDot];
+        _springs = [_width, _height, _top, _radius, _float, _bubble, _doneBubble, _giliInside, _giliCircle, _cameraDot, _microphoneDot];
         InitializeComponent();
         DataContext = vm;
         CameraDot.RenderTransform = _cameraScale;
@@ -130,6 +133,7 @@ public partial class IslandWindow : Window
         island.Shelf.Changed += ShowDropState;
         Body.Clip = _clip;
         Bubble.RenderTransform = _bubbleScale;
+        DoneBubble.RenderTransform = _doneBubbleScale;
         GiliInside.RenderTransform = new TransformGroup { Children = { _giliInsideScale, _giliInsideShift } };
         GiliCircle.RenderTransform = _giliCircleScale;
         gili.Register(GiliInside);
@@ -143,6 +147,8 @@ public partial class IslandWindow : Window
         SystemStats = new SystemViewModel(island.Close);
         _shelfPage = new ShelfViewModel(island.Shelf);
         _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
+        _claudePage = new ClaudePageViewModel(island, () => settings.Current.Use24HourClock);
+        _claudePage.ContentChanged += () => PageContentChanged(IslandPage.Claude);
         _bottom = settings.Current.BarPosition == BarPosition.Bottom;
         settings.Changed += s =>
         {
@@ -485,6 +491,7 @@ public partial class IslandWindow : Window
         Retarget(_radius, target.CornerRadius, spring, instant);
         Retarget(_float, Floats(_mode) ? 1 : 0, spring, instant);
         Retarget(_bubble, _island.View.Bubble is null ? 0 : 1, SpringParameters.Pop, instant);
+        Retarget(_doneBubble, _island.View.DoneBubble ? 1 : 0, SpringParameters.Pop, instant);
         if (!instant)
         {
             StartAnimating();
@@ -580,6 +587,15 @@ public partial class IslandWindow : Window
         _bubbleScale.ScaleX = scale;
         _bubbleScale.ScaleY = scale;
         Bubble.IsHitTestVisible = _bubble.Target > 0;
+        // Claude's green bubble sits right of the activity bubble, sliding in beside the island when that one goes.
+        DoneBubble.Width = DoneBubble.Height = s.IslandHeight;
+        DoneBubble.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
+        var activityRoom = Math.Clamp(_bubble.Value, 0, 1) * (s.IslandHeight + IslandLayout.BubbleGap);
+        Canvas.SetLeft(DoneBubble, Width / 2 + w / 2 + IslandLayout.BubbleGap + activityRoom);
+        Canvas.SetTop(DoneBubble, slotTop);
+        var done = Math.Max(0, _doneBubble.Value);
+        _doneBubbleScale.ScaleX = _doneBubbleScale.ScaleY = done;
+        DoneBubble.IsHitTestVisible = _doneBubble.Target > 0;
 
         // Gili's eyes shrink and slide out of the island's left end while the circle drips from that end to 6 px
         // beside it; both follow the island's width every frame, hover included (PRD 6.3 "Berpindah bentuk").
@@ -717,7 +733,7 @@ public partial class IslandWindow : Window
     private void ShowLayers(IslandMode mode)
     {
         Reveal(CardLayer, mode == IslandMode.Card);
-        CardLayer.SetPulsing(mode == IslandMode.Card, _vm.CardShake);
+        CardLayer.SetPulsing(mode == IslandMode.Card && _vm.CardPulse, _vm.CardShake);
         _timerPage.SetPageOpen(mode == IslandMode.Expanded && _island.View.Page == IslandPage.Timer);
         Fade(CompactLayer, mode == IslandMode.Compact);
         Fade(WideLayer, mode == IslandMode.Wide);
@@ -923,6 +939,12 @@ public partial class IslandWindow : Window
         e.Handled = true;
     }
 
+    private void OnDoneBubbleClick(object sender, MouseButtonEventArgs e)
+    {
+        _island.OpenDoneBubble();
+        e.Handled = true;
+    }
+
     private void OnPlayPause(object sender, RoutedEventArgs e) => _ = _island.Media.TogglePlayPauseAsync();
 
     private static SolidColorBrush Frozen(byte r, byte g, byte b)
@@ -1044,6 +1066,7 @@ public partial class IslandWindow : Window
         IslandPage.Notes => _notesView = new NotesPage(_notesPage) { IsOverIsland = OverIsland },
         IslandPage.System => new SystemPage(SystemStats),
         IslandPage.Shelf => new ShelfPage(_shelfPage, _island),
+        IslandPage.Claude => new ClaudePage(_claudePage),
         _ => Placeholder(tab),
     };
 
@@ -1261,8 +1284,8 @@ public partial class IslandWindow : Window
             case nameof(IslandViewModel.WideRuns):
                 BuildWideParts();
                 break;
-            case nameof(IslandViewModel.CardShake):
-                CardLayer.SetPulsing(_mode == IslandMode.Card, _vm.CardShake);
+            case nameof(IslandViewModel.CardShake) or nameof(IslandViewModel.CardPulse):
+                CardLayer.SetPulsing(_mode == IslandMode.Card && _vm.CardPulse, _vm.CardShake);
                 break;
             case nameof(IslandViewModel.IsPlaying) or nameof(IslandViewModel.GlowPrimary) or nameof(IslandViewModel.GlowSecondary):
                 UpdateGlow();

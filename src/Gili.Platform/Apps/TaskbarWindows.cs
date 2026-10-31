@@ -106,6 +106,12 @@ public sealed class TaskbarWindows : IDisposable
         return TaskbarFilter.Shows(window) ? window with { AppKey = AppKeyOf(hwnd) } : null;
     }
 
+    /// <summary>The app a window belongs to, without the cache (for windows outside the strip).</summary>
+    public static string KeyOf(nint hwnd) => ResolveKey(hwnd);
+
+    /// <summary>The AppUserModelID of a packaged app's process (Windows Terminal), or null for a desktop program.</summary>
+    public static string? PackagedAppId(nint hwnd) => ProcessAppId(hwnd);
+
     private static string ResolveKey(nint hwnd)
     {
         if (WindowAppId(hwnd) is { } id) return "aumid:" + id;

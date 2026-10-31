@@ -137,8 +137,14 @@
                              input, Done · 4m 12s or the running time at the right. -->
                         <DockPanel MinWidth="172" Background="Transparent" ToolTip="{Binding ClaudeTooltip}"
                                    Visibility="{Binding ShowClaudeSlot, Converter={StaticResource VisibleWhen}}">
-                            <c:IconView x:Name="ClaudeSlotIcon" DockPanel.Dock="Left" Glyph="{Binding ClaudeGlyph}" Filled="{Binding ClaudeFilled}"
-                                        Foreground="{Binding ClaudeBrush}" Width="14" Height="14" />
+                            <!-- Another session finished unseen: a 5 px green dot ringed in black at the icon's top right (mockup .clp.dot). -->
+                            <Grid DockPanel.Dock="Left" VerticalAlignment="Center">
+                                <c:IconView x:Name="ClaudeSlotIcon" Glyph="{Binding ClaudeGlyph}" Filled="{Binding ClaudeFilled}"
+                                            Foreground="{Binding ClaudeBrush}" Width="14" Height="14" />
+                                <Ellipse Width="8" Height="8" Margin="0,-3.5,-4.5,0" HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#30D158"
+                                         Stroke="#000000" StrokeThickness="1.5" IsHitTestVisible="False"
+                                         Visibility="{Binding ClaudeDot, Converter={StaticResource VisibleWhen}}" />
+                            </Grid>
                             <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeRight}" Foreground="{Binding ClaudeRightBrush}" Margin="8,0,0,0"
                                        Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding ClaudeLeft}" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
@@ -245,8 +251,12 @@
 
         <Border x:Name="Bubble" Background="#000000" RenderTransformOrigin="0.5,0.5" MouseLeftButtonUp="OnBubbleClick">
             <Grid>
-                <c:IconView Glyph="{Binding BubbleGlyph}" Filled="{Binding BubbleFilled}" Foreground="{Binding BubbleBrush}" Width="13" Height="13"
-                            Visibility="{Binding BubbleIsMusic, Converter={StaticResource VisibleWhenFalse}}" />
+                <Grid Width="13" Height="13" Visibility="{Binding BubbleIsMusic, Converter={StaticResource VisibleWhenFalse}}">
+                    <c:IconView Glyph="{Binding BubbleGlyph}" Filled="{Binding BubbleFilled}" Foreground="{Binding BubbleBrush}" />
+                    <Ellipse Width="8" Height="8" Margin="0,-3.5,-4.5,0" HorizontalAlignment="Right" VerticalAlignment="Top" Fill="#30D158"
+                             Stroke="#000000" StrokeThickness="1.5" IsHitTestVisible="False"
+                             Visibility="{Binding BubbleDot, Converter={StaticResource VisibleWhen}}" />
+                </Grid>
                 <!-- Music as the second activity: its artwork as a circle, 3 px inside the bubble. -->
                 <Grid Margin="3" Visibility="{Binding BubbleIsMusic, Converter={StaticResource VisibleWhen}}">
                     <Ellipse Fill="#1C1C1E" />
@@ -258,6 +268,22 @@
                     </Ellipse>
                     <Ellipse Stroke="#24FFFFFF" StrokeThickness="0.5" />
                 </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Claude's green bubble (F-CLD-04, mockup .bubble.cdone): a session finished while its window was behind. Right of
+             every other bubble; a green badge counts more than one (mockup .bn). -->
+        <Border x:Name="DoneBubble" Background="#000000" BorderBrush="#8030D158" BorderThickness="1.5" RenderTransformOrigin="0.5,0.5"
+                MouseLeftButtonUp="OnDoneBubbleClick" ToolTip="{Binding DoneTooltip}" AutomationProperties.Name="{Binding DoneName}"
+                IsHitTestVisible="False">
+            <Grid>
+                <c:IconView Glyph="{StaticResource Icon.Claude}" Filled="True" Foreground="#30D158" Width="13" Height="13" />
+                <Border MinWidth="13" Height="13" Padding="3,0" CornerRadius="6.5" Background="#30D158" Margin="0,-4.5,-5.5,0"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" IsHitTestVisible="False"
+                        Visibility="{Binding HasDoneCount, Converter={StaticResource VisibleWhen}}">
+                    <TextBlock Text="{Binding DoneCount}" FontSize="9" FontWeight="Bold" Foreground="#000000" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+                </Border>
             </Grid>
         </Border>
 

@@ -59,7 +59,7 @@ public class DemoTests
     [Fact]
     public void Pages_open_in_order() =>
         Assert.Equal(
-            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo, IslandPage.System],
+            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo, IslandPage.System, IslandPage.Claude],
             Steps.Select(s => s.Action).OfType<DemoOpen>().Select(o => o.Page));
 
     [Fact]
@@ -104,7 +104,7 @@ public class DemoTests
         var privacy = Steps.Where(s => s.Action is DemoPrivacy).ToList();
         Assert.Equal([new PrivacyUse(["Zoom"], ["Discord"]), PrivacyUse.None], privacy.Select(s => ((DemoPrivacy)s.Action).Use));
         Assert.True(privacy[0].At > Steps.First(s => s.Action is DemoOpen).At);
-        Assert.True(privacy[1].At > Steps.Last(s => s.Action is DemoOpen).At);
+        Assert.True(privacy[1].At > Steps.Last(s => s.Action is DemoOpen { Page: not IslandPage.Claude }).At);
     }
 
     [Fact]
@@ -117,7 +117,23 @@ public class DemoTests
     }
 
     [Fact]
-    public void Lasts_under_a_minute() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 60);
+    public void Lasts_about_a_minute_and_a_half() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 95);
+
+    [Fact]
+    public void Claude_asks_is_answered_then_both_sessions_finish_before_its_page_opens()
+    {
+        var hooks = Steps.Where(s => s.Action is DemoClaudeHook).ToList();
+        var ask = hooks.Single(s => ((DemoClaudeHook)s.Action).Tool == "AskUserQuestion");
+        var answer = hooks.Single(s => ((DemoClaudeHook)s.Action).Event == "PostToolUse");
+        // The card shows its full 8 s before the answer takes it away.
+        Assert.True(answer.At - ask.At >= TimeSpan.FromSeconds(8));
+        var stops = hooks.Where(s => ((DemoClaudeHook)s.Action).Event == "Stop").ToList();
+        Assert.Equal(2, stops.Count);
+        // The second Done's 4 s end before the Claude page opens, so the green bubble shows first.
+        var page = Steps.Single(s => s.Action is DemoOpen { Page: IslandPage.Claude });
+        Assert.True(page.At - stops[1].At > TimeSpan.FromSeconds(4));
+        Assert.All(Steps.Where(s => s.Action is DemoClaudeSession), s => Assert.True(s.At <= hooks[0].At));
+    }
 
     [Fact]
     public void Due_returns_each_step_once()

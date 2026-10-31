@@ -33,19 +33,28 @@ public sealed class ClaudeService : IDisposable
     private bool _justEnabled;
     private DateTimeOffset? _lastEvent;
     private string? _problem;
+    private ClaudeBoard? _demo;
+    private ClaudeCards? _demoCards;
+    // Each session process's window, found once; the PIDs whose terminal name was looked for.
+    private readonly Dictionary<int, SessionWindow?> _windows = [];
+    private readonly HashSet<int> _hostTried = [];
 
     public ClaudeService(Dispatcher dispatcher, SettingsHub settings, FileLog log, InstallKind kind)
     {
         _dispatcher = dispatcher;
         _log = log;
         _kind = kind;
-        Board.Changed += OnBoardChanged;
+        _real = new ClaudeBoard(() => DateTimeOffset.Now, IsFront);
+        _real.Changed += OnBoardChanged;
         _deadline.Tick += (_, _) =>
         {
             _deadline.Stop();
-            Board.Tick();
+            _real.Tick();
+            _demo?.Tick();
+            // A timer that fires a hair early changes nothing and raises nothing: it must be set again all the same.
+            ScheduleDeadline();
         };
-        _alive.Tick += (_, _) => Board.RemoveDead(ClaudeSessionFiles.IsAlive);
+        _alive.Tick += (_, _) => _real.RemoveDead(ClaudeSessionFiles.IsAlive);
         _second.Tick += (_, _) => Raise();
         _throttle.Tick += (_, _) =>
         {
@@ -58,7 +67,14 @@ public sealed class ClaudeService : IDisposable
         settings.Changed += s => Apply(s.ClaudeSessions, startup: false);
     }
 
-    public ClaudeBoard Board { get; } = new(() => DateTimeOffset.Now);
+    private readonly ClaudeBoard _real;
+    private readonly ClaudeCards _cards = new();
+
+    /// <summary>The sessions on show: the demo's while it plays (F-BAR-09), else the real ones.</summary>
+    public ClaudeBoard Board => _demo ?? _real;
+
+    /// <summary>Which wait the Needs input card stands for (F-CLD-03); the demo has its own.</summary>
+    public ClaudeCards Cards => _demoCards ?? _cards;
 
     /// <summary>The sessions or the running time changed.</summary>
     public event Action? Changed;
@@ -170,27 +186,28 @@ public sealed class ClaudeService : IDisposable
         _pipe.LineReceived += line =>
         {
             if (ClaudeHookMessage.Parse(line) is not { } message) return;
-            _dispatcher.InvokeAsync(() =>
+            _dispatcher.InvokeAsync(() => Guard(() =>
             {
                 if (!_on) return;
                 var first = _lastEvent is null;
                 _lastEvent = DateTimeOffset.Now;
-                Board.Apply(message);
+                _real.Apply(message);
                 if (first) StatusChanged?.Invoke();
-            });
+            }));
         };
         _pipe.Failed += ex => _log.Write("Could not open the Claude pipe", ex);
         _pipe.Start();
         _files = new ClaudeSessionFiles(ClaudeFolder);
-        _files.Read += texts => _dispatcher.InvokeAsync(() =>
+        _files.Read += texts => _dispatcher.InvokeAsync(() => Guard(() =>
         {
             if (!_on) return;
             foreach (var text in texts)
             {
-                if (ClaudeSessionFile.Parse(text) is { } file) Board.Apply(file);
+                if (ClaudeSessionFile.Parse(text) is { } file) _real.Apply(file);
             }
-            Board.RemoveDead(ClaudeSessionFiles.IsAlive);
-        });
+            _real.RemoveDead(ClaudeSessionFiles.IsAlive);
+            NameHosts();
+        }));
         _files.Start();
     }
 
@@ -204,22 +221,113 @@ public sealed class ClaudeService : IDisposable
         _alive.Stop();
         _second.Stop();
         _lastEvent = null;
-        Board.Clear();
+        _real.Clear();
+        _windows.Clear();
+        _hostTried.Clear();
+    }
+
+    /// <summary>
+    /// Brings the session's window forward (F-CLD-06) and counts its finish as seen (F-CLD-04). A demo session has no
+    /// window; it is only marked seen.
+    /// </summary>
+    public void Focus(string id)
+    {
+        var board = Board;
+        if (board.Sessions.FirstOrDefault(s => s.Id == id) is { Pid: > 0 } session && FindWindow(session.Pid!.Value, fresh: true) is { } window)
+            SessionWindows.BringToFront(window);
+        board.MarkSeen(id);
+    }
+
+    /// <summary>A window came forward: a session that finished unseen behind it is seen now (F-CLD-04).</summary>
+    public void OnForeground(nint hwnd)
+    {
+        if (!_real.Sessions.Any(s => s.Unseen)) return;
+        var pid = SessionWindows.PidOf(hwnd);
+        if (pid == 0) return;
+        _real.MarkSeen(s => s.Pid is > 0 && FindWindow(s.Pid.Value, fresh: false)?.Pid == pid);
+    }
+
+    /// <summary>The demo's own sessions replace the real ones on screen until it ends (F-BAR-09).</summary>
+    public void BeginDemo()
+    {
+        if (_demo is not null) return;
+        _demo = new ClaudeBoard(() => DateTimeOffset.Now, _ => false);
+        _demoCards = new ClaudeCards();
+        _demo.Changed += OnBoardChanged;
+        OnBoardChanged();
+    }
+
+    public void ApplyDemo(ClaudeHookMessage message) => _demo?.Apply(message);
+
+    public void ApplyDemo(ClaudeSessionFile file) => _demo?.Apply(file);
+
+    public void EndDemo()
+    {
+        if (_demo is null) return;
+        _demo.Changed -= OnBoardChanged;
+        _demo = null;
+        _demoCards = null;
+        OnBoardChanged();
+    }
+
+    /// <summary>InvokeAsync keeps an exception in its task, where nobody sees it; the log does.</summary>
+    private void Guard(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            _log.Write("A Claude event could not be applied", ex);
+        }
+    }
+
+    /// <summary>Whether the session's window is the foreground one when Claude stops.</summary>
+    private bool IsFront(ClaudeSession session) =>
+        session.Pid is > 0 && FindWindow(session.Pid.Value, fresh: true) is { } window && window.Pid == SessionWindows.ForegroundPid();
+
+    /// <summary>A session's window, from the cache unless asked fresh (a click, a Stop) or the cached one is gone.</summary>
+    private SessionWindow? FindWindow(int pid, bool fresh)
+    {
+        if (!fresh && _windows.TryGetValue(pid, out var known) && (known is null || SessionWindows.PidOf(known.Handle) == known.Pid)) return known;
+        try
+        {
+            return _windows[pid] = SessionWindows.Find(pid);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+        {
+            _log.Write("Could not find a Claude session's window", ex);
+            return _windows[pid] = null;
+        }
+    }
+
+    /// <summary>A terminal session's app name (Terminal, wmux), looked up once when its PID is first known.</summary>
+    private void NameHosts()
+    {
+        foreach (var s in _real.Sessions.Where(s => s is { App: ClaudeApp.Terminal, Pid: > 0 } && _hostTried.Add(s.Pid!.Value)).ToList())
+            _real.SetHost(s.Id, FindWindow(s.Pid!.Value, fresh: true)?.Program);
     }
 
     private void OnBoardChanged()
     {
         var sessions = Board.Sessions;
-        _alive.IsEnabled = sessions.Count > 0;
+        _alive.IsEnabled = _real.Sessions.Count > 0;
         // The running time ticks only while one session works alone in the slot (PRD 8.1).
         _second.IsEnabled = sessions.Count(s => s.Status == ClaudeStatus.Working) == 1;
-        _deadline.Stop();
-        if (Board.NextDeadline is { } next)
-        {
-            _deadline.Interval = TimeSpan.FromMilliseconds(Math.Max(1, (next - DateTimeOffset.Now).TotalMilliseconds));
-            _deadline.Start();
-        }
+        ScheduleDeadline();
         Raise();
+    }
+
+    /// <summary>The next Done to end or Esc to show, on either board.</summary>
+    private void ScheduleDeadline()
+    {
+        _deadline.Stop();
+        var next = _real.NextDeadline;
+        if (_demo?.NextDeadline is { } demo && (next is null || demo < next)) next = demo;
+        if (next is null) return;
+        _deadline.Interval = TimeSpan.FromMilliseconds(Math.Max(1, (next.Value - DateTimeOffset.Now).TotalMilliseconds));
+        _deadline.Start();
     }
 
     /// <summary>Right away, then at most once per 250 ms.</summary>

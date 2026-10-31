@@ -116,5 +116,12 @@ public sealed class ClaudePageTests
         Assert.Null(ClaudeWindows.Find(60, Facts, pid => pid == 70 ? 7000 : 0));
 
     [Fact]
+    public void An_unreadable_start_time_trusts_the_parent()
+    {
+        var tree = new Dictionary<int, ProcessFacts> { [1] = new(2, 0, "claude.exe"), [2] = new(0, 500, "WindowsTerminal.exe") };
+        Assert.Equal(((nint)22, 2), ClaudeWindows.Find(1, p => tree.TryGetValue(p, out var f) ? f : null, p => p == 2 ? 22 : 0));
+    }
+
+    [Fact]
     public void No_pid_no_window() => Assert.Null(ClaudeWindows.Find(-1, Facts, _ => 1));
 }

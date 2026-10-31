@@ -15,7 +15,7 @@
                     <ScaleTransform x:Name="PulseScale" />
                 </Ellipse.RenderTransform>
             </Ellipse>
-            <c:IconView Glyph="{Binding CardGlyph}" Foreground="{Binding CardBrush}" Width="22" Height="22" RenderTransformOrigin="0.5,0.5">
+            <c:IconView Glyph="{Binding CardGlyph}" Filled="{Binding CardFilled}" Foreground="{Binding CardBrush}" Width="22" Height="22" RenderTransformOrigin="0.5,0.5">
                 <c:IconView.RenderTransform>
                     <RotateTransform x:Name="IconTurn" />
                 </c:IconView.RenderTransform>
@@ -55,6 +55,9 @@
             <TextBlock Text="{Binding CardTitle}" FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding CardSubtitle}" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                        Visibility="{Binding HasCardSubtitle, Converter={StaticResource VisibleWhen}}" />
+            <!-- Claude's question or message (mockup .cs.cq): one line in the text colour, 2 px below. -->
+            <TextBlock Text="{Binding CardQuote}" FontSize="13" Foreground="#F5F5F7" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                       ToolTip="{Binding CardQuote}" Visibility="{Binding HasCardQuote, Converter={StaticResource VisibleWhen}}" />
             <!-- Sound is off (mockup .cs.wrn): a yellow line with the muted speaker, 4 px below. -->
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding HasCardWarning, Converter={StaticResource VisibleWhen}}">
                 <c:IconView Glyph="{StaticResource Icon.Volume.Mute}" Foreground="#FFD60A" Width="13" Height="13" VerticalAlignment="Center" />

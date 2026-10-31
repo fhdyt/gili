@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Gili.App.Island;
+using Gili.Core.Claude;
 using Gili.Core.Clipboard;
 using Gili.Core.Demo;
 
@@ -34,6 +35,9 @@ public sealed class DemoService
 
     public bool IsRunning => _player is not null;
 
+    /// <summary>Claude's sessions, whose demo board replaces the real one while the demo plays (plan 3i).</summary>
+    public ClaudeService? Claude { get; set; }
+
     public event Action? Changed;
 
     /// <summary>The script brings a floating note home: the island bulges and Gili is happy (plan 2h).</summary>
@@ -58,6 +62,8 @@ public sealed class DemoService
         _timerCardPending = false;
         _island.DismissCard(DemoAlarm.CardId);
         _island.DismissCard(DemoReminder.CardId);
+        _island.DismissClaudeCard();
+        Claude?.EndDemo();
         _island.EndDemo();
         Changed?.Invoke();
     }
@@ -66,6 +72,7 @@ public sealed class DemoService
     {
         _player = new DemoPlayer(DemoScript.Phase1(DateTimeOffset.Now));
         _island.BeginDemo();
+        Claude?.BeginDemo();
         _clock.Restart();
         _timer.Start();
         Changed?.Invoke();
@@ -123,6 +130,13 @@ public sealed class DemoService
                     break;
                 case DemoShelf shelf:
                     _island.ShowDemoShelf(shelf.Name, shelf.Size);
+                    break;
+                case DemoClaudeSession session:
+                    Claude?.ApplyDemo(new ClaudeSessionFile(-1, session.Id, session.Cwd, session.Title, false,
+                        session.Desktop ? "claude-desktop" : "cli", "idle", null));
+                    break;
+                case DemoClaudeHook hook:
+                    Claude?.ApplyDemo(new ClaudeHookMessage(hook.Event, hook.Id, null, hook.Tool, null, null, hook.Question));
                     break;
                 case DemoNoteHome:
                     NoteCameHome?.Invoke();

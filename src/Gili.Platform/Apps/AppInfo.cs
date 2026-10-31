@@ -37,6 +37,19 @@ public static class AppInfo
         return (name ?? "App", icon);
     }
 
+    /// <summary>Only the app's name, as the bar's strip shows it (Windows Terminal, Claude).</summary>
+    public static string Name(string appKey, nint sampleWindow)
+    {
+        if (appKey.StartsWith("aumid:", StringComparison.Ordinal) && Item(@"shell:AppsFolder\" + appKey[6..]) is { } app)
+        {
+            var name = DisplayName(app);
+            Marshal.ReleaseComObject(app);
+            if (name is not null) return name;
+        }
+        var path = appKey.StartsWith("exe:", StringComparison.Ordinal) ? appKey[4..] : TaskbarWindows.ProcessPath(sampleWindow);
+        return path is null ? "App" : Describe(path);
+    }
+
     /// <summary>The file description ("Google Chrome"), or the file name without .exe.</summary>
     private static string Describe(string path)
     {

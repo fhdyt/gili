@@ -24,7 +24,8 @@ public static class ClaudeWindows
             if (string.Equals(self.Name, "explorer.exe", StringComparison.OrdinalIgnoreCase)) return null;
             var window = windowOf(current);
             if (window != 0) return (window, current);
-            if (self.Parent <= 0 || facts(self.Parent) is not { } parent || parent.StartTicks > self.StartTicks) return null;
+            // A start time of 0 could not be read (an elevated process): the link is trusted rather than lost.
+            if (self.Parent <= 0 || facts(self.Parent) is not { } parent || (self.StartTicks > 0 && parent.StartTicks > self.StartTicks)) return null;
             current = self.Parent;
             info = parent;
         }

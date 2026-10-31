@@ -1,0 +1,102 @@
+<UserControl x:Class="Gili.App.Island.ClaudePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls"
+             xmlns:cc="clr-namespace:Gili.Core.Claude;assembly=Gili.Core">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+        <c:VisibleWhenFalse x:Key="VisibleWhenFalse" />
+
+        <!-- .crow: 44 px high at least, #1C1C1E with radius 12, #2C2C2E under the pointer; 12 px between its parts. -->
+        <Style x:Key="SessionRow" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Foreground" Value="#F5F5F7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" MinHeight="44" Padding="12,6" CornerRadius="12" Background="#1C1C1E">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- The Claude page (mockup section "Claude", .clist): every live session, 6 px apart, without scrolling (PRD 6.3). -->
+    <Grid Margin="32,0,38,0" VerticalAlignment="Center">
+        <TextBlock Text="No Claude sessions" FontSize="14" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
+        <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+            <ItemsControl.ItemContainerStyle>
+                <!-- Each row reads by its session's name, not by its view model's type. -->
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button x:Name="Row" Style="{StaticResource SessionRow}" Command="{Binding OpenCommand}" ToolTip="{Binding Tooltip}"
+                            AutomationProperties.Name="{Binding Name}" Margin="0,0,0,6">
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Left" Width="16" Height="16" VerticalAlignment="Center">
+                                <c:IconView x:Name="Glyph" Glyph="{StaticResource Icon.Claude}" Filled="True" Width="16" Height="16"
+                                            Visibility="{Binding IsDone, Converter={StaticResource VisibleWhenFalse}}" />
+                                <c:IconView x:Name="Check" Glyph="{StaticResource Icon.Check}" Width="16" Height="16" Foreground="#30D158"
+                                            Visibility="{Binding IsDone, Converter={StaticResource VisibleWhen}}" />
+                            </Grid>
+                            <TextBlock x:Name="Right" DockPanel.Dock="Right" Text="{Binding Right}" FontSize="12" Foreground="#8E8E93"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock x:Name="Sub" Text="{Binding Sub}" FontSize="12" Foreground="#8E8E93" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Button>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Kind}" Value="{x:Static cc:ClaudeRowKind.Ask}">
+                            <Setter TargetName="Glyph" Property="Foreground" Value="#FFD60A" />
+                            <Setter TargetName="Sub" Property="Foreground" Value="#FFD60A" />
+                            <Setter TargetName="Right" Property="Foreground" Value="#FFD60A" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="{x:Static cc:ClaudeRowKind.Work}">
+                            <Setter TargetName="Glyph" Property="Foreground" Value="#D97757" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="{x:Static cc:ClaudeRowKind.Done}">
+                            <Setter TargetName="Right" Property="Foreground" Value="#30D158" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="{x:Static cc:ClaudeRowKind.Idle}">
+                            <Setter TargetName="Row" Property="Opacity" Value="0.55" />
+                        </DataTrigger>
+                        <!-- Working: the glyph breathes 0.55 ↔ 1 over 1.6 s, and holds still with Windows animations off (PRD 8.3). -->
+                        <DataTrigger Binding="{Binding Pulses}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard x:Name="Breathe">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Glyph" Storyboard.TargetProperty="Opacity" From="0.55" To="1"
+                                                         Duration="0:0:0.8" AutoReverse="True" RepeatBehavior="Forever">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="Breathe" />
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>

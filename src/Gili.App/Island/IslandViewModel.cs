@@ -48,6 +48,15 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private Brush _claudeRightBrush = Muted;
     [ObservableProperty] private string _claudeTooltip = "";
     [ObservableProperty] private bool _claudePulse;
+    /// <summary>Another session finished unseen while Claude shows: a green dot on its icon (mockup .clp.dot).</summary>
+    [ObservableProperty] private bool _claudeDot;
+    [ObservableProperty] private bool _bubbleDot;
+
+    /// <summary>Claude's green bubble (F-CLD-04, mockup renderCbub): the count when more than one finished unseen.</summary>
+    [ObservableProperty] private string _doneCount = "";
+    [ObservableProperty] private bool _hasDoneCount;
+    [ObservableProperty] private string _doneTooltip = "";
+    [ObservableProperty] private string _doneName = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(HasActivity))]
@@ -117,6 +126,12 @@ public sealed partial class IslandViewModel : ObservableObject
     private string? _cardSubtitle;
     [ObservableProperty] private IReadOnlyList<CardButton> _cardButtons = [];
     [ObservableProperty] private bool _cardShake;
+    [ObservableProperty] private bool _cardFilled;
+    [ObservableProperty] private bool _cardPulse = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCardQuote))]
+    private string? _cardQuote;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCardWarning))]
@@ -126,7 +141,6 @@ public sealed partial class IslandViewModel : ObservableObject
     {
         _island = island;
         _settings = settings;
-        // Until Phase 3 the Claude tab is a placeholder, as in the mockup (PRD 6.3).
         Tabs =
         [
             new(IslandPage.Media, "Media", Glyph("Icon.Music"), null),
@@ -137,7 +151,7 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), null),
             new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), null),
-            new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), Phase3),
+            new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), null),
             new(IslandPage.System, "System", Glyph("Icon.Cpu"), null),
         ];
         settings.Changed += _ => UpdateSettings();
@@ -181,6 +195,8 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool HasCardWarning => CardWarning is not null;
 
+    public bool HasCardQuote => !string.IsNullOrEmpty(CardQuote);
+
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
     public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot;
 
@@ -205,6 +221,11 @@ public sealed partial class IslandViewModel : ObservableObject
         ClaudeRightBrush = claude.State == Gili.Core.Claude.ClaudeSlotState.NeedsInput ? Warn : Muted;
         ClaudeTooltip = claude.Tooltip;
         ClaudePulse = claude.State == Gili.Core.Claude.ClaudeSlotState.Working;
+        ClaudeDot = claude.Dot;
+        var unseen = _island.ClaudeUnseen;
+        DoneCount = unseen.Count.ToString(CultureInfo.InvariantCulture);
+        HasDoneCount = unseen.Count > 1;
+        (DoneTooltip, DoneName) = Gili.Core.Claude.ClaudeSlot.Bubble(unseen);
         UpdateBubble();
     }
 
@@ -245,6 +266,9 @@ public sealed partial class IslandViewModel : ObservableObject
         CardButtons = content.Buttons;
         CardWarning = content.Warning;
         CardShake = content.Shake;
+        CardQuote = content.Quote;
+        CardFilled = content.Filled;
+        CardPulse = content.Pulse;
     }
 
     public bool HasClipThumb => ClipThumb is not null;
@@ -316,6 +340,7 @@ public sealed partial class IslandViewModel : ObservableObject
     {
         // Music as the second activity shows its artwork in the bubble instead of a note glyph.
         BubbleIsMusic = _island.View.Bubble == ActivityKind.Media && IsMusic;
+        BubbleDot = _island.View.Bubble is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking && _island.Claude.Dot;
         (BubbleGlyph, BubbleBrush, BubbleFilled) = _island.View.Bubble switch
         {
             ActivityKind.Media => (Glyph(IsVideo ? "Icon.Film" : "Icon.Music"), IsVideo ? VideoOrange : Accent, false),

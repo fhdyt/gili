@@ -58,10 +58,16 @@ public sealed record DemoShelf(string Name, long Size) : DemoAction;
 /// <summary>A floating note comes home into the closed island: it bulges once and Gili is happy (plan 2h).</summary>
 public sealed record DemoNoteHome : DemoAction;
 
+/// <summary>A demo Claude Code session appears: Claude Desktop with its title, or a terminal named after its folder (plan 3i).</summary>
+public sealed record DemoClaudeSession(string Id, string? Title, string Cwd, bool Desktop) : DemoAction;
+
+/// <summary>One of Claude Code's hooks for a demo session (PRD 9.2): a prompt, a question, a tool done, a stop.</summary>
+public sealed record DemoClaudeHook(string Event, string Id, string? Tool = null, string? Question = null) : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
-/// The demo of every island state so far, just under a minute (plan 1g decision 2): a copy in the slot, a 10 s timer and its card, music in the slot, the charger as a wide
+/// The demo of every island state so far, about a minute and a half (plan 1g decision 2, plan 3i): a copy in the slot, a 10 s timer and its card, music in the slot, the charger as a wide
 /// notice and a bubble, the Media page, a walk through the tabs, the Power island, the charger out, then the music
 /// pausing and leaving so Gili returns to the island.
 /// </summary>
@@ -114,9 +120,24 @@ public static class DemoScript
             // After the reminder: the battery runs low, then a charge limit holds the charge (plan 3a).
             Step(52.2, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 20))),
             Step(57.4, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: false, Percent: 79))),
-            Step(59.8, new DemoEnd()),
+            // Claude (plan 3i): Desktop works, asks (card and Ping, 8 s), is answered; a terminal session joins; both finish
+            // behind other windows, so a green dot, then the green bubble with 2, then the Claude page.
+            Step(60, new DemoClaudeSession(Desk, "Integrate taskbar with Claude", @"C:\Projects\gili", Desktop: true)),
+            Step(60, new DemoClaudeSession(Term, null, @"C:\Projects\top-taskbar", Desktop: false)),
+            Step(60.2, new DemoClaudeHook("UserPromptSubmit", Desk)),
+            Step(63, new DemoClaudeHook("PreToolUse", Desk, "AskUserQuestion", "Which island layout do you prefer for the session list?")),
+            Step(72.5, new DemoClaudeHook("PostToolUse", Desk)),
+            Step(73.5, new DemoClaudeHook("UserPromptSubmit", Term)),
+            Step(76.5, new DemoClaudeHook("Stop", Desk)),
+            Step(81.5, new DemoClaudeHook("Stop", Term)),
+            Step(87, new DemoOpen(IslandPage.Claude)),
+            Step(91, new DemoClose()),
+            Step(92, new DemoEnd()),
         ];
     }
+
+    private const string Desk = "demo-desktop";
+    private const string Term = "demo-terminal";
 
     private static readonly BluetoothChange Buds = new("demo", "Galaxy Buds2 Pro", BluetoothKind.Audio, Connected: false, Battery: 80);
 

@@ -51,6 +51,9 @@ public sealed class AppsService : IDisposable
     /// <summary>The list or the active app changed.</summary>
     public event Action? Changed;
 
+    /// <summary>A window came to the foreground (a Claude session's finish may be seen now, F-CLD-04).</summary>
+    public event Action<nint>? ForegroundChanged;
+
     /// <summary>Brings the app's topmost window to the front, like its taskbar button.</summary>
     public void Activate(string key)
     {
@@ -78,6 +81,7 @@ public sealed class AppsService : IDisposable
 
     private void OnForeground(nint hwnd)
     {
+        ForegroundChanged?.Invoke(hwnd);
         // A window that just opened may not be on the strip yet; read first so it can become active straight away.
         var key = _windows.AppKeyOf(hwnd);
         if (!_strip.Apps.Contains(key)) Read();
