@@ -337,11 +337,24 @@
                         <GroupBox x:Name="EditorContent" Style="{StaticResource Group}" AutomationProperties.Name="Edit note" Opacity="0">
                             <Grid Margin="14,12,14,10">
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <Grid>
+                                <!-- The grip along the top (mockup .nedgrip): 16 px, white 30% (65% on hover); dragging it out of
+                                     the island floats the note. The text below stays for selecting text. -->
+                                <Border x:Name="EditorGrip" Height="16" Margin="-14,-6,-14,2" Background="Transparent" Cursor="Hand"
+                                        ToolTip="Drag out of the island to float on top"
+                                        MouseLeftButtonDown="OnGripDown" MouseLeftButtonUp="OnGripUp">
+                                    <c:IconView x:Name="GripIcon" Glyph="{StaticResource Icon.Grip}" Filled="True" Width="14" Height="14"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <c:IconView.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </c:IconView.LayoutTransform>
+                                    </c:IconView>
+                                </Border>
+                                <Grid Grid.Row="1">
                                     <TextBlock x:Name="Placeholder" Text="Write something. The first line becomes the title." Foreground="#636366"
                                                TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" IsHitTestVisible="False"
                                                Visibility="Collapsed" />
@@ -350,7 +363,7 @@
                                 </Grid>
 
                                 <!-- Colours, then the text size at the end of the row (mockup .nrow: 8 px above, 12 apart). -->
-                                <DockPanel Grid.Row="1" Margin="0,8,0,0">
+                                <DockPanel Grid.Row="2" Margin="0,8,0,0">
                                     <GroupBox DockPanel.Dock="Right" Style="{StaticResource Group}" Margin="12,0,0,0" AutomationProperties.Name="Text size">
                                         <Border CornerRadius="9" Background="#14FFFFFF" Padding="2">
                                             <StackPanel x:Name="SizePicker" Orientation="Horizontal" />
@@ -362,7 +375,7 @@
                                 </DockPanel>
 
                                 <!-- Saved, Delete and Done (mockup .nfoot: 6 px above, 12 px grey). -->
-                                <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                                <DockPanel Grid.Row="3" Margin="0,6,0,0">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                         <Button Style="{StaticResource NotePop}" Command="{Binding FloatOnTopCommand}" ToolTip="Float on top"
                                                 AutomationProperties.Name="Float on top" Margin="0,0,2,0" VerticalAlignment="Center" />

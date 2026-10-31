@@ -133,6 +133,9 @@ public sealed partial class NotesViewModel : ObservableObject
         if (Floating?.FloatOnTop(id) == true) _closeIsland();
     }
 
+    /// <summary>Writes what was typed now, before the editor is dragged out (PRD 6.3 "Melepas dari editor").</summary>
+    public void Save() => _notes.Flush();
+
     /// <summary>A note dragged out of the editor has left the island: the editor closes at once and the note stays, even empty.</summary>
     public void LeaveEditor()
     {

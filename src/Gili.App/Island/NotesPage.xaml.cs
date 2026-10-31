@@ -52,6 +52,7 @@ public partial class NotesPage : UserControl
     private int _growing;
     // A press on a card that may still become a drag, and the drag: lifted, then landing (PRD 6.3 "Mengatur urutan").
     private (NoteCardView Card, Point At)? _press;
+    private Point? _gripPress;
     private CardDrag? _drag;
     // Floating notes flying home into the grid: their cards stay hidden until they land (PRD 6.3 "Back to island").
     private readonly HashSet<long> _homing = [];
@@ -66,6 +67,11 @@ public partial class NotesPage : UserControl
         EditorShadow.Shadows = SoftShadow.NoteEditor;
         BuildSwatches();
         BuildSizes();
+        // The grip brightens from white 30% to 65% under the pointer, in 150 ms.
+        var grip = new SolidColorBrush(Color.FromArgb(0x4D, 0xFF, 0xFF, 0xFF));
+        GripIcon.Foreground = grip;
+        EditorGrip.MouseEnter += (_, _) => grip.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(Color.FromArgb(0xA6, 0xFF, 0xFF, 0xFF), Ms(150)));
+        EditorGrip.MouseLeave += (_, _) => grip.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(Color.FromArgb(0x4D, 0xFF, 0xFF, 0xFF), Ms(150)));
         vm.CardsChanged += SyncCards;
         vm.CardChanged += ShowCard;
         vm.EditorClosed += Shut;
@@ -211,6 +217,22 @@ public partial class NotesPage : UserControl
         _press = null;
     }
 
+    /// <summary>A press on the editor's grip: what was typed is written first, and moving 6 px lifts the editor (PRD 6.3 "Melepas dari editor").</summary>
+    private void OnGripDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!_vm.IsEditing || _drag is not null || _shutting) return;
+        _vm.Save();
+        _gripPress = e.GetPosition(this);
+        EditorGrip.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void OnGripUp(object sender, MouseButtonEventArgs e)
+    {
+        _gripPress = null;
+        if (EditorGrip.IsMouseCaptured) EditorGrip.ReleaseMouseCapture();
+    }
+
     /// <summary>A press that moves 6 px lifts the card, unless a search is on (it then no longer opens either).</summary>
     protected override void OnMouseMove(MouseEventArgs e)
     {
@@ -218,6 +240,17 @@ public partial class NotesPage : UserControl
         if (_drag is { Landing: false } drag)
         {
             Follow(drag, e);
+            return;
+        }
+        if (_gripPress is { } from)
+        {
+            var moved = e.GetPosition(this);
+            if (e.LeftButton != MouseButtonState.Pressed || !EditorGrip.IsMouseCaptured) _gripPress = null;
+            else if (NoteDrag.Lifts(moved.X - from.X, moved.Y - from.Y))
+            {
+                _gripPress = null;
+                LiftEditor(e);
+            }
             return;
         }
         if (_press is not { } press) return;
@@ -300,6 +333,46 @@ public partial class NotesPage : UserControl
     }
 
     /// <summary>
+    /// The open editor lifts by its grip: from now on it is a window the editor's size above the island, showing its
+    /// text with the 16 px corners, while the editor itself hides. It never reorders the grid; past the island's edge
+    /// it tears off like a card (PRD 6.3 "Melepas dari editor").
+    /// </summary>
+    private void LiftEditor(MouseEventArgs e)
+    {
+        if (_vm.EditingId is not { } id || !_cards.TryGetValue(id, out var card)) return;
+        var note = card.Note;
+        var size = NoteStyle.Size(note.Size).Editor;
+        // The editor's text as it stands (mockup .fsed: padding 22 14 10, line height 1.6).
+        var look = new Grid();
+        look.Children.Add(new TextBlock
+        {
+            Text = note.Body,
+            FontSize = size,
+            LineHeight = size * 1.6,
+            LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = EditorText.Foreground,
+            Margin = new Thickness(14, 22, 14, 10),
+        });
+        var topLeft = Editor.PointToScreen(new Point(0, 0));
+        var window = new NoteDragWindow(note, look, Editor.ActualWidth, Editor.ActualHeight, e.GetPosition(Editor), 16)
+        {
+            Owner = Window.GetWindow(this),
+        };
+        _drag = new CardDrag(card, PointToScreen(e.GetPosition(this)) - topLeft, window, [.. Cards.Children.OfType<NoteCardView>().Select(c => c.Id)])
+        {
+            FromEditor = true,
+        };
+        _vm.IsDragging = true;
+        window.ShowAt(topLeft);
+        window.SetLifted(true);
+        EditorLayer.BeginAnimation(OpacityProperty, null);
+        EditorLayer.Opacity = 0;
+        Cursor = Cursors.Hand;
+        CaptureMouse();
+    }
+
+    /// <summary>
     /// The window follows the pointer; over another card's resting slot in the visible grid the dragged note takes its
     /// place, the cards slide 320 ms, and the next swap waits 260 ms. Outside the grid nothing moves.
     /// </summary>
@@ -311,7 +384,7 @@ public partial class NotesPage : UserControl
         var outside = IsOverIsland is { } over && !over(pointer);
         if (outside && !drag.Torn) Tear(drag);
         else if (!outside && drag.Torn) Mend(drag);
-        if (drag.Torn || DateTime.UtcNow < drag.PausedUntil) return;
+        if (drag.Torn || drag.FromEditor || DateTime.UtcNow < drag.PausedUntil) return;
         var view = e.GetPosition(Scroller);
         if (view.X < 0 || view.Y < 0 || view.X >= Scroller.ActualWidth || view.Y >= Scroller.ActualHeight) return;
         var at = e.GetPosition(Cards);
@@ -367,6 +440,13 @@ public partial class NotesPage : UserControl
         drag.Landing = true;
         ClearValue(CursorProperty);
         if (IsMouseCaptured) ReleaseMouseCapture();
+        if (drag.FromEditor)
+        {
+            // Back into the editor's frame, which then shows again with the keyboard in its text.
+            if (!instant && _vm.IsEditing && IsVisible) await drag.Window.LandAsync(new Rect(Editor.PointToScreen(new Point(0, 0)), new Size(1, 1)));
+            Landed(drag);
+            return;
+        }
         _vm.Reorder(drag.Order);
         var kept = _cards.TryGetValue(drag.Card.Id, out var card) && ReferenceEquals(card, drag.Card);
         if (!instant && kept && IsVisible && LandingRect(drag.Card) is { } slot) await drag.Window.LandAsync(slot);
@@ -381,8 +461,10 @@ public partial class NotesPage : UserControl
     private bool FloatOut(CardDrag drag)
     {
         if (_vm.Floating is not { } floating) return false;
-        _vm.Reorder(drag.Order);
+        if (!drag.FromEditor) _vm.Reorder(drag.Order);
         if (!floating.BeginLanding(drag.Card.Id, drag.Window.Grown)) return false;
+        // The editor closes without shrinking, since its note has left; an empty note stays until it comes back.
+        if (drag.FromEditor) _vm.LeaveEditor();
         _drag = null;
         _vm.IsDragging = false;
         ClearValue(CursorProperty);
@@ -406,6 +488,11 @@ public partial class NotesPage : UserControl
         _drag = null;
         Dim(drag.Card, animate: false);
         _vm.IsDragging = false;
+        if (drag.FromEditor)
+        {
+            EditorLayer.Opacity = 1;
+            if (_vm.IsEditing) EditorText.Focus();
+        }
         AfterFrame(drag.Window.Close);
     }
 
@@ -829,6 +916,9 @@ public partial class NotesPage : UserControl
 
         /// <summary>The six-note limit was shown once in this drag.</summary>
         public bool Warned { get; set; }
+
+        /// <summary>The open editor was lifted by its grip; it goes back to the editor's frame when let go inside.</summary>
+        public bool FromEditor { get; init; }
     }
 
     private static SolidColorBrush Frozen(byte r, byte g, byte b)
