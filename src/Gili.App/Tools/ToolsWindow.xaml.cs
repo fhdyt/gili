@@ -26,6 +26,7 @@ public partial class ToolsWindow : Window
             e.Handled = true;
         };
         Loaded += (_, _) => FocusTab();
+        StateChanged += (_, _) => vm.SetMinimized(WindowState == WindowState.Minimized);
         vm.Alarms.PropertyChanged += OnAlarmsChanged;
         Closed += (_, _) =>
         {

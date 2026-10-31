@@ -19,7 +19,7 @@ public sealed partial class ToolsViewModel : ObservableObject
         Alarms = alarms;
         Todo = todo;
         _selectedTab = tab;
-        stopwatch.SetVisible(IsStopwatch);
+        ShowStopwatch();
     }
 
     public IReadOnlyList<string> Tabs { get; } = [TimerTab, StopwatchTab, PomodoroTab, AlarmsTab, TodoTab];
@@ -27,6 +27,8 @@ public sealed partial class ToolsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimer), nameof(IsStopwatch), nameof(IsPomodoro), nameof(IsAlarms), nameof(IsTodo))]
     private string _selectedTab;
+
+    private bool _minimized;
 
     public TimersTabViewModel Timers { get; }
 
@@ -48,7 +50,17 @@ public sealed partial class ToolsViewModel : ObservableObject
 
     public bool IsTodo => SelectedTab == TodoTab;
 
-    partial void OnSelectedTabChanged(string value) => Stopwatch.SetVisible(IsStopwatch);
+    partial void OnSelectedTabChanged(string value) => ShowStopwatch();
+
+    /// <summary>A minimized window shows nothing, so the stopwatch's 100 ms tick stops too (PRD 8.1).</summary>
+    public void SetMinimized(bool minimized)
+    {
+        _minimized = minimized;
+        ShowStopwatch();
+    }
+
+    /// <summary>The stopwatch shows, and its tick runs, only on its tab and only while the window is not minimized.</summary>
+    private void ShowStopwatch() => Stopwatch.SetVisible(IsStopwatch && !_minimized);
 
     public void Detach()
     {
