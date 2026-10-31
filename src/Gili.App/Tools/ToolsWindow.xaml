@@ -100,6 +100,12 @@
                                     <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding QuickChoices}" SelectedItem="{Binding QuickRepeat}"
                                              Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="Repeat" />
                                     <ItemsControl ItemsSource="{Binding Days}" Focusable="False" VerticalAlignment="Center">
+                                        <ItemsControl.ItemContainerStyle>
+                                            <!-- Each row reads by its name, not by its view model's type. -->
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="AutomationProperties.Name" Value="{Binding FullName}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel Orientation="Horizontal" />
@@ -136,6 +142,12 @@
                                    Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
 
                         <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                            <ItemsControl.ItemContainerStyle>
+                                <!-- Each row reads by its name, not by its view model's type. -->
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding Time, StringFormat='Alarm {0}'}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <!-- One alarm (mockup .srow): time 17 px, label and days · sound, Edit, Delete, switch; 12 px apart. -->

@@ -56,6 +56,12 @@
                        LineStackingStrategy="BlockLineHeight" LineHeight="44"
                        Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
             <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                <ItemsControl.ItemContainerStyle>
+                    <!-- Each row reads by its name, not by its view model's type. -->
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <!-- One task (.tlist li): 44 px, radius 12, #1C1C1E; done #0F2A17 with the title crossed out. -->

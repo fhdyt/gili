@@ -20,6 +20,12 @@
         <TextBlock Text="No laps yet" Foreground="#8E8E93" Margin="0,4,0,0" Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
 
         <ItemsControl ItemsSource="{Binding Laps}" Focusable="False">
+            <ItemsControl.ItemContainerStyle>
+                <!-- Each row reads by its name, not by its view model's type. -->
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <!-- One lap (mockup .srow): name, split and total in 76 px columns on the right. -->

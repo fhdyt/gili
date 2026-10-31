@@ -91,6 +91,12 @@
                    Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
 
         <ItemsControl x:Name="List" ItemsSource="{Binding Rows}" Focusable="False">
+            <ItemsControl.ItemContainerStyle>
+                <!-- Each row reads by its name, not by its view model's type. -->
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <!-- One task (mockup .srow.td): check, title, when it is due, Edit, Delete; 12 px apart. -->

@@ -121,7 +121,14 @@
             <ScrollViewer x:Name="Page" VerticalScrollBarVisibility="Auto" Focusable="False" Padding="20,16">
                 <StackPanel>
                     <TextBlock Text="{Binding SelectedSection.Name}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-                    <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False" />
+                    <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False">
+                        <ItemsControl.ItemContainerStyle>
+                            <!-- Each row reads by its name, not by its view model's type. -->
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>

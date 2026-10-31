@@ -22,6 +22,12 @@
             </c:IconView>
         </Grid>
         <ItemsControl DockPanel.Dock="Right" ItemsSource="{Binding CardButtons}" VerticalAlignment="Center" Margin="6,0,0,0">
+            <ItemsControl.ItemContainerStyle>
+                <!-- Each row reads by its name, not by its view model's type. -->
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal" />

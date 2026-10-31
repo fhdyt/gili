@@ -6,6 +6,12 @@
         <!-- .alist: 300 px, rows 6 px apart. -->
         <ItemsControl DockPanel.Dock="Right" Width="300" ItemsSource="{Binding Rows}" VerticalAlignment="Center" Margin="24,0,0,0"
                       Focusable="False">
+            <ItemsControl.ItemContainerStyle>
+                <!-- Each row reads by its name, not by its view model's type. -->
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Time, StringFormat='Alarm {0}'}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <!-- .arow: #1C1C1E, radius 12, padding 7 12, 10 px between time, text and switch. -->

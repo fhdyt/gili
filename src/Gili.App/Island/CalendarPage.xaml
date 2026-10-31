@@ -96,6 +96,12 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
             <ItemsControl ItemsSource="{Binding Days}" Focusable="False">
+                <ItemsControl.ItemContainerStyle>
+                    <!-- Each row reads by its name, not by its view model's type. -->
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="7" />
@@ -116,6 +122,12 @@
         <StackPanel Grid.Column="2" VerticalAlignment="Center">
             <TextBlock Text="{Binding Heading}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" />
             <ItemsControl ItemsSource="{Binding Entries}" Focusable="False">
+                <ItemsControl.ItemContainerStyle>
+                    <!-- Each row reads by its name, not by its view model's type. -->
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Text}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Background="#1C1C1E" CornerRadius="10" Padding="12,8" Margin="0,0,0,6">
