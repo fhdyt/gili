@@ -120,3 +120,21 @@ Langkah baru setelah Todo: `DemoOpen(IslandPage.System)` di 28,5 detik, sebelum 
 ## Yang diserahkan ke pembangun
 
 Nama kelas dan pembagian file, cara menyusun ulang anak `RightModules` (memindahkan elemen atau membuat ulang daftar), cara menggambar grafik (`Polyline` atau `StreamGeometry`), dan detail seret di Settings selama hasilnya sesuai bagian di atas.
+
+## Temuan saat implementasi
+
+- **Urutan modul disimpan sebagai string berkoma** (`"moduleOrder": "weather,net,cpu,ram,gpu,disk"`), bukan daftar JSON, karena `AppSettings` adalah record yang dibandingkan nilainya; daftar membuat dua settings yang sama dianggap berbeda. `AppSettings.Order` membacanya dan `Normalize` memperbaikinya (id ganda, tak dikenal, atau hilang).
+- **`RightModules` bentrok dengan nama `StackPanel` di `BarWindow.xaml`**; di code-behind tipe flag dipakai lewat alias `ModuleSet`.
+- **`MinWidth` 24 px modul menahan slot yang menutup**, jadi `SlotAnimation` ikut menganimasikan `MinWidth` bersama `Width`. Animasi saklar Left side dan Right side sekarang satu helper (`SlotAnimation`), termasuk geser 300 ms saat urutan berubah.
+- **Sampler dibuat ulang lewat factory** setiap kali diminta lagi, dan objek di balik method group (`CpuSampler`, `GpuSampler`) dilepas saat berhenti, jadi query PDH tidak tertinggal terbuka.
+- **Belum teruji dengan input asli**: seret pegangan dan Alt + panah di Settings, serta klik modul GPU/Disk di bar (modul bar tidak punya peer UI Automation). Urutan dari `settings.json` tampil benar di bar dan di Settings; saklar diuji lewat pola Toggle UI Automation; `Open Task Manager` lewat Invoke.
+- **Overflow di 1366 px** tidak diuji di layar nyata (laptop pengguna 1920 px); aturannya dites di Core (`RightOverflow`) dan tidak berubah.
+
+## Hasil verifikasi
+
+- Release 0 warning, 702 tes lulus, format bersih.
+- GPU dari `GpuSampler` 1,8–2,5% saat `Get-Counter` membaca 2,5% (selisih < 1 poin); disk `106 GB free` sama dengan `DriveInfo`.
+- Bar: saklar GPU, Disk, CPU, Weather, Clock and date, dan Tray icons menampilkan/menyembunyikan modulnya langsung; urutan `disk,gpu,weather,net,cpu,ram` diikuti bar dan Settings. Bekerja di build pengembangan, salinan GitHub (`publish.ps1`), dan MSIX (`package.ps1 -Install`).
+- Halaman System sesuai mockup; grafik mulai dari tepi kanan dan skala Download mengikuti lonjakan; klik membuka Task Manager dan menutup pulau.
+- CPU (Debug, 60 detik diam): GPU/Disk mati 0,44%, nyala 0,56% (+0,12%, anggaran ≤ 0,2%). Pulau terbuka 30 detik: halaman Calendar 2,26%, halaman System 2,41% (+0,15%, anggaran ≤ 0,5%; sisanya ambient glow).
+- Memori privat (Debug) dibanding build sebelum 3c dengan settings yang sama: 90 detik 104,6 vs 101,8 MB, 150 detik 101,9 vs 112,5 MB; perbedaannya dalam derau GC.
