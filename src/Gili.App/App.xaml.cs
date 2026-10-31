@@ -414,7 +414,9 @@ public partial class App : Application
         var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now),
             _hotkeys is null ? null : new HotkeyHooks(_hotkeys.Suspend, action => _hotkeys.Failed.Contains(action)),
             Platform.Modules.GeocodingClient.SearchAsync,
-            new AboutActions(Core.About.AboutInfo.VersionLine(typeof(App).Assembly.GetName().Version!, Kind), OpenLogs, PrepareStoreUninstall));
+            new AboutActions(Core.About.AboutInfo.VersionLine(typeof(App).Assembly.GetName().Version!, Kind), OpenLogs, PrepareStoreUninstall,
+                Kind == InstallKind.Development ? null : Task.Run(() => Core.About.AboutInfo.AnotherCopyNote(Kind,
+                    Kind == InstallKind.Installed && OtherCopies.StoreInstalled(), Kind == InstallKind.Store && OtherCopies.GithubInstalled()))));
         if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
         _settingsWindow = new SettingsWindow(model);

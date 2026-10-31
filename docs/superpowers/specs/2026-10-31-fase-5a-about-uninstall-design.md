@@ -62,3 +62,19 @@ Tanpa kerja di latar belakang: semua dijalankan hanya saat tombol diklik atau pe
 - Temuan: proses lama masih hidup sesaat setelah mutex lepas, padahal uninstaller langsung menghapus `Gili.exe`. Perbaikan: perintah juga menunggu proses Gili lain selesai dalam batas 5 detik yang sama; setelahnya tidak ada proses tersisa.
 - Settings → About lewat UIA: `Version` = `0.1.1 · GitHub`; Updates, Privacy policy, Release notes nonaktif dengan `Coming in a later version`; `Open logs folder` (Invoke UIA) membuka folder log di Explorer; `Prepare to uninstall` tidak tampil di salinan GitHub.
 - Belum teruji: tombol Prepare to uninstall di versi Store (butuh `package.ps1 -Install`; diuji bersama installer di 5b).
+
+## Fase 5c: dua salinan terpasang (F-PUB-07)
+
+Perpindahan data GitHub ↔ Store sudah ditangani salinan di `%USERPROFILE%\.gili` (desain data tetap 2026-10-31), dan mutex F-BAR-05 dipakai bersama. Yang tersisa dari F-PUB-07 dan PRD 9.4 adalah catatan di Settings.
+
+- Catatan `Another copy of Gili is installed. Uninstall one of them in Windows Settings › Apps` di bawah baris Version **(keputusan Claude: teks PRD ditambah saran yang PRD minta)**.
+- Versi GitHub: paket pengguna bernama `Gili` (paket dev) atau berakhiran `.Gili` (nama yang dipesan Partner Center, F-PUB-02) lewat `PackageManager.FindPackagesForUser`. Versi Store: `Gili.exe` di `%LOCALAPPDATA%\Programs\Gili` (bacaan file MSIX diteruskan ke folder asli). `dotnet run` tidak memeriksa. Pencarian jalan di `Task.Run` saat Settings dibuka; tanpa kerja latar lain (PRD 8.1).
+- Aturan di `AboutInfo.AnotherCopyNote` dan `AboutInfo.IsGiliPackage`, 10 unit test.
+
+### Hasil verifikasi 5c dan tombol Store
+
+- 992 unit test lulus, format bersih.
+- `package.ps1 -Install` lalu Settings Store lewat UIA: `0.1.1 · Microsoft Store`, catatan Another copy (salinan GitHub ada), baris Prepare to uninstall tampil. Invoke **Prepare**: Gili keluar, 8 hook Gili lepas dan 13 hook wmux utuh, Settings Windows terbuka; log paket `Prepared to uninstall`.
+- Salinan GitHub dengan paket masih terdaftar: catatan Another copy tampil. Setelah `Remove-AppxPackage`: catatan hilang.
+- Temuan dan perbaikan: pencarian yang sudah selesai saat Settings dibuat melanjutkan `ShowAnotherCopyAsync` sebelum konstruktor mengisi bagian terpilih (`NullReferenceException`, tercatat sebagai unobserved task exception). Sekarang pencarian disambung di akhir konstruktor.
+- Paket dev dilepas lagi; salinan harian `publish.ps1` jalan dengan entri Run dan hook.

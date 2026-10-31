@@ -11,7 +11,8 @@ public sealed record HotkeyHooks(Action<bool> Suspend, Func<HotkeyAction, bool> 
 public delegate Task<IReadOnlyList<Gili.Core.Modules.CityResult>> CitySearcher(string name, CancellationToken cancel);
 
 /// <summary>What Settings → About shows and does (design 5a).</summary>
-public sealed record AboutActions(string VersionLine, Action OpenLogs, Action PrepareUninstall);
+/// <param name="AnotherCopy">The Version row's note when the other release path is installed too (F-PUB-07); found off the UI thread.</param>
+public sealed record AboutActions(string VersionLine, Action OpenLogs, Action PrepareUninstall, Task<string?>? AnotherCopy = null);
 
 /// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
@@ -42,6 +43,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         _selectedSection = Sections[0];
         BuildRows();
         hub.Changed += Reload;
+        // Last: a search that already finished continues at once and lists the rows again.
+        if (about?.AnotherCopy is { } anotherCopy) _ = ShowAnotherCopyAsync(anotherCopy);
     }
 
     public IReadOnlyList<SettingsSection> Sections => SettingsCatalog.Sections;
@@ -74,6 +77,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private string? InfoFor(string key) => key == "version" ? _about?.VersionLine : null;
 
+    private string? _anotherCopy;
+
+    private async Task ShowAnotherCopyAsync(Task<string?> found)
+    {
+        _anotherCopy = await found;
+        if (_anotherCopy is not null && SelectedSection.Name == "About") BuildRows();
+    }
+
     private Action? RunFor(string key) => key switch
     {
         "logs" => _about?.OpenLogs,
@@ -92,6 +103,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         "auto" when _kind == InstallKind.Store && _startup is { } state => StartupRules.Note(state),
         // The integration's status line (PRD 9.4): waiting, connected, or what went wrong.
         "clOn" => _claudeStatus?.Invoke(),
+        "version" => _anotherCopy,
         "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
         // PRD 11: a combination another app holds stays off.
         _ when Hotkeys.ActionOf(key) is { } action && _hotkeys?.Failed(action) == true => "Used by another app",
