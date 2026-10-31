@@ -9,14 +9,19 @@ namespace Gili.Platform.Devices;
 
 /// <summary>
 /// The apps using the camera and the microphone, from the CapabilityAccessManager ConsentStore that Windows' own
-/// microphone indicator reads (plan 3a). One background thread waits for the registry to change; nothing is polled.
+/// microphone indicator reads (plan 3a). One background thread waits for the registry to change. Inside the MSIX
+/// package Windows never delivers those notifications (the package sees HKCU through its virtualised view), so there
+/// the thread also reads the two keys once a second, and skips that while polling is paused (PRD 8.1).
 /// </summary>
 public sealed class PrivacyMonitor : IDisposable
 {
     private const string Store = @"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\";
     private const string NonPackaged = "NonPackaged";
 
+    private static readonly TimeSpan PackagedRead = TimeSpan.FromSeconds(1);
+
     private readonly ManualResetEvent _stop = new(false);
+    private volatile bool _paused;
     private readonly Dictionary<string, string> _names = [];
     private readonly string? _ownExe = Environment.ProcessPath;
     private readonly string? _ownFamily = OwnFamily();
@@ -26,6 +31,9 @@ public sealed class PrivacyMonitor : IDisposable
 
     /// <summary>Raised on the monitor's thread when the apps using either device change.</summary>
     public event Action<PrivacyUse>? Changed;
+
+    /// <summary>Stops the packaged copy's once-a-second read; notifications, where they arrive, still count.</summary>
+    public void SetPaused(bool paused) => _paused = paused;
 
     public void Start()
     {
@@ -48,12 +56,20 @@ public sealed class PrivacyMonitor : IDisposable
         using var cameraChanged = new AutoResetEvent(false);
         using var microphoneChanged = new AutoResetEvent(false);
         Publish(camera, microphone);
+        var packaged = Shell.PackageInfo.IsPackaged;
+        var wait = packaged ? PackagedRead : Timeout.InfiniteTimeSpan;
         while (true)
         {
             // A notification fires once; it is asked for again before the keys are read, so no change slips between.
-            Watch(camera, cameraChanged);
-            Watch(microphone, microphoneChanged);
-            if (WaitHandle.WaitAny([_stop, cameraChanged, microphoneChanged]) == 0) return;
+            // The package never gets one, so it asks for none rather than pile up requests that never complete.
+            if (!packaged)
+            {
+                Watch(camera, cameraChanged);
+                Watch(microphone, microphoneChanged);
+            }
+            var woke = WaitHandle.WaitAny([_stop, cameraChanged, microphoneChanged], wait);
+            if (woke == 0) return;
+            if (woke == WaitHandle.WaitTimeout && _paused) continue;
             Publish(camera, microphone);
         }
     }

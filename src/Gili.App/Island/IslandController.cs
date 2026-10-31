@@ -278,8 +278,12 @@ public sealed class IslandController : IDisposable
             _coordinator.Open(IslandTabs.Fallback(hidden, view.Page));
     }
 
-    /// <summary>Lock keys stop being read while the bar pauses its polling (PRD 8.1).</summary>
-    public void SetPaused(bool paused) => _lockKeys.SetPaused(paused);
+    /// <summary>Lock keys, and the packaged copy's privacy read, stop while the bar pauses its polling (PRD 8.1).</summary>
+    public void SetPaused(bool paused)
+    {
+        _lockKeys.SetPaused(paused);
+        _privacy.SetPaused(paused);
+    }
 
     public void OpenFromIsland() => OpenActivity(View.Slot);
 
