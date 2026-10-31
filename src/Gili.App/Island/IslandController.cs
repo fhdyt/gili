@@ -309,6 +309,10 @@ public sealed class IslandController : IDisposable
 
     public void Toggle(IslandPage page) => _coordinator.Toggle(page);
 
+    public void Toggle(ControlKind control) => _coordinator.Toggle(control);
+
+    public void Open(ControlKind control) => _coordinator.Open(control);
+
     public void Close() => _coordinator.Close();
 
     public void DismissCard(string id)

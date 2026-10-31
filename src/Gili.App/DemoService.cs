@@ -115,6 +115,9 @@ public sealed class DemoService
                 case DemoOpen open:
                     _island.Open(open.Page);
                     break;
+                case DemoControl control:
+                    _island.Open(control.Kind);
+                    break;
                 case DemoClose:
                     _island.Close();
                     break;

@@ -6,8 +6,8 @@ public class IslandLayoutTests
 {
     private static IslandGeometry Layout(
         IslandMode mode, double content = 120, bool hovered = false, double screen = 1920, double expandedWidth = 560, double pageHeight = 112,
-        IslandPage page = IslandPage.Media) =>
-        IslandLayout.For(mode, new IslandScreen(32, 24, screen, 1080), content, hovered, expandedWidth, pageHeight, page);
+        IslandPage page = IslandPage.Media, ControlKind control = ControlKind.Power) =>
+        IslandLayout.For(mode, new IslandScreen(32, 24, screen, 1080), content, hovered, expandedWidth, pageHeight, page, control);
 
     [Fact]
     public void Compact_is_never_narrower_than_200() => Assert.Equal(200, Layout(IslandMode.Compact, content: 100).Width);
@@ -48,6 +48,19 @@ public class IslandLayoutTests
     [Fact]
     public void Control_island_is_360_wide_radius_28_and_as_tall_as_its_content() =>
         Assert.Equal(new IslandGeometry(360, 229 + 32, 4, 28), Layout(IslandMode.Expanded, expandedWidth: 578, pageHeight: 229, page: IslandPage.Controls));
+
+    [Theory]
+    [InlineData(ControlKind.Wifi, 400)]
+    [InlineData(ControlKind.Bluetooth, 400)]
+    [InlineData(ControlKind.Volume, 360)]
+    [InlineData(ControlKind.Brightness, 360)]
+    [InlineData(ControlKind.Power, 360)]
+    public void Control_width_follows_kind(ControlKind kind, double width) =>
+        Assert.Equal(width, Layout(IslandMode.Expanded, page: IslandPage.Controls, control: kind).Width);
+
+    [Fact]
+    public void Wide_control_island_also_leaves_12_each_side() =>
+        Assert.Equal(380 - 24, Layout(IslandMode.Expanded, screen: 380, page: IslandPage.Controls, control: ControlKind.Wifi).Width);
 
     [Fact]
     public void Control_island_leaves_12_each_side_on_a_narrow_screen() =>

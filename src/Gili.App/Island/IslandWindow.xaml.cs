@@ -285,7 +285,7 @@ public partial class IslandWindow : Window
     {
         var page = _island.View.Page;
         var height = page == IslandPage.Controls ? ControlHeight() : _pageHeight;
-        return IslandLayout.For(_mode, Screen(), content, hovered, ExpandedLayer.Width, height, page);
+        return IslandLayout.For(_mode, Screen(), content, hovered, ExpandedLayer.Width, height, page, _island.View.Control);
     }
 
     /// <summary>The control's full height at the control island's inner width.</summary>

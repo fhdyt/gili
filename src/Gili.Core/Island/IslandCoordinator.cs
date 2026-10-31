@@ -22,7 +22,9 @@ public sealed class IslandCoordinator
     private DateTimeOffset? _clipboardUntil;
     private IslandPage? _openPage;
     private IslandPage _lastPage = IslandPage.Media;
+    private ControlKind _control = ControlKind.Power;
     private IslandPage? _dismissedPage;
+    private ControlKind _dismissedControl;
     private DateTimeOffset _dismissedAt;
 
     /// <summary>How long after a dismiss the same page's icon counts as the click that dismissed it.</summary>
@@ -145,6 +147,13 @@ public sealed class IslandCoordinator
         Update();
     }
 
+    /// <summary>Opens a control island, or swaps the open one's control without closing (PRD 6.4).</summary>
+    public void Open(ControlKind control)
+    {
+        _control = control;
+        Open(IslandPage.Controls);
+    }
+
     public void Close()
     {
         _openPage = null;
@@ -158,6 +167,7 @@ public sealed class IslandCoordinator
     public void Dismiss()
     {
         _dismissedPage = _openPage;
+        _dismissedControl = _control;
         _dismissedAt = _now();
         Close();
     }
@@ -165,11 +175,26 @@ public sealed class IslandCoordinator
     /// <summary>Bar icons and slots that open a page toggle it: the page that is already open closes the island.</summary>
     public void Toggle(IslandPage page)
     {
+        if (page == IslandPage.Controls)
+        {
+            Toggle(ControlKind.Power);
+            return;
+        }
         var dismissedByThisClick = _dismissedPage == page && _now() - _dismissedAt < DismissClick;
         _dismissedPage = null;
         if (dismissedByThisClick) return;
         if (_openPage == page) Close();
         else Open(page);
+    }
+
+    /// <summary>A control's bar icon: its own open control closes the island, another control swaps in.</summary>
+    public void Toggle(ControlKind control)
+    {
+        var dismissedByThisClick = _dismissedPage == IslandPage.Controls && _dismissedControl == control && _now() - _dismissedAt < DismissClick;
+        _dismissedPage = null;
+        if (dismissedByThisClick) return;
+        if (_openPage == IslandPage.Controls && _control == control) Close();
+        else Open(control);
     }
 
     /// <summary>Opens the page of an activity (slot or bubble click), or the last page viewed when it has none.</summary>
@@ -241,6 +266,7 @@ public sealed class IslandCoordinator
             mode == IslandMode.Compact && ranked.Count > 1 ? ranked[1] : null,
             mode == IslandMode.Wide ? _wide : null,
             mode == IslandMode.Card ? _shownCard : null,
-            _openPage ?? _lastPage);
+            _openPage ?? _lastPage,
+            _control);
     }
 }

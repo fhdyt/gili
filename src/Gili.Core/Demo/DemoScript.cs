@@ -45,6 +45,9 @@ public sealed record DemoPrivacy(PrivacyUse Use) : DemoAction;
 
 public sealed record DemoOpen(IslandPage Page) : DemoAction;
 
+/// <summary>Opens a control island, or swaps the open one's control (plan 3b).</summary>
+public sealed record DemoControl(ControlKind Kind) : DemoAction;
+
 public sealed record DemoClose : DemoAction;
 
 public sealed record DemoEnd : DemoAction;
@@ -87,7 +90,9 @@ public static class DemoScript
             Step(26, new DemoOpen(IslandPage.Calendar)),
             Step(27.5, new DemoOpen(IslandPage.Todo)),
             Step(29.5, new DemoClose()),
-            Step(31, new DemoOpen(IslandPage.Controls)),
+            // A control island, then another bar icon swaps its control without closing (plan 3b).
+            Step(31, new DemoControl(ControlKind.Power)),
+            Step(32.5, new DemoControl(ControlKind.Volume)),
             Step(33, new DemoPrivacy(PrivacyUse.None)),
             Step(34, new DemoClose()),
             Step(35.5, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 64))),

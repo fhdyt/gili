@@ -59,8 +59,17 @@ public class DemoTests
     [Fact]
     public void Pages_open_in_order() =>
         Assert.Equal(
-            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo, IslandPage.Controls],
+            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo],
             Steps.Select(s => s.Action).OfType<DemoOpen>().Select(o => o.Page));
+
+    [Fact]
+    public void Demo_swaps_power_for_volume()
+    {
+        var controls = Steps.Where(s => s.Action is DemoControl).ToList();
+        Assert.Equal([ControlKind.Power, ControlKind.Volume], controls.Select(s => ((DemoControl)s.Action).Kind));
+        var close = Steps.First(s => s.At > controls[1].At && s.Action is DemoClose);
+        Assert.True(close.At - controls[1].At >= TimeSpan.FromSeconds(1));
+    }
 
     [Fact]
     public void Charger_goes_in_out_then_the_battery_runs_low_and_charging_holds()

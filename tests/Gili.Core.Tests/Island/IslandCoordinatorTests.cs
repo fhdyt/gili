@@ -348,6 +348,50 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void Other_control_swaps_without_closing()
+    {
+        _island.Toggle(ControlKind.Power);
+        _island.Toggle(ControlKind.Volume);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Controls, ControlKind.Volume), (_island.View.Mode, _island.View.Page, _island.View.Control));
+    }
+
+    [Fact]
+    public void Same_control_closes()
+    {
+        _island.Toggle(ControlKind.Wifi);
+        _island.Toggle(ControlKind.Wifi);
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
+    }
+
+    [Fact]
+    public void Dismissing_click_on_the_open_control_stays_closed()
+    {
+        _island.Toggle(ControlKind.Bluetooth);
+        _island.Dismiss();
+        Advance(0.2);
+        _island.Toggle(ControlKind.Bluetooth);
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
+    }
+
+    [Fact]
+    public void Dismissing_click_on_another_control_opens_it()
+    {
+        _island.Toggle(ControlKind.Bluetooth);
+        _island.Dismiss();
+        Advance(0.2);
+        _island.Toggle(ControlKind.Brightness);
+        Assert.Equal((IslandMode.Expanded, ControlKind.Brightness), (_island.View.Mode, _island.View.Control));
+    }
+
+    [Fact]
+    public void A_page_icon_replaces_a_control_island()
+    {
+        _island.Toggle(ControlKind.Volume);
+        _island.Toggle(IslandPage.Calendar);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Calendar), (_island.View.Mode, _island.View.Page));
+    }
+
+    [Fact]
     public void A_control_island_is_not_the_last_page_the_island_reopens()
     {
         _island.Open(IslandPage.Calendar);

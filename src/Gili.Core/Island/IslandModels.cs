@@ -8,6 +8,9 @@ public enum IslandMode { Hidden, Compact, Wide, Expanded, Card, DropZone }
 /// </summary>
 public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System, Controls }
 
+/// <summary>The control a control island shows (PRD 6.4 "Pulau kontrol"): one per bar icon.</summary>
+public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
+
 /// <summary>Activities that can hold the compact slot, best first (PRD 6.3 activity order).</summary>
 public enum ActivityKind { ClipboardSnippet, ClaudeAttention, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging }
 
@@ -34,14 +37,18 @@ public enum CardPriority { Urgent = 1, Reminder = 2 }
 /// <summary>A notification card. Urgent cards stay until answered; reminders close after <paramref name="Timeout"/>.</summary>
 public sealed record IslandCard(string Id, CardPriority Priority, TimeSpan Timeout);
 
-/// <summary>What the island shows right now. <see cref="Bubble"/> is only set while compact.</summary>
+/// <summary>
+/// What the island shows right now. <see cref="Bubble"/> is only set while compact; <see cref="Control"/> picks the
+/// control while <see cref="Page"/> is <see cref="IslandPage.Controls"/>.
+/// </summary>
 public sealed record IslandView(
     IslandMode Mode,
     ActivityKind? Slot,
     ActivityKind? Bubble,
     WideEvent? Wide,
     IslandCard? Card,
-    IslandPage Page)
+    IslandPage Page,
+    ControlKind Control = ControlKind.Power)
 {
     public bool IsFloating => Mode is IslandMode.Expanded or IslandMode.Card or IslandMode.DropZone;
 }

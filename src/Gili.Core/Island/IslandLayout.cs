@@ -24,9 +24,13 @@ public static class IslandLayout
     public const double PageTop = 58;
     public const double PageBottom = 20;
 
-    /// <summary>A control island (PRD 6.4) is 360 wide, its content 16 from every edge.</summary>
+    /// <summary>A control island (PRD 6.4) is 360 wide, 400 for the Wi‑Fi and Bluetooth lists, its content 16 from every edge.</summary>
     public const double ControlWidth = 360;
+    public const double ListControlWidth = 400;
     public const double ControlPadding = 16;
+
+    public static double ControlWidthFor(ControlKind control) =>
+        control is ControlKind.Wifi or ControlKind.Bluetooth ? ListControlWidth : ControlWidth;
 
     /// <summary>
     /// The open island is <paramref name="expandedWidth"/> wide (from the tab menu) and as tall as its page, up to the
@@ -35,7 +39,7 @@ public static class IslandLayout
     /// </summary>
     public static IslandGeometry For(
         IslandMode mode, IslandScreen screen, double contentWidth, bool hovered, double expandedWidth, double pageHeight,
-        IslandPage page = IslandPage.Media)
+        IslandPage page = IslandPage.Media, ControlKind control = ControlKind.Power)
     {
         var top = (screen.BarHeight - screen.IslandHeight) / 2.0;
         var radius = screen.IslandHeight / 2.0;
@@ -43,7 +47,7 @@ public static class IslandLayout
         return mode switch
         {
             IslandMode.Expanded when page == IslandPage.Controls => new(
-                Math.Min(ControlWidth, screen.Width - ScreenMargin),
+                Math.Min(ControlWidthFor(control), screen.Width - ScreenMargin),
                 Math.Min(pageHeight + 2 * ControlPadding, maxHeight),
                 top,
                 28),
