@@ -8,7 +8,8 @@ public sealed class ClaudeBoardTests
     private DateTimeOffset _now = new(2026, 10, 31, 12, 0, 0, TimeSpan.Zero);
     private readonly ClaudeBoard _board;
 
-    public ClaudeBoardTests() => _board = new ClaudeBoard(() => _now);
+    // The session's window is in front, so a Done is seen; unseen finishes are in ClaudeSeenTests.
+    public ClaudeBoardTests() => _board = new ClaudeBoard(() => _now, _ => true);
 
     private void Hook(string hookEvent, string id = "s1", string? tool = null, string? type = null, string? message = null, string? question = null) =>
         _board.Apply(new ClaudeHookMessage(hookEvent, id, @"C:\Users\a\Documents\Project\top-taskbar", tool, type, message, question));

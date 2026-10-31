@@ -70,9 +70,15 @@ public sealed record AppSettings
     [JsonIgnore]
     public IReadOnlyList<string> Order => RightModuleRules.Repair((ModuleOrder ?? "").Split(','));
 
+    /// <summary>
+    /// The left icons the bar leaves out: those switched off, and Claude while Show Claude Code sessions is off (PRD 6.2).
+    /// </summary>
+    [JsonIgnore]
+    public LeftIcons ShownHiddenLeft => HiddenLeft | (ClaudeSessions ? LeftIcons.None : LeftIcons.Claude);
+
     /// <summary>The tabs the island hides: its own switches and the pages of hidden left icons (PRD 6.2).</summary>
     [JsonIgnore]
-    public PageSet HiddenTabs => HiddenPages | HiddenRules.PagesOf(HiddenLeft);
+    public PageSet HiddenTabs => HiddenPages | HiddenRules.PagesOf(ShownHiddenLeft);
 
     /// <summary>The pomodoro lengths in minutes and the sessions before the long break (F-TOOL-03).</summary>
     public int PomodoroFocus { get; init; } = 25;
@@ -103,7 +109,7 @@ public sealed record AppSettings
             BatteryAlert = Math.Clamp(BatteryAlert, 5, 50),
             UnplugReminder = Math.Clamp(UnplugReminder, 50, 100),
             // Media has no left icon, so freeing it always leaves the island one tab.
-            HiddenPages = (HiddenPages | HiddenRules.PagesOf(HiddenLeft)) == PageSet.All ? HiddenPages & ~PageSet.Media : HiddenPages,
+            HiddenPages = (HiddenPages | HiddenRules.PagesOf(ShownHiddenLeft)) == PageSet.All ? HiddenPages & ~PageSet.Media : HiddenPages,
             TimerSound = Sound.Voices.Find(TimerSound).Name,
             ModuleOrder = string.Join(",", Order),
             PomodoroFocus = plan.FocusMinutes,

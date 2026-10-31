@@ -8,8 +8,9 @@ public enum ClaudeSlotState { None, NeedsInput, Done, Working }
 /// <summary>
 /// The slot's Claude activity. <paramref name="Name"/> is the one session's name (at most 28 characters), absent when
 /// several are counted in <paramref name="Text"/>; <paramref name="Value"/> is the running time of one working session.
+/// <paramref name="Dot"/> puts the 5 px green dot on Claude's icon: another session finished unseen (mockup clIcon).
 /// </summary>
-public sealed record ClaudeSlotView(ClaudeSlotState State, string? Name, string Text, string? Value, string Tooltip)
+public sealed record ClaudeSlotView(ClaudeSlotState State, string? Name, string Text, string? Value, string Tooltip, bool Dot = false)
 {
     public static readonly ClaudeSlotView Empty = new(ClaudeSlotState.None, null, "", null, "");
 }
@@ -19,11 +20,30 @@ public static class ClaudeSlot
 {
     private const int NameLength = 28;
 
-    public static ClaudeSlotView For(IReadOnlyList<ClaudeSession> sessions, DateTimeOffset now)
+    public static ClaudeSlotView For(IReadOnlyList<ClaudeSession> sessions, DateTimeOffset now) =>
+        View(sessions, now) is { State: not ClaudeSlotState.None } view ? view with { Dot = Unseen(sessions).Count > 0 } : ClaudeSlotView.Empty;
+
+    /// <summary>Sessions that finished unseen, apart from the one whose Done the slot shows (mockup clUnseen).</summary>
+    public static IReadOnlyList<ClaudeSession> Unseen(IReadOnlyList<ClaudeSession> sessions) =>
+        [.. sessions.Where(s => s.Unseen && !s.ShowsDone)];
+
+    /// <summary>
+    /// The sessions a click on the slot is about (mockup clClick): the waiting ones, else the Done on show, else the working
+    /// ones. One brings its window forward; more open the Claude page.
+    /// </summary>
+    public static IReadOnlyList<ClaudeSession> Involved(IReadOnlyList<ClaudeSession> sessions)
+    {
+        var ask = sessions.Where(s => s.Status == ClaudeStatus.NeedsInput).ToList();
+        if (ask.Count > 0) return ask;
+        if (sessions.Where(s => s.ShowsDone).MaxBy(s => s.DoneUntil) is { } done) return [done];
+        return [.. sessions.Where(s => s.Status == ClaudeStatus.Working)];
+    }
+
+    private static ClaudeSlotView View(IReadOnlyList<ClaudeSession> sessions, DateTimeOffset now)
     {
         var ask = sessions.Where(s => s.Status == ClaudeStatus.NeedsInput).ToList();
         var work = sessions.Where(s => s.Status == ClaudeStatus.Working).ToList();
-        var done = sessions.Where(s => s.Status == ClaudeStatus.Done).MaxBy(s => s.DoneUntil);
+        var done = sessions.Where(s => s.ShowsDone).MaxBy(s => s.DoneUntil);
         if (ask.Count > 0)
         {
             return ask.Count > 1
@@ -64,15 +84,23 @@ public static class ClaudeSlot
     {
         var ask = sessions.Count(s => s.Status == ClaudeStatus.NeedsInput);
         var work = sessions.Count(s => s.Status == ClaudeStatus.Working);
+        var unseen = Unseen(sessions).Count;
         return ask > 0 ? $"Claude · {ask} need{(ask > 1 ? "" : "s")} input"
             : work > 0 ? $"Claude · {work} working"
+            : unseen > 0 ? $"Claude · {unseen} finished"
             : "Claude sessions";
     }
 
-    public static string AppName(ClaudeApp app) => app == ClaudeApp.Desktop ? "Claude Desktop" : "Terminal";
+    /// <summary>Claude Desktop, or the terminal's own name (Windows Terminal, wmux) once its window is known.</summary>
+    public static string AppName(ClaudeSession s) => s.App == ClaudeApp.Desktop ? "Claude Desktop" : s.Host ?? "Terminal";
+
+    /// <summary>The green bubble's tooltip and accessible name (mockup renderCbub).</summary>
+    public static (string Tooltip, string Name) Bubble(IReadOnlyList<ClaudeSession> unseen) =>
+        (string.Join("\n", unseen.Select(s => s.Name)),
+            unseen.Count > 1 ? $"{unseen.Count} Claude sessions finished" : $"Claude finished: {(unseen.Count > 0 ? unseen[0].Name : "")}");
 
     private static string Tooltip(ClaudeSession s, bool snippet) =>
-        $"{s.Name}\n{s.Cwd} · {AppName(s.App)}" + (snippet && !string.IsNullOrEmpty(s.Snippet) ? "\n" + s.Snippet : "");
+        $"{s.Name}\n{s.Cwd} · {AppName(s)}" + (snippet && !string.IsNullOrEmpty(s.Snippet) ? "\n" + s.Snippet : "");
 
     /// <summary>The mockup's trunc(): the first n − 1 characters and an ellipsis.</summary>
     private static string Trunc(string text) => text.Length > NameLength ? text[..(NameLength - 1)] + "…" : text;

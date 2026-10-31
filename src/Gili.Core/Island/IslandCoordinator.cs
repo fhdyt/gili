@@ -19,6 +19,7 @@ public sealed class IslandCoordinator
     private bool _dropZone;
     private bool _fullscreen;
     private bool _focus;
+    private bool _claudeUnseen;
     private DateTimeOffset? _clipboardUntil;
     private IslandPage? _openPage;
     private IslandPage _lastPage = IslandPage.Media;
@@ -105,6 +106,17 @@ public sealed class IslandCoordinator
     public void DismissCard(string id)
     {
         if (_cards.RemoveAll(c => c.Id == id) > 0) Update();
+    }
+
+    /// <summary>
+    /// A Claude session finished while its window was in the background (F-CLD-04): the green bubble, which is no
+    /// activity, so Gili stays in the island.
+    /// </summary>
+    public void SetClaudeUnseen(bool unseen)
+    {
+        if (_claudeUnseen == unseen) return;
+        _claudeUnseen = unseen;
+        Update();
     }
 
     public void SetDropZone(bool active)
@@ -211,6 +223,8 @@ public sealed class IslandCoordinator
         _ => null,
     };
 
+    private static bool IsClaude(ActivityKind? kind) => kind is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking;
+
     private void Update()
     {
         var view = Compute();
@@ -260,13 +274,18 @@ public sealed class IslandCoordinator
         }
 
         var ranked = _activities.Order().ToList();
+        ActivityKind? slot = ranked.Count > 0 ? ranked[0] : null;
+        ActivityKind? bubble = mode == IslandMode.Compact && ranked.Count > 1 ? ranked[1] : null;
+        // While Claude shows in the slot or the bubble, an unseen finish is a dot on its icon instead (PRD 6.3).
+        var doneBubble = mode == IslandMode.Compact && _claudeUnseen && !IsClaude(slot) && !IsClaude(bubble);
         return new IslandView(
             mode,
-            ranked.Count > 0 ? ranked[0] : null,
-            mode == IslandMode.Compact && ranked.Count > 1 ? ranked[1] : null,
+            slot,
+            bubble,
             mode == IslandMode.Wide ? _wide : null,
             mode == IslandMode.Card ? _shownCard : null,
             _openPage ?? _lastPage,
-            _control);
+            _control,
+            doneBubble);
     }
 }

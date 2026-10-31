@@ -39,7 +39,8 @@ public sealed record IslandCard(string Id, CardPriority Priority, TimeSpan Timeo
 
 /// <summary>
 /// What the island shows right now. <see cref="Bubble"/> is only set while compact; <see cref="Control"/> picks the
-/// control while <see cref="Page"/> is <see cref="IslandPage.Controls"/>.
+/// control while <see cref="Page"/> is <see cref="IslandPage.Controls"/>. <see cref="DoneBubble"/> is Claude's green bubble
+/// for a session that finished unseen, right of every other bubble.
 /// </summary>
 public sealed record IslandView(
     IslandMode Mode,
@@ -48,7 +49,8 @@ public sealed record IslandView(
     WideEvent? Wide,
     IslandCard? Card,
     IslandPage Page,
-    ControlKind Control = ControlKind.Power)
+    ControlKind Control = ControlKind.Power,
+    bool DoneBubble = false)
 {
     public bool IsFloating => Mode is IslandMode.Expanded or IslandMode.Card or IslandMode.DropZone;
 }

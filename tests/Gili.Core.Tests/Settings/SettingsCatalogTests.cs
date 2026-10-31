@@ -173,7 +173,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Start_switch_has_no_page()
     {
-        var s = SettingsCatalog.Write(new AppSettings(), "L.Start", false);
+        var s = SettingsCatalog.Write(new AppSettings { ClaudeSessions = true }, "L.Start", false);
         Assert.Equal((LeftIcons.Start, PageSet.None), (s.HiddenLeft, s.HiddenTabs));
         Assert.Equal(new RowState(true, null), SettingsCatalog.State(new AppSettings { HiddenPages = PageSet.All & ~PageSet.Media }, "L.Start"));
     }
@@ -230,5 +230,18 @@ public class SettingsCatalogModuleTests
         Assert.Equal("disk", SettingsCatalog.ModuleId("M.Disk"));
         Assert.Null(SettingsCatalog.ModuleId("M.Wi‑Fi"));
         Assert.Null(SettingsCatalog.ModuleId("h12"));
+    }
+
+    [Fact]
+    public void Claude_icon_and_page_wait_for_the_integration()
+    {
+        var off = new AppSettings();
+        Assert.True(off.HiddenTabs.HasFlag(PageSet.Claude));
+        Assert.True(off.ShownHiddenLeft.HasFlag(LeftIcons.Claude));
+        Assert.Equal(new RowState(false, SettingsCatalog.ClaudeOff), SettingsCatalog.State(off, "L.Claude"));
+        Assert.Equal(new RowState(false, SettingsCatalog.ClaudeOff), SettingsCatalog.State(off, "T.Claude"));
+        var on = off with { ClaudeSessions = true };
+        Assert.False(on.HiddenTabs.HasFlag(PageSet.Claude));
+        Assert.True(SettingsCatalog.State(on, "L.Claude").Enabled);
     }
 }

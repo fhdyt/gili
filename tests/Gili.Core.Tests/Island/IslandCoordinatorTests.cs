@@ -438,4 +438,38 @@ public class IslandCoordinatorTests
         _island.Tick();
         Assert.Equal(1, count);
     }
+
+    [Fact]
+    public void An_unseen_claude_finish_is_a_bubble_beside_the_compact_island()
+    {
+        _island.SetActivity(ActivityKind.Media, true);
+        _island.SetClaudeUnseen(true);
+        Assert.True(_island.View.DoneBubble);
+        Assert.Equal(ActivityKind.Media, _island.View.Slot);
+    }
+
+    [Fact]
+    public void No_claude_bubble_while_claude_shows_in_the_slot_or_the_bubble()
+    {
+        _island.SetClaudeUnseen(true);
+        _island.SetActivity(ActivityKind.ClaudeWorking, true);
+        Assert.False(_island.View.DoneBubble);
+        _island.SetActivity(ActivityKind.Timer, true);
+        Assert.Equal(ActivityKind.ClaudeWorking, _island.View.Bubble);
+        Assert.False(_island.View.DoneBubble);
+        _island.SetActivity(ActivityKind.Stopwatch, true);
+        // Claude third: hidden, so the green bubble shows again.
+        Assert.True(_island.View.DoneBubble);
+    }
+
+    [Fact]
+    public void The_claude_bubble_only_shows_while_compact()
+    {
+        _island.SetClaudeUnseen(true);
+        _island.Open(IslandPage.Media);
+        Assert.False(_island.View.DoneBubble);
+        _island.Close();
+        _island.SetFullscreen(true);
+        Assert.False(_island.View.DoneBubble);
+    }
 }

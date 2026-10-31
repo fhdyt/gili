@@ -102,9 +102,25 @@ public sealed class ClaudeSession(string id)
     /// <summary>How long the last finished prompt took, waiting for answers included.</summary>
     public TimeSpan? DoneAfter { get; internal set; }
 
+    /// <summary>Until when the slot shows this session's Done (4 s after Stop).</summary>
     public DateTimeOffset? DoneUntil { get; internal set; }
 
     public DateTimeOffset? IdleSince { get; internal set; }
+
+    /// <summary>When Claude last stopped after a prompt.</summary>
+    public DateTimeOffset? FinishedAt { get; internal set; }
+
+    /// <summary>Finished while its window was in the background and not looked at since (F-CLD-04).</summary>
+    public bool Unseen { get; internal set; }
+
+    /// <summary>Numbers each wait for an answer, so one question never opens its card twice (F-CLD-03); 0 before any.</summary>
+    public long WaitId { get; internal set; }
+
+    /// <summary>The terminal's name (Windows Terminal, wmux), from the program that owns the session's window.</summary>
+    public string? Host { get; internal set; }
+
+    /// <summary>The slot shows this session's Done right now.</summary>
+    public bool ShowsDone => Status == ClaudeStatus.Done && DoneUntil is not null;
 
     internal string? Title { get; set; }
 
@@ -120,5 +136,6 @@ public sealed class ClaudeSession(string id)
     /// <summary>The session title from Claude Desktop, else the folder's name (PRD 6.3 "Nama sesi").</summary>
     public string Name => Title ?? Folder ?? "Claude";
 
-    private string? Folder => string.IsNullOrEmpty(Cwd) ? null : Path.GetFileName(Path.TrimEndingDirectorySeparator(Cwd));
+    /// <summary>The working folder's own name (top-taskbar).</summary>
+    public string? Folder => string.IsNullOrEmpty(Cwd) ? null : Path.GetFileName(Path.TrimEndingDirectorySeparator(Cwd));
 }

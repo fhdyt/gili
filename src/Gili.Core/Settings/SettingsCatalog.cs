@@ -31,6 +31,9 @@ public static class SettingsCatalog
 {
     public const string LaterVersion = "Coming in a later version";
 
+    /// <summary>The Claude icon and page exist only while the integration is on (PRD 6.2, 6.3 page 9).</summary>
+    public const string ClaudeOff = "Turn on Claude Code sessions first";
+
     private static readonly string[] LeftNames = ["Start", "Timer", "Alarms", "Todo", "Notes", "Clipboard", "Shelf", "Claude"];
     /// <summary>The Right side switches by label, with the bar's id for each module (PRD 6.4).</summary>
     private static readonly Dictionary<string, string> ModuleIds = new()
@@ -199,6 +202,7 @@ public static class SettingsCatalog
     {
         if (key == "pos" && !s.HideTaskbar)
             return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
+        if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude") return new(false, ClaudeOff);
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {
             var page = Page(key);

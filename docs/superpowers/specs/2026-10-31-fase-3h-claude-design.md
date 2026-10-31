@@ -86,3 +86,69 @@ Saat mati: nol (tidak ada pipe, watcher, atau timer). Saat nyala: satu pipe menu
 - **Diuji setelah pengguna mengizinkan (2026-10-31 19:27):** saklar dinyalakan lewat `settings.json`. Tujuh hook Gili masuk ke `~/.claude/settings.json` dengan matcher dan `timeout: 2` sesuai PRD; semua hook wmux, `statusLine`, `mcpServers`, dan field lain utuh; `settings.json.gili-backup` identik dengan file asli. Helper saat Gili mendengarkan: median 13 ms, p95 16 ms, maks 23 ms (target ≤ 50 ms).
 - **Sesi sungguhan** (`claude -p` di folder uji): slot `2 sessions working` saat sesi uji dan sesi CLI ini (dari file sesinya) bekerja bersamaan, lalu `✓ gili-hook-test · Done · 5s`, lalu kembali ke `gili 1:07`. Uji pertama menemukan bug: `claude -p` mengirim `SessionEnd` tepat setelah `Stop`, sehingga Done hilang sebelum tampil. Sekarang sesi yang berakhir tetap ada sampai Done 4 detiknya selesai (2 unit test baru).
 - Masih butuh pengguna: apakah prompt izin di Claude Desktop membuat slot kuning `Needs input`.
+
+## Rancangan 3i
+
+Fitur: F-CLD-03, F-CLD-04, F-CLD-05, F-CLD-06, klik slot, titik hijau di ikon kiri (F-LEFT-05). Pengguna minta saya memilih sendiri; semua bagian **(keputusan Claude)** adalah pilihan saya.
+
+### Pendekatan
+
+| Pendekatan | Untung | Rugi |
+|---|---|---|
+| **A. Aturan di Core, App hanya menyambung (dipilih)** | `ClaudeBoard` mencatat "belum dilihat" dan nomor tunggu; kelas Core baru `ClaudeCards` (kartu mana yang tampil), `ClaudePage` (baris halaman), `ClaudeWindows` (penelusuran proses induk); semua bisa dites tanpa WPF (F-ISL-03, PRD 13) | Lebih banyak tipe kecil |
+| B. Logika kartu dan gelembung di `ClaudeService` (App) | Lebih sedikit file | Aturan "tidak muncul lagi untuk pertanyaan yang sama", fokus, dan fullscreen tidak tertes |
+| C. Kartu Claude sebagai jenis kartu baru di `IslandCoordinator` | Satu tempat untuk semua kartu | Coordinator jadi tahu isi sesi Claude; kartu pengingat prioritas 2 yang ada sudah memberi 8 detik, tahan saat fokus, dan lewati saat fullscreen |
+
+### Sesi (`ClaudeBoard`)
+
+- `Stop` mencatat `FinishedAt` dan `Unseen = !isFront(sesi)`; `isFront` disuntikkan (App: jendela sesi = jendela di depan).
+- Done tetap berstatus Done setelah 4 detik selama belum dilihat (untuk urutan halaman "Done (belum dilihat)"); slot hanya menampilkan Done yang 4 detiknya masih berjalan (`DoneUntil`). Setelah dilihat: Idle, `IdleSince = FinishedAt`.
+- Dilihat (`MarkSeen`): jendela sesi menjadi aktif, gelembung atau baris halaman diklik, atau prompt baru (`UserPromptSubmit`, atau file `busy` saat Done yang sudah selesai tampil).
+- Setiap kali sesi masuk ke Needs input dari keadaan lain, sesi mendapat `WaitId` baru. Hook yang datang setelah file `waiting` untuk tunggu yang sama hanya memperbarui isi (jenis dan pesan), tidak memberi nomor baru.
+- `Host`: nama terminal dari deskripsi file exe pemilik jendela (`Windows Terminal`, `wmux`); Claude Desktop tetap `Claude Desktop`.
+
+### Kartu Needs input (`ClaudeCards`, F-CLD-03)
+
+- Satu kartu dengan id `claude`, prioritas 2 (Reminder), 8 detik. Isi sesuai tabel PRD: judul per jenis, nama sesi, baris ketiga (cuplikan pertanyaan maks. 90 karakter, atau pesan izin; rencana tanpa baris ketiga). Tombol **Later** dan **Open Claude** / **Open terminal**. Ikon Claude kuning tanpa pulse (mockup `CARDS.claude`, `cls:''`), Ping sekali.
+- Tunggu baru (WaitId yang belum pernah ditangani) → kartu tampil untuk tunggu terbaru; kartu yang sedang tampil berganti isi dan menghitung ulang 8 detik (sudah ditangani `IslandCoordinator.ShowCard`).
+- Tunggu yang sudah ditangani tidak pernah membuka kartu lagi (Later, 8 detik habis, Open).
+- Sesi kartu dijawab, berhenti, atau hilang → kartu ditutup. Isi berubah untuk tunggu yang sama (pesan izin dari hook datang setelah file) → isi diperbarui tanpa menghitung ulang.
+- Saat fullscreen tunggu baru langsung dianggap ditangani (dilewati, PRD 6.3). Saat fase fokus kartu ditahan oleh coordinator dan tampil saat istirahat mulai bila sesinya masih menunggu.
+- **(keputusan Claude)** Kartu pengingat todo juga tanpa pulse, karena mockup `CARDS.todo` juga `cls:''`.
+
+### Belum dilihat (F-CLD-04)
+
+- Gelembung hijau `IslandView.DoneBubble`: hanya saat compact, ada sesi belum dilihat, dan aktivitas Claude tidak tampil di slot maupun di gelembung aktivitas. Paling kanan, 6 px setelah gelembung aktivitas. Lingkaran hitam, ikon Claude hijau, garis dalam hijau 50%; angka di lencana hijau bila lebih dari satu (mockup `.bubble.cdone`, `.bn`).
+- Klik: satu sesi → jendelanya ke depan dan dilihat; lebih dari satu → halaman Claude.
+- Selama aktivitas Claude tampil, sesi lain yang belum dilihat jadi titik hijau 5 px di ikon Claude (slot dan gelembung aktivitas).
+- Ikon kiri: titik hijau saat ada yang belum dilihat dan tidak ada yang menunggu; tooltip `Claude · 2 finished`.
+
+### Jendela sesi (`ClaudeWindows`, F-CLD-06)
+
+- Dari PID sesi, naik ke proses induk sampai proses yang punya jendela top-level terlihat (bukan tool window, tanpa owner). Induk yang mulai setelah anaknya berarti PID sudah dipakai ulang → berhenti. Berhenti juga di `explorer.exe` dan setelah 12 langkah.
+- Diverifikasi di laptop (2026-10-31): sesi Desktop `claude.exe` → `claude.exe` (jendela `Claude`); sesi CLI `claude.exe` → `pwsh.exe` → `WindowsTerminal.exe`.
+- Membawa ke depan memakai `TaskbarWindows.BringToFront` (pulihkan bila diminimize, lalu fokus).
+- "Jendela aktif" = proses pemilik jendela di depan sama dengan proses jendela sesi. Pemantauan foreground memakai event `ForegroundChanged` yang sudah dimiliki `AppsService`, dan hanya dihitung bila ada sesi belum dilihat.
+
+### Halaman Claude (`ClaudePage`, F-CLD-05)
+
+- Baris persis mockup `renderClPage`: urut Needs input → Working → Done → Idle; ikon (centang untuk Done), nama 14 px semibold, baris kedua 12 px (`"pertanyaan"` untuk pertanyaan, pesan/judul untuk izin dan rencana, selain itu `folder · aplikasi`), kanan `Needs input`, `Working · 2:14`, `Done · 4m 12s`, `Idle since 14:05` (format jam mengikuti 12-hour clock). Needs input kuning, Done hijau, Idle opacity 0,55. Baris 44 px, jarak 6 px, radius 12, `#1C1C1E` dan `#2C2C2E` saat hover. Tanpa sesi: `No Claude sessions`.
+- Klik baris: jendela sesi ke depan dan Done ditandai dilihat; pulau tetap terbuka (mockup `clFocus`).
+- Waktu Working diperbarui tiap detik hanya selama halaman tampil (PRD 8.1).
+- Baris ringkasan 5 jam menyusul di 3j.
+
+### Klik slot
+
+`ClaudeSlot.Involved`: sesi yang menunggu; kalau tidak ada, Done yang sedang tampil; kalau tidak ada, yang bekerja. Satu sesi → jendelanya ke depan (Done ikut dilihat) dan pulau tidak terbuka; lebih dari satu → halaman Claude. Klik gelembung aktivitas Claude tetap membuka halaman (PRD 6.3).
+
+### Integrasi mati
+
+**(keputusan Claude)** Sesuai PRD 6.2 dan tabel halaman 9: ikon Claude di kiri dan tab Claude hanya ada saat `Show Claude Code sessions` nyala. Saklar Left side → Claude dan Island → Claude nonaktif dengan keterangan `Turn on Claude Code sessions first` selama integrasi mati.
+
+### Demo (F-BAR-09)
+
+Papan demo terpisah menggantikan papan asli selama demo (sesi asli tetap dicatat di belakang): sesi Desktop `Integrate taskbar with Claude` bekerja, bertanya (kartu + Ping), dijawab; sesi terminal `top-taskbar` ikut bekerja (`2 sessions working`); keduanya selesai saat jendelanya tidak di depan, jadi muncul titik hijau lalu gelembung `2`; halaman Claude dibuka. Demo menjadi ±90 detik.
+
+### Anggaran (PRD 8.1)
+
+Tidak ada timer baru saat diam. Penelusuran proses (satu snapshot Toolhelp + satu `EnumWindows`) hanya saat `Stop`, saat klik, saat sesi pertama kali punya PID (nama host), dan saat foreground berganti selama ada sesi belum dilihat (hasilnya di-cache per PID). Timer halaman 1 detik hanya selama halaman Claude tampil dengan sesi Working.
