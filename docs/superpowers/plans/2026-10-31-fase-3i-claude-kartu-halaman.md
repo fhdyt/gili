@@ -1,6 +1,6 @@
 # Fase 3i: kartu Needs input, belum dilihat, halaman Claude — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Sesi Claude yang menunggu membuka kartu sekali, sesi yang selesai di belakang meninggalkan gelembung hijau, halaman Claude mendaftar semua sesi, dan klik membawa jendela sesi ke depan (F-CLD-03–06, F-LEFT-05).
 
@@ -40,27 +40,27 @@
 - `SoundRules.ForCard("claude") → ("Ping", false, false)`.
 - `AppSettings.ShownHiddenLeft` (Claude ikut tersembunyi saat integrasi mati) dan `HiddenTabs` memakainya; `SettingsCatalog.State` untuk `L.Claude`/`T.Claude`.
 
-- [ ] Tulis tes gagal untuk tiap perilaku di atas, jalankan, implementasi, jalankan `dotnet test tests/Gili.Core.Tests`.
-- [ ] Commit `feat(core): ...`.
+- [x] Tulis tes gagal untuk tiap perilaku di atas, jalankan, implementasi, jalankan `dotnet test tests/Gili.Core.Tests`.
+- [x] Commit `feat(core): ...`.
 
 ### Task 2: Platform — jendela sesi
 
 **Files:** Create `src/Gili.Platform/Claude/SessionWindows.cs` (Toolhelp snapshot, `GetProcessTimes`, `EnumWindows` per PID, deskripsi exe, `IsFront`).
 
-- [ ] Build; cek manual dengan sesi di laptop (Desktop → `Claude`, CLI → Windows Terminal).
+- [x] Build; cek manual dengan sesi di laptop (Desktop → `Claude`, CLI → Windows Terminal).
 
 ### Task 3: App — kartu, gelembung, halaman, ikon kiri, klik, demo
 
 **Files:** Modify `ClaudeService.cs`, `IslandController.cs`, `IslandViewModel.cs`, `IslandWindow.xaml(.cs)`, `CardContent.cs`, `CardView.xaml(.cs)`, `LeftSide.xaml(.cs)`, `BarWindow.xaml.cs`, `AppsService.cs`, `App.xaml.cs`, `DemoService.cs`, `src/Gili.Core/Demo/DemoScript.cs`; Create `ClaudePage.xaml(.cs)`, `ClaudePageViewModel.cs`.
 
-- [ ] Kartu `claude` (CardContent `Quote`, `Filled`, `Pulse`), Later/Open, Ping.
-- [ ] Gelembung hijau + lencana, titik di slot/gelembung aktivitas, ikon kiri hijau.
-- [ ] Halaman Claude menggantikan placeholder; klik baris.
-- [ ] Klik slot (satu sesi → jendela), klik gelembung hijau.
-- [ ] Foreground → MarkSeen; Stop → isFront.
-- [ ] Demo Claude.
-- [ ] `dotnet build`, `dotnet format --verify-no-changes`, `dotnet test`, publish, cek di demo dan dengan sesi sungguhan; commit.
+- [x] Kartu `claude` (CardContent `Quote`, `Filled`, `Pulse`), Later/Open, Ping.
+- [x] Gelembung hijau + lencana, titik di slot/gelembung aktivitas, ikon kiri hijau.
+- [x] Halaman Claude menggantikan placeholder; klik baris.
+- [x] Klik slot (satu sesi → jendela), klik gelembung hijau.
+- [x] Foreground → MarkSeen; Stop → isFront.
+- [x] Demo Claude.
+- [x] `dotnet build`, `dotnet format --verify-no-changes`, `dotnet test`, publish, cek di demo dan dengan sesi sungguhan; commit.
 
 ### Task 4: Dokumen
 
-- [ ] Hasil verifikasi 3i di desain, PRD (bila ada yang berubah), commit, `scripts/publish.ps1`.
+- [x] Hasil verifikasi 3i di desain, PRD (bila ada yang berubah), commit, `scripts/publish.ps1`.

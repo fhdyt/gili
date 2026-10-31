@@ -152,3 +152,14 @@ Papan demo terpisah menggantikan papan asli selama demo (sesi asli tetap dicatat
 ### Anggaran (PRD 8.1)
 
 Tidak ada timer baru saat diam. Penelusuran proses (satu snapshot Toolhelp + satu `EnumWindows`) hanya saat `Stop`, saat klik, saat sesi pertama kali punya PID (nama host), dan saat foreground berganti selama ada sesi belum dilihat (hasilnya di-cache per PID). Timer halaman 1 detik hanya selama halaman Claude tampil dengan sesi Working.
+
+## Hasil verifikasi 3i
+
+- Build dan `dotnet format` bersih, 914 unit test lulus (baru: `ClaudeSeenTests` 11, `ClaudeCardsTests` 11, `ClaudePageTests` 10, coordinator 3, settings 1, demo 1).
+- Penelusuran jendela di laptop: sesi Claude Desktop → proses `Claude` (PID 17912), sesi CLI → Windows Terminal dengan nama `Terminal`; 8–37 ms per pencarian.
+- Sesi uji di jendela yang diminimize (`claude "Reply with the single word OK"`): slot `2 sessions working` → `✓ gili · Done · 5s` selama 4 detik → `gili 0:17` dengan titik hijau di ikon Claude (sesi uji belum dilihat, sesi ini masih bekerja).
+- **Bug lama ditemukan dan diperbaiki**: Done kadang tertahan di slot. `DispatcherTimer` bisa berbunyi sedikit sebelum tenggatnya; `Tick()` tidak mengubah apa pun sehingga tidak ada `Changed` dan tenggat tidak pernah dipasang lagi. Sekarang tenggat selalu dipasang ulang setelah setiap tick (sama seperti `IslandController`). Exception di handler pipe dan file sesi sekarang dicatat di log, tidak hilang di dalam `InvokeAsync`.
+- Halaman Claude dibuka lewat UIA Invoke ikon kiri: baris `gili · Terminal · Working · 0:04` dan dua sesi Desktop yang redup `Idle since 23:07`, sesuai mockup.
+- `claude -p` mengirim `SessionEnd` tepat setelah `Stop`, jadi sesinya hilang setelah Done 4 detik dan tidak meninggalkan gelembung hijau (benar: halaman hanya mendaftar sesi yang hidup).
+- Catatan: sesi CLI yang dijalankan lewat `Start-Process pwsh` tidak menulis `~/.claude/sessions/<pid>.json`, jadi Gili hanya mengenalnya dari hook (tanpa PID, jadi tanpa jendela). Klik baris sesi seperti itu hanya menandainya dilihat.
+- **Belum teruji langsung, butuh pengguna** (tanpa input sintetis): kartu `Claude needs your input` + Ping dari pertanyaan sungguhan, gelembung hijau (butuh sesi ini tidak bekerja), klik baris/slot yang membawa jendela ke depan, dan klik gelembung. Semuanya bisa dilihat di mode demo (klik kanan bar → Demo mode, detik 60–92).
