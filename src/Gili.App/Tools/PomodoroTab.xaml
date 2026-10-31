@@ -1,0 +1,43 @@
+<UserControl x:Class="Gili.App.Tools.PomodoroTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/WindowControls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Text="{Binding Sub}" Foreground="#8E8E93" />
+        <TextBlock Text="{Binding Time}" FontSize="44" FontWeight="Bold" LineHeight="48.4" LineStackingStrategy="BlockLineHeight" Margin="0,4,0,0" Typography.NumeralAlignment="Tabular"
+                   AutomationProperties.Name="Pomodoro time" />
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Style="{StaticResource PrimaryToolButton}" Content="{Binding ButtonText}" Command="{Binding StartCommand}" AutomationProperties.Name="Start or pause pomodoro" />
+            <Button Style="{StaticResource ToolButton}" Content="Reset" Margin="8,0,0,0" Command="{Binding ResetCommand}" />
+        </StackPanel>
+
+        <TextBlock Text="Lengths" FontSize="13" FontWeight="SemiBold" Foreground="#8E8E93" Margin="0,16,0,8" />
+        <ItemsControl ItemsSource="{Binding Lengths}" Focusable="False">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!-- One length (mockup .srow with .stp): the name, then - value + with the value 84 px wide. -->
+                    <Border MinHeight="46" Padding="12,6" Margin="0,0,0,4" CornerRadius="8" Background="#0AFFFFFF">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource StepButton}" Content="&#x2212;" Command="{Binding DecreaseCommand}"
+                                        AutomationProperties.Name="{Binding DecreaseName}" />
+                                <TextBlock Text="{Binding ValueText}" Width="84" Margin="8,0" TextAlignment="Center" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+                                <Button Style="{StaticResource StepButton}" Content="+" Command="{Binding IncreaseCommand}"
+                                        AutomationProperties.Name="{Binding IncreaseName}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

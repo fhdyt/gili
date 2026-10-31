@@ -238,7 +238,9 @@ public partial class App : Application
             return;
         }
         var alarms = new AlarmsTabViewModel(_alarms!, () => _settings!.Current.Use24HourClock, voice => _sound?.Preview(voice));
-        _toolsWindow = new ToolsWindow(new ToolsViewModel(alarms, tab));
+        var model = new ToolsViewModel(new TimersTabViewModel(_timers!), new StopwatchTabViewModel(_timers!),
+            new PomodoroTabViewModel(_timers!, _settings!), alarms, tab);
+        _toolsWindow = new ToolsWindow(model);
         _toolsWindow.Closed += (_, _) => _toolsWindow = null;
         _toolsWindow.Show();
         // The bar never takes focus, so Show alone can leave it behind the active app.

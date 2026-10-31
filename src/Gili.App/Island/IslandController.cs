@@ -59,6 +59,7 @@ public sealed class IslandController : IDisposable
         timers.Changed += ApplyTimers;
         timers.Finished += id => _coordinator.ShowCard(new IslandCard(id, CardPriority.Urgent, TimeSpan.Zero));
         timers.Stale += id => DismissCard(id);
+        timers.Relabeled += _ => RefreshCard();
         ApplyTimers();
         alarms.Ringing += (alarm, missed) => Ring(alarm, missed, AlarmCard(alarm.Id));
         alarms.Stale += id => DismissCard(AlarmCard(id));

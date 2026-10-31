@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:Gili.App.Controls"
+        xmlns:local="clr-namespace:Gili.App.Tools"
         Title="Gili Tools" Width="720" Height="520" MinWidth="560" MinHeight="420" WindowStyle="None" ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen" Background="#202020" Foreground="#F5F5F7"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" UseLayoutRounding="True">
@@ -52,20 +53,30 @@
                     <DockPanel Margin="0,0,0,12">
                         <Button DockPanel.Dock="Right" Style="{StaticResource ToolButton}" Content="New alarm" Command="{Binding Alarms.NewCommand}"
                                 Visibility="{Binding IsAlarms, Converter={StaticResource VisibleWhen}}" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource ToolButton}" Content="New timer" Command="{Binding Timers.NewCommand}"
+                                Visibility="{Binding IsTimer, Converter={StaticResource VisibleWhen}}" />
                         <TextBlock Text="{Binding SelectedTab}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </DockPanel>
 
                     <TextBlock Text="Coming in a later version" Foreground="#8E8E93">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsAlarms}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    <DataTrigger Binding="{Binding IsComingLater}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+
+                    <local:TimersTab DataContext="{Binding Timers}"
+                                     Visibility="{Binding DataContext.IsTimer, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
+                    <local:StopwatchTab DataContext="{Binding Stopwatch}"
+                                        Visibility="{Binding DataContext.IsStopwatch, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
+                    <local:PomodoroTab DataContext="{Binding Pomodoro}"
+                                       Visibility="{Binding DataContext.IsPomodoro, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
 
                     <StackPanel DataContext="{Binding Alarms}" Visibility="{Binding DataContext.IsAlarms, RelativeSource={RelativeSource AncestorType=Window},
                                 Converter={StaticResource VisibleWhen}}">

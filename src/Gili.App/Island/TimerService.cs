@@ -96,6 +96,9 @@ public sealed class TimerService
     /// <summary>A labeled timer's duration changed or it was deleted: the card it raised no longer applies.</summary>
     public event Action<string>? Stale;
 
+    /// <summary>A labeled timer got a new label: an open card of that timer shows it (the card id).</summary>
+    public event Action<string>? Relabeled;
+
     private static DateTimeOffset Now => DateTimeOffset.UtcNow;
 
     /// <summary>The page's main button: start, pause or resume whatever the segment shows.</summary>
@@ -182,8 +185,10 @@ public sealed class TimerService
     {
         if (Find(id) is not { } timer) return;
         var clock = seconds == timer.Clock.TotalSeconds ? timer.Clock : timer.Clock.WithTotal(seconds);
-        Replace(timer with { Label = LabeledTimer.CleanLabel(label), Clock = clock });
+        var cleaned = LabeledTimer.CleanLabel(label);
+        Replace(timer with { Label = cleaned, Clock = clock });
         if (!ReferenceEquals(clock, timer.Clock)) Stale?.Invoke(CardId(id));
+        else if (cleaned != timer.Label) Relabeled?.Invoke(CardId(id));
     }
 
     public void DeleteTimer(long id)
@@ -199,12 +204,17 @@ public sealed class TimerService
     public void StartOrPause(long id)
     {
         if (Find(id) is not { } timer) return;
-        Replace(timer with { Clock = timer.Clock.IsRunning ? timer.Clock.Pause(Now) : timer.Clock.Start(Now) });
+        var starting = !timer.Clock.IsRunning;
+        Replace(timer with { Clock = starting ? timer.Clock.Start(Now) : timer.Clock.Pause(Now) });
+        // Started from Tools while its card shows: the card is answered.
+        if (starting) Stale?.Invoke(CardId(id));
     }
 
     public void ResetTimer(long id)
     {
-        if (Find(id) is { } timer) Replace(timer with { Clock = timer.Clock.Reset() });
+        if (Find(id) is not { } timer) return;
+        Replace(timer with { Clock = timer.Clock.Reset() });
+        Stale?.Invoke(CardId(id));
     }
 
     public void RepeatTimer(long id)

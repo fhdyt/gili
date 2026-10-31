@@ -1,0 +1,46 @@
+<UserControl x:Class="Gili.App.Tools.StopwatchTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/WindowControls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- The time (mockup .tbig): 44 px bold, tabular digits. -->
+        <TextBlock Text="{Binding Time}" FontSize="44" FontWeight="Bold" LineHeight="48.4" LineStackingStrategy="BlockLineHeight" Margin="0,0,0,0" Typography.NumeralAlignment="Tabular"
+                   AutomationProperties.Name="Stopwatch time" />
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,16">
+            <Button Style="{StaticResource PrimaryToolButton}" Content="{Binding ButtonText}" Command="{Binding StartCommand}" AutomationProperties.Name="Start or pause stopwatch" />
+            <Button Style="{StaticResource ToolButton}" Content="Lap" Margin="8,0,0,0" Command="{Binding LapCommand}" />
+            <Button Style="{StaticResource ToolButton}" Content="Reset" Margin="8,0,0,0" Command="{Binding ResetCommand}" />
+        </StackPanel>
+
+        <TextBlock Text="No laps yet" Foreground="#8E8E93" Margin="0,4,0,0" Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
+
+        <ItemsControl ItemsSource="{Binding Laps}" Focusable="False">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!-- One lap (mockup .srow): name, split and total in 76 px columns on the right. -->
+                    <Border MinHeight="46" Padding="12,6" Margin="0,0,0,4" CornerRadius="8" Background="#0AFFFFFF">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="76" />
+                                <ColumnDefinition Width="76" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding Split}" TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Typography.NumeralAlignment="Tabular" />
+                            <TextBlock Grid.Column="2" Text="{Binding Total}" TextAlignment="Right" VerticalAlignment="Center" Foreground="#8E8E93"
+                                       Typography.NumeralAlignment="Tabular" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>
