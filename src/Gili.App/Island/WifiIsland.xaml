@@ -10,7 +10,7 @@
                 <c:IconView Glyph="{StaticResource Icon.Wifi}" Width="15" Height="15" />
             </Border>
             <ToggleButton x:Name="WifiSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" VerticalAlignment="Center"
-                          AutomationProperties.Name="Wi‑Fi" Click="OnWifiSwitch" />
+                          AutomationProperties.Name="Wi‑Fi" Checked="OnWifiSwitch" Unchecked="OnWifiSwitch" />
             <TextBlock Text="Wi‑Fi" Margin="12,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
         </DockPanel>
         <DockPanel MinHeight="32" Margin="0,4,0,0">
@@ -18,7 +18,7 @@
                 <c:IconView Glyph="{StaticResource Icon.Plane}" Width="15" Height="15" />
             </Border>
             <ToggleButton x:Name="AirSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" VerticalAlignment="Center"
-                          AutomationProperties.Name="Airplane mode" Click="OnAirSwitch" />
+                          AutomationProperties.Name="Airplane mode" Checked="OnAirSwitch" Unchecked="OnAirSwitch" />
             <TextBlock Text="Airplane mode" Margin="12,0" FontSize="13" FontWeight="Medium" VerticalAlignment="Center" />
         </DockPanel>
 

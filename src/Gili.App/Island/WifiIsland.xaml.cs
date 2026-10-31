@@ -24,6 +24,7 @@ public partial class WifiIsland : UserControl, IControlIsland
     private readonly IslandController _island;
     private readonly DispatcherTimer _connectTimeout = new() { Interval = TimeSpan.FromSeconds(15) };
     private bool _open;
+    private bool _rendering;
     private bool _wasOn;
     private string? _connecting;
 
@@ -72,9 +73,11 @@ public partial class WifiIsland : UserControl, IControlIsland
         var on = radio == true && !airplane;
         if (scanIfTurnedOn && on && !_wasOn) _right.ScanWifi();
         _wasOn = on;
+        _rendering = true;
         WifiSwitch.IsChecked = on;
-        WifiSwitch.IsEnabled = radio is not null;
         AirSwitch.IsChecked = airplane;
+        _rendering = false;
+        WifiSwitch.IsEnabled = radio is not null;
         WifiTile.Background = on ? TileOn : TileOff;
         AirTile.Background = airplane ? TileOn : TileOff;
 
@@ -96,6 +99,8 @@ public partial class WifiIsland : UserControl, IControlIsland
 
     private async void OnWifiSwitch(object sender, RoutedEventArgs e)
     {
+        // Checked rather than Click, so a screen reader's toggle also switches the radio; not while showing the state.
+        if (_rendering) return;
         var on = WifiSwitch.IsChecked == true;
         // Turning Wi‑Fi on leaves Airplane mode, as in Windows (mockup).
         if (on && _right.AirplaneOn) await _right.SetAirplaneAsync(false);
@@ -105,6 +110,8 @@ public partial class WifiIsland : UserControl, IControlIsland
 
     private async void OnAirSwitch(object sender, RoutedEventArgs e)
     {
+        // Checked rather than Click, so a screen reader's toggle also switches the radio; not while showing the state.
+        if (_rendering) return;
         await _right.SetAirplaneAsync(AirSwitch.IsChecked == true);
         Refresh(scanIfTurnedOn: true);
     }

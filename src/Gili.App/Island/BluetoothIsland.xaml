@@ -10,7 +10,7 @@
                 <c:IconView Glyph="{StaticResource Icon.Bluetooth}" Width="15" Height="15" />
             </Border>
             <ToggleButton x:Name="RadioSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" VerticalAlignment="Center"
-                          AutomationProperties.Name="Bluetooth" Click="OnSwitch" />
+                          AutomationProperties.Name="Bluetooth" Checked="OnSwitch" Unchecked="OnSwitch" />
             <TextBlock Text="Bluetooth" Margin="12,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
         </DockPanel>
 

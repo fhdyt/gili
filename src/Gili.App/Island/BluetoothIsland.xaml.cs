@@ -28,6 +28,7 @@ public partial class BluetoothIsland : UserControl, IControlIsland
     private readonly DispatcherTimer _timer = new();
     private IReadOnlyList<PairedDevice> _devices = [];
     private bool _open;
+    private bool _rendering;
     private bool _reading;
     private bool _readAgain;
     private string? _connecting;
@@ -106,7 +107,9 @@ public partial class BluetoothIsland : UserControl, IControlIsland
     private void Render()
     {
         var on = RadioOn;
+        _rendering = true;
         RadioSwitch.IsChecked = on == true;
+        _rendering = false;
         RadioSwitch.IsEnabled = on is not null;
         Tile.Background = on == true ? TileOn : TileOff;
         Off.Text = on is null ? "Not available" : "Bluetooth is off";
@@ -140,6 +143,8 @@ public partial class BluetoothIsland : UserControl, IControlIsland
 
     private async void OnSwitch(object sender, RoutedEventArgs e)
     {
+        // Checked rather than Click, so a screen reader's toggle also switches the radio; not while showing the state.
+        if (_rendering) return;
         var on = RadioSwitch.IsChecked == true;
         // Turning Bluetooth on leaves Airplane mode, as in Windows (mockup).
         if (on && _right.AirplaneOn) await _right.SetAirplaneAsync(false);
