@@ -67,7 +67,7 @@ Lapisan baru di `IslandWindow` sesuai `.dz`: garis putus-putus 1,5 px `#48484A` 
 
 ## Mode demo
 
-`DemoShelf` menyalakan drop zone 1,5 detik (hot), lalu menaruh satu item demo (`Quarterly report.pdf`, 2,4 MB) di atas isi Shelf yang tampil dan membuka halaman Shelf. Item demo hanya ada di memori dan hilang saat demo berakhir, seperti alarm demo **(keputusan Claude)**. Langkahnya ditambahkan setelah batas pengisian (60,5–64,5 detik) dan akhir demo digeser ke 65,5 detik.
+`DemoShelf` menyalakan drop zone 1,5 detik (hot), lalu menaruh satu item demo (`Quarterly report.pdf`, 2,4 MB) di atas isi Shelf yang tampil dan membuka halaman Shelf. Item demo hanya ada di memori dan hilang saat demo berakhir, seperti alarm demo **(keputusan Claude)**. Supaya demo tetap di bawah satu menit, langkahnya di 29 detik, langsung setelah halaman System, dan pulau Power menggantikan halaman Shelf di 31 detik.
 
 ## Anggaran (PRD 8.1)
 

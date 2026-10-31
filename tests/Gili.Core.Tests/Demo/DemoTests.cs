@@ -131,4 +131,14 @@ public class DemoTests
         Assert.Equal(Steps.Count, first.Count + rest.Count);
         Assert.True(player.IsDone);
     }
+
+    [Fact]
+    public void Demo_drops_a_file_on_the_shelf_then_the_power_island_takes_over()
+    {
+        var shelf = Steps.Single(s => s.Action is DemoShelf);
+        Assert.Equal(new DemoShelf("Quarterly report.pdf", 2_400_000), shelf.Action);
+        var next = Steps.SkipWhile(s => s != shelf).Skip(1).First();
+        Assert.Equal(new DemoControl(ControlKind.Power), next.Action);
+        Assert.True(next.At - shelf.At >= TimeSpan.FromSeconds(2));
+    }
 }

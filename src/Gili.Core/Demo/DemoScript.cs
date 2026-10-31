@@ -52,6 +52,9 @@ public sealed record DemoClose : DemoAction;
 
 public sealed record DemoEnd : DemoAction;
 
+/// <summary>Files dragged over the island and dropped: a demo item shows on the Shelf page, never saved (plan 3d).</summary>
+public sealed record DemoShelf(string Name, long Size) : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
@@ -91,7 +94,8 @@ public static class DemoScript
             Step(27.5, new DemoOpen(IslandPage.Todo)),
             // The System page shows the laptop's own readings (plan 3c).
             Step(28.5, new DemoOpen(IslandPage.System)),
-            Step(29.5, new DemoClose()),
+            // A file dropped on the Shelf: 1 s of drop zone, then the page with a demo item that is never saved (plan 3d).
+            Step(29, new DemoShelf("Quarterly report.pdf", 2_400_000)),
             // A control island, then another bar icon swaps its control without closing (plan 3b).
             Step(31, new DemoControl(ControlKind.Power)),
             Step(32.5, new DemoControl(ControlKind.Volume)),
