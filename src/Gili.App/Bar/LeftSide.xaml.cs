@@ -10,6 +10,7 @@ using Gili.Core.Apps;
 using Gili.Core.Island;
 using Gili.Core.Motion;
 using Gili.Core.Settings;
+using Gili.Core.Shelf;
 using Gili.Platform.Shell;
 
 namespace Gili.App.Bar;
@@ -58,6 +59,22 @@ public partial class LeftSide : UserControl
     }
 
     private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon);
+
+    /// <summary>The Shelf's file count beside its icon and in its tooltip (PRD 6.2); a new drop bounces the tray.</summary>
+    public void ShowShelf(int files, bool bounce)
+    {
+        ShelfCount.Text = files.ToString(CultureInfo.InvariantCulture);
+        ShelfCount.Visibility = files > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ShelfButton.ToolTip = ShelfText.BarTooltip(files);
+        if (!bounce || !SystemParameters.ClientAreaAnimation) return;
+        var scale = ShelfIcon.RenderTransform as ScaleTransform ?? (ScaleTransform)(ShelfIcon.RenderTransform = new ScaleTransform());
+        // Scale 1.25 and back over 380 ms on the pop curve (mockup addFiles).
+        var grow = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(380) };
+        grow.KeyFrames.Add(new EasingDoubleKeyFrame(1.25, KeyTime.FromPercent(0.5), Pop));
+        grow.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(1), Pop));
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+    }
 
     /// <summary>A launcher, Shelf or Claude icon asks for its page; the island toggles it.</summary>
     public event Action<IslandPage>? PageRequested;

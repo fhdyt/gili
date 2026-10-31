@@ -118,6 +118,9 @@ public sealed class DemoService
                 case DemoControl control:
                     _island.Open(control.Kind);
                     break;
+                case DemoShelf shelf:
+                    _island.ShowDemoShelf(shelf.Name, shelf.Size);
+                    break;
                 case DemoClose:
                     _island.Close();
                     break;

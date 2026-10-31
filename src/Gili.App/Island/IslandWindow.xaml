@@ -7,7 +7,8 @@
         xmlns:gm="clr-namespace:Gili.Core.Mascot;assembly=Gili.Core"
         Title="Gili Island" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True" UseLayoutRounding="True"
-        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7"
+        AllowDrop="True" DragEnter="OnFileDrag" DragOver="OnFileDrag" DragLeave="OnFileDragLeave" Drop="OnFileDrop">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleWhen" />
         <c:VisibleWhenFalse x:Key="VisibleWhenFalse" />
@@ -206,6 +207,24 @@
 
                 <!-- A notification card (PRD 6.3): 560 × 104, as wide as the screen allows. -->
                 <i:CardView x:Name="CardLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False" />
+
+                <!-- The drop zone (mockup .dz): a dashed outline 10 px in, the tray in a circle, and what dropping does. -->
+                <Grid x:Name="DropLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False"
+                      Background="Transparent">
+                    <Rectangle x:Name="DropOutline" Margin="10" RadiusX="22" RadiusY="22" StrokeThickness="1.5" StrokeDashArray="3 2"
+                               Stroke="#48484A" Fill="Transparent" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30,0">
+                        <Grid x:Name="DropBadge" Width="48" Height="48" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse x:Name="DropCircle" Fill="#1C1C1E" />
+                            <c:IconView x:Name="DropIcon" Glyph="{StaticResource Icon.TrayDown}" Width="24" Height="24" Foreground="#8E8E93" />
+                        </Grid>
+                        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="DropTitle" Text="Drop to keep on the Shelf" FontSize="18" FontWeight="Bold" />
+                            <TextBlock x:Name="DropSubtitle" Text="Files stay where they are until you drag them out" FontSize="13"
+                                       Foreground="#8E8E93" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
 
                 <!-- A control island (PRD 6.4): one control alone, 16 px from every edge, without the menu or Gili. -->
                 <Border x:Name="ControlLayer" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Top"

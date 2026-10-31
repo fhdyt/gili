@@ -14,6 +14,7 @@ using Gili.Core.Diagnostics;
 using Gili.Core.Island;
 using Gili.Core.Modules;
 using Gili.Core.Settings;
+using Gili.Core.Shelf;
 using Gili.Data;
 using Gili.Platform.Power;
 using Gili.Platform.Shell;
@@ -108,7 +109,8 @@ public partial class App : Application
         _notes = new NoteService(OpenNotes());
         // One Bluetooth watcher serves the bar's icon and the island's connect notices (plan 3a decision 4).
         var bluetooth = new Gili.Platform.Modules.BluetoothMonitor();
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, () => _settings.Current)
+        var shelf = new ShelfService(_database is null ? null : new ShelfStore(_database), ProbeFile);
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, shelf, () => _settings.Current)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
         };
@@ -166,6 +168,10 @@ public partial class App : Application
             Owner = _bar,
         };
         _islandWindow.FloatingChanged += _bar.SetIslandFloating;
+        _bar.Island = _islandController;
+        _islandController.Shelf.Changed += () => _bar.ShowShelf(_islandController.Shelf.FileCount, bounce: false);
+        _islandController.ShelfAdded += () => _bar.ShowShelf(_islandController.Shelf.FileCount, bounce: true);
+        _bar.ShowShelf(_islandController.Shelf.FileCount, bounce: false);
         // The System page is fed, and reads everything, only while it shows (PRD 8.1).
         _islandController.ViewChanged += v => ShowSystemPage(v.Mode == IslandMode.Expanded && v.Page == IslandPage.System);
         _stats.Updated += s =>
@@ -357,6 +363,21 @@ public partial class App : Application
     }
 
     /// <summary>The notes table, without the empty notes a crash left behind while one was open (plan 2f decision 4).</summary>
+    /// <summary>What the Shelf needs to know about a path: gone (null), a folder, or a file and its size.</summary>
+    private static FileFacts? ProbeFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) return new FileFacts(IsFolder: false, new FileInfo(path).Length);
+            if (Directory.Exists(path)) return new FileFacts(IsFolder: true, 0);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Unreadable counts as gone.
+        }
+        return null;
+    }
+
     private NoteStore? OpenNotes()
     {
         if (_database is null) return null;

@@ -6,6 +6,7 @@ using Gili.Core.Devices;
 using Gili.Core.Island;
 using Gili.Core.Power;
 using Gili.Core.Settings;
+using Gili.Core.Shelf;
 using Gili.Core.Sound;
 using Gili.Core.Timers;
 using Gili.Core.Todos;
@@ -36,9 +37,15 @@ public sealed class IslandController : IDisposable
     private string? _soundCard;
 
     public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes,
-        BluetoothMonitor bluetooth, Func<AppSettings> settings)
+        BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings)
     {
         _settings = settings;
+        Shelf = shelf;
+        _dragLeave.Tick += (_, _) => EndDrag();
+        _shelfCheck.Tick += (_, _) => Shelf.Prune();
+        _demoDrop.Tick += (_, _) => DropDemo();
+        shelf.Changed += SyncShelfCheck;
+        SyncShelfCheck();
         Media = media;
         Timers = timers;
         Alarms = alarms;
@@ -53,6 +60,10 @@ public sealed class IslandController : IDisposable
         _coordinator.Changed += view =>
         {
             ScheduleDeadline();
+            // Files gone since the last look leave as the Shelf page opens (PRD 6.3).
+            var shelfOpen = view.Mode == IslandMode.Expanded && view.Page == IslandPage.Shelf;
+            if (shelfOpen && !_shelfOpen) Shelf.Prune();
+            _shelfOpen = shelfOpen;
             ViewChanged?.Invoke(view);
             // A reminder that closed itself is gone from the queue; its task goes too.
             foreach (var card in _reminders.Keys.Where(id => !_coordinator.HasCard(id)).ToList()) _reminders.Remove(card);
@@ -97,6 +108,106 @@ public sealed class IslandController : IDisposable
     public TodoService Todos { get; }
 
     public NoteService Notes { get; }
+
+    public ShelfService Shelf { get; }
+
+    private readonly DispatcherTimer _dragLeave = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private readonly DispatcherTimer _shelfCheck = new() { Interval = TimeSpan.FromMinutes(1) };
+    private readonly DispatcherTimer _demoDrop = new() { Interval = TimeSpan.FromSeconds(1) };
+    private bool _dragging;
+    private bool _shelfOpen;
+    private bool _shelfPaused;
+    private ShelfItem? _demoShelf;
+
+    /// <summary>Set while a Shelf tile is being dragged out, so Gili's own drag doesn't open the drop zone.</summary>
+    public bool DraggingOut { get; set; }
+
+    /// <summary>Whether the pointer of a file drag is over the island itself (the drop zone lights up, mockup .hot).</summary>
+    public bool DropHot { get; private set; }
+
+    public event Action? DropHotChanged;
+
+    /// <summary>A drop landed on the Shelf; the left icon bounces (PRD 6.2).</summary>
+    public event Action? ShelfAdded;
+
+    /// <summary>
+    /// Files dragged over the bar or the island turn the island into the drop zone (PRD 6.3). Leaving is held for
+    /// 150 ms, so moving from the bar onto the island doesn't make it flicker (plan 3d).
+    /// </summary>
+    public void DragEntered(bool overIsland)
+    {
+        if (DraggingOut) return;
+        _dragLeave.Stop();
+        SetDropHot(overIsland);
+        if (_dragging) return;
+        _dragging = true;
+        _coordinator.SetDropZone(true);
+    }
+
+    public void DragLeft()
+    {
+        if (!_dragging) return;
+        _dragLeave.Stop();
+        _dragLeave.Start();
+    }
+
+    /// <summary>Adds what was dropped as one item and opens the Shelf page; false when the Shelf is full.</summary>
+    public bool DropFiles(IReadOnlyList<string> paths)
+    {
+        EndDrag();
+        if (Shelf.Add(paths, DateTimeOffset.UtcNow) is null) return false;
+        ShelfAdded?.Invoke();
+        _coordinator.Open(IslandPage.Shelf);
+        return true;
+    }
+
+    /// <summary>The Shelf's one-minute check for missing files stops with the rest of the polling (PRD 8.1).</summary>
+    private void PauseShelfCheck(bool paused)
+    {
+        _shelfPaused = paused;
+        SyncShelfCheck();
+    }
+
+    /// <summary>The demo's drop: a second of drop zone, then its item on the Shelf page, never saved (F-BAR-09).</summary>
+    public void ShowDemoShelf(string name, long size)
+    {
+        _demo = true;
+        _demoShelf = new ShelfItem(-1, [System.IO.Path.Combine(@"C:\Demo", name)], name, size, -1, DateTimeOffset.UtcNow);
+        DragEntered(overIsland: true);
+        _demoDrop.Start();
+    }
+
+    private void DropDemo()
+    {
+        _demoDrop.Stop();
+        EndDrag();
+        if (_demoShelf is null) return;
+        Shelf.ShowDemo(_demoShelf);
+        ShelfAdded?.Invoke();
+        _coordinator.Open(IslandPage.Shelf);
+    }
+
+    private void EndDrag()
+    {
+        _dragLeave.Stop();
+        SetDropHot(false);
+        if (!_dragging) return;
+        _dragging = false;
+        _coordinator.SetDropZone(false);
+    }
+
+    private void SetDropHot(bool hot)
+    {
+        if (DropHot == hot) return;
+        DropHot = hot;
+        DropHotChanged?.Invoke();
+    }
+
+    private void SyncShelfCheck()
+    {
+        if (Shelf.Items.Count > 0 && !_shelfPaused) _shelfCheck.Start();
+        else _shelfCheck.Stop();
+    }
 
     /// <summary>The demo's task reminder, shown like a real one and never saved (F-BAR-09).</summary>
     public void ShowDemoReminder(string title, TimeOnly time) =>
@@ -283,6 +394,7 @@ public sealed class IslandController : IDisposable
     {
         _lockKeys.SetPaused(paused);
         _privacy.SetPaused(paused);
+        PauseShelfCheck(paused);
     }
 
     public void OpenFromIsland() => OpenActivity(View.Slot);
@@ -358,6 +470,10 @@ public sealed class IslandController : IDisposable
     /// <summary>Closes the island and puts the real charger state back, without a wide notice for the change.</summary>
     public void EndDemo()
     {
+        _demoDrop.Stop();
+        _demoShelf = null;
+        EndDrag();
+        Shelf.ShowDemo(null);
         Close();
         if (!_demo) return;
         _demo = false;

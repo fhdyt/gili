@@ -85,8 +85,8 @@ public sealed class ShelfService
         Changed?.Invoke();
     }
 
-    /// <summary>Whether a path of the Shelf is a folder, for its icon; a path that is gone reads as a file.</summary>
-    public bool IsFolder(string path) => _probe(path) is { IsFolder: true };
+    /// <summary>What the disk says about a path now: null when it is gone.</summary>
+    public FileFacts? Facts(string path) => _probe(path);
 
     private bool Check(ShelfItem item)
     {

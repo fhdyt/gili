@@ -220,6 +220,36 @@ public partial class BarWindow : Window
         MoreModulesList.IsOpen = true;
     }
 
+    /// <summary>The island that a file dragged over the bar turns into the drop zone (PRD 6.3 "Shelf").</summary>
+    public Island.IslandController? Island { get; set; }
+
+    public void ShowShelf(int files, bool bounce) => _left.ShowShelf(files, bounce);
+
+    /// <summary>Files dragged over the bar open the drop zone; dropping them on the bar keeps them too (PRD 6.2).</summary>
+    private void OnFileDrag(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (Island is not { DraggingOut: false } island || !e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+        island.DragEntered(overIsland: false);
+        // Copy, never Move: the source must not delete a file Gili only points at (plan 3d).
+        e.Effects = island.Shelf.IsFull ? DragDropEffects.None : DragDropEffects.Copy;
+    }
+
+    private void OnFileDragLeave(object sender, DragEventArgs e) => Island?.DragLeft();
+
+    private void OnFileDrop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        e.Effects = Island is { DraggingOut: false } island && e.Data.GetData(DataFormats.FileDrop) is string[] paths && island.DropFiles(paths)
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        if (e.Effects == DragDropEffects.None) Island?.DragLeft();
+    }
+
     private Geometry Glyph(string key) => (Geometry)FindResource(key);
 
     private void OnWifi(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Wifi);

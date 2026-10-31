@@ -5,7 +5,8 @@
         Title="Gili" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         Left="0" Top="0" Width="800" Height="32" UseLayoutRounding="True"
-        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7">
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" Foreground="#F5F5F7"
+        AllowDrop="True" DragEnter="OnFileDrag" DragOver="OnFileDrag" DragLeave="OnFileDragLeave" Drop="OnFileDrop">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleWhen" />
         <Style x:Key="BarMenu" TargetType="ContextMenu">
@@ -102,7 +103,8 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <!-- Nearly clear rather than empty, so a file dragged over the bar is still seen once the backdrop fades for the drop zone. -->
+    <Grid Background="#01000000">
         <Grid.ContextMenu>
             <ContextMenu x:Name="BarMenu" Style="{StaticResource BarMenu}">
                 <MenuItem Header="Open Tools" Style="{StaticResource BarMenuItem}" Click="OnTools" />

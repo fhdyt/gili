@@ -58,6 +58,7 @@ public partial class IslandWindow : Window
     private ControlKind? _shownControl;
     private readonly TimerViewModel _timerPage;
     private readonly AlarmsViewModel _alarmsPage;
+    private readonly ShelfViewModel _shelfPage;
     private readonly CalendarViewModel _calendarPage;
     private readonly TodoViewModel _todoPage;
     private readonly NotesViewModel _notesPage;
@@ -119,6 +120,8 @@ public partial class IslandWindow : Window
         CameraDot.RenderTransform = _cameraScale;
         MicrophoneDot.RenderTransform = _microphoneScale;
         island.PrivacyChanged += UpdatePrivacy;
+        island.DropHotChanged += ShowDropState;
+        island.Shelf.Changed += ShowDropState;
         Body.Clip = _clip;
         Bubble.RenderTransform = _bubbleScale;
         GiliInside.RenderTransform = new TransformGroup { Children = { _giliInsideScale, _giliInsideShift } };
@@ -132,6 +135,8 @@ public partial class IslandWindow : Window
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
         _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
         SystemStats = new SystemViewModel(island.Close);
+        _shelfPage = new ShelfViewModel(island.Shelf);
+        _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
         settings.Changed += _ =>
         {
             _alarmsPage.Refresh();
@@ -389,6 +394,11 @@ public partial class IslandWindow : Window
             CardLayer.Width = target.Width;
             CardLayer.Height = target.Height;
         }
+        else if (_mode == IslandMode.DropZone)
+        {
+            DropLayer.Width = target.Width;
+            DropLayer.Height = target.Height;
+        }
         NotifyCompact(content);
         if (_floatingEnvelope) GrowEnvelope(target.Top + target.Height);
         var spring = parameters ?? (Floats(_mode) ? null : SpringParameters.Resize);
@@ -590,6 +600,69 @@ public partial class IslandWindow : Window
         Fade(WideLayer, mode == IslandMode.Wide);
         Reveal(ExpandedLayer, mode == IslandMode.Expanded && !ShowsControl);
         Reveal(ControlLayer, ShowsControl);
+        Reveal(DropLayer, mode == IslandMode.DropZone);
+        if (mode == IslandMode.DropZone) ShowDropState();
+    }
+
+    private static readonly SolidColorBrush DropGreen = Frozen(Color.FromRgb(0x30, 0xD1, 0x58));
+    private static readonly SolidColorBrush DropGreenWash = Frozen(Color.FromArgb(0x14, 0x30, 0xD1, 0x58));
+    private static readonly SolidColorBrush DropWarn = Frozen(Color.FromRgb(0xFF, 0xD6, 0x0A));
+    private static readonly SolidColorBrush DropIdle = Frozen(Color.FromRgb(0x48, 0x48, 0x4A));
+    private static readonly SolidColorBrush DropCircleIdle = Frozen(Color.FromRgb(0x1C, 0x1C, 0x1E));
+    private static readonly SolidColorBrush DropIconIdle = Frozen(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+    private static SolidColorBrush Frozen(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// The drop zone lights green while the pointer is over the island (mockup .hot) and turns yellow when the Shelf is
+    /// full (.full), saying so instead of inviting the drop.
+    /// </summary>
+    private void ShowDropState()
+    {
+        var full = _island.Shelf.IsFull;
+        var hot = _island.DropHot && !full;
+        DropTitle.Text = full ? "Shelf is full" : "Drop to keep on the Shelf";
+        DropSubtitle.Text = full ? "Drag something out first" : "Files stay where they are until you drag them out";
+        DropOutline.Stroke = full ? DropWarn : hot ? DropGreen : DropIdle;
+        DropOutline.Fill = hot ? DropGreenWash : Brushes.Transparent;
+        DropCircle.Fill = hot ? DropGreen : DropCircleIdle;
+        DropIcon.Foreground = full ? DropWarn : hot ? Brushes.Black : DropIconIdle;
+        var lift = hot ? 1.06 : 1;
+        var duration = TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 260 : 0);
+        var scale = DropBadge.RenderTransform as ScaleTransform ?? (ScaleTransform)(DropBadge.RenderTransform = new ScaleTransform());
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
+        DropBadge.Margin = new Thickness(0, hot ? 4 : 0, 0, 0);
+    }
+
+    /// <summary>Files dragged over the island: the drop zone, lit while over it. Only files count (PRD 6.3).</summary>
+    private void OnFileDrag(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (_island.DraggingOut || !e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+        _island.DragEntered(overIsland: true);
+        // Copy, never Move: the source must not delete a file Gili only points at (plan 3d).
+        e.Effects = _island.Shelf.IsFull ? DragDropEffects.None : DragDropEffects.Copy;
+    }
+
+    private void OnFileDragLeave(object sender, DragEventArgs e) => _island.DragLeft();
+
+    private void OnFileDrop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        e.Effects = !_island.DraggingOut && e.Data.GetData(DataFormats.FileDrop) is string[] paths && _island.DropFiles(paths)
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        if (e.Effects == DragDropEffects.None) _island.DragLeft();
     }
 
     /// <summary>Slot content cross-fades: out in 90 ms, in over 180 ms once the old content is gone (PRD 8.3).</summary>
@@ -845,6 +918,7 @@ public partial class IslandWindow : Window
         IslandPage.Todo => new TodoPage(_todoPage),
         IslandPage.Notes => _notesView = new NotesPage(_notesPage),
         IslandPage.System => new SystemPage(SystemStats),
+        IslandPage.Shelf => new ShelfPage(_shelfPage, _island),
         _ => Placeholder(tab),
     };
 

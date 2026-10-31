@@ -1,0 +1,105 @@
+<UserControl x:Class="Gili.App.Island.ShelfPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+        <c:VisibleWhenFalse x:Key="VisibleWhenFalse" />
+
+        <!-- .frm: a 20 px circle in the tile's corner, shown on hover or focus; red under the pointer. -->
+        <Style x:Key="RemoveButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Foreground" Value="#F5F5F7" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Width="20" Height="20" CornerRadius="10" Background="#3A3A3C">
+                            <c:IconView Glyph="{StaticResource Icon.Close}" Width="11" Height="11" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#FF453A" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel Margin="32,0" VerticalAlignment="Center">
+        <!-- .shsum: 150 px; the file count, files and size, and Clear all. -->
+        <StackPanel DockPanel.Dock="Left" Width="150" VerticalAlignment="Center">
+            <TextBlock Text="{Binding CountText}" FontSize="46" FontWeight="Bold" Typography.NumeralAlignment="Tabular"
+                       LineStackingStrategy="BlockLineHeight" LineHeight="46" />
+            <TextBlock Text="{Binding Summary}" FontSize="15" Foreground="#8E8E93" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+            <Button Style="{StaticResource Chip}" Content="Clear all" Margin="0,14,0,0" HorizontalAlignment="Left" Command="{Binding ClearCommand}"
+                    Visibility="{Binding HasItems, Converter={StaticResource VisibleWhen}}" />
+        </StackPanel>
+
+        <!-- .shgrid: four columns by two 64 px rows, 8 px apart, never scrolling (PRD 6.3). -->
+        <Grid Height="136">
+            <ItemsControl ItemsSource="{Binding Tiles}" Margin="-4" Focusable="False"
+                          Visibility="{Binding HasItems, Converter={StaticResource VisibleWhen}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4" Rows="2" VerticalAlignment="Top" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <!-- Each tile reads by its name, not by its view model's type. -->
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- .ftile: #1C1C1E, radius 12, lighter on hover; it is grabbed to drag the file out. -->
+                        <Border x:Name="Tile" Height="64" Margin="4" CornerRadius="12" Background="#1C1C1E" Cursor="Hand" ToolTip="{Binding Tooltip}"
+                                MouseLeftButtonDown="OnTileDown" MouseMove="OnTileMove" MouseLeftButtonUp="OnTileUp">
+                            <Grid>
+                                <StackPanel VerticalAlignment="Center" Margin="8,6">
+                                    <!-- .fi: the type's icon, 24 × 28, with its badge along the bottom. -->
+                                    <Grid Width="24" Height="28" HorizontalAlignment="Center">
+                                        <c:IconView Glyph="{Binding Glyph}" Width="24" Height="28" Foreground="#D1D1D6" />
+                                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,2" Padding="3,0" CornerRadius="3"
+                                                Background="{Binding BadgeBrush}" Visibility="{Binding HasBadge, Converter={StaticResource VisibleWhen}}">
+                                            <TextBlock Text="{Binding BadgeText}" FontSize="8" FontWeight="Bold" Foreground="Black" LineStackingStrategy="BlockLineHeight"
+                                                       LineHeight="11.2" />
+                                        </Border>
+                                    </Grid>
+                                    <Grid Margin="0,6,0,0">
+                                        <TextBlock Text="{Binding Name}" FontSize="12" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                   Visibility="{Binding Gone, Converter={StaticResource VisibleWhenFalse}}" />
+                                        <TextBlock Text="File moved or deleted" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" Visibility="{Binding Gone, Converter={StaticResource VisibleWhen}}" />
+                                    </Grid>
+                                </StackPanel>
+                                <Button x:Name="Remove" Style="{StaticResource RemoveButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0"
+                                        Opacity="0" Command="{Binding RemoveCommand}" AutomationProperties.Name="{Binding RemoveName}" />
+                            </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger SourceName="Tile" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tile" Property="Background" Value="#2C2C2E" />
+                                <Setter TargetName="Remove" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger SourceName="Remove" Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Remove" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- .shempty: what the Shelf is for, while it holds nothing. -->
+            <DockPanel VerticalAlignment="Center" HorizontalAlignment="Left" MaxWidth="340"
+                       Visibility="{Binding HasItems, Converter={StaticResource VisibleWhenFalse}}">
+                <c:IconView DockPanel.Dock="Left" Glyph="{StaticResource Icon.Tray}" Width="28" Height="28" Foreground="#636366" />
+                <TextBlock Text="Drag files onto the island to hold them here while you find where they go." FontSize="13" Foreground="#8E8E93"
+                           TextWrapping="Wrap" LineHeight="19.5" Margin="14,0,0,0" VerticalAlignment="Center" />
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
