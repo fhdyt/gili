@@ -412,14 +412,16 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 
 | Kejadian | Isi | Lama |
 |---|---|---|
-| Caps Lock / Num Lock | `Caps Lock on` / `off` | 1,5 detik |
+| Caps Lock / Num Lock | `Caps Lock on` / `off`, `Num Lock on` / `off` | 1,5 detik |
 | Charger dicolok | Petir + `Charging · 64%` | 3 detik |
 | Charger dicabut | `On battery · 63%` | 2 detik |
-| Peringatan baterai | `Battery 20% · plug in`, `Battery 10%`, `80% reached · unplug`, `Fully charged` | 5 detik |
+| Peringatan baterai | `Battery 20% · plug in` (persen saat itu, petir kuning), `Battery 10%` (petir merah), `Charging on hold · 79%`, `80% reached · unplug`, `Fully charged` (petir hijau) | 5 detik |
 | Perangkat Bluetooth tersambung | Ikon jenis perangkat (biru) + nama (`Galaxy Buds2 Pro`) + `Connected` + baterai perangkat (`80%`) kalau perangkat melaporkannya | 4 detik |
 | Perangkat Bluetooth terputus | Ikon abu-abu + nama + `Disconnected` | 2 detik |
 
 Perubahan volume dan brightness tidak ditampilkan di pulau; flyout bawaan Windows sudah menanganinya. Mengatur keduanya bisa lewat pulau Volume dan Brightness (6.4).
+
+**Baterai**: peringatan rendah muncul sekali per siklus pakai (sejak charger dicabut) di ambang `Battery alert` (default 20%) dan di 10%; kalau keduanya terlewati sekaligus, hanya 10% yang tampil. Laptop yang membatasi pengisian sendiri (Lenovo Vantage, ASUS, Dell, Surface) dikenali dari charger yang tercolok tetapi pengisian berhenti di bawah 100%: Gili menampilkan `Charging on hold · 79%` sekali per colok (kalau sudah ditahan saat dicolok, wide charger langsung berbunyi begitu, bukan `Charging`), dan tidak pernah `unplug` atau `Fully charged`. Laptop tanpa batas mendapat `80% reached · unplug` saat persen **melewati** ambang `Unplug reminder` (default 80%) sambil masih mengisi, lalu `Fully charged` di 100%; keduanya sekali per colok. Gili yang mulai di bawah ambang tanpa charger memberi peringatan sekali; mulai dengan charger tidak memunculkan apa pun.
 
 **Bluetooth**: berlaku untuk perangkat audio (TWS, headphone, speaker), mouse, keyboard, controller, dan ponsel, dengan ikon sesuai jenisnya. Hanya kejadian sambung/putus yang ditampilkan, bukan perangkat yang sudah tersambung saat Gili mulai. Kalau perangkat yang sama tersambung-putus berulang dalam 10 detik, hanya kejadian terakhir yang ditampilkan.
 
@@ -765,7 +767,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Clipboard, Shelf, Claude. Tiap saklar selain Start juga menyalakan/mematikan tab halaman yang sama di pulau, dengan keterangan `Turning it off also hides the <name> page in the island` |
 | Island | Show Gili; Show lyrics (default mati); saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System); saklar halaman yang ikon kirinya mati nonaktif dengan keterangan `Turned off in Left side` |
-| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date; **Weather city**; **Battery alert** (ambang baterai) |
+| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date; **Weather city**; **Battery alert** (ambang peringatan rendah 5–50%, keterangan `Also at 10%`); **Unplug reminder** (50–100%, default 80%, keterangan `Only on laptops that keep charging past it. 100% turns it off`) |
 | Notifications | Show Windows notifications (default mati; meminta izin Windows), Show message text (default nyala), saklar per aplikasi yang pernah mengirim notifikasi, baris status izin, dan tips mematikan banner aplikasi di Windows (revisi 8) |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
 | Sounds | Timer sound, Alert volume, Gradually increase, contoh suara |
@@ -862,7 +864,7 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-ISL-07 | Halaman expanded | Menu tab ikon selebar pulau (nama di tab aktif dan tab yang di-hover), perpindahan halaman, dan aturan buka/tutup di 6.3; setiap halaman bisa dibuka dengan satu klik | 1 (kerangka + Media), 2 (Timer, Alarms, Calendar, Todo, Notes), 3 (Shelf, Claude, System), 4 (Clipboard) |
 | F-ISL-08 | Kartu notifikasi | Kartu alarm, timer, todo, dan pomodoro muncul bersama toast Windows tanpa suara | 2 |
 | F-ISL-10 | Caps/Num Lock | Menekan tombol menampilkan status baru | 3 |
-| F-ISL-11 | Peringatan baterai | Muncul sekali per siklus di 20%, 10%, saat mencapai batas pengisian (default 80%), dan 100%; ambang bisa diubah | 3 |
+| F-ISL-11 | Peringatan baterai | Muncul sekali per siklus di ambang rendah (default 20%) dan 10%, saat pengisian ditahan oleh batas pengisian laptop (`Charging on hold`), saat melewati pengingat cabut (default 80%) di laptop tanpa batas, dan di 100%; ambang rendah dan pengingat cabut bisa diubah | 3 |
 | F-ISL-12 | Shelf | Perilaku di 6.3 "Shelf": drop zone, satu drop = satu item (bundel untuk banyak file), maksimal 8 item di grid 4 × 2 tanpa scroll, pesan saat penuh, referensi, seret keluar dengan Copy/Move, pembersihan file yang hilang, tersimpan setelah restart | 3 |
 | F-ISL-14 | Titik kamera/mic | Titik muncul di kiri pulau ≤ 2 detik setelah kamera/mic mulai dipakai dan hilang ≤ 2 detik setelah berhenti; tetap tampil saat pulau mengambang; terlihat di atas latar gelap maupun terang; tidak pernah tumpang-tindih dengan isi bagian kiri bar | 3 |
 | F-ISL-15 | Progres operasi file Explorer | Copy dan move file > 1 GB, serta delete > 1.000 item (ke Recycle Bin maupun permanen), tampil di slot pulau sesuai tabel di 6.3; pulau tetap compact dan tidak pernah terbuka atau mengambang karena operasi file; hasil akhir tampil 2 detik; batal menampilkan "Cancelled"; konflik file membuka kartu di pulau (Replace/Skip, Try again/Skip, atau Open dialog) dan pilihannya diteruskan ke dialog Explorer; klik slot membawa dialog Explorer ke depan | 4 |
@@ -990,7 +992,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 - Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik) dan detik di jam (satu teks per detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
 - Panel tray dan jendela Settings dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup. Jendela Tools dan Settings tidak menyisakan referensi setelah ditutup, tetapi memorinya baru kembali ke Windows setelah GC berjalan: 30 detik setelah salah satunya ditutup, kalau keduanya tidak sedang terbuka, Gili menjalankan satu GC penuh yang memadatkan heap (`GC.Collect` mode Aggressive). Biayanya satu GC penuh per penutupan; membuka salah satu jendela sebelum 30 detik membatalkannya.
 - Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
-- Tidak ada hook mouse atau keyboard global selain hook Caps/Num Lock yang sudah ada.
+- Tidak ada hook mouse atau keyboard global. Status Caps/Num Lock dibaca 8×/detik lewat `GetKeyState` (dua bit, bukan tombol yang ditekan), ikut dijeda bersama polling lain.
 
 **Anggaran per fitur revisi 4 dan 5** (diukur di laptop pengguna saat fase fiturnya; kalau melewati anggaran, cadangannya dipakai):
 
@@ -1010,6 +1012,10 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Notifikasi Windows di pulau (revisi 8) | Event `NotificationChanged` dari `UserNotificationListener` (tanpa polling); satu baris teks di pulau per notifikasi; logo aplikasi di-cache per AppUserModelID. Cadangan bila event tidak terkirim ke aplikasi desktop: `GetNotificationsAsync` tiap 2 detik selama fitur nyala, membandingkan ID saja | RAM ≤ +4 MB; CPU 0% tanpa notifikasi (≤ 0,1% dengan cadangan polling); 0 saat mati | Polling cadangan turun ke tiap 5 detik |
 | Lirik lagu (revisi 8) | Satu permintaan HTTPS kecil per lagu (hanya bila Show lyrics nyala); parsing LRC sekali; pengecekan baris 4×/detik hanya selama lirik tampil dan musik diputar, dan teks diperbarui hanya saat baris berganti (sekitar tiap 4 detik) | RAM ≤ +2 MB; CPU tidak terukur; 0 saat mati | Pengecekan baris turun ke 2×/detik |
 | Ukuran teks note (revisi 8) | Satu angka per note; teks ditata ulang hanya saat ukurannya diganti | Tidak terukur | — |
+| Caps/Num Lock (Fase 3a) | Dua `GetKeyState` per 125 ms di thread pool, dijeda bersama polling lain | Tidak terukur (< 0,05%) | Turun ke 4×/detik |
+| Titik kamera/mic (Fase 3a) | Satu thread menunggu notifikasi registry `ConsentStore`; dua key dibaca hanya saat berubah; nama app dicari sekali per app | CPU 0% saat diam; RAM ≤ +1 MB | — |
+| Kejadian Bluetooth (Fase 3a) | Properti tambahan di watcher perangkat yang sudah ada | Tidak terukur | — |
+| Peringatan baterai (Fase 3a) | Event `PowerManager` yang sudah ada | Tidak terukur | — |
 | Halaman Clipboard dan tempel ke kursor (revisi 8) | Daftar 50 teks yang sudah ada di memori dan database (F-LEFT-03), digambar hanya saat halamannya dibuka; satu tulisan clipboard dan satu `SendInput` per tempel; jendela yang terakhir aktif sudah dicatat oleh pelacak aplikasi aktif (6.2), jadi tidak ada pembacaan tambahan | RAM ≤ +1 MB; CPU 0% saat halaman tertutup | — |
 | Build self-contained (revisi 6) | Runtime .NET ikut di paket, jadi pengguna tidak perlu memasangnya. Tidak menambah RAM atau CPU; ukuran di disk naik | Paket unduhan ≤ 80 MB, terpasang ≤ 200 MB | Trimming dimatikan untuk WPF; kurangi aset yang ikut |
 | Cek update (installer GitHub saja, F-PUB-04) | Satu permintaan HTTPS kecil saat start lalu tiap 24 jam; tidak ada proses latar terpisah | Tidak terukur | — |

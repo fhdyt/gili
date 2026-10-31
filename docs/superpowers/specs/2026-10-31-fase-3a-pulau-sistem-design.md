@@ -92,7 +92,7 @@ Aturan Core `BatteryAlerts` dengan state per siklus. Teks dan lama:
 - Saat dicolok dan langsung ditahan (laptop pengguna di 79%), wide charger berbunyi `Charging on hold · 79%` alih-alih `Charging · 79%`, dan kejadian ditahan dianggap sudah muncul **(keputusan Claude)**: satu wide, bukan dua.
 - Kalau rendah dan kritis terpicu bersamaan (Gili mulai di 8% tanpa charger), hanya kritis yang tampil.
 - Kalau Gili mulai di bawah ambang tanpa charger, peringatan muncul sekali; mulai di atas ambang tidak memicu apa pun.
-- Ikon: rendah dan kritis memakai ikon baterai merah (`#FF453A`), ditahan dan penuh memakai ikon petir, pengingat cabut memakai ikon petir kuning **(keputusan Claude)**.
+- Ikon mengikuti mockup: semua kejadian baterai memakai petir; rendah kuning (`#FFD60A`), kritis merah (`#FF453A`), ditahan, pengingat cabut, dan penuh hijau (`#30D158`).
 - Settings → Right side: `Battery alert` (rentang 5–50, help `Also at 10%`) dan baris baru `Unplug reminder` (rentang 50–100, help `Only on laptops that keep charging past it. 100% turns it off`) jadi tersedia **(keputusan Claude: teks baru, ditambahkan ke PRD dan mockup)**.
 
 ### Titik kamera/mic (F-ISL-14)

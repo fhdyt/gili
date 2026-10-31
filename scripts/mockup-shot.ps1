@@ -11,7 +11,7 @@
     pwsh scripts/mockup-shot.ps1 -State media-page -Out $env:TEMP\mockup-media.png
 #>
 param(
-    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card', 'alarms-page', 'tools-alarms', 'tools-editor', 'tools-timer', 'tools-stopwatch', 'tools-pomodoro', 'tools-todo', 'calendar-page', 'todo-page', 'notes-page')] [string] $State,
+    [Parameter(Mandatory)] [ValidateSet('idle', 'music', 'media-page', 'charging', 'power', 'settings', 'timer-page', 'timer-card', 'alarms-page', 'tools-alarms', 'tools-editor', 'tools-timer', 'tools-stopwatch', 'tools-pomodoro', 'tools-todo', 'wide-numlock', 'wide-hold', 'settings-island-hidden', 'calendar-page', 'todo-page', 'notes-page')] [string] $State,
     [Parameter(Mandatory)] [string] $Out,
     [double] $Scale = 0,
     [int] $Width = 0,
@@ -51,6 +51,9 @@ $clicks = @{
     'tools-stopwatch' = @('[data-page="2"]', '#manageAl', '[data-tab="Stopwatch"]', '#swGo', 'wait:900', '#swLap', 'wait:700', '#swLap')
     'tools-pomodoro' = @('[data-page="2"]', '#manageAl', '[data-tab="Pomodoro"]')
     'tools-todo' = @('[data-page="2"]', '#manageAl', '[data-tab="Todo"]', '[data-tf="All"]')
+    'wide-numlock' = @('[data-act="idle"]', '[data-act="num"]')
+    'wide-hold' = @('[data-act="idle"]', '[data-act="batHold"]')
+    'settings-island-hidden' = @('#mSet', '[data-sec="Left side"]', '[data-k="L.timer"]', '[data-sec="Island"]')
     'calendar-page' = @('[data-page="3"]')
     'todo-page' = @('[data-page="4"]')
     'notes-page' = @('[data-page="5"]')
