@@ -22,7 +22,7 @@ public enum PageSet
     All = 1023,
 }
 
-public static class Visibility
+public static class HiddenRules
 {
     /// <summary>The page a left icon opens, which its switch hides too; Start has none.</summary>
     public static PageSet PageOf(LeftIcons icon) => icon switch

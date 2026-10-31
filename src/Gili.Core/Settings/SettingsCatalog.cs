@@ -143,7 +143,7 @@ public static class SettingsCatalog
         "W.unplug" => s with { UnplugReminder = Number(value) },
         // Turning a left icon back on brings its page back too (PRD 6.2 "Saklar kiri ikut mematikan tab pulau").
         _ when key.StartsWith("L.", StringComparison.Ordinal) => (bool)value
-            ? s with { HiddenLeft = s.HiddenLeft & ~Left(key), HiddenPages = s.HiddenPages & ~Visibility.PageOf(Left(key)) }
+            ? s with { HiddenLeft = s.HiddenLeft & ~Left(key), HiddenPages = s.HiddenPages & ~HiddenRules.PageOf(Left(key)) }
             : s with { HiddenLeft = s.HiddenLeft | Left(key) },
         _ when key.StartsWith("T.", StringComparison.Ordinal) => s with
         {
@@ -173,10 +173,10 @@ public static class SettingsCatalog
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {
             var page = Page(key);
-            if (Visibility.PagesOf(s.HiddenLeft).HasFlag(page)) return new(false, "Turned off in Left side");
+            if (HiddenRules.PagesOf(s.HiddenLeft).HasFlag(page)) return new(false, "Turned off in Left side");
             if (IsLastVisible(s, page)) return new(false, null);
         }
-        if (key.StartsWith("L.", StringComparison.Ordinal) && Visibility.PageOf(Left(key)) is var own && own != PageSet.None && IsLastVisible(s, own))
+        if (key.StartsWith("L.", StringComparison.Ordinal) && HiddenRules.PageOf(Left(key)) is var own && own != PageSet.None && IsLastVisible(s, own))
             return new(false, null);
         return new(true, null);
     }
