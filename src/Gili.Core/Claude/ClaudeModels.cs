@@ -108,6 +108,9 @@ public sealed class ClaudeSession(string id)
 
     internal string? Title { get; set; }
 
+    /// <summary>SessionEnd came or the process died while its Done still shows; it goes once the 4 s are over.</summary>
+    internal bool Ended { get; set; }
+
     /// <summary>The session file went idle; Esc unless Stop arrives first (design 3h).</summary>
     internal DateTimeOffset? IdleWait { get; set; }
 

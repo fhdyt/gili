@@ -39,7 +39,9 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now)
     {
         if (message.Event == "SessionEnd")
         {
-            _sessions.RemoveAll(s => s.Id == message.SessionId);
+            // A Done still shows its 4 s first: claude -p ends the session right after Stop.
+            foreach (var ended in _sessions.Where(s => s.Id == message.SessionId)) ended.Ended = true;
+            _sessions.RemoveAll(s => s.Ended && s.Status != ClaudeStatus.Done);
             return;
         }
         var s = Get(message.SessionId, message.Cwd);
@@ -113,6 +115,7 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now)
         {
             if (s.DoneUntil is { } done && done <= t)
             {
+                if (s.Ended) continue;
                 s.Status = ClaudeStatus.Idle;
                 s.DoneUntil = null;
                 s.IdleSince = done;
@@ -124,13 +127,18 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now)
                 ClearWait(s);
             }
         }
+        _sessions.RemoveAll(s => s.Ended && s.Status == ClaudeStatus.Done && s.DoneUntil <= t);
     });
 
     /// <summary>Forgets every session, when the integration is switched off.</summary>
     public void Clear() => Change(_sessions.Clear);
 
     /// <summary>Drops sessions whose process is gone, e.g. Claude Desktop closed by force without SessionEnd.</summary>
-    public void RemoveDead(Func<int, bool> isAlive) => Change(() => _sessions.RemoveAll(s => s.Pid is { } pid && !isAlive(pid)));
+    public void RemoveDead(Func<int, bool> isAlive) => Change(() =>
+    {
+        foreach (var s in _sessions.Where(s => s.Pid is { } pid && !isAlive(pid))) s.Ended = true;
+        _sessions.RemoveAll(s => s.Ended && s.Status != ClaudeStatus.Done);
+    });
 
     private ClaudeSession Get(string id, string? cwd)
     {
@@ -171,5 +179,5 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now)
     }
 
     private string Signature() => string.Join("|", _sessions.Select(s =>
-        $"{s.Id},{s.Status},{s.Need},{s.Snippet},{s.Name},{s.App},{s.Pid},{s.PromptAt?.Ticks},{s.DoneUntil?.Ticks},{s.IdleWait?.Ticks}"));
+        $"{s.Id},{s.Ended},{s.Status},{s.Need},{s.Snippet},{s.Name},{s.App},{s.Pid},{s.PromptAt?.Ticks},{s.DoneUntil?.Ticks},{s.IdleWait?.Ticks}"));
 }

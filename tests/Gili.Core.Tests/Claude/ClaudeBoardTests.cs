@@ -131,6 +131,30 @@ public sealed class ClaudeBoardTests
     }
 
     [Fact]
+    public void A_session_that_ends_right_after_stop_still_shows_done()
+    {
+        // claude -p sends SessionEnd straight after Stop.
+        Hook("UserPromptSubmit");
+        Hook("Stop");
+        Hook("SessionEnd");
+        Assert.Equal(ClaudeStatus.Done, S().Status);
+        Wait(4.1);
+        Assert.Empty(_board.Sessions);
+    }
+
+    [Fact]
+    public void A_dead_process_keeps_its_done_until_it_ends()
+    {
+        File("busy", pid: 100);
+        Hook("Stop");
+        _board.RemoveDead(_ => false);
+        Assert.Equal(ClaudeStatus.Done, S().Status);
+        Wait(4.1);
+        _board.RemoveDead(_ => false);
+        Assert.Empty(_board.Sessions);
+    }
+
+    [Fact]
     public void A_dead_process_removes_its_session()
     {
         File("idle", pid: 100);

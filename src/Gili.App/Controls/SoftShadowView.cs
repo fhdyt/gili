@@ -16,7 +16,7 @@ public sealed class SoftShadowView : FrameworkElement
     public static readonly DependencyProperty CornerRadiusProperty = DependencyProperty.Register(
         nameof(CornerRadius), typeof(double), typeof(SoftShadowView), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private static readonly IReadOnlyList<(ShadowLayer Layer, Brush Brush)> IslandLayers = LayersOf(SoftShadow.Island, Steps);
+    private static readonly IReadOnlyList<(ShadowLayer Layer, Brush Brush)> IslandLayers = LayersOf(SoftShadow.Island, StepsFor(SoftShadow.Island));
 
     private IReadOnlyList<(ShadowLayer Layer, Brush Brush)> _layers = IslandLayers;
     private IReadOnlyList<ShadowSpec> _shadows = SoftShadow.Island;
@@ -34,11 +34,13 @@ public sealed class SoftShadowView : FrameworkElement
         set
         {
             _shadows = value;
-            // A wider blur needs more rectangles, or their edges show as bands (about one per 2 px of blur).
-            _layers = LayersOf(value, Math.Max(Steps, (int)Math.Ceiling(value.Max(s => s.Blur) / 2)));
+            _layers = LayersOf(value, StepsFor(value));
             InvalidateVisual();
         }
     }
+
+    /// <summary>A wider blur needs more rectangles, or their edges show as bands (about one per 2 px of blur).</summary>
+    private static int StepsFor(IReadOnlyList<ShadowSpec> shadows) => Math.Max(Steps, (int)Math.Ceiling(shadows.Max(s => s.Blur) / 2));
 
     protected override void OnRender(DrawingContext dc)
     {

@@ -12,8 +12,13 @@ if ($running.Count -gt 0) {
     }
 }
 
-dotnet publish (Join-Path $root 'src/Gili.App/Gili.App.csproj') -c Release -o $target --no-self-contained
-if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed.' }
+# Windows can hold the old files for a moment after the process exits, so a failed copy is tried once more.
+foreach ($attempt in 1..2) {
+    dotnet publish (Join-Path $root 'src/Gili.App/Gili.App.csproj') -c Release -o $target --no-self-contained
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($attempt -eq 2) { throw 'dotnet publish failed.' }
+    Start-Sleep -Seconds 2
+}
 
 # The Claude hook helper is NativeAOT (F-CLD-07); the native linker finds MSVC through vswhere in the VS Installer folder.
 $vsInstaller = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
