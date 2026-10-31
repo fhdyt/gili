@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
+using Gili.App.Bar;
 using Gili.App.Controls;
 using Gili.App.Mascot;
 using Gili.Core.Island;
@@ -53,7 +54,8 @@ public partial class IslandWindow : Window
     private int _dots;
     private readonly Spring[] _springs;
     private readonly GiliService _gili;
-    private readonly PowerPage _powerPage;
+    private readonly Dictionary<ControlKind, FrameworkElement> _controls;
+    private ControlKind? _shownControl;
     private readonly TimerViewModel _timerPage;
     private readonly AlarmsViewModel _alarmsPage;
     private readonly CalendarViewModel _calendarPage;
@@ -102,7 +104,7 @@ public partial class IslandWindow : Window
     private int _wheel;
     private DateTime _wheelPausedUntil;
 
-    public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings, GiliService gili)
+    public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings, GiliService gili, RightService right)
     {
         _island = island;
         _vm = vm;
@@ -147,7 +149,26 @@ public partial class IslandWindow : Window
         };
         BuildTabs();
         BuildPages();
-        ControlLayer.Child = _powerPage = new PowerPage(island);
+        // The control islands share one layer; the open one is visible and a swap cross-fades (PRD 6.4).
+        _controls = new()
+        {
+            [ControlKind.Power] = new PowerPage(island),
+            [ControlKind.Volume] = new VolumeIsland(right),
+            [ControlKind.Brightness] = new BrightnessIsland(right),
+            [ControlKind.Wifi] = new WifiIsland(right, island),
+            [ControlKind.Bluetooth] = new BluetoothIsland(right, island),
+        };
+        var controls = new Grid();
+        foreach (var (kind, view) in _controls)
+        {
+            view.Visibility = Visibility.Collapsed;
+            controls.Children.Add(view);
+            ((IControlIsland)view).Resized += () =>
+            {
+                if (ShowsControl && _island.View.Control == kind) Relayout(SpringParameters.Resize);
+            };
+        }
+        ControlLayer.Child = controls;
         // Tabs hidden in Settings before this start leave the menu now; later changes arrive through VisiblePages.
         ApplyShownTabs();
         vm.PropertyChanged += OnViewModelChanged;
@@ -172,7 +193,7 @@ public partial class IslandWindow : Window
         {
             _awayTimer.Stop();
             // Not while typing in the island or dragging a note (mockup armLeave).
-            if (_mode == IslandMode.Expanded && !Body.IsMouseOver && Keyboard.FocusedElement is not TextBox && !_notesPage.IsDragging) _island.Close();
+            if (_mode == IslandMode.Expanded && !Body.IsMouseOver && Keyboard.FocusedElement is not TextBox && !_notesPage.IsDragging && !HoldsSlider) _island.Close();
         };
         Deactivated += (_, _) =>
         {
@@ -268,7 +289,7 @@ public partial class IslandWindow : Window
         }
         if (!IsVisible) Show();
         if (Floats(view.Mode) && !_floatingEnvelope) SetEnvelope(true);
-        if (ShowsControl) _powerPage.Refresh();
+        UpdateControl();
         _hovered = view.Mode == IslandMode.Compact && Body.IsMouseOver;
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
@@ -276,6 +297,52 @@ public partial class IslandWindow : Window
         UpdatePrivacy();
         UpdateGlow();
         FloatingChanged?.Invoke(Floats(view.Mode), Floats(view.Mode) ? Target(0, false).Width : 0);
+    }
+
+    /// <summary>A control island's slider is being dragged, maybe outside the island: it stays open (PRD 6.4).</summary>
+    private bool HoldsSlider => Mouse.Captured is DependencyObject held && ControlLayer.IsAncestorOf(held);
+
+    /// <summary>
+    /// Shows the open control island's content. A swap while open fades the old content out in 90 ms and the new one in
+    /// over 180 ms after it (PRD 6.4); opening from closed shows it at once, as the layer itself reveals.
+    /// </summary>
+    private void UpdateControl()
+    {
+        var kind = ShowsControl ? _island.View.Control : (ControlKind?)null;
+        if (kind == _shownControl) return;
+        var animate = kind is not null && _shownControl is not null && SystemParameters.ClientAreaAnimation;
+        if (_shownControl is { } old)
+        {
+            var leaving = _controls[old];
+            ((IControlIsland)leaving).Hidden();
+            if (animate)
+            {
+                var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(90));
+                fade.Completed += (_, _) =>
+                {
+                    if (_shownControl != old) leaving.Visibility = Visibility.Collapsed;
+                };
+                leaving.BeginAnimation(OpacityProperty, fade);
+            }
+            else if (kind is not null)
+            {
+                leaving.BeginAnimation(OpacityProperty, null);
+                leaving.Visibility = Visibility.Collapsed;
+            }
+        }
+        _shownControl = kind;
+        if (kind is not { } next) return;
+        foreach (var (other, view) in _controls)
+        {
+            if (other != next && !animate) view.Visibility = Visibility.Collapsed;
+        }
+        var shown = _controls[next];
+        shown.Visibility = Visibility.Visible;
+        shown.BeginAnimation(OpacityProperty, animate
+            ? new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)) { BeginTime = TimeSpan.FromMilliseconds(90) }
+            : null);
+        if (!animate) shown.Opacity = 1;
+        ((IControlIsland)shown).Shown();
     }
 
     /// <summary>The control island is open: the island shows one control instead of the menu and its pages.</summary>
@@ -291,8 +358,11 @@ public partial class IslandWindow : Window
     /// <summary>The control's full height at the control island's inner width.</summary>
     private double ControlHeight()
     {
-        _powerPage.Measure(new Size(IslandLayout.ControlWidth - 2 * IslandLayout.ControlPadding, double.PositiveInfinity));
-        return _powerPage.DesiredSize.Height;
+        var view = _controls[_island.View.Control];
+        // A list just filled is only marked for layout; laying it out first lets its new height reach this measure.
+        view.UpdateLayout();
+        view.Measure(new Size(IslandLayout.ControlWidthFor(_island.View.Control) - 2 * IslandLayout.ControlPadding, double.PositiveInfinity));
+        return view.DesiredSize.Height;
     }
 
     /// <summary>Sets the springs' targets for the current mode. Without explicit parameters, a floating island keeps its own.</summary>
@@ -605,6 +675,8 @@ public partial class IslandWindow : Window
         }
         // A text field keeps its arrows, and its page decides what Esc does (cancel the form, not close the island).
         if (e.OriginalSource is TextBox) return;
+        // A control island has no pages: the arrows move its slider (PRD 6.4).
+        if (ShowsControl && e.Key is Key.Left or Key.Right) return;
         switch (e.Key)
         {
             case Key.Escape:

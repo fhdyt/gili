@@ -1,0 +1,66 @@
+<UserControl x:Class="Gili.App.Island.VolumeIsland"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Gili.App.Controls"
+             AutomationProperties.Name="Volume">
+    <UserControl.Resources>
+        <!-- .cvdev: the output device under the slider, 28 px, 12 px grey, white 6% and white text on hover. -->
+        <Style x:Key="DeviceButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" MinHeight="28" CornerRadius="8" Background="Transparent" Padding="8,0">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#0FFFFFFF" />
+                                <Setter Property="Foreground" Value="#F5F5F7" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- The Volume control island (PRD 6.4, mockup .cv[data-cv=vol]): the speaker and level, the slider, the output device. -->
+    <StackPanel>
+        <DockPanel MinHeight="32">
+            <Button x:Name="MuteButton" DockPanel.Dock="Left" Style="{StaticResource ControlTileButton}" Click="OnMute">
+                <c:IconView x:Name="Speaker" Width="15" Height="15" />
+            </Button>
+            <TextBlock x:Name="Level" DockPanel.Dock="Right" FontSize="13" Foreground="#8E8E93"
+                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+            <TextBlock Text="Volume" Margin="12,0" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </DockPanel>
+
+        <Slider x:Name="Slider" Style="{StaticResource ControlSlider}" Margin="40,12,0,0" AutomationProperties.Name="Volume"
+                ValueChanged="OnSlide" PreviewMouseWheel="OnWheel" />
+
+        <Button x:Name="DeviceButton" Style="{StaticResource DeviceButton}" Margin="32,12,0,0" Click="OnDevices"
+                AutomationProperties.Name="Output device">
+            <DockPanel>
+                <c:IconView x:Name="Chevron" DockPanel.Dock="Right" Glyph="{StaticResource Icon.ChevronRight}" Width="13" Height="13"
+                            Margin="8,0,0,0" RenderTransformOrigin="0.5,0.5">
+                    <c:IconView.RenderTransform>
+                        <RotateTransform x:Name="ChevronTurn" />
+                    </c:IconView.RenderTransform>
+                </c:IconView>
+                <TextBlock x:Name="DeviceName" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            </DockPanel>
+        </Button>
+
+        <Border x:Name="DeviceList" Style="{StaticResource ControlList}" Margin="0,12,0,0" Visibility="Collapsed">
+            <ScrollViewer MaxHeight="228" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="Devices" ItemTemplate="{StaticResource ControlRowTemplate}" Button.Click="OnDevice" />
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock x:Name="Unavailable" Text="Not available" Style="{StaticResource ControlOff}" Visibility="Collapsed" />
+    </StackPanel>
+</UserControl>

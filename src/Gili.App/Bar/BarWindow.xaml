@@ -169,7 +169,7 @@
                         <StackPanel x:Name="MoreModulesItems" />
                     </Border>
                 </Popup>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding WifiTooltip}" MouseLeftButtonUp="OnQuickSettings"
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding WifiTooltip}" MouseLeftButtonUp="OnWifi"
                         Visibility="{Binding HasWifi, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Wi‑Fi">
                     <StackPanel Orientation="Horizontal">
                         <c:IconView Glyph="{StaticResource Icon.Wifi}" Width="16" Height="16" VerticalAlignment="Center" />
@@ -180,7 +180,7 @@
                     </StackPanel>
                 </Border>
                 <!-- Bluetooth: a small blue dot in the corner while a device is connected. -->
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BluetoothTooltip}" MouseLeftButtonUp="OnQuickSettings"
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BluetoothTooltip}" MouseLeftButtonUp="OnBluetooth"
                         Visibility="{Binding HasBluetooth, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Bluetooth">
                     <Grid>
                         <c:IconView Glyph="{StaticResource Icon.Bluetooth}" Width="16" Height="16" />
@@ -188,11 +188,11 @@
                                  Margin="0,1.5,-3.5,0" Visibility="{Binding BluetoothConnected, Converter={StaticResource VisibleWhen}}" />
                     </Grid>
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding VolumeTooltip}" MouseLeftButtonUp="OnQuickSettings"
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding VolumeTooltip}" MouseLeftButtonUp="OnVolume"
                         Visibility="{Binding HasVolume, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Volume">
                     <c:IconView Glyph="{Binding VolumeGlyph}" Width="16" Height="16" />
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BrightnessTooltip}" MouseLeftButtonUp="OnQuickSettings"
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BrightnessTooltip}" MouseLeftButtonUp="OnBrightness"
                         ToolTipOpening="OnBrightnessTooltip" Visibility="{Binding HasBrightness, Converter={StaticResource VisibleWhen}}"
                         AutomationProperties.Name="Brightness">
                     <c:IconView Glyph="{StaticResource Icon.Sun}" Width="16" Height="16" />

@@ -130,7 +130,7 @@ public partial class App : Application
         _bar.ToolsRequested += () => ShowTools(ToolsViewModel.AlarmsTab);
         _islandController.ToolsRequested += ShowTools;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
-        _bar.PowerRequested += () => _islandController.Toggle(Core.Island.IslandPage.Controls);
+        _bar.ControlRequested += _islandController.Toggle;
         _demo = new DemoService(Dispatcher, _islandController, _media);
         _bar.DemoRequested += _demo.Toggle;
         _demo.Changed += () => _bar.SetDemoRunning(_demo.IsRunning);
@@ -155,7 +155,7 @@ public partial class App : Application
 
         // Owned by the bar, so the island stays above it whenever the bar re-asserts its topmost place.
         _gili = new GiliService();
-        _islandWindow = new IslandWindow(_islandController, new IslandViewModel(_islandController, _settings), _settings, _gili)
+        _islandWindow = new IslandWindow(_islandController, new IslandViewModel(_islandController, _settings), _settings, _gili, _right)
         {
             Owner = _bar,
         };

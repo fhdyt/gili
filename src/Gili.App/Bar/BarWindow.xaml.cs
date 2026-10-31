@@ -87,8 +87,8 @@ public partial class BarWindow : Window
 
     public event Action? ClockClicked;
 
-    /// <summary>The Power icon toggles the Power island (PRD 6.4).</summary>
-    public event Action? PowerRequested;
+    /// <summary>The Wi‑Fi, Bluetooth, Volume, Brightness and Power icons toggle their control islands (PRD 6.4).</summary>
+    public event Action<ControlKind>? ControlRequested;
 
     /// <summary>A launcher, Shelf or Claude icon asks for its island page.</summary>
     public event Action<IslandPage>? PageRequested;
@@ -171,11 +171,17 @@ public partial class BarWindow : Window
 
     private Geometry Glyph(string key) => (Geometry)FindResource(key);
 
-    private void OnQuickSettings(object sender, MouseButtonEventArgs e) => SystemActions.QuickSettings();
+    private void OnWifi(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Wifi);
+
+    private void OnBluetooth(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Bluetooth);
+
+    private void OnVolume(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Volume);
+
+    private void OnBrightness(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Brightness);
 
     private void OnHiddenIcons(object sender, MouseButtonEventArgs e) => SystemActions.HiddenIcons();
 
-    private void OnPower(object sender, MouseButtonEventArgs e) => PowerRequested?.Invoke();
+    private void OnPower(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Power);
 
     private void OnSystem(object sender, MouseButtonEventArgs e) => PageRequested?.Invoke(IslandPage.System);
 

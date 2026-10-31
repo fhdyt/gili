@@ -22,6 +22,8 @@
     <PathGeometry x:Key="Icon.Pencil" Figures="M4 20h4L19 9l-4 -4L4 16z M13.5 6.5l4 4" />
     <PathGeometry x:Key="Icon.Trash" Figures="M3 6h18 M8 6V4a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1 -2 2H8a2 2 0 0 1 -2 -2L5 6" />
     <PathGeometry x:Key="Icon.Plus" Figures="M12 5v14 M5 12h14" />
+    <!-- Mockup i-plane: Airplane mode in the Wi‑Fi island. -->
+    <PathGeometry x:Key="Icon.Plane" Figures="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
     <PathGeometry x:Key="Icon.ChevronLeft" Figures="M15 6l-6 6l6 6" />
     <PathGeometry x:Key="Icon.ChevronRight" Figures="M9 6l6 6l-6 6" />
     <PathGeometry x:Key="Icon.Film" Figures="M4.5 3h15a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-15A2.5 2.5 0 0 1 2 18.5v-13A2.5 2.5 0 0 1 4.5 3z M7 3v18 M17 3v18 M2 12h20 M2 7.5h5 M2 16.5h5 M17 7.5h5 M17 16.5h5" />

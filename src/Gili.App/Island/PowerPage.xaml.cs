@@ -6,7 +6,7 @@ using Gili.Platform.Shell;
 
 namespace Gili.App.Island;
 
-public partial class PowerPage : UserControl
+public partial class PowerPage : UserControl, IControlIsland
 {
     private readonly IslandController _island;
 
@@ -16,6 +16,19 @@ public partial class PowerPage : UserControl
         InitializeComponent();
         island.PowerChanged += Refresh;
         Refresh();
+    }
+
+    /// <summary>The buttons never change height.</summary>
+    public event Action? Resized
+    {
+        add { }
+        remove { }
+    }
+
+    public void Shown() => Refresh();
+
+    public void Hidden()
+    {
     }
 
     /// <summary>The battery line on the right of the title: empty without a battery (PRD 6.4).</summary>
