@@ -108,8 +108,14 @@
 
             <Border DockPanel.Dock="Left" Width="150" BorderBrush="#0FFFFFFF" BorderThickness="0,0,1,0">
                 <ListBox x:Name="Nav" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection}" DisplayMemberPath="Name"
-                         ItemContainerStyle="{StaticResource NavItem}" Background="Transparent" BorderThickness="0" Padding="8"
+                         Background="Transparent" BorderThickness="0" Padding="8"
                          AutomationProperties.Name="Settings sections">
+                    <ListBox.ItemContainerStyle>
+                        <!-- Each section reads by its name, not by its record's text. -->
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource NavItem}">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.Template>
                         <ControlTemplate TargetType="ListBox">
                             <ItemsPresenter Margin="{TemplateBinding Padding}" />
