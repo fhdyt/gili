@@ -85,6 +85,10 @@
                                 </Setter.Value>
                             </Setter>
                         </Trigger>
+                        <!-- .pill:disabled: Start with the picker at 0:00:00 (F-ISL-29). -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bg" Property="Opacity" Value="0.4" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

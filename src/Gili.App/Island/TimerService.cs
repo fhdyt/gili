@@ -100,6 +100,8 @@ public sealed class TimerService
         switch (Mode)
         {
             case TimerMode.Timer:
+                // The picker at 0:00:00 has nothing to count down (F-ISL-29).
+                if (!Timer.IsRunning && !Timer.IsPaused && Timer.TotalSeconds <= 0) return;
                 Timer = Timer.IsRunning ? Timer.Pause(Now) : Timer.Start(Now);
                 break;
             case TimerMode.Stopwatch:

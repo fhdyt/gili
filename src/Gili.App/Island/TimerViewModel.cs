@@ -28,6 +28,15 @@ public sealed partial class TimerViewModel : ObservableObject
     [ObservableProperty] private bool _showPresets = true;
     [ObservableProperty] private TimerMode _mode;
 
+    /// <summary>The picker replaces the digits while the timer is ready: not running and not paused (F-ISL-29).</summary>
+    [ObservableProperty] private bool _showWheel;
+
+    /// <summary>The timer's length, which the picker shows.</summary>
+    [ObservableProperty] private int _wheelSeconds;
+
+    /// <summary>What the picker is turning to; it becomes the timer's length once the picker rests or Start is pressed.</summary>
+    private int? _picked;
+
     public TimerViewModel(TimerService timers)
     {
         _timers = timers;
@@ -51,8 +60,28 @@ public sealed partial class TimerViewModel : ObservableObject
         UpdateFastTick();
     }
 
-    [RelayCommand]
-    private void StartOrPause() => _timers.StartOrPause();
+    /// <summary>The picker turned (F-ISL-29): Start waits for a length above 0:00:00.</summary>
+    public void Pick(int seconds)
+    {
+        _picked = seconds;
+        StartOrPauseCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>The picker came to rest: its length becomes the timer's, and is kept like a preset.</summary>
+    public void CommitPick()
+    {
+        if (ShowWheel && _picked is { } seconds && seconds != _timers.Timer.TotalSeconds) _timers.Preset(seconds);
+    }
+
+    private bool CanStart() => !(Mode == TimerMode.Timer && ShowWheel && (_picked ?? WheelSeconds) <= 0);
+
+    [RelayCommand(CanExecute = nameof(CanStart))]
+    private void StartOrPause()
+    {
+        // Start while the picker still spins takes the length it is heading for.
+        CommitPick();
+        _timers.StartOrPause();
+    }
 
     [RelayCommand]
     private void Reset() => _timers.Reset();
@@ -74,6 +103,8 @@ public sealed partial class TimerViewModel : ObservableObject
                 ButtonText = TimerText.Button(timer.IsRunning, timer.IsPaused);
                 Fraction = timer.Remaining(now).TotalSeconds / Math.Max(1, timer.TotalSeconds);
                 RingBrush = Orange;
+                ShowWheel = !timer.IsRunning && !timer.IsPaused;
+                WheelSeconds = timer.TotalSeconds;
                 break;
             case TimerMode.Stopwatch:
                 var stopwatch = _timers.Stopwatch;
@@ -94,6 +125,8 @@ public sealed partial class TimerViewModel : ObservableObject
                 break;
         }
         ShowPresets = _timers.Mode == TimerMode.Timer;
+        if (_timers.Mode != TimerMode.Timer) ShowWheel = false;
+        StartOrPauseCommand.NotifyCanExecuteChanged();
         UpdateFastTick();
     }
 

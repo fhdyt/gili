@@ -1418,6 +1418,8 @@ public partial class IslandWindow : Window
         for (; element is not null && !ReferenceEquals(element, PageArea); element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
         {
             if (element is ScrollViewer list && WheelScroll.KeepsWheel(list.ScrollableHeight)) return true;
+            // The Timer page's picker turns with the wheel (F-ISL-29).
+            if (element is Controls.WheelColumnView) return true;
         }
         return false;
     }

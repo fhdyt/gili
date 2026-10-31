@@ -453,7 +453,18 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 .bring circle{fill:none;stroke-width:8}
 .bring .bg{stroke:var(--surface)}.bring .fg{stroke:var(--orange);stroke-linecap:round;transition:stroke-dashoffset 120ms linear,stroke 200ms}
 .tbtns{display:flex;flex-direction:column;gap:8px}
-#tBig{margin-top:8px}
+/* Timer picker (F-ISL-29): five 24 px rows per looping column, the middle one big and white, the band behind it. */
+.tstage{position:relative;height:120px;margin-top:8px}
+.tdig,.wheel{position:absolute;left:0;top:0;transition:opacity 150ms}
+.tdig{right:0;bottom:0;display:flex;flex-direction:column;justify-content:center}
+.wheel{height:120px;display:flex}
+.tstage.pick .tdig,.tstage:not(.pick) .wheel{opacity:0;pointer-events:none}
+.wband{position:absolute;left:0;right:0;top:45px;height:30px;border-radius:9px;background:rgba(255,255,255,.1);pointer-events:none}
+.wcol{position:relative;width:72px;height:120px;overflow:hidden;cursor:pointer;outline:none;touch-action:none;user-select:none}
+.wcol:focus-visible::after{content:'';position:absolute;left:1px;right:1px;top:45px;height:30px;border-radius:9px;box-shadow:inset 0 0 0 1.5px #0a84ff}
+.wcol .wr{position:absolute;right:38px;height:24px;line-height:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.wcol .wu{position:absolute;left:40px;top:60px;transform:translateY(-50%);font-size:13px;font-weight:600;opacity:.85}
+.pill:disabled{opacity:.4;pointer-events:none}
 
 /* alarms */
 .alist{margin-left:auto;width:300px;display:flex;flex-direction:column;gap:6px}
@@ -1084,8 +1095,15 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
             <section class="page" aria-label="Timer">
               <div>
                 <div class="seg" id="seg"><button data-m="timer">Timer</button><button data-m="sw">Stopwatch</button><button data-m="pomo">Pomodoro</button></div>
-                <div class="big num" id="tBig"></div>
-                <div class="sub" id="tSub"></div>
+                <!-- 120 px either way: the iOS-style picker while the timer is ready, the digits otherwise (F-ISL-29). -->
+                <div class="tstage" id="tStage">
+                  <div class="tdig"><div class="big num" id="tBig"></div><div class="sub" id="tSub"></div></div>
+                  <div class="wheel" id="wheel"><i class="wband"></i>
+                    <div class="wcol" data-n="24" data-u="hours" tabindex="0" role="spinbutton" aria-label="Hours" aria-valuemin="0" aria-valuemax="23"></div>
+                    <div class="wcol" data-n="60" data-u="min" tabindex="0" role="spinbutton" aria-label="Minutes" aria-valuemin="0" aria-valuemax="59"></div>
+                    <div class="wcol" data-n="60" data-u="sec" tabindex="0" role="spinbutton" aria-label="Seconds" aria-valuemin="0" aria-valuemax="59"></div>
+                  </div>
+                </div>
                 <div class="chips" id="chips"><button class="chip" data-s="10">10 s</button><button class="chip" data-s="300">5 min</button><button class="chip" data-s="600">10 min</button><button class="chip" data-s="1500">25 min</button></div>
               </div>
               <div class="tright">
@@ -2163,6 +2181,7 @@ function renderTimerPage(){
   $('#tBig').textContent=big;$('#tSub').textContent=sub;$('#tStart').textContent=btn;
   const fg=$('#bigFg');fg.style.strokeDashoffset=BC*(1-frac);fg.style.stroke=m==='pomo'?'var(--danger)':'var(--orange)';
   $('#chips').style.visibility=m==='timer'?'visible':'hidden';
+  if(WCOLS){$('#tStage').classList.toggle('pick',wShown());if(!wRaf&&wShown()&&wSecs()!==S.timer.total)wSet(S.timer.total,S.page===PAGE.timer);wPicked()}
   $$('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   if(S.page===PAGE.timer)renderGlow();
 }
@@ -2171,10 +2190,74 @@ function toggleSw(){
   setPressed('sw',S.sw.running);renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
 }
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(b){S.timer.mode=b.dataset.m;renderTimerPage()}};
-$('#chips').onclick=e=>{const b=e.target.closest('button');if(b){Object.assign(S.timer,{total:+b.dataset.s,left:+b.dataset.s,running:false});renderTimerPage();renderSlot()}};
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(b){Object.assign(S.timer,{total:+b.dataset.s,left:+b.dataset.s,running:false});wSet(+b.dataset.s,true);renderTimerPage();renderSlot()}};
+// The Timer picker (F-ISL-29): three looping columns like iOS, each on its own spring (damping 1, response 0.35 s) that
+// a new scroll, drag or click interrupts from where it is. The wheel, a drag with a fling, a click on a row, or ↑/↓.
+var WCOLS=$$('#wheel .wcol').map(el=>({el,n:+el.dataset.n,pos:0,tgt:0,vel:0,drag:false}));
+const WH=24,wrap=(v,n)=>((v%n)+n)%n;
+let wRaf=0,wLast=0;
+const wSize=a=>a<=1?20-5*a:Math.max(11,15-2*(a-1));
+const wFade=a=>a<=1?1-.4*a:a<=2?.6-.3*(a-1):Math.max(0,.3-.5*(a-2));
+const wShown=()=>S.timer.mode==='timer'&&!S.timer.running&&S.timer.left===S.timer.total;
+const wSecs=()=>{const[h,m,s]=WCOLS.map(c=>wrap(Math.round(c.tgt),c.n));return h*3600+m*60+s};
+function wDraw(c){
+  let h='';
+  for(let r=Math.floor(c.pos)-3;r<=Math.ceil(c.pos)+3;r++){
+    const d=r-c.pos,a=Math.abs(d);if(a>2.6)continue;
+    h+=`<span class="wr" style="top:${48+d*WH}px;font-size:${wSize(a)}px;opacity:${wFade(a)};transform:scaleY(${Math.cos(Math.min(a,2.5)*.38)})">${wrap(r,c.n)}</span>`;
+  }
+  c.el.innerHTML=h+`<span class="wu">${c.el.dataset.u}</span>`;
+  c.el.setAttribute('aria-valuenow',wrap(Math.round(c.tgt),c.n));
+}
+function wTick(t){
+  const dt=Math.min(.1,(t-(wLast||t))/1000),k=(2*Math.PI/.35)**2,damp=4*Math.PI/.35;wLast=t;let moving=false;
+  for(const c of WCOLS){
+    if(c.drag)moving=true;
+    else{
+      for(let s=dt;s>0;s-=1/480){const h=Math.min(s,1/480);c.vel+=(-k*(c.pos-c.tgt)-damp*c.vel)*h;c.pos+=c.vel*h}
+      if(Math.abs(c.pos-c.tgt)<.01&&Math.abs(c.vel)<.05){c.pos=c.tgt;c.vel=0}else moving=true;
+    }
+    wDraw(c);
+  }
+  if(moving)wRaf=requestAnimationFrame(wTick);else{wRaf=0;wLast=0;wCommit()}
+}
+function wGo(){
+  wPicked();
+  if(S.reduce){for(const c of WCOLS){if(!c.drag){c.pos=c.tgt;c.vel=0}wDraw(c)}if(!WCOLS.some(c=>c.drag))wCommit();return}
+  if(!wRaf)wRaf=requestAnimationFrame(wTick);
+}
+// Start waits for a length above 0:00:00.
+function wPicked(){$('#tStart').disabled=wShown()&&wSecs()===0}
+// The picker at rest sets the timer's length, kept like a preset.
+function wCommit(){if(!wShown())return;const s=wSecs();if(s!==S.timer.total){Object.assign(S.timer,{total:s,left:s});renderSlot()}}
+// Turns to a length set from outside (a preset, Reset) the short way round.
+function wSet(sec,anim){
+  const v=[Math.floor(sec/3600),Math.floor(sec/60)%60,sec%60];
+  WCOLS.forEach((c,i)=>{const from=Math.round(c.tgt);let d=wrap(v[i]-wrap(from,c.n),c.n);if(d>c.n/2)d-=c.n;c.tgt=from+d;if(!anim){c.pos=c.tgt;c.vel=0;wDraw(c)}});
+  if(anim)wGo();else wPicked();
+}
+WCOLS.forEach(c=>{
+  let acc=0,y0=0,ly=0,moved=false,samp=[];
+  c.el.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();acc+=e.deltaY;const st=Math.trunc(acc/100);if(!st)return;acc-=st*100;c.tgt=Math.round(c.tgt)+st;wGo()},{passive:false});
+  c.el.onpointerdown=e=>{c.el.setPointerCapture(e.pointerId);c.el.focus();c.drag=true;c.vel=0;y0=ly=e.clientY;moved=false;samp=[[performance.now(),ly]];wGo()};
+  c.el.onpointermove=e=>{if(!c.drag)return;const y=e.clientY;if(Math.abs(y-y0)>3)moved=true;c.pos-=(y-ly)/WH;c.tgt=c.pos;ly=y;samp.push([performance.now(),y]);if(samp.length>8)samp.shift();wPicked()};
+  c.el.onpointerup=c.el.onpointercancel=e=>{
+    if(!c.drag)return;c.drag=false;
+    if(!moved)c.tgt=Math.round(c.pos+(e.clientY-c.el.getBoundingClientRect().top-60)/WH);
+    else{const now=performance.now(),f=samp.find(s=>now-s[0]<=80)||samp[samp.length-1],sec=Math.max(.016,(now-f[0])/1000),v=S.reduce?0:-(e.clientY-f[1])/WH/sec;c.tgt=Math.round(c.pos+Math.max(-30,Math.min(30,v*.3)))}
+    wGo();
+  };
+  c.el.onkeydown=e=>{
+    const st={ArrowUp:-1,ArrowDown:1,PageUp:-5,PageDown:5}[e.key];
+    if(e.key==='Home'){const from=Math.round(c.tgt);let d=wrap(-wrap(from,c.n),c.n);if(d>c.n/2)d-=c.n;c.tgt=from+d}
+    else if(!st)return;else c.tgt=Math.round(c.tgt)+st;
+    e.preventDefault();e.stopPropagation();wGo();
+  };
+});
+wSet(S.timer.total,false);
 $('#tStart').onclick=()=>{
   const m=S.timer.mode;
-  if(m==='timer'){if(S.timer.left<=0)S.timer.left=S.timer.total;S.timer.running=!S.timer.running}
+  if(m==='timer'){wCommit();if(S.timer.total<=0)return;if(S.timer.left<=0)S.timer.left=S.timer.total;S.timer.running=!S.timer.running}
   else if(m==='sw'){toggleSw();return}
   else S.pomo.running=!S.pomo.running;
   renderTimerPage();renderSlot();
