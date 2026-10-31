@@ -68,6 +68,8 @@ Belum tersedia. Setelah rilis publik, ada dua jalur yang dibangun dari kode yang
 | Update | Lewat Store | Gili memeriksa update tiap 24 jam |
 | Butuh .NET terpasang | Tidak | Tidak |
 
+Installer GitHub adalah satu file `.exe` (dibangun dengan Inno Setup): unduh, klik dua kali, selesai, tanpa UAC. Installer ini baru dibuat setelah semua fitur selesai (awal Fase 5). Sebelum rilis publik, versi tanpa tanda tangan dibagikan dulu ke beberapa teman penguji; Windows akan menampilkan "Windows protected your PC" sekali, lalu pilih **More info → Run anyway**. Rinciannya di PRD 9.4.
+
 ### Dari kode sumber
 
 Yang perlu dipasang dulu:
