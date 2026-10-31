@@ -104,6 +104,9 @@ public partial class IslandWindow : Window
     private int _wheel;
     private DateTime _wheelPausedUntil;
 
+    /// <summary>The System page's readings, fed by the app while the page shows (plan 3c).</summary>
+    public SystemViewModel SystemStats { get; }
+
     public IslandWindow(IslandController island, IslandViewModel vm, SettingsHub settings, GiliService gili, RightService right)
     {
         _island = island;
@@ -128,6 +131,7 @@ public partial class IslandWindow : Window
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
         _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
+        SystemStats = new SystemViewModel(island.Close);
         settings.Changed += _ =>
         {
             _alarmsPage.Refresh();
@@ -840,6 +844,7 @@ public partial class IslandWindow : Window
         IslandPage.Calendar => new CalendarPage(_calendarPage),
         IslandPage.Todo => new TodoPage(_todoPage),
         IslandPage.Notes => _notesView = new NotesPage(_notesPage),
+        IslandPage.System => new SystemPage(SystemStats),
         _ => Placeholder(tab),
     };
 

@@ -11,6 +11,7 @@ using Gili.App.Settings;
 using Gili.App.Tools;
 using Gili.Core;
 using Gili.Core.Diagnostics;
+using Gili.Core.Island;
 using Gili.Core.Modules;
 using Gili.Core.Settings;
 using Gili.Data;
@@ -32,6 +33,7 @@ public partial class App : Application
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
     private bool _systemPageShown;
+    private StatsSnapshot? _lastStats;
     private ClockService? _clock;
     private MediaService? _media;
     private IslandController? _islandController;
@@ -164,6 +166,13 @@ public partial class App : Application
             Owner = _bar,
         };
         _islandWindow.FloatingChanged += _bar.SetIslandFloating;
+        // The System page is fed, and reads everything, only while it shows (PRD 8.1).
+        _islandController.ViewChanged += v => ShowSystemPage(v.Mode == IslandMode.Expanded && v.Page == IslandPage.System);
+        _stats.Updated += s =>
+        {
+            _lastStats = s;
+            if (_systemPageShown) _islandWindow.SystemStats.Apply(s);
+        };
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
         _islandWindow.Show();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
@@ -292,6 +301,14 @@ public partial class App : Application
     /// Only the installed copy owns the Run entry, so a dev build started with `dotnet run` never registers itself
     /// (F-BAR-04; the first run of the installed copy creates the entry, PRD 9.4). The Store copy uses its StartupTask.
     /// </summary>
+    private void ShowSystemPage(bool shown)
+    {
+        if (shown == _systemPageShown) return;
+        _systemPageShown = shown;
+        UpdateStatsDemand();
+        if (shown && _lastStats is { } last) _islandWindow?.SystemStats.Apply(last);
+    }
+
     /// <summary>Only the modules switched on, and everything while the System page shows, are read (PRD 8.1).</summary>
     private void UpdateStatsDemand()
     {

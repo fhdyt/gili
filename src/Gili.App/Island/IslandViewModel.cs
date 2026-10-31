@@ -128,7 +128,7 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), Phase3),
             new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), Phase3),
-            new(IslandPage.System, "System", Glyph("Icon.Cpu"), Phase3),
+            new(IslandPage.System, "System", Glyph("Icon.Cpu"), null),
         ];
         settings.Changed += _ => UpdateSettings();
         island.ViewChanged += UpdateView;

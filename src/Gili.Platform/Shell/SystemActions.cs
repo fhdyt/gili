@@ -41,6 +41,9 @@ public static class SystemActions
         }
     }
 
+    /// <summary>Task Manager, from the System page (PRD 6.3); it asks for elevation itself when its policy wants it.</summary>
+    public static void TaskManager() => OpenSettings("taskmgr.exe");
+
     private static void Run(string file, string arguments)
     {
         try
