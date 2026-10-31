@@ -4,13 +4,15 @@ using Microsoft.Data.Sqlite;
 
 namespace Gili.Data;
 
-/// <summary>The notes table (PRD 10): body, colour and text size, the user's order, and UTC times. float_* belong to floating notes and are left alone.</summary>
+/// <summary>The notes table (PRD 10): body, colour and text size, the user's order, UTC times, and a floating note's window in float_*.</summary>
 public sealed class NoteStore(Database db)
 {
     public IReadOnlyList<Note> All()
     {
         using var command = db.Connection.CreateCommand();
-        command.CommandText = "SELECT id, body, color, text_size, sort_order, created_at, updated_at FROM notes ORDER BY sort_order, id";
+        command.CommandText =
+            "SELECT id, body, color, text_size, sort_order, created_at, updated_at, float_x, float_y, float_w, float_h " +
+            "FROM notes ORDER BY sort_order, id";
         using var reader = command.ExecuteReader();
         var notes = new List<Note>();
         while (reader.Read())
@@ -22,7 +24,8 @@ public sealed class NoteStore(Database db)
                 Enum.IsDefined((NoteTextSize)reader.GetInt32(3)) ? (NoteTextSize)reader.GetInt32(3) : NoteTextSize.Medium,
                 reader.GetInt32(4),
                 Instant(reader.GetString(5)),
-                Instant(reader.GetString(6))));
+                Instant(reader.GetString(6)),
+                FloatOf(reader)));
         }
         return notes;
     }
@@ -77,6 +80,19 @@ public sealed class NoteStore(Database db)
         transaction.Commit();
     }
 
+    /// <summary>Writes where a floating note's window is, or null once it is back in the island.</summary>
+    public void SetFloat(long id, NoteRect? rect)
+    {
+        using var command = db.Connection.CreateCommand();
+        command.CommandText = "UPDATE notes SET float_x = $x, float_y = $y, float_w = $w, float_h = $h WHERE id = $id";
+        command.Parameters.AddWithValue("$id", id);
+        command.Parameters.AddWithValue("$x", (object?)rect?.X ?? DBNull.Value);
+        command.Parameters.AddWithValue("$y", (object?)rect?.Y ?? DBNull.Value);
+        command.Parameters.AddWithValue("$w", (object?)rect?.Width ?? DBNull.Value);
+        command.Parameters.AddWithValue("$h", (object?)rect?.Height ?? DBNull.Value);
+        command.ExecuteNonQuery();
+    }
+
     public void Delete(long id)
     {
         using var command = db.Connection.CreateCommand();
@@ -109,6 +125,14 @@ public sealed class NoteStore(Database db)
         }
         transaction.Commit();
         return blank.Count;
+    }
+
+    /// <summary>A window only when all four values are there; anything less (a file edited by hand) is a note in the island.</summary>
+    private static NoteRect? FloatOf(SqliteDataReader reader)
+    {
+        for (var i = 7; i <= 10; i++)
+            if (reader.IsDBNull(i)) return null;
+        return new NoteRect(reader.GetDouble(7), reader.GetDouble(8), reader.GetDouble(9), reader.GetDouble(10));
     }
 
     private static string Text(DateTimeOffset at) => at.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture);

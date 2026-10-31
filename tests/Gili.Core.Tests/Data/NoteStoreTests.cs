@@ -72,6 +72,25 @@ public sealed class NoteStoreTests : IDisposable
     }
 
     [Fact]
+    public void A_floating_window_survives_a_restart_and_clears()
+    {
+        long id;
+        var window = new NoteRect(1200.5, 64, 300, 260);
+        using (var db = Database.Open(_folder))
+        {
+            var store = new NoteStore(db);
+            id = store.Add(Make("Float me")).Id;
+            store.SetFloat(id, window);
+        }
+        SqliteConnection.ClearAllPools();
+        using var reopened = Database.Open(_folder);
+        var again = new NoteStore(reopened);
+        Assert.Equal(window, Assert.Single(again.All()).Float);
+        again.SetFloat(id, null);
+        Assert.Null(Assert.Single(again.All()).Float);
+    }
+
+    [Fact]
     public void Delete_removes_it()
     {
         using var db = Database.Open(_folder);
