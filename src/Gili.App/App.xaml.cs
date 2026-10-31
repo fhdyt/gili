@@ -239,7 +239,7 @@ public partial class App : Application
         }
         var alarms = new AlarmsTabViewModel(_alarms!, () => _settings!.Current.Use24HourClock, voice => _sound?.Preview(voice));
         var model = new ToolsViewModel(new TimersTabViewModel(_timers!), new StopwatchTabViewModel(_timers!),
-            new PomodoroTabViewModel(_timers!, _settings!), alarms, tab);
+            new PomodoroTabViewModel(_timers!, _settings!), alarms, new TodoTabViewModel(_todos!, () => _settings!.Current.Use24HourClock), tab);
         _toolsWindow = new ToolsWindow(model);
         _toolsWindow.Closed += (_, _) => _toolsWindow = null;
         _toolsWindow.Show();

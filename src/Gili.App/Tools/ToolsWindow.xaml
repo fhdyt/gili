@@ -58,25 +58,15 @@
                         <TextBlock Text="{Binding SelectedTab}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </DockPanel>
 
-                    <TextBlock Text="Coming in a later version" Foreground="#8E8E93">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsComingLater}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-
                     <local:TimersTab DataContext="{Binding Timers}"
                                      Visibility="{Binding DataContext.IsTimer, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
                     <local:StopwatchTab DataContext="{Binding Stopwatch}"
                                         Visibility="{Binding DataContext.IsStopwatch, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
                     <local:PomodoroTab DataContext="{Binding Pomodoro}"
                                        Visibility="{Binding DataContext.IsPomodoro, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
+
+                    <local:TodoTab DataContext="{Binding Todo}"
+                                   Visibility="{Binding DataContext.IsTodo, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
 
                     <StackPanel DataContext="{Binding Alarms}" Visibility="{Binding DataContext.IsAlarms, RelativeSource={RelativeSource AncestorType=Window},
                                 Converter={StaticResource VisibleWhen}}">

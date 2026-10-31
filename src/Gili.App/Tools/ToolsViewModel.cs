@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Gili.App.Tools;
 
-/// <summary>The Tools window (PRD 7.5): tabs on the left; Timer, Stopwatch, Pomodoro and Alarms work, Todo arrives later.</summary>
+/// <summary>The Tools window (PRD 7.5): tabs on the left; Timer, Stopwatch, Pomodoro, Alarms and Todo.</summary>
 public sealed partial class ToolsViewModel : ObservableObject
 {
     public const string TimerTab = "Timer";
@@ -11,12 +11,13 @@ public sealed partial class ToolsViewModel : ObservableObject
     public const string AlarmsTab = "Alarms";
     public const string TodoTab = "Todo";
 
-    public ToolsViewModel(TimersTabViewModel timers, StopwatchTabViewModel stopwatch, PomodoroTabViewModel pomodoro, AlarmsTabViewModel alarms, string tab)
+    public ToolsViewModel(TimersTabViewModel timers, StopwatchTabViewModel stopwatch, PomodoroTabViewModel pomodoro, AlarmsTabViewModel alarms, TodoTabViewModel todo, string tab)
     {
         Timers = timers;
         Stopwatch = stopwatch;
         Pomodoro = pomodoro;
         Alarms = alarms;
+        Todo = todo;
         _selectedTab = tab;
         stopwatch.SetVisible(IsStopwatch);
     }
@@ -24,7 +25,7 @@ public sealed partial class ToolsViewModel : ObservableObject
     public IReadOnlyList<string> Tabs { get; } = [TimerTab, StopwatchTab, PomodoroTab, AlarmsTab, TodoTab];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTimer), nameof(IsStopwatch), nameof(IsPomodoro), nameof(IsAlarms), nameof(IsTodo), nameof(IsComingLater))]
+    [NotifyPropertyChangedFor(nameof(IsTimer), nameof(IsStopwatch), nameof(IsPomodoro), nameof(IsAlarms), nameof(IsTodo))]
     private string _selectedTab;
 
     public TimersTabViewModel Timers { get; }
@@ -34,6 +35,8 @@ public sealed partial class ToolsViewModel : ObservableObject
     public PomodoroTabViewModel Pomodoro { get; }
 
     public AlarmsTabViewModel Alarms { get; }
+
+    public TodoTabViewModel Todo { get; }
 
     public bool IsTimer => SelectedTab == TimerTab;
 
@@ -45,9 +48,6 @@ public sealed partial class ToolsViewModel : ObservableObject
 
     public bool IsTodo => SelectedTab == TodoTab;
 
-    /// <summary>The tab that still shows "Coming in a later version".</summary>
-    public bool IsComingLater => IsTodo;
-
     partial void OnSelectedTabChanged(string value) => Stopwatch.SetVisible(IsStopwatch);
 
     public void Detach()
@@ -56,5 +56,6 @@ public sealed partial class ToolsViewModel : ObservableObject
         Stopwatch.Detach();
         Pomodoro.Detach();
         Alarms.Detach();
+        Todo.Detach();
     }
 }

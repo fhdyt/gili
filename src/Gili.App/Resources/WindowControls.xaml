@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
     <!-- The Settings and Tools windows' own controls (mockup .setw, .stb, .setn, .tbtn, .tin, .day). -->
 
     <Style x:Key="CloseButton" TargetType="Button">
@@ -110,7 +111,7 @@
         <Setter Property="Foreground" Value="#FF453A" />
     </Style>
 
-    <!-- Text field (mockup .tin): 30 px, radius 6, white at 6 % with an 8 % edge; blue edge when focused, red when invalid (Tag True). -->
+    <!-- Text field (mockup .tin): 30 px, radius 6, white at 6 % with an 8 % edge; blue edge when focused, red when invalid (Tag True), yellow for a warning (Tag Warn). -->
     <Style x:Key="TextField" TargetType="TextBox">
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -136,7 +137,13 @@
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Bg" Property="BorderBrush" Value="#0A84FF" />
                         </Trigger>
-                        <Trigger Property="Tag" Value="True">
+                        <Trigger Property="Tag" Value="Warn">
+                            <Setter TargetName="Bg" Property="BorderBrush" Value="#FFD60A" />
+                        </Trigger>
+                        <Trigger Property="Tag">
+                            <Trigger.Value>
+                                <sys:Boolean>True</sys:Boolean>
+                            </Trigger.Value>
                             <Setter TargetName="Bg" Property="BorderBrush" Value="#FF453A" />
                         </Trigger>
                     </ControlTemplate.Triggers>
