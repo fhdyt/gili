@@ -37,6 +37,53 @@ public sealed class NoteService
     /// <summary>Whether a save is waiting, and when the last one was written (null before any).</summary>
     public event Action<bool, DateTimeOffset?>? SaveState;
 
+    /// <summary>A note left the island (F-TOOL-12): true when it was Float on top, false when it was dragged out.</summary>
+    public event Action<Note, bool>? Floated;
+
+    public int FloatingCount => _notes.Count(n => n.Float is not null);
+
+    /// <summary>
+    /// The note leaves the island into a window at this place (DIPs), written at once; its card leaves the grid. False
+    /// when six already float or the note floats already. A blank note may float; it is dropped once it comes back.
+    /// </summary>
+    public bool Float(long id, NoteRect rect, bool fromButton)
+    {
+        Flush();
+        var index = IndexOf(id);
+        if (index < 0 || _notes[index].Float is not null || !NoteFloat.CanFloat(FloatingCount)) return false;
+        _notes[index] = _notes[index] with { Float = rect };
+        _store?.SetFloat(id, rect);
+        Changed?.Invoke();
+        Floated?.Invoke(_notes[index], fromButton);
+        return true;
+    }
+
+    /// <summary>A floating note was moved or resized; written once the drag ends, so nothing else needs to know.</summary>
+    public void MoveFloat(long id, NoteRect rect)
+    {
+        var index = IndexOf(id);
+        if (index < 0 || _notes[index].Float is not { } was || was == rect) return;
+        _notes[index] = _notes[index] with { Float = rect };
+        _store?.SetFloat(id, rect);
+    }
+
+    /// <summary>Back to island: the note takes its old place in the order again, or is dropped when it is empty (true).</summary>
+    public bool Return(long id)
+    {
+        Flush();
+        var index = IndexOf(id);
+        if (index < 0 || _notes[index].Float is null) return false;
+        _notes[index] = _notes[index] with { Float = null };
+        _store?.SetFloat(id, null);
+        if (NoteSession.Discards(_notes[index].Body))
+        {
+            Delete(id);
+            return true;
+        }
+        Changed?.Invoke();
+        return false;
+    }
+
     /// <summary>An empty Medium note in the default colour above all others, written at once so its id holds (plan 2f decision 4).</summary>
     public Note Create()
     {

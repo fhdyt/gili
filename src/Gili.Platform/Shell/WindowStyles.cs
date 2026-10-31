@@ -26,6 +26,33 @@ public static class WindowStyles
     public static void MoveTo(IntPtr hwnd, int x, int y) =>
         Win32.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Win32.SWP_NOSIZE | Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE);
 
+    /// <summary>Moves and sizes a window in screen pixels in one step, so its edges never move apart, without activating it.</summary>
+    public static void Place(IntPtr hwnd, int x, int y, int width, int height) =>
+        Win32.SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, Win32.SWP_NOZORDER | Win32.SWP_NOACTIVATE);
+
+    /// <summary>Moves and sizes a window and puts it right below another in the z-order, like a floating note's shadow.</summary>
+    public static void PlaceBelow(IntPtr hwnd, IntPtr above, int x, int y, int width, int height) =>
+        Win32.SetWindowPos(hwnd, above, x, y, width, height, Win32.SWP_NOACTIVATE);
+
+    /// <summary>Puts a topmost window above every other topmost window, like the island opening over floating notes.</summary>
+    public static void BringToTop(IntPtr hwnd) =>
+        Win32.SetWindowPos(hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
+
+    /// <summary>A window's place and size on screen in pixels.</summary>
+    public static (int Left, int Top, int Width, int Height) Bounds(IntPtr hwnd)
+    {
+        Win32.GetWindowRect(hwnd, out var rect);
+        return (rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+    }
+
+    /// <summary>The primary monitor's work area in screen pixels: without the AppBar strips and the Windows taskbar.</summary>
+    public static (int Left, int Top, int Right, int Bottom) PrimaryWorkArea()
+    {
+        var info = new Win32.MONITORINFO { cbSize = (uint)Marshal.SizeOf<Win32.MONITORINFO>() };
+        Win32.GetMonitorInfo(Win32.MonitorFromPoint(default, Win32.MONITOR_DEFAULTTOPRIMARY), ref info);
+        return (info.rcWork.Left, info.rcWork.Top, info.rcWork.Right, info.rcWork.Bottom);
+    }
+
     /// <summary>The island takes focus only while it is open, so Esc and the arrow keys reach it.</summary>
     public static void SetNoActivate(IntPtr hwnd, bool noActivate)
     {

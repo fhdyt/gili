@@ -101,7 +101,7 @@ public sealed class NoteStore(Database db)
         command.ExecuteNonQuery();
     }
 
-    /// <summary>Drops notes that are empty or only whitespace (left behind by a crash) and returns how many.</summary>
+    /// <summary>Drops notes in the island that are empty or only whitespace (left behind by a crash) and returns how many.</summary>
     public int DeleteBlank()
     {
         using var transaction = db.Connection.BeginTransaction();
@@ -109,7 +109,8 @@ public sealed class NoteStore(Database db)
         using (var read = db.Connection.CreateCommand())
         {
             read.Transaction = transaction;
-            read.CommandText = "SELECT id, body FROM notes";
+            // A floating note may be blank on purpose; it goes once it is back in the island (F-TOOL-12).
+            read.CommandText = "SELECT id, body FROM notes WHERE float_x IS NULL OR float_y IS NULL OR float_w IS NULL OR float_h IS NULL";
             using var reader = read.ExecuteReader();
             while (reader.Read())
                 if (NoteText.IsBlank(reader.GetString(1))) blank.Add(reader.GetInt64(0));

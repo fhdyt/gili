@@ -110,4 +110,15 @@ public sealed class NoteStoreTests : IDisposable
         Assert.Equal(2, store.DeleteBlank());
         Assert.Equal(new[] { kept.Id }, store.All().Select(note => note.Id));
     }
+
+    [Fact]
+    public void A_blank_floating_note_stays_on_start()
+    {
+        using var db = Database.Open(_folder);
+        var store = new NoteStore(db);
+        var floating = store.Add(Make(""));
+        store.SetFloat(floating.Id, new NoteRect(10, 50, 260, 220));
+        Assert.Equal(0, store.DeleteBlank());
+        Assert.Equal(new[] { floating.Id }, store.All().Select(note => note.Id));
+    }
 }

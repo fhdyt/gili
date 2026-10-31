@@ -497,4 +497,79 @@
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
+
+    <!-- Back to island on a floating note (mockup .fhd button): 20 × 20, radius 8, a 12 px icon at white 55%;
+         white 12% behind it and a white icon on hover. -->
+    <Style x:Key="FloatingNoteBack" TargetType="Button">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="#8CFFFFFF" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Width="20" Height="20" CornerRadius="8" Background="Transparent">
+                        <c:IconView Glyph="{StaticResource Icon.IntoIsland}" Width="12" Height="12" StrokeThickness="2.4"
+                                    Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#1FFFFFFF" />
+                            <Setter Property="Foreground" Value="#FFFFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A floating note's text (mockup .fnote textarea): no box, padding 0 14 12, line height 1.55, a thin dark
+         scroll bar in the right padding. -->
+    <Style x:Key="FloatingNoteText" TargetType="TextBox">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="CaretBrush" Value="#F5F5F7" />
+        <Setter Property="SelectionBrush" Value="#0A84FF" />
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="AcceptsTab" Value="False" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <!-- The text view keeps 2 px on each side of its own, so 12 + 2 = the mockup's 14. -->
+                    <ScrollViewer x:Name="PART_ContentHost" Margin="12,0,12,12" Focusable="False" HorizontalScrollBarVisibility="Disabled">
+                        <ScrollViewer.Template>
+                            <ControlTemplate TargetType="ScrollViewer">
+                                <Grid>
+                                    <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanContentScroll="{TemplateBinding CanContentScroll}" />
+                                    <ScrollBar x:Name="PART_VerticalScrollBar" HorizontalAlignment="Right" Margin="0,0,-10,0" Width="8" MinWidth="8"
+                                               OverridesDefaultStyle="True"
+                                               Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}"
+                                               Value="{TemplateBinding VerticalOffset}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}">
+                                        <ScrollBar.Template>
+                                            <ControlTemplate TargetType="ScrollBar">
+                                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                                    <Track.Thumb>
+                                                        <Thumb>
+                                                            <Thumb.Template>
+                                                                <ControlTemplate TargetType="Thumb">
+                                                                    <Border Width="6" CornerRadius="3" Background="#40FFFFFF" />
+                                                                </ControlTemplate>
+                                                            </Thumb.Template>
+                                                        </Thumb>
+                                                    </Track.Thumb>
+                                                </Track>
+                                            </ControlTemplate>
+                                        </ScrollBar.Template>
+                                    </ScrollBar>
+                                </Grid>
+                            </ControlTemplate>
+                        </ScrollViewer.Template>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

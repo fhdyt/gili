@@ -17,6 +17,7 @@ using Gili.Core.Island;
 using Gili.Core.Layout;
 using Gili.Core.Mascot;
 using Gili.Core.Motion;
+using Gili.Core.Notes;
 using Gili.Core.Settings;
 using Gili.Platform.Interop;
 using Gili.Platform.Shell;
@@ -136,7 +137,10 @@ public partial class IslandWindow : Window
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
-        _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
+        _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close)
+        {
+            FloatNote = id => FloatNote?.Invoke(id) == true,
+        };
         SystemStats = new SystemViewModel(island.Close);
         _shelfPage = new ShelfViewModel(island.Shelf);
         _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
@@ -222,6 +226,54 @@ public partial class IslandWindow : Window
 
     /// <summary>Whether the island floats, and the panel's width; the bar fades its backdrop and covered elements (PRD 6.3).</summary>
     public event Action<bool, double>? FloatingChanged;
+
+    /// <summary>Float on top for the open note: true once it floats, false at the limit (F-TOOL-12).</summary>
+    public Func<long, bool>? FloatNote { get; set; }
+
+    /// <summary>The island is open (expanded), on any page.</summary>
+    public bool IsOpen => _mode == IslandMode.Expanded;
+
+    /// <summary>The Notes page is open, so a note coming home lands in its card's slot.</summary>
+    public bool ShowsNotes => _mode == IslandMode.Expanded && _island.View.Page == IslandPage.Notes && _notesView is not null;
+
+    public double CompactHeight => _settings.Current.IslandHeight;
+
+    /// <summary>The island's black shape on screen, in DIPs.</summary>
+    public NoteRect IslandBounds()
+    {
+        if (PresentationSource.FromVisual(Body) is null) return default;
+        var device = Body.PointToScreen(new Point(0, 0));
+        var dpi = VisualTreeHelper.GetDpi(this);
+        return new NoteRect(device.X / dpi.DpiScaleX, device.Y / dpi.DpiScaleY, Body.ActualWidth, Body.ActualHeight);
+    }
+
+    /// <summary>A note is about to come home into the open grid: its card stays hidden until the note lands in it.</summary>
+    public void ExpectNote(long id) => _notesView?.Expect(id);
+
+    /// <summary>Where the expected note's card rests, in screen pixels.</summary>
+    public Rect? NoteSlot(long id) => _notesView?.SlotOnScreen(id);
+
+    /// <summary>The note has landed: its card shows in its place.</summary>
+    public void ReleaseNote(long id) => _notesView?.Release(id);
+
+    /// <summary>The island swallows a note coming home (mockup .island.gulp: 1.07 × 1.18 at 40% of 420 ms).</summary>
+    public void Gulp()
+    {
+        if (!SystemParameters.ClientAreaAnimation) return;
+        var scale = Body.RenderTransform as ScaleTransform ?? (ScaleTransform)(Body.RenderTransform = new ScaleTransform());
+        Body.RenderTransformOrigin = new Point(0.5, 0.5);
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, Bulge(1.07));
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, Bulge(1.18));
+
+        static DoubleAnimationUsingKeyFrames Bulge(double peak)
+        {
+            var bulge = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromMilliseconds(420) };
+            bulge.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(0)));
+            bulge.KeyFrames.Add(new EasingDoubleKeyFrame(peak, KeyTime.FromPercent(0.4)) { EasingFunction = BezierEase.Expression });
+            bulge.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(1)) { EasingFunction = BezierEase.Expression });
+            return bulge;
+        }
+    }
 
     /// <summary>The compact island's width without hover, and whether Gili's circle shows beside it.</summary>
     /// <summary>The compact island's width, whether Gili's circle shows beside it, and how many privacy dots do.</summary>
@@ -740,6 +792,8 @@ public partial class IslandWindow : Window
             _previousForeground = ForegroundWindow.Get();
             WindowStyles.SetNoActivate(_hwnd, false);
             Activate();
+            // Above the floating notes, even the one clicked last (plan 2h decision 10).
+            WindowStyles.BringToTop(_hwnd);
         }
         else if (mode != IslandMode.Expanded && previous == IslandMode.Expanded)
         {

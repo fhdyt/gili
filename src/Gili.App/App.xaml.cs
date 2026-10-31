@@ -44,6 +44,7 @@ public partial class App : Application
     private MediaService? _media;
     private IslandController? _islandController;
     private IslandWindow? _islandWindow;
+    private FloatingNotes? _floating;
     private GiliService? _gili;
     private BarWindow? _bar;
     private AppsService? _apps;
@@ -203,6 +204,11 @@ public partial class App : Application
         _claude.Changed += ShowClaude;
         ShowClaude();
         _islandWindow.Show();
+        // Notes that floated when Gili closed come back where they were (F-TOOL-12).
+        _floating = new FloatingNotes(_notes, _islandWindow);
+        _islandWindow.FloatNote = _floating.FloatOnTop;
+        _bar.FullscreenChanged += _floating.SetFullscreen;
+        _floating.Restore();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
         _timers.Reschedule();
         // Likewise an alarm missed while Gili was closed or the laptop slept rings now, marked missed (F-TOOL-05).
@@ -230,6 +236,8 @@ public partial class App : Application
         _apps?.Dispose();
         _right?.Dispose();
         _gili?.Dispose();
+        // Stopping clears the sessions, and the island's windows are already closed: nothing may show them again.
+        _claude?.Changed -= ShowClaude;
         _claude?.Dispose();
         _islandController?.Dispose();
         _alarms?.Dispose();

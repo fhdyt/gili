@@ -21,6 +21,12 @@ public static class SoftShadow
     /// <summary>A note card lifted by a drag (mockup .fnote.proxy: 0 16 32 −10 black 75%).</summary>
     public static readonly IReadOnlyList<ShadowSpec> LiftedNote = [new(16, 32, -10, 0.75)];
 
+    /// <summary>A floating note at rest (mockup .fnote: 0 18 40 −12 black 70%).</summary>
+    public static readonly IReadOnlyList<ShadowSpec> FloatingNote = [new(18, 40, -12, 0.7)];
+
+    /// <summary>A note torn out of the island or held by its header (mockup .fnote.torn/.held: 0 28 56 −14 black 80%).</summary>
+    public static readonly IReadOnlyList<ShadowSpec> HeldNote = [new(28, 56, -14, 0.8)];
+
     /// <summary>
     /// <paramref name="steps"/> rectangles spread evenly across the blur around the spread edge; where they all overlap
     /// they add up to the shadow's opacity, and toward the outside fewer overlap, so the edge fades.

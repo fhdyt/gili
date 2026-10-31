@@ -66,6 +66,9 @@
     <PathGeometry x:Key="Icon.Weather.Snow" Figures="M 20 17.58 A 5 5 0 0 0 18 8 h -1.26 A 8 8 0 1 0 4 16.25 M 8 16 h .01 M 8 20 h .01 M 12 18 h .01 M 12 22 h .01 M 16 16 h .01 M 16 20 h .01" />
     <PathGeometry x:Key="Icon.Weather.Storm" Figures="M 19 16.9 A 5 5 0 0 0 18 7 h -1.26 a 8 8 0 1 0 -11.62 9 M 13 11 l -4 6 h 6 l -4 6" />
     <PathGeometry x:Key="Icon.Weather.Fog" Figures="M 3 15 h 18 M 5 19 h 14 M 18 11 h -1.26 A 8 8 0 1 0 5 11" />
+    <!-- Float on top (mockup i-popout) and Back to island (i-intoisland: an arrow up into the island's pill). -->
+    <PathGeometry x:Key="Icon.Popout" Figures="M 14 4 h 6 v 6 M 20 4 l -8 8 M 18 14 v 4 a 2 2 0 0 1 -2 2 H 6 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 4" />
+    <PathGeometry x:Key="Icon.IntoIsland" Figures="M 7 3 h 10 a 3 3 0 0 1 0 6 H 7 a 3 3 0 0 1 0 -6 z M 12 21 v -8 M 8.5 16.5 L 12 13 l 3.5 3.5" />
     <!-- Filled -->
     <!-- Two columns of three dots (mockup i-grip): the handle that reorders a row. -->
     <PathGeometry x:Key="Icon.Grip" Figures="M 7.5 6 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 6 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 7.5 12 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 12 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 7.5 18 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 18 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z" />

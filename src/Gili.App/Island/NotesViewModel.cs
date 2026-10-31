@@ -19,6 +19,7 @@ public sealed partial class NotesViewModel : ObservableObject
     private readonly Func<bool> _use24Hour;
     private readonly Action _closeIsland;
     private readonly DispatcherTimer _confirm = new() { Interval = TimeSpan.FromSeconds(3) };
+    private readonly DispatcherTimer _hintTimer = new() { Interval = TimeSpan.FromMilliseconds(2400) };
     private List<Note> _visible = [];
     private bool _loading;
     private bool _reservesEditor;
@@ -41,12 +42,21 @@ public sealed partial class NotesViewModel : ObservableObject
     [ObservableProperty] private bool _isEmpty;
     [ObservableProperty] private string _emptyText = NoteText.NoNotes;
 
+    /// <summary>A short message at the foot of the page for 2.4 s, like "Up to 6 floating notes" (plan 2h decision 6).</summary>
+    [ObservableProperty] private string _hint = "";
+    [ObservableProperty] private bool _isHintShown;
+
     public NotesViewModel(NoteService notes, Func<bool> use24Hour, Action closeIsland)
     {
         _notes = notes;
         _use24Hour = use24Hour;
         _closeIsland = closeIsland;
         _confirm.Tick += (_, _) => ResetDelete();
+        _hintTimer.Tick += (_, _) =>
+        {
+            _hintTimer.Stop();
+            IsHintShown = false;
+        };
         notes.Changed += Refresh;
         notes.Edited += OnEdited;
         notes.SaveState += OnSaveState;
@@ -90,9 +100,52 @@ public sealed partial class NotesViewModel : ObservableObject
 
     public void NotifyContentChanged() => ContentChanged?.Invoke();
 
+    /// <summary>Puts a note on its own window outside the island; set by the island (F-TOOL-12).</summary>
+    public Func<long, bool>? FloatNote { get; init; }
+
+    /// <summary>Whether another note may leave the island; at six the page says so instead (PRD 6.3 "Batas").</summary>
+    public bool CanFloatAnother() => NoteFloat.CanFloat(_notes.FloatingCount);
+
+    public void ShowHint(string text)
+    {
+        Hint = text;
+        IsHintShown = true;
+        _hintTimer.Stop();
+        _hintTimer.Start();
+    }
+
+    /// <summary>
+    /// Float on top: what was typed is written, the editor closes without motion (the note has left), the note floats at
+    /// the top right of the work area, and the island closes. An empty note may float too; it goes once it is back.
+    /// </summary>
+    [RelayCommand]
+    private void FloatOnTop()
+    {
+        if (EditingId is not { } id) return;
+        _notes.Flush();
+        if (!CanFloatAnother())
+        {
+            ShowHint(NoteText.FloatLimit);
+            return;
+        }
+        Shut();
+        EditorClosed?.Invoke(new EditorClose(id, ToSlot: false, Fade: false, Instant: true));
+        if (FloatNote?.Invoke(id) == true) _closeIsland();
+    }
+
+    /// <summary>A note dragged out of the editor has left the island: the editor closes at once and the note stays, even empty.</summary>
+    public void LeaveEditor()
+    {
+        if (!IsEditing || EditingId is not { } id) return;
+        _notes.Flush();
+        Shut();
+        EditorClosed?.Invoke(new EditorClose(id, ToSlot: false, Fade: false, Instant: true));
+    }
+
     public void Refresh()
     {
-        _visible = [.. _notes.Notes.Where(n => NoteText.Matches(n.Body, Search))];
+        // A floating note has left the island: no card, and not in the search either (PRD 6.3 "Di pulau").
+        _visible = [.. _notes.Notes.Where(n => n.Float is null && NoteText.Matches(n.Body, Search))];
         IsEmpty = Visible.Count == 0;
         EmptyText = _notes.Notes.Count == 0 ? NoteText.NoNotes : NoteText.NoMatch;
         CardsChanged?.Invoke();

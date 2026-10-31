@@ -9,6 +9,7 @@ public static class NoteText
     public const string Empty = "Empty note";
     public const string NoMatch = "No notes match.";
     public const string NoNotes = "No notes yet.";
+    public const string FloatLimit = "Up to 6 floating notes";
 
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 

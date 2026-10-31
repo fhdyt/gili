@@ -261,6 +261,28 @@
             </Setter>
         </Style>
 
+        <!-- Float on top (mockup .npop): 28 × 28, radius 8, a 15 px grey icon; white 8% behind a white icon on hover. -->
+        <Style x:Key="NotePop" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Width="28" Height="28" CornerRadius="8" Background="Transparent">
+                            <c:IconView Glyph="{StaticResource Icon.Popout}" Width="15" Height="15" Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#14FFFFFF" />
+                                <Setter Property="Foreground" Value="#F5F5F7" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Done (mockup .pill.pri.sm): 30 px white pill with black text. -->
         <Style x:Key="DonePill" TargetType="Button" BasedOn="{StaticResource SmallPill}">
             <Setter Property="Foreground" Value="#000000" />
@@ -342,6 +364,8 @@
                                 <!-- Saved, Delete and Done (mockup .nfoot: 6 px above, 12 px grey). -->
                                 <DockPanel Grid.Row="2" Margin="0,6,0,0">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Style="{StaticResource NotePop}" Command="{Binding FloatOnTopCommand}" ToolTip="Float on top"
+                                                AutomationProperties.Name="Float on top" Margin="0,0,2,0" VerticalAlignment="Center" />
                                         <Button Style="{StaticResource NoteDelete}" Command="{Binding DeleteCommand}" Content="{Binding DeleteText}" />
                                         <Button Style="{StaticResource DonePill}" Margin="6,0,0,0" Command="{Binding DoneCommand}" Content="Done" />
                                     </StackPanel>
@@ -357,5 +381,12 @@
                 </Grid>
             </Border>
         </Canvas>
+
+        <!-- A short message at the foot of the page, such as "Up to 6 floating notes" (plan 2h decision 6). -->
+        <Border x:Name="HintPill" Grid.RowSpan="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,10"
+                CornerRadius="10" Background="#1C1C1E" BorderBrush="#1AFFFFFF" BorderThickness="1" Padding="12,6"
+                IsHitTestVisible="False" Opacity="0">
+            <TextBlock Text="{Binding Hint}" FontSize="12" Foreground="#F5F5F7" />
+        </Border>
     </Grid>
 </UserControl>

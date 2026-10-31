@@ -53,6 +53,8 @@ public partial class NotesPage : UserControl
     // A press on a card that may still become a drag, and the drag: lifted, then landing (PRD 6.3 "Mengatur urutan").
     private (NoteCardView Card, Point At)? _press;
     private CardDrag? _drag;
+    // Floating notes flying home into the grid: their cards stay hidden until they land (PRD 6.3 "Back to island").
+    private readonly HashSet<long> _homing = [];
 
     public NotesPage(NotesViewModel vm)
     {
@@ -352,6 +354,19 @@ public partial class NotesPage : UserControl
         return new Rect(Scroller.PointToScreen(new Point(land.X, land.Y)), Scroller.PointToScreen(new Point(land.Right, land.Bottom)));
     }
 
+    /// <summary>A floating note is coming home: its card, made when the note is back in the list, stays hidden until it lands.</summary>
+    public void Expect(long id) => _homing.Add(id);
+
+    /// <summary>Where the expected note's card rests in screen pixels, moved into view; the other cards are already making room.</summary>
+    public Rect? SlotOnScreen(long id) => _cards.TryGetValue(id, out var card) && IsVisible ? LandingRect(card) : null;
+
+    /// <summary>The note has landed in its slot: its card takes the window's place.</summary>
+    public void Release(long id)
+    {
+        if (!_homing.Remove(id)) return;
+        if (_cards.TryGetValue(id, out var card)) Dim(card, animate: false);
+    }
+
     /// <summary>Runs once the next frame has been drawn.</summary>
     private static void AfterFrame(Action action)
     {
@@ -498,7 +513,7 @@ public partial class NotesPage : UserControl
 
     private void Dim(NoteCardView card, bool animate)
     {
-        var hidden = (_sourceHidden && card.Id == _source) || ReferenceEquals(card, _drag?.Card);
+        var hidden = (_sourceHidden && card.Id == _source) || ReferenceEquals(card, _drag?.Card) || _homing.Contains(card.Id);
         card.IsHitTestVisible = !hidden;
         var target = hidden ? 0 : _vm.IsEditing ? 0.3 : 1;
         if (hidden || !animate)
@@ -663,6 +678,9 @@ public partial class NotesPage : UserControl
                 break;
             case nameof(NotesViewModel.IsSaving):
                 ShowSaving();
+                break;
+            case nameof(NotesViewModel.IsHintShown):
+                HintPill.BeginAnimation(OpacityProperty, new DoubleAnimation(_vm.IsHintShown ? 1 : 0, Ms(SystemParameters.ClientAreaAnimation ? 200 : 100)));
                 break;
         }
     }
