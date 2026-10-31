@@ -35,11 +35,26 @@ public sealed class AudioMonitor : IDisposable
     /// <summary>Volume 0–100 and mute, or null without a speaker.</summary>
     public (int Percent, bool Muted)? Current { get; private set; }
 
-    /// <summary>Only ever on the user's click (Unmute on a card, PRD 6.6); Gili never changes the volume itself.</summary>
+    /// <summary>Only ever on the user's click (Unmute on a card, PRD 6.6, or the Volume island); Gili never changes the volume itself.</summary>
     public void Unmute()
     {
         var context = Guid.Empty;
         _endpoint?.SetMute(false, ref context);
+    }
+
+    /// <summary>The volume slider in the Volume island (F-RIGHT-10); moving it up from 0 also unmutes, like Windows.</summary>
+    public void SetVolume(int percent)
+    {
+        var context = Guid.Empty;
+        _endpoint?.SetMasterVolumeLevelScalar(Math.Clamp(percent, 0, 100) / 100f, ref context);
+        if (percent > 0 && Current is { Muted: true }) _endpoint?.SetMute(false, ref context);
+    }
+
+    /// <summary>The speaker button in the Volume island.</summary>
+    public void SetMute(bool muted)
+    {
+        var context = Guid.Empty;
+        _endpoint?.SetMute(muted, ref context);
     }
 
     public void Dispose()

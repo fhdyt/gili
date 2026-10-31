@@ -35,5 +35,8 @@
     <rescap:Capability Name="runFullTrust" />
     <!-- Windows only gives the Wi-Fi network name to apps with location access (F-RIGHT-02). -->
     <DeviceCapability Name="location" />
+    <!-- The control islands switch the Wi-Fi and Bluetooth radios and list paired devices (F-RIGHT-10). -->
+    <DeviceCapability Name="bluetooth" />
+    <DeviceCapability Name="radios" />
   </Capabilities>
 </Package>

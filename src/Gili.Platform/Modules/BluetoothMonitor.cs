@@ -1,4 +1,5 @@
 using Gili.Core.Devices;
+using Gili.Core.Modules;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Radios;
@@ -18,7 +19,16 @@ public sealed class BluetoothMonitor : IDisposable
     /// <summary>DEVPKEY_Bluetooth_Battery: the charge a device reports, 0–100.</summary>
     private const string BatteryKey = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
 
+    private const string ClassicProtocol = "{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}";
+    private const string LowEnergyProtocol = "{bb7bb05e-5972-42b5-94fc-76eaa7084d49}";
+    private const string IsConnectedKey = "System.Devices.Aep.IsConnected";
+    private const string ContainerKey = "System.Devices.Aep.ContainerId";
+    private const string MajorKey = "System.Devices.Aep.Bluetooth.Cod.Major";
+    private const string MinorKey = "System.Devices.Aep.Bluetooth.Cod.Minor";
+    private const string AppearanceKey = "System.Devices.Aep.Bluetooth.Le.Appearance";
+
     private readonly Dictionary<string, string> _connected = [];
+    private readonly Dictionary<string, int> _batteries = [];
     private readonly List<DeviceWatcher> _watchers = [];
     private Radio? _radio;
     private bool _radioOn;
@@ -64,6 +74,7 @@ public sealed class BluetoothMonitor : IDisposable
         watcher.EnumerationCompleted += (_, _) => started = true;
         watcher.Added += (source, device) =>
         {
+            if (Battery(device.Properties) is { } battery) lock (_connected) _batteries[device.Name] = battery;
             Set(device.Id, device.Name);
             if (started) _ = ReportAsync(device.Id, device.Name, Battery(device.Properties), lowEnergy, connected: true);
         };
@@ -77,6 +88,51 @@ public sealed class BluetoothMonitor : IDisposable
         watcher.Start();
         _watchers.Add(watcher);
     }
+
+    /// <summary>
+    /// The paired devices for the Bluetooth island (F-RIGHT-10), read when it opens: one per device (a phone pairs over
+    /// classic and LE), with its kind, whether it is connected, the charge it last reported, and whether Gili can
+    /// connect it itself. The ID is the device's container, which the audio endpoints share.
+    /// </summary>
+    public async Task<IReadOnlyList<PairedDevice>> PairedAsync()
+    {
+        var audio = await Task.Run(AudioDevices.BluetoothAudio);
+        var devices = new Dictionary<string, PairedDevice>();
+        foreach (var protocol in new[] { ClassicProtocol, LowEnergyProtocol })
+        {
+            var selector = $"System.Devices.Aep.ProtocolId:=\"{protocol}\" AND System.Devices.Aep.IsPaired:=System.StructuredQueryType.Boolean#True";
+            var found = await DeviceInformation.FindAllAsync(
+                selector, [IsConnectedKey, ContainerKey, MajorKey, MinorKey, AppearanceKey], DeviceInformationKind.AssociationEndpoint);
+            foreach (var device in found)
+            {
+                var container = device.Properties.TryGetValue(ContainerKey, out var c) && c is Guid g ? g : (Guid?)null;
+                var id = container?.ToString() ?? device.Id;
+                var connected = device.Properties.TryGetValue(IsConnectedKey, out var on) && on is true;
+                if (devices.TryGetValue(id, out var known))
+                {
+                    if (connected && !known.Connected) devices[id] = known with { Connected = true };
+                    continue;
+                }
+                var kind = protocol == ClassicProtocol
+                    ? BluetoothRules.KindFromClass((Number(device.Properties, MajorKey) << 8) | (Number(device.Properties, MinorKey) << 2))
+                    : BluetoothRules.KindFromAppearance((ushort)Number(device.Properties, AppearanceKey));
+                int? battery;
+                lock (_connected) battery = _batteries.TryGetValue(device.Name, out var b) ? b : null;
+                var canConnect = container is { } box && audio.Contains(box);
+                devices[id] = new PairedDevice(id, device.Name, canConnect ? BluetoothKind.Audio : kind, connected, battery, canConnect);
+            }
+        }
+        return BluetoothList.Order(devices.Values);
+    }
+
+    /// <summary>Asks an audio device to connect or disconnect; false when Windows did not take the request.</summary>
+    public static Task<bool> ConnectAsync(PairedDevice device, bool connect) =>
+        Guid.TryParse(device.Id, out var container)
+            ? Task.Run(() => AudioDevices.ConnectBluetooth(container, connect))
+            : Task.FromResult(false);
+
+    private static uint Number(IReadOnlyDictionary<string, object> properties, string key) =>
+        properties.TryGetValue(key, out var value) && value is not null ? Convert.ToUInt32(value, System.Globalization.CultureInfo.InvariantCulture) : 0;
 
     private async Task ReportAsync(string id, string name, int? battery, bool lowEnergy, bool connected)
     {

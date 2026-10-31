@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using Gili.Core.Modules;
 
 namespace Gili.Platform.Modules;
 
@@ -9,7 +10,8 @@ public sealed record WifiState(bool RadioOn, bool Connected, string? Ssid, int Q
 
 /// <summary>
 /// Reads the first Wi‑Fi adapter through the Native WLAN API (PRD 9.2) and raises Changed when Windows reports a
-/// connection change; the signal itself is read again by the app every 10 s.
+/// connection change; the signal itself is read again by the app every 10 s. The Wi‑Fi island (F-RIGHT-10) reads the
+/// network list, asks for a scan, and connects with a saved profile only while it is open.
 /// </summary>
 public sealed class WifiMonitor : IDisposable
 {
@@ -22,19 +24,33 @@ public sealed class WifiMonitor : IDisposable
     private const uint NotificationSourceAcm = 0x08;
     private const uint NotificationSourceMsm = 0x10;
     private const int InterfaceInfoSize = 16 + 512 + 4;
+    private const int AvailableNetworkSize = 628;
+    private const int AcmScanComplete = 7;
+    private const int AcmScanFail = 8;
+    private const int AcmConnectionComplete = 10;
+    private const int AcmConnectionAttemptFail = 11;
+    private const int AcmScanListRefresh = 26;
+    private const int FlagConnected = 1;
+    private const int FlagHasProfile = 2;
 
     private readonly nint _handle;
     private readonly NotificationCallback _callback;
 
     public WifiMonitor()
     {
-        _callback = (_, _) => Changed?.Invoke();
+        _callback = (data, _) => OnNotification(data);
         if (WlanOpenHandle(ClientVersion, 0, out _, out _handle) != 0) _handle = 0;
         if (_handle != 0) WlanRegisterNotification(_handle, NotificationSourceAcm | NotificationSourceMsm, true, _callback, 0, 0, out _);
     }
 
     /// <summary>Raised on a thread-pool thread.</summary>
     public event Action? Changed;
+
+    /// <summary>A scan finished or Windows refreshed its list; raised on a thread-pool thread.</summary>
+    public event Action? ListChanged;
+
+    /// <summary>A connection Gili or anything else started finished: true when it connected.</summary>
+    public event Action<bool>? ConnectFinished;
 
     private delegate void NotificationCallback(nint data, nint context);
 
@@ -75,9 +91,113 @@ public sealed class WifiMonitor : IDisposable
         }
     }
 
+    /// <summary>Windows' current list for the first adapter, one entry per network and band; empty without an adapter.</summary>
+    public IReadOnlyList<WifiNetwork> Networks()
+    {
+        if (Adapter() is not { } guid) return [];
+        if (WlanGetAvailableNetworkList(_handle, ref guid, 0, 0, out var list) != 0) return [];
+        try
+        {
+            // WLAN_AVAILABLE_NETWORK_LIST: count, index, then 628-byte entries: profile name (256 chars), SSID length and
+            // bytes, …, signal quality at 604, security at 608, flags at 620.
+            var count = Marshal.ReadInt32(list);
+            var networks = new List<WifiNetwork>(count);
+            for (var i = 0; i < count; i++)
+            {
+                var entry = list + 8 + i * AvailableNetworkSize;
+                var profile = Marshal.PtrToStringUni(entry);
+                var length = Math.Clamp(Marshal.ReadInt32(entry, 512), 0, 32);
+                var bytes = new byte[length];
+                Marshal.Copy(entry + 516, bytes, 0, length);
+                var flags = Marshal.ReadInt32(entry, 620);
+                networks.Add(new WifiNetwork(
+                    Encoding.UTF8.GetString(bytes),
+                    Marshal.ReadInt32(entry, 604),
+                    Marshal.ReadInt32(entry, 608) != 0,
+                    (flags & FlagHasProfile) != 0,
+                    (flags & FlagConnected) != 0,
+                    string.IsNullOrEmpty(profile) ? null : profile));
+            }
+            return networks;
+        }
+        finally
+        {
+            WlanFreeMemory(list);
+        }
+    }
+
+    /// <summary>Asks Windows for a fresh scan; <see cref="ListChanged"/> follows within a few seconds.</summary>
+    public void Scan()
+    {
+        if (Adapter() is { } guid) WlanScan(_handle, ref guid, 0, 0, 0);
+    }
+
+    /// <summary>Connects with a saved profile; false when the request itself failed.</summary>
+    public bool Connect(string profile)
+    {
+        if (Adapter() is not { } guid) return false;
+        var name = Marshal.StringToHGlobalUni(profile);
+        try
+        {
+            var parameters = new ConnectionParameters { Mode = 0, Profile = name, BssType = 1 };
+            return WlanConnect(_handle, ref guid, ref parameters, 0) == 0;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(name);
+        }
+    }
+
     public void Dispose()
     {
         if (_handle != 0) WlanCloseHandle(_handle, 0);
+    }
+
+    private Guid? Adapter()
+    {
+        if (_handle == 0 || WlanEnumInterfaces(_handle, 0, out var list) != 0) return null;
+        try
+        {
+            return Marshal.ReadInt32(list) == 0 ? null : Marshal.PtrToStructure<Guid>(list + 8);
+        }
+        finally
+        {
+            WlanFreeMemory(list);
+        }
+    }
+
+    private void OnNotification(nint data)
+    {
+        // WLAN_NOTIFICATION_DATA: source, code, adapter GUID, data size, then the data pointer at 32.
+        if (data != 0 && Marshal.ReadInt32(data) == (int)NotificationSourceAcm)
+        {
+            switch (Marshal.ReadInt32(data, 4))
+            {
+                case AcmScanComplete or AcmScanFail or AcmScanListRefresh:
+                    ListChanged?.Invoke();
+                    break;
+                case AcmConnectionComplete:
+                    // WLAN_CONNECTION_NOTIFICATION_DATA: the reason code sits after mode, profile, SSID, type and security.
+                    var details = Marshal.ReadIntPtr(data, 32);
+                    ConnectFinished?.Invoke(details != 0 && Marshal.ReadInt32(details, 560) == 0);
+                    break;
+                case AcmConnectionAttemptFail:
+                    ConnectFinished?.Invoke(false);
+                    break;
+            }
+        }
+        Changed?.Invoke();
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ConnectionParameters
+    {
+        public int Mode;
+        public nint Profile;
+        public nint Ssid;
+        public nint BssidList;
+        public int BssType;
+        public int Flags;
     }
 
     private bool ReadRadio(Guid guid)
@@ -110,6 +230,15 @@ public sealed class WifiMonitor : IDisposable
     [DllImport("wlanapi.dll")]
     private static extern uint WlanRegisterNotification(nint handle, uint sources, [MarshalAs(UnmanagedType.Bool)] bool ignoreDuplicate,
         NotificationCallback callback, nint context, nint reserved, out uint previous);
+
+    [DllImport("wlanapi.dll")]
+    private static extern uint WlanGetAvailableNetworkList(nint handle, ref Guid guid, uint flags, nint reserved, out nint list);
+
+    [DllImport("wlanapi.dll")]
+    private static extern uint WlanScan(nint handle, ref Guid guid, nint ssid, nint ie, nint reserved);
+
+    [DllImport("wlanapi.dll")]
+    private static extern uint WlanConnect(nint handle, ref Guid guid, ref ConnectionParameters parameters, nint reserved);
 
     [DllImport("wlanapi.dll")]
     private static extern void WlanFreeMemory(nint memory);
