@@ -35,7 +35,12 @@ public static class SettingsCatalog
     /// <summary>The Claude icon and page exist only while the integration is on (PRD 6.2, 6.3 page 9).</summary>
     public const string ClaudeOff = "Turn on Claude Code sessions first";
 
-    private static readonly string[] LeftNames = ["Start", "Timer", "Alarms", "Todo", "Notes", "Clipboard", "Shelf", "Claude"];
+    /// <summary>The Left side switches: the icon's flag name and its label (PRD 6.5).</summary>
+    private static readonly (string Name, string Label)[] LeftRows =
+    [
+        ("Start", "Start"), ("Timer", "Timer"), ("Alarms", "Alarms"), ("Todo", "Todo"), ("Notes", "Notes"), ("Clipboard", "Clipboard"),
+        ("Shelf", "Shelf"), ("Claude", "Claude"), ("Apps", "Running apps"),
+    ];
     /// <summary>The Right side switches by label, with the bar's id for each module (PRD 6.4).</summary>
     private static readonly Dictionary<string, string> ModuleIds = new()
     {
@@ -77,8 +82,12 @@ public static class SettingsCatalog
         ]),
         new("Left side",
         [
-            .. LeftNames.Select(n => new SettingRow("L." + n, n, SettingKind.Switch,
-                n == "Start" ? null : $"Turning it off also hides the {n} page in the island", Available: true)),
+            .. LeftRows.Select(r => new SettingRow("L." + r.Name, r.Label, SettingKind.Switch, r.Name switch
+            {
+                "Start" => null,
+                "Apps" => "The apps that are open, after the divider",
+                _ => $"Turning it off also hides the {r.Label} page in the island",
+            }, Available: true)),
         ]),
         new("Island",
         [

@@ -1016,7 +1016,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <button class="lcl" id="mClaude" data-l="claude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
       </div>
       <span class="lsep" id="lsep" aria-hidden="true"></span>
-      <div class="apps" id="apps" role="toolbar" aria-label="Open apps"></div>
+      <div class="apps" id="apps" data-l="apps" role="toolbar" aria-label="Open apps"></div>
     </div>
     <div class="right" id="right">
       <span class="mod" data-m="weather" title="Partly cloudy · 31° / 24° · Jakarta"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg><span class="tw"><small>Cloudy</small><b class="num">29°</b></span></span>
@@ -1334,7 +1334,7 @@ const S={
   // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
   order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
-  left:{start:1,timer:1,alarms:1,todo:1,notes:1,clipboard:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1,1],
+  left:{start:1,timer:1,alarms:1,todo:1,notes:1,clipboard:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -2993,7 +2993,7 @@ function limCheck(){
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
   Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
-  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':'Turning it off also hides the '+n+' page in the island']),
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.apps','Running apps']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
@@ -3029,7 +3029,8 @@ function sput(k,v){
 }
 function applySettings(){
   $$('#left [data-l]').forEach(b=>b.hidden=!S.left[b.dataset.l]);
-  $('#lsep').hidden=!Object.values(S.left).some(Boolean);
+  // The divider separates the launcher from the open apps, so it needs both (revision 12, issue #24).
+  $('#lsep').hidden=!S.left.apps||!Object.keys(S.left).some(k=>k!=='apps'&&S.left[k]);
   document.body.classList.toggle('nosecs',!S.secs);
   document.body.classList.toggle('noglow',!S.glow);document.body.classList.toggle('nomotion',!S.motion);setPressed('glow',!!S.glow);
   $('#desk').classList.toggle('notb',!!S.hideTb);document.body.classList.toggle('bottom',S.pos==='bottom');

@@ -21,6 +21,7 @@ public sealed class AppsService : IDisposable
     private readonly DispatcherTimer _coalesce = new(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(100) };
     private readonly Func<double> _dpiScale;
     private IReadOnlyList<TaskbarWindow> _last = [];
+    private bool _showStrip = true;
 
     public AppsService(Func<double> dpiScale)
     {
@@ -32,7 +33,7 @@ public sealed class AppsService : IDisposable
         };
         _windows.Changed += () =>
         {
-            if (!_coalesce.IsEnabled) _coalesce.Start();
+            if (_showStrip && !_coalesce.IsEnabled) _coalesce.Start();
         };
         _windows.ForegroundChanged += OnForeground;
     }
@@ -40,6 +41,24 @@ public sealed class AppsService : IDisposable
     /// <summary>First read, once the bar shows, so icons come at the bar's DPI.</summary>
     public void Start()
     {
+        if (!_showStrip) return;
+        Read();
+        OnForeground(Platform.Shell.ForegroundWindow.Get());
+    }
+
+    /// <summary>
+    /// Settings → Left side → Running apps (F-LEFT-07). While off the window list isn't read at all; the foreground
+    /// window is still followed, since the Clipboard page's paste and Claude's sessions need it.
+    /// </summary>
+    public void ShowStrip(bool show)
+    {
+        if (_showStrip == show) return;
+        _showStrip = show;
+        if (!show)
+        {
+            _coalesce.Stop();
+            return;
+        }
         Read();
         OnForeground(Platform.Shell.ForegroundWindow.Get());
     }
@@ -82,6 +101,7 @@ public sealed class AppsService : IDisposable
     private void OnForeground(nint hwnd)
     {
         ForegroundChanged?.Invoke(hwnd);
+        if (!_showStrip) return;
         // A window that just opened may not be on the strip yet; read first so it can become active straight away.
         var key = _windows.AppKeyOf(hwnd);
         if (!_strip.Apps.Contains(key)) Read();

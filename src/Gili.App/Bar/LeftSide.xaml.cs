@@ -44,8 +44,9 @@ public partial class LeftSide : UserControl
     }
 
     /// <summary>
-    /// Settings → Left side hides icons (F-BAR-12) the way <see cref="SlotAnimation"/> describes. The divider shows only
-    /// after an icon. With Windows animations off, icons just appear and go.
+    /// Settings → Left side hides icons (F-BAR-12) and the running apps (F-LEFT-07) the way <see cref="SlotAnimation"/>
+    /// describes. The divider shows only between an icon and the apps. With Windows animations off, icons just appear
+    /// and go.
     /// </summary>
     public void ApplyHidden(LeftIcons hidden, bool animate)
     {
@@ -55,8 +56,14 @@ public partial class LeftSide : UserControl
         _slots.Show(StartButton, !hidden.HasFlag(LeftIcons.Start), animate);
         foreach (var icon in Launcher.Children.OfType<FrameworkElement>())
             _slots.Show(icon, !hidden.HasFlag(Enum.Parse<LeftIcons>((string)icon.Tag)), animate);
-        Rule.Visibility = hidden == EveryIcon ? Visibility.Collapsed : Visibility.Visible;
+        var apps = !hidden.HasFlag(LeftIcons.Apps);
+        _apps.ShowStrip(apps);
+        _slots.Show(Strip, apps, animate);
+        Rule.Visibility = apps && (hidden | LeftIcons.Apps) != EveryIcon ? Visibility.Visible : Visibility.Collapsed;
+        Fit();
     }
+
+    private bool ShowsApps => _hidden?.HasFlag(LeftIcons.Apps) != true;
 
     private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon);
 
@@ -193,7 +200,7 @@ public partial class LeftSide : UserControl
             }
             _buttons[apps[i].Key].Root.Visibility = hide ? Visibility.Collapsed : Visibility.Visible;
         }
-        More.Visibility = hidden.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        More.Visibility = hidden.Count > 0 && ShowsApps ? Visibility.Visible : Visibility.Collapsed;
         More.Content = "+" + hidden.Count.ToString(CultureInfo.InvariantCulture);
         More.ToolTip = hidden.Count > 0 ? string.Join(", ", hidden.Select(a => a.Name)) : null;
         More.Tag = hidden;

@@ -18,7 +18,7 @@ public class SettingsCatalogTests
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
             new HashSet<string> { "version", "updates", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
-                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
+                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude", "L.Apps",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
@@ -50,6 +50,21 @@ public class SettingsCatalogTests
         var rows = Section("Left side").Rows;
         Assert.Equal("Turning it off also hides the Timer page in the island", rows.Single(r => r.Label == "Timer").Help);
         Assert.Null(rows.Single(r => r.Label == "Start").Help);
+    }
+
+    [Fact]
+    public void Running_apps_can_be_hidden_without_touching_a_tab()
+    {
+        var rows = Section("Left side").Rows;
+        Assert.Equal("L.Apps", rows[^1].Key);
+        Assert.Equal("Running apps", rows[^1].Label);
+        Assert.Equal("The apps that are open, after the divider", rows[^1].Help);
+        var s = SettingsCatalog.Write(new AppSettings(), "L.Apps", false);
+        Assert.Equal(LeftIcons.Apps, s.HiddenLeft);
+        Assert.Equal(PageSet.None, s.HiddenPages);
+        Assert.Equal(false, SettingsCatalog.Read(s, "L.Apps"));
+        Assert.True(SettingsCatalog.State(s, "L.Apps").Enabled);
+        Assert.Equal(LeftIcons.None, SettingsCatalog.Write(s, "L.Apps", true).HiddenLeft);
     }
 
     [Fact]
