@@ -17,6 +17,7 @@ public enum RightModules
     Brightness = 512,
     Tray = 1024,
     Clock = 2048,
+    Power = 4096,
 }
 
 /// <summary>
@@ -41,6 +42,7 @@ public static class RightModuleRules
         "bri" => RightModules.Brightness,
         "tray" => RightModules.Tray,
         "clock" => RightModules.Clock,
+        "power" => RightModules.Power,
         _ => RightModules.None,
     };
 

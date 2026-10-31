@@ -1035,7 +1035,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       </span>
       <button class="mod" data-m="clock" id="mClock" title=""><span class="tw"><small id="clkD"></small><b class="num" id="clkT"></b></span></button>
       <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg><i class="udot gdot" id="gDot" hidden></i></button>
-      <span class="pwr">
+      <span class="pwr" data-m="power">
         <button class="mod" id="mPower" aria-label="Power" title="Power"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg><i class="udot" id="uDot" hidden></i></button>
       </span>
     </div>
@@ -1330,7 +1330,7 @@ const S={
   charging:false,battery:64,caps:false,num:false,barH:32,islH:24,
   cpu:12,gpu:4,ram:54,down:2100,up:300,
   hist:{cpu:[],ram:[],gpu:[],down:[]},
-  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1},
+  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1,power:1},
   // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
   order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
@@ -2995,7 +2995,7 @@ const SET={
   Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
-  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date']].map(([k,n])=>['M.'+k,n,'sw']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
+  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],

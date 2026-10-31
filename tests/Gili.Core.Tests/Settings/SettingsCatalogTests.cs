@@ -20,7 +20,7 @@ public class SettingsCatalogTests
             new HashSet<string> { "version", "updates", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
-                "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
+                "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -38,7 +38,7 @@ public class SettingsCatalogTests
     {
         var rows = Section("Right side").Rows;
         Assert.Equal(
-            ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Weather city", "Battery alert", "Unplug reminder"],
+            ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Power", "Weather city", "Battery alert", "Unplug reminder"],
             rows.Select(r => r.Label));
         Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.GPU"));
         Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.Disk"));
@@ -197,6 +197,17 @@ public class SettingsCatalogModuleTests
         s = SettingsCatalog.Write(s, "M.Clock and date", false);
         s = SettingsCatalog.Write(s, "M.Tray icons", false);
         Assert.Equal(RightModules.Disk | RightModules.Clock | RightModules.Tray, s.HiddenModules);
+    }
+
+    [Fact]
+    public void Power_can_be_hidden_but_starts_on()
+    {
+        var s = new AppSettings();
+        Assert.Equal(true, SettingsCatalog.Read(s, "M.Power"));
+        s = SettingsCatalog.Write(s, "M.Power", false);
+        Assert.True(s.HiddenModules.HasFlag(RightModules.Power));
+        Assert.Equal("Sleep, restart and shut down stay in the Start menu", RightSide.Rows.Single(r => r.Key == "M.Power").Help);
+        Assert.True(SettingsCatalog.State(s, "M.Power").Enabled);
     }
 
     [Fact]

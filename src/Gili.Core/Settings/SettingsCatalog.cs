@@ -51,6 +51,7 @@ public static class SettingsCatalog
         ["Brightness"] = "bri",
         ["Tray icons"] = "tray",
         ["Clock and date"] = "clock",
+        ["Power"] = "power",
     };
 
     private static readonly string[] Pages = ["Media", "Timer", "Alarms", "Calendar", "Todo", "Notes", "Clipboard", "Shelf", "Claude", "System"];
@@ -88,7 +89,8 @@ public static class SettingsCatalog
         ]),
         new("Right side",
         [
-            .. ModuleIds.Keys.Select(n => new SettingRow("M." + n, n, SettingKind.Switch, Available: true)),
+            .. ModuleIds.Keys.Select(n => new SettingRow("M." + n, n, SettingKind.Switch,
+                n == "Power" ? "Sleep, restart and shut down stay in the Start menu" : null, Available: true)),
             new("W.city", "Weather city", SettingKind.City, "Search by name. Only the name you type is sent, to Open-Meteo", Available: true),
             new("W.bat", "Battery alert", SettingKind.Range, "Also at 10%", Available: true, Unit: "%"),
             new("W.unplug", "Unplug reminder", SettingKind.Range, "Only on laptops that keep charging past it. 100% turns it off",

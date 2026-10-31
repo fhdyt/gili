@@ -234,8 +234,8 @@
                                  Margin="0,1.5,-3.5,0" Visibility="{Binding GiliUpdate, Converter={StaticResource VisibleWhen}}" />
                     </Grid>
                 </Border>
-                <!-- Power: a small orange dot in the corner while Windows has updates waiting (F-RIGHT-08, mockup .udot). -->
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding PowerTooltip}" MouseLeftButtonUp="OnPower" AutomationProperties.Name="Power">
+                <!-- Power: a small orange dot in the corner while Windows has updates waiting (F-RIGHT-08, mockup .udot); Settings can hide it (F-RIGHT-12). -->
+                <Border Tag="power" Style="{StaticResource ClickableModule}" ToolTip="{Binding PowerTooltip}" MouseLeftButtonUp="OnPower" AutomationProperties.Name="Power">
                     <Grid>
                         <c:IconView Glyph="{StaticResource Icon.Power}" Width="16" Height="16" />
                         <Ellipse Width="9" Height="9" Fill="#FF9F0A" Stroke="#161618" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Top"

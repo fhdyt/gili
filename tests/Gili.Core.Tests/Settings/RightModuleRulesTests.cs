@@ -62,6 +62,7 @@ public class RightModuleRulesTests
     [InlineData("bri", RightModules.Brightness)]
     [InlineData("tray", RightModules.Tray)]
     [InlineData("clock", RightModules.Clock)]
-    [InlineData("power", RightModules.None)]
+    [InlineData("power", RightModules.Power)]
+    [InlineData("settings", RightModules.None)]
     public void Bar_ids_map_to_their_flag(string id, RightModules flag) => Assert.Equal(flag, RightModuleRules.Of(id));
 }
