@@ -137,10 +137,7 @@ public partial class IslandWindow : Window
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
-        _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close)
-        {
-            FloatNote = id => FloatNote?.Invoke(id) == true,
-        };
+        _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
         SystemStats = new SystemViewModel(island.Close);
         _shelfPage = new ShelfViewModel(island.Shelf);
         _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
@@ -227,8 +224,12 @@ public partial class IslandWindow : Window
     /// <summary>Whether the island floats, and the panel's width; the bar fades its backdrop and covered elements (PRD 6.3).</summary>
     public event Action<bool, double>? FloatingChanged;
 
-    /// <summary>Float on top for the open note: true once it floats, false at the limit (F-TOOL-12).</summary>
-    public Func<long, bool>? FloatNote { get; set; }
+    /// <summary>The notes floating outside the island, which the Notes page sends notes to (F-TOOL-12).</summary>
+    public FloatingNotes? Floating
+    {
+        get => _notesPage.Floating;
+        set => _notesPage.Floating = value;
+    }
 
     /// <summary>The island is open (expanded), on any page.</summary>
     public bool IsOpen => _mode == IslandMode.Expanded;
@@ -245,6 +246,14 @@ public partial class IslandWindow : Window
         var device = Body.PointToScreen(new Point(0, 0));
         var dpi = VisualTreeHelper.GetDpi(this);
         return new NoteRect(device.X / dpi.DpiScaleX, device.Y / dpi.DpiScaleY, Body.ActualWidth, Body.ActualHeight);
+    }
+
+    /// <summary>Whether a point on screen (pixels) is over the island's black shape: a dragged note past it tears off.</summary>
+    private bool OverIsland(Point screen)
+    {
+        if (PresentationSource.FromVisual(Body) is null) return true;
+        var at = Body.PointFromScreen(screen);
+        return at.X >= 0 && at.Y >= 0 && at.X <= Body.ActualWidth && at.Y <= Body.ActualHeight;
     }
 
     /// <summary>A note is about to come home into the open grid: its card stays hidden until the note lands in it.</summary>
@@ -983,7 +992,7 @@ public partial class IslandWindow : Window
         IslandPage.Alarms => new AlarmsPage(_alarmsPage),
         IslandPage.Calendar => new CalendarPage(_calendarPage),
         IslandPage.Todo => new TodoPage(_todoPage),
-        IslandPage.Notes => _notesView = new NotesPage(_notesPage),
+        IslandPage.Notes => _notesView = new NotesPage(_notesPage) { IsOverIsland = OverIsland },
         IslandPage.System => new SystemPage(SystemStats),
         IslandPage.Shelf => new ShelfPage(_shelfPage, _island),
         _ => Placeholder(tab),

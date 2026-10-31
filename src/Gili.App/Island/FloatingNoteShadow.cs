@@ -51,9 +51,9 @@ public sealed class FloatingNoteShadow : Window
     }
 
     /// <summary>The deeper shadow while the note is held by its header (mockup .fnote.held), in 220 ms.</summary>
-    public void SetHeld(bool held)
+    public void SetHeld(bool held, bool animate = true)
     {
-        var animated = SystemParameters.ClientAreaAnimation;
+        var animated = animate && SystemParameters.ClientAreaAnimation;
         Fade(_held, held ? 1 : 0, animated);
         Fade(_rest, held ? 0 : 1, animated);
     }

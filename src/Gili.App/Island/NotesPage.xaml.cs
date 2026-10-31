@@ -76,6 +76,9 @@ public partial class NotesPage : UserControl
         Placeholder.Visibility = Visibility.Visible;
     }
 
+    /// <summary>Whether a point on screen (pixels) is over the island; a dragged note past it tears off. Set by the island.</summary>
+    public Func<Point, bool>? IsOverIsland { get; init; }
+
     /// <summary>
     /// The page's height is its content: the top row, then the cards or the open editor, whichever is taller, so the
     /// island grows first when a note opens (mockup pageNeed).
@@ -282,7 +285,8 @@ public partial class NotesPage : UserControl
     private void Lift(NoteCardView card, MouseEventArgs e)
     {
         var topLeft = card.PointToScreen(new Point(0, 0));
-        var window = new NoteDragWindow(card.Note, _vm.Edited(card.Note), card.ActualWidth, card.ActualHeight, e.GetPosition(card))
+        var look = new NoteCardView(card.Note, _vm.Edited(card.Note)) { Focusable = false, IsTabStop = false };
+        var window = new NoteDragWindow(card.Note, look, card.ActualWidth, card.ActualHeight, e.GetPosition(card), NoteFloat.Corner)
         {
             Owner = Window.GetWindow(this),
         };
@@ -301,8 +305,13 @@ public partial class NotesPage : UserControl
     /// </summary>
     private void Follow(CardDrag drag, MouseEventArgs e)
     {
-        drag.Window.MoveTo(PointToScreen(e.GetPosition(this)) - drag.Grab);
-        if (DateTime.UtcNow < drag.PausedUntil) return;
+        var pointer = PointToScreen(e.GetPosition(this));
+        drag.Window.MoveTo(pointer - drag.Grab);
+        // Past the island's edge the note tears off; back inside, its card comes back (PRD 6.3 "Note mengambang").
+        var outside = IsOverIsland is { } over && !over(pointer);
+        if (outside && !drag.Torn) Tear(drag);
+        else if (!outside && drag.Torn) Mend(drag);
+        if (drag.Torn || DateTime.UtcNow < drag.PausedUntil) return;
         var view = e.GetPosition(Scroller);
         if (view.X < 0 || view.Y < 0 || view.X >= Scroller.ActualWidth || view.Y >= Scroller.ActualHeight) return;
         var at = e.GetPosition(Cards);
@@ -319,12 +328,42 @@ public partial class NotesPage : UserControl
     }
 
     /// <summary>
+    /// The note has left the island: its card leaves the grid, which closes the gap, and the shadow deepens; the
+    /// dragged note keeps its size. With six notes floating it stays a reorder, and the page says so once per drag.
+    /// </summary>
+    private void Tear(CardDrag drag)
+    {
+        if (_vm.Floating is not { } floating) return;
+        if (!floating.CanFloatAnother)
+        {
+            if (drag.Warned) return;
+            drag.Warned = true;
+            _vm.ShowHint(NoteText.FloatLimit);
+            return;
+        }
+        drag.Torn = true;
+        Cards.Children.Remove(drag.Card);
+        drag.Window.SetTorn(true);
+    }
+
+    /// <summary>Back inside before it is let go: its card comes back to the grid at its place in the drag's order, and the others make room.</summary>
+    private void Mend(CardDrag drag)
+    {
+        drag.Torn = false;
+        SyncCards();
+        drag.Window.SetTorn(false);
+    }
+
+    /// <summary>
     /// Let go anywhere, inside the island or not: the order is written once, the window lands in the card's slot
     /// (340 ms with a little bounce) and the card takes its place as it goes. The island closing lets go at once.
+    /// A note torn off and let go outside the island floats instead.
     /// </summary>
     private async void LetGo(bool instant)
     {
         if (_drag is not { Landing: false } drag) return;
+        if (drag.Torn && (instant || !FloatOut(drag))) Mend(drag);
+        if (!ReferenceEquals(_drag, drag)) return;
         drag.Landing = true;
         ClearValue(CursorProperty);
         if (IsMouseCaptured) ReleaseMouseCapture();
@@ -332,6 +371,32 @@ public partial class NotesPage : UserControl
         var kept = _cards.TryGetValue(drag.Card.Id, out var card) && ReferenceEquals(card, drag.Card);
         if (!instant && kept && IsVisible && LandingRect(drag.Card) is { } slot) await drag.Window.LandAsync(slot);
         Landed(drag);
+    }
+
+    /// <summary>
+    /// Let go outside the island (mockup landTear): the order reached is written, the note leaves the island, the page
+    /// lets go of it and the island closes; the dragged note grows into the floating note's size around the grab point,
+    /// and the floating note's window then takes its place. False when it cannot float after all.
+    /// </summary>
+    private bool FloatOut(CardDrag drag)
+    {
+        if (_vm.Floating is not { } floating) return false;
+        _vm.Reorder(drag.Order);
+        if (!floating.BeginLanding(drag.Card.Id, drag.Window.Grown)) return false;
+        _drag = null;
+        _vm.IsDragging = false;
+        ClearValue(CursorProperty);
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        _vm.CloseIsland();
+        _ = Grow(floating, drag.Window, drag.Card.Id);
+        return true;
+    }
+
+    private static async Task Grow(FloatingNotes floating, NoteDragWindow window, long id)
+    {
+        await window.GrowAsync();
+        floating.FinishLanding(id);
+        AfterFrame(window.Close);
     }
 
     /// <summary>The card takes the window's place; the window goes once the frame with the card in it is on screen.</summary>
@@ -758,6 +823,12 @@ public partial class NotesPage : UserControl
         public IReadOnlyList<long> Order { get; set; } = order;
         public DateTime PausedUntil { get; set; }
         public bool Landing { get; set; }
+
+        /// <summary>Past the island's edge: its card has left the grid.</summary>
+        public bool Torn { get; set; }
+
+        /// <summary>The six-note limit was shown once in this drag.</summary>
+        public bool Warned { get; set; }
     }
 
     private static SolidColorBrush Frozen(byte r, byte g, byte b)

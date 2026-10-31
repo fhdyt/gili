@@ -206,7 +206,7 @@ public partial class App : Application
         _islandWindow.Show();
         // Notes that floated when Gili closed come back where they were (F-TOOL-12).
         _floating = new FloatingNotes(_notes, _islandWindow);
-        _islandWindow.FloatNote = _floating.FloatOnTop;
+        _islandWindow.Floating = _floating;
         _bar.FullscreenChanged += _floating.SetFullscreen;
         _floating.Restore();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).

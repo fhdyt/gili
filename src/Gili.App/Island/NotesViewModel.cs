@@ -100,8 +100,8 @@ public sealed partial class NotesViewModel : ObservableObject
 
     public void NotifyContentChanged() => ContentChanged?.Invoke();
 
-    /// <summary>Puts a note on its own window outside the island; set by the island (F-TOOL-12).</summary>
-    public Func<long, bool>? FloatNote { get; init; }
+    /// <summary>The notes floating outside the island, which a note joins with Float on top or a drag (F-TOOL-12).</summary>
+    public FloatingNotes? Floating { get; set; }
 
     /// <summary>Whether another note may leave the island; at six the page says so instead (PRD 6.3 "Batas").</summary>
     public bool CanFloatAnother() => NoteFloat.CanFloat(_notes.FloatingCount);
@@ -130,7 +130,7 @@ public sealed partial class NotesViewModel : ObservableObject
         }
         Shut();
         EditorClosed?.Invoke(new EditorClose(id, ToSlot: false, Fade: false, Instant: true));
-        if (FloatNote?.Invoke(id) == true) _closeIsland();
+        if (Floating?.FloatOnTop(id) == true) _closeIsland();
     }
 
     /// <summary>A note dragged out of the editor has left the island: the editor closes at once and the note stays, even empty.</summary>

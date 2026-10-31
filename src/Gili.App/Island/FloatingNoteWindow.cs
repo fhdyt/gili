@@ -219,6 +219,13 @@ public sealed class FloatingNoteWindow : Window
         Pop(from: 1, peak: 1.035);
     }
 
+    /// <summary>Taking over from a dragged note, which had the deeper shadow: it settles to the resting one in 220 ms.</summary>
+    public void ArriveHeld()
+    {
+        _shadow.SetHeld(true, animate: false);
+        _shadow.SetHeld(false);
+    }
+
     /// <summary>Float on top: the note appears at 0.9 and fading in, 420 ms on the spring curve (mockup fBorn).</summary>
     public void Born()
     {

@@ -18,6 +18,7 @@ public sealed class FloatingNotes
     private readonly NoteService _notes;
     private readonly IslandWindow _island;
     private readonly Dictionary<long, FloatingNoteWindow> _windows = [];
+    private readonly HashSet<long> _landing = [];
     private bool _fullscreen;
     private bool _keeping;
 
@@ -60,8 +61,31 @@ public sealed class FloatingNotes
     /// </summary>
     public bool FloatOnTop(long id) => _notes.Float(id, NoteFloat.Default(_notes.FloatingCount, WorkArea()), fromButton: true);
 
-    /// <summary>A dragged note has grown into its window here: it floats from now on, ready to type in. False at the limit.</summary>
-    public bool Land(long id, NoteRect rect) => _notes.Float(id, rect, fromButton: false);
+    /// <summary>Whether another note may leave the island; at six the Notes page says so instead (PRD 6.3 "Batas").</summary>
+    public bool CanFloatAnother => NoteFloat.CanFloat(_notes.FloatingCount);
+
+    /// <summary>
+    /// A dragged note was let go outside the island and is growing into its window at <paramref name="rect"/>: it has
+    /// left the island from now on, but its window comes only with <see cref="FinishLanding"/>. False at the limit.
+    /// </summary>
+    public bool BeginLanding(long id, NoteRect rect)
+    {
+        _landing.Add(id);
+        if (_notes.Float(id, rect, fromButton: false)) return true;
+        _landing.Remove(id);
+        return false;
+    }
+
+    /// <summary>The dragged note has grown: its window takes over in the same place, springs inside the work area, and takes the keyboard.</summary>
+    public FloatingNoteWindow? FinishLanding(long id)
+    {
+        if (!_landing.Remove(id) || _notes.Notes.FirstOrDefault(n => n.Id == id) is not { Float: { } rect } note) return null;
+        var window = Open(note, rect);
+        window.ArriveHeld();
+        window.SettleInside();
+        window.FocusText();
+        return window;
+    }
 
     /// <summary>Fullscreen hides every floating note, like the bar, and they come back after it (PRD 6.3).</summary>
     public void SetFullscreen(bool fullscreen)
@@ -80,6 +104,8 @@ public sealed class FloatingNotes
 
     private void OnFloated(Note note, bool fromButton)
     {
+        // A dragged note still growing gets its window once it has grown.
+        if (_landing.Contains(note.Id)) return;
         var window = Open(note, note.Float!.Value);
         if (fromButton) window.Born();
         else window.SettleInside();
