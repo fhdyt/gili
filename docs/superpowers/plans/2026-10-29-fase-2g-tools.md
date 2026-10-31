@@ -149,4 +149,4 @@
 
 - [ ] **Step 1:** `dotnet build Gili.slnx -c Release` 0 warning, `dotnet test tests/Gili.Core.Tests` lulus, dan `dotnet format Gili.slnx --verify-no-changes` bersih.
 - [ ] **Step 2:** `pwsh scripts/publish.ps1` dan `pwsh scripts/package.ps1 -Install`; tiga timer berlabel dan stopwatch dengan lap bertahan setelah restart di kedua bentuk.
-- [ ] **Step 3:** Anggaran 8.1: CPU diam < 1% dengan Tools tertutup; dengan tab Stopwatch terbuka dan berjalan, CPU tetap di anggaran; RAM diam tidak naik > 5 MB; setelah Tools ditutup memori turun dalam 30 detik.
+- [ ] **Step 3:** Anggaran 8.1: CPU diam < 1% dengan Tools tertutup; dengan tab Stopwatch terbuka dan berjalan, CPU tetap di anggaran; setelah siklus buka-tutup Tools pertama, RAM diam tidak naik > 5 MB per siklus berikutnya; 30 detik setelah Tools ditutup memori turun (GC penuh). Biaya sekali waktu dari pembukaan pertama (JIT, cache WPF) tidak bisa dikembalikan, jadi RAM tidak kembali persis ke angka sebelum Tools dibuka.
