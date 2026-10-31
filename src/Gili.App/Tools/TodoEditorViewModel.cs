@@ -34,7 +34,7 @@ public sealed partial class TodoEditorViewModel : ObservableObject
         _today = today;
         EditingId = existing.Id;
         _titleText = existing.Title;
-        _dateText = TodoText.DateInput(existing.DueDate, today());
+        _dateText = TodoText.DateField(existing.DueDate, today());
         _timeText = existing.DueTime is { } time ? time.ToString("HH:mm") : "";
         CancelCommand = new RelayCommand(cancel);
     }

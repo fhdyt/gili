@@ -80,6 +80,10 @@ public static class TodoText
     /// <summary>The Date field filled from a task: the shown form (Thu 30 Oct, with the year when it is not this year), or blank without a date.</summary>
     public static string DateInput(DateOnly? date, DateOnly today) => date is { } d ? DayWithYear(d, today) : "";
 
+    /// <summary>The Date field filled from a task (mockup dispDate): Today or Tomorrow for those days, else <see cref="DateInput"/>; blank without a date.</summary>
+    public static string DateField(DateOnly? date, DateOnly today) =>
+        date is not { } d ? "" : d == today ? "Today" : d == today.AddDays(1) ? "Tomorrow" : DayWithYear(d, today);
+
     /// <summary>The date on a Todo tab row: Today, Tomorrow or the day, or No date, plus " · 15:00" when it has a time.</summary>
     public static string Due(Todo todo, DateOnly today, bool use24Hour)
     {

@@ -37,6 +37,8 @@ internal sealed class TodoListDrag
 
     private void OnDown(object sender, MouseButtonEventArgs e)
     {
+        // A press that never saw its release (let go outside the list) must not outlive the next one.
+        _press = null;
         if (_landing || _model() is not { CanReorder: true, HasEditor: false } model || e.ChangedButton != MouseButton.Left) return;
         var source = e.OriginalSource as DependencyObject;
         for (var d = source; d is not null && d != _list; d = Parent(d))
@@ -49,18 +51,27 @@ internal sealed class TodoListDrag
         for (var i = 0; i < model.Rows.Count; i++)
             if (_list.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement c) containers.Add(c);
         if (containers.Count != model.Rows.Count) return;
-        _press = new Drag(model, containers, from, e.GetPosition(_list).Y, container.ActualHeight);
+        _press = new Drag(model, containers, from, model.Rows[from].Id, e.GetPosition(_list).Y, container.ActualHeight);
     }
 
     private void OnMove(object sender, MouseEventArgs e)
     {
-        if (_press is not { } drag || e.LeftButton != MouseButtonState.Pressed) return;
+        if (_press is not { } drag) return;
+        if (e.LeftButton != MouseButtonState.Pressed || !drag.Model.CanReorder || drag.Model.HasEditor)
+        {
+            // The button came up unseen, or the list changed under the press: drop it.
+            _press = null;
+            if (drag.Lifted) Land(drag, commit: false);
+            return;
+        }
         var dy = e.GetPosition(_list).Y - drag.StartY;
         if (!drag.Lifted)
         {
             if (Math.Abs(dy) < LiftDistance) return;
             drag.Lifted = true;
-            if (SystemParameters.ClientAreaAnimation)
+            // Read once: a setting flipped mid-drag must not change which transforms exist.
+            drag.Animated = SystemParameters.ClientAreaAnimation;
+            if (drag.Animated)
             {
                 drag.Attach();
                 Lift(drag);
@@ -69,7 +80,7 @@ internal sealed class TodoListDrag
             _list.CaptureMouse();
         }
         drag.To = Target(drag, dy);
-        if (!SystemParameters.ClientAreaAnimation) return;
+        if (!drag.Animated) return;
         drag.Move.Y = dy;
         for (var k = 0; k < drag.Containers.Count; k++)
         {
@@ -94,7 +105,7 @@ internal sealed class TodoListDrag
     /// <summary>The pointer was taken away (another window, Esc by the system): the row goes back.</summary>
     private void OnLostCapture(object sender, MouseEventArgs e)
     {
-        if (_press is not { Lifted: true } drag || _landing) return;
+        if (e.OriginalSource != _list || _press is not { Lifted: true } drag || _landing) return;
         _press = null;
         Land(drag, commit: false);
     }
@@ -102,16 +113,20 @@ internal sealed class TodoListDrag
     private void Land(Drag drag, bool commit)
     {
         _list.ReleaseMouseCapture();
-        var moves = commit && drag.To != drag.From && drag.Model.Rows.Count > drag.To;
-        var id = drag.Model.Rows[drag.From].Id;
-        var target = moves ? drag.Model.Rows[drag.To].Id : id;
+        var rows = drag.Model.Rows;
+        // The list may have changed since the press; then nothing is committed.
+        var same = drag.From < rows.Count && rows[drag.From].Id == drag.Id && rows.Count == drag.Containers.Count;
+        var moves = commit && same && drag.To != drag.From && drag.To < rows.Count;
+        var id = drag.Id;
+        var target = moves ? rows[drag.To].Id : id;
         void Done()
         {
             _landing = false;
             drag.Clear();
             if (moves) drag.Model.Drop(id, target);
+            if (same) FocusRow(drag.Model, id);
         }
-        if (!SystemParameters.ClientAreaAnimation)
+        if (!drag.Animated)
         {
             Done();
             return;
@@ -119,7 +134,7 @@ internal sealed class TodoListDrag
         _landing = true;
         // The other rows keep their offsets until the list changes; the dragged one settles into its slot.
         if (!moves) for (var k = 0; k < drag.Shifts.Count; k++) Slide(drag, k, 0);
-        drag.Model.Rows[drag.From].IsLifted = false;
+        if (same) rows[drag.From].IsLifted = false;
         var slot = moves ? (drag.To - drag.From) * drag.Height : 0;
         var land = BezierEase.To(slot, Milliseconds, BezierEase.Out);
         land.Completed += (_, _) => Done();
@@ -160,6 +175,11 @@ internal sealed class TodoListDrag
         e.Handled = true;
         var id = model.Rows[index].Id;
         if (!model.Move(id, key == Key.Up ? -1 : 1)) return;
+        FocusRow(model, id);
+    }
+
+    /// <summary>Puts the keyboard focus back on a task's row once the list has settled.</summary>
+    private void FocusRow(TodoTabViewModel model, long id) =>
         _list.Dispatcher.InvokeAsync(() =>
         {
             for (var i = 0; i < model.Rows.Count; i++)
@@ -168,7 +188,6 @@ internal sealed class TodoListDrag
                 Root(moved)?.Focus();
             }
         }, System.Windows.Threading.DispatcherPriority.Loaded);
-    }
 
     private static DependencyObject? Parent(DependencyObject d) =>
         d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
@@ -179,11 +198,12 @@ internal sealed class TodoListDrag
     /// <summary>One press on a row, and the offsets its rows carry while it is dragged.</summary>
     private sealed class Drag
     {
-        public Drag(TodoTabViewModel model, List<FrameworkElement> containers, int from, double startY, double height)
+        public Drag(TodoTabViewModel model, List<FrameworkElement> containers, int from, long id, double startY, double height)
         {
             Model = model;
             Containers = containers;
             From = To = from;
+            Id = id;
             StartY = startY;
             Height = height;
         }
@@ -222,6 +242,12 @@ internal sealed class TodoListDrag
 
         public int From { get; }
 
+        /// <summary>The pressed task, to be sure the list still holds it at that place when it lands.</summary>
+        public long Id { get; }
+
+        /// <summary>Whether this drag lifts and slides, decided once when it lifts.</summary>
+        public bool Animated { get; set; }
+
         public int To { get; set; }
 
         public double StartY { get; }
@@ -239,7 +265,7 @@ internal sealed class TodoListDrag
                 row.Effect = null;
                 Panel.SetZIndex(row, 0);
             }
-            if (From < Model.Rows.Count) Model.Rows[From].IsLifted = false;
+            if (From < Model.Rows.Count && Model.Rows[From].Id == Id) Model.Rows[From].IsLifted = false;
         }
     }
 }

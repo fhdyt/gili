@@ -3221,7 +3221,7 @@ function dateParse(v){
 }
 const timeOk=v=>!v.trim()||!!alParse(v);
 function pastToday(dt,tm){
-  const k=dateParse(dt),t=alParse(tm||'');if(k!==dayOffset(0)||!t)return false;
+  const k=dt.trim()?dateParse(dt):dayOffset(0),t=alParse(tm||'');if(k!==dayOffset(0)||!t)return false;
   const n=new Date();return t<pad(n.getHours())+':'+pad(n.getMinutes());
 }
 // Sample tasks with dates (the island's Today list only shows undated tasks and tasks due today)
@@ -3280,7 +3280,7 @@ $('#toolp').addEventListener('pointerdown',e=>{
 });
 $('#toolp').addEventListener('pointermove',e=>{
   const g=tdDrag;if(!g)return;
-  const dy=e.clientY-g.y0;if(!g.moved&&Math.abs(dy)<4)return;
+  const dy=e.clientY-g.y0;if(!g.moved&&Math.abs(dy)<6)return;
   g.moved=true;if(S.reduce)return;
   g.row.classList.add('lift');g.row.style.transform=`translateY(${dy}px) scale(1.02)`;
   g.to=Math.max(0,Math.min(g.rows.length-1,Math.round(g.from+dy/g.h)));

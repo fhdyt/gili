@@ -13,6 +13,21 @@ public class TodoTextTests
         new(1, title, due ?? Tuesday, time, null, done ? Created : null, 0, Created);
 
     [Fact]
+    public void The_date_field_says_Today_and_Tomorrow_and_reads_them_back()
+    {
+        Assert.Equal("", TodoText.DateField(null, Tuesday));
+        Assert.Equal("Today", TodoText.DateField(Tuesday, Tuesday));
+        Assert.Equal("Tomorrow", TodoText.DateField(Tuesday.AddDays(1), Tuesday));
+        Assert.Equal("Fri 30 Oct", TodoText.DateField(new DateOnly(2026, 10, 30), Tuesday));
+        Assert.Equal("Wed 3 Nov 2027", TodoText.DateField(new DateOnly(2027, 11, 3), Tuesday));
+        foreach (var day in new DateOnly?[] { null, Tuesday, Tuesday.AddDays(1), new DateOnly(2027, 11, 3) })
+        {
+            Assert.True(TodoText.TryDate(TodoText.DateField(day, Tuesday), Tuesday, out var back));
+            Assert.Equal(day, back);
+        }
+    }
+
+    [Fact]
     public void Blank_titles_are_refused()
     {
         Assert.Null(TodoText.Title("   "));
