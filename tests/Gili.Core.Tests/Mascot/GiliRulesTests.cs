@@ -5,7 +5,59 @@ namespace Gili.Core.Tests.Mascot;
 public class GiliRulesTests
 {
     [Fact]
+    public void Startled_beats_everything() =>
+        Assert.Equal(GiliMood.Surprise, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true, Happy: true, Startled: true, Focused: true)));
+
+    [Fact]
     public void Happy_beats_dragging_and_sleep() => Assert.Equal(GiliMood.Happy, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true, Happy: true)));
+
+    [Fact]
+    public void Sleep_beats_focus() => Assert.Equal(GiliMood.Sleep, GiliRules.Mood(new(false, TimeSpan.FromMinutes(5), false, Focused: true)));
+
+    [Fact]
+    public void Focus_beats_music() => Assert.Equal(GiliMood.Focus, GiliRules.Mood(new(false, TimeSpan.Zero, true, Focused: true)));
+
+    [Fact]
+    public void An_alarm_while_asleep_startles() => Assert.Equal(GiliMood.Surprise, GiliRules.Mood(new(false, TimeSpan.FromHours(1), false, Startled: true)));
+
+    [Theory]
+    [InlineData("alarm:12", true)]
+    [InlineData("timer", true)]
+    [InlineData("timer:3", true)]
+    [InlineData("pomo-focus", true)]
+    [InlineData("pomo-break", true)]
+    [InlineData("todo:7", true)]
+    [InlineData("conflict:1", false)]
+    [InlineData("timers", false)]
+    [InlineData(null, false)]
+    public void Alarm_timer_pomodoro_and_reminder_cards_startle(string? card, bool startles) => Assert.Equal(startles, GiliRules.Startles(card));
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 1)]
+    [InlineData(60, 1)]
+    [InlineData(61, 2)]
+    [InlineData(1499, 25)]
+    public void A_timer_shows_its_minutes_rounded_up(int seconds, int minute) => Assert.Equal(minute, GiliRules.TimerMinute(TimeSpan.FromSeconds(seconds)));
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(59, 0)]
+    [InlineData(60, 1)]
+    [InlineData(3599, 59)]
+    public void A_stopwatch_shows_its_minutes_rounded_down(int seconds, int minute) => Assert.Equal(minute, GiliRules.StopwatchMinute(TimeSpan.FromSeconds(seconds)));
+
+    [Fact]
+    public void A_new_minute_brings_a_glance_at_most_every_four_seconds()
+    {
+        var at = new DateTime(2026, 10, 31, 12, 0, 0, DateTimeKind.Utc);
+        Assert.True(GiliRules.Glances(25, 24, at.AddSeconds(-4), at));
+        Assert.False(GiliRules.Glances(25, 24, at.AddSeconds(-3.9), at));
+        Assert.False(GiliRules.Glances(25, 25, DateTime.MinValue, at));
+        // The first minute read, or the slot leaving a timer, is no change to glance at.
+        Assert.False(GiliRules.Glances(null, 25, DateTime.MinValue, at));
+        Assert.False(GiliRules.Glances(25, null, DateTime.MinValue, at));
+    }
 
     [Fact]
     public void Dragging_beats_sleep_and_music() => Assert.Equal(GiliMood.Wide, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true)));
@@ -25,7 +77,9 @@ public class GiliRulesTests
         Assert.False(GiliRules.CanBlink(GiliMood.Sleep));
         Assert.False(GiliRules.CanBlink(GiliMood.Wide));
         Assert.False(GiliRules.CanBlink(GiliMood.Happy));
+        Assert.False(GiliRules.CanBlink(GiliMood.Surprise));
         Assert.True(GiliRules.CanBlink(GiliMood.Enjoy));
+        Assert.True(GiliRules.CanBlink(GiliMood.Focus));
     }
 
     [Fact]

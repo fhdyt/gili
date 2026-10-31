@@ -129,7 +129,7 @@
                         <!-- A timer, pomodoro or stopwatch: its icon at the left end, the time at the right (mockup ACT_ICON). -->
                         <DockPanel MinWidth="172" Visibility="{Binding ShowTimerSlot, Converter={StaticResource VisibleWhen}}">
                             <c:IconView DockPanel.Dock="Left" Glyph="{Binding TimerSlotGlyph}" Foreground="{Binding TimerSlotBrush}" Width="14" Height="14" />
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding TimerSlotValue}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TimerSlotDigits" DockPanel.Dock="Right" Text="{Binding TimerSlotValue}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             <Border />
                         </DockPanel>
 

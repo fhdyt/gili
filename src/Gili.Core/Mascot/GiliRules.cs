@@ -5,14 +5,15 @@ namespace Gili.Core.Mascot;
 /// <summary>Where Gili is drawn (PRD 6.3 "Maskot Gili"): inside the idle island, the circle beside it, or beside the tab menu.</summary>
 public enum GiliForm { InIsland, Circle, Menu }
 
-/// <summary>
-/// Gili's expressions available so far, lowest first in priority. Focus and Surprise come later (PRD 6.3
-/// "Ekspresi Gili").
-/// </summary>
-public enum GiliMood { Neutral, Enjoy, Sleep, Wide, Happy }
+/// <summary>Gili's expressions, lowest first in priority (PRD 6.3 "Ekspresi Gili").</summary>
+public enum GiliMood { Neutral, Enjoy, Focus, Sleep, Wide, Happy, Surprise }
 
-/// <summary>What the expression depends on: a mouse drag, time since the last input, music playing in the slot, and a note just home.</summary>
-public readonly record struct GiliInputs(bool Dragging, TimeSpan Idle, bool MusicPlayingInSlot, bool Happy = false);
+/// <summary>
+/// What the expression depends on: a mouse drag, time since the last input, music playing in the slot, a note just
+/// home, an alarm, timer, pomodoro or reminder card showing, and a running timer, stopwatch or focus session in the slot.
+/// </summary>
+public readonly record struct GiliInputs(
+    bool Dragging, TimeSpan Idle, bool MusicPlayingInSlot, bool Happy = false, bool Startled = false, bool Focused = false);
 
 /// <summary>Side, corner radius and gap of Gili's two eyes in one form.</summary>
 public readonly record struct GiliEyeSize(double Side, double Radius, double Gap);
@@ -29,16 +30,43 @@ public static class GiliRules
     private const double IslandReach = 0.4;
     private const double CircleReach = 400;
 
-    /// <summary>The highest expression that applies: happy for a note come home, wide eyes while dragging, then asleep, then enjoying music.</summary>
+    /// <summary>How long the eyes glance at the slot's digits when a new minute shows, and the least time between glances.</summary>
+    public static readonly TimeSpan GlanceFor = TimeSpan.FromSeconds(1.2);
+    public static readonly TimeSpan GlanceGap = TimeSpan.FromSeconds(4);
+
+    /// <summary>
+    /// The highest expression that applies: startled by a card, happy for a note come home, wide eyes while dragging,
+    /// asleep, focused on a timer, then enjoying music. Asleep beats focus and music, so someone who walks away finds
+    /// Gili asleep; an alarm still startles it awake.
+    /// </summary>
     public static GiliMood Mood(GiliInputs inputs) =>
-        inputs.Happy ? GiliMood.Happy
+        inputs.Startled ? GiliMood.Surprise
+        : inputs.Happy ? GiliMood.Happy
         : inputs.Dragging ? GiliMood.Wide
         : inputs.Idle >= SleepAfter ? GiliMood.Sleep
+        : inputs.Focused ? GiliMood.Focus
         : inputs.MusicPlayingInSlot ? GiliMood.Enjoy
         : GiliMood.Neutral;
 
-    /// <summary>Closed, wide and happy eyes don't blink, on a timer or on a click.</summary>
-    public static bool CanBlink(GiliMood mood) => mood is not (GiliMood.Sleep or GiliMood.Wide or GiliMood.Happy);
+    /// <summary>Closed, startled, wide and happy eyes don't blink, on a timer or on a click.</summary>
+    public static bool CanBlink(GiliMood mood) => mood is not (GiliMood.Sleep or GiliMood.Wide or GiliMood.Happy or GiliMood.Surprise);
+
+    /// <summary>The cards that startle Gili: an alarm, a finished timer or pomodoro phase, and a task reminder (mockup STARTLE).</summary>
+    public static bool Startles(string? cardId) =>
+        cardId is "timer" or "pomo-focus" or "pomo-break"
+        || (cardId is not null && (cardId.StartsWith("alarm:", StringComparison.Ordinal)
+            || cardId.StartsWith("timer:", StringComparison.Ordinal)
+            || cardId.StartsWith("todo:", StringComparison.Ordinal)));
+
+    /// <summary>The minute a countdown shows in the slot: what is left, rounded up (24:59 is minute 25).</summary>
+    public static int TimerMinute(TimeSpan remaining) => (int)Math.Ceiling(Math.Max(0, remaining.TotalSeconds) / 60);
+
+    /// <summary>The minute a stopwatch shows in the slot: whole minutes run.</summary>
+    public static int StopwatchMinute(TimeSpan elapsed) => (int)Math.Floor(Math.Max(0, elapsed.TotalSeconds) / 60);
+
+    /// <summary>Whether the eyes glance at the slot: its minute changed since the last read, and the last glance was 4 s ago or more.</summary>
+    public static bool Glances(int? before, int? now, DateTime lastGlance, DateTime at) =>
+        before is { } b && now is { } n && b != n && at - lastGlance >= GlanceGap;
 
     /// <summary>How long Gili is happy when a floating note comes home into the closed island.</summary>
     public static readonly TimeSpan HappyFor = TimeSpan.FromMilliseconds(900);

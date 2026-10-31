@@ -119,7 +119,9 @@ public sealed class GiliEyes : Grid
         var (scaleX, scaleY, shiftY) = mood switch
         {
             GiliMood.Enjoy => (1.0, 0.5, 0.0),
-            GiliMood.Wide => (1.3, 1.3, 0.0),
+            // Startled looks like the wide eyes of a drag (mockup .x-surprise); focused squints to 70% (.x-focus).
+            GiliMood.Wide or GiliMood.Surprise => (1.3, 1.3, 0.0),
+            GiliMood.Focus => (1.0, 0.7, 0.0),
             GiliMood.Sleep => (1.0, 0.16, 1.0),
             GiliMood.Happy => (1.0, 0.42, 0.0),
             _ => (1.0, 1.0, 0.0),
@@ -131,7 +133,7 @@ public sealed class GiliEyes : Grid
             eye.RenderTransformOrigin = mood is GiliMood.Enjoy or GiliMood.Happy ? new Point(0.5, 1) : new Point(0.5, 0.5);
             eye.CornerRadius = mood switch
             {
-                GiliMood.Wide => new CornerRadius(_size.Side / 2),
+                GiliMood.Wide or GiliMood.Surprise => new CornerRadius(_size.Side / 2),
                 GiliMood.Happy => new CornerRadius(_size.Side / 2, _size.Side / 2, 1, 1),
                 GiliMood.Sleep => new CornerRadius(2),
                 _ => new CornerRadius(_size.Radius),

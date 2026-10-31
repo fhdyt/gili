@@ -22,6 +22,12 @@ public sealed class GiliService : IDisposable
     private bool _isHappy;
     private Func<Point>? _watch;
     private DateTime _watchUntil;
+    private bool _startled;
+    private bool _focused;
+    private int? _minute;
+    private DateTime _glanceAt = DateTime.MinValue;
+    private DateTime _glanceUntil = DateTime.MinValue;
+    private bool _glancing;
     private bool _shown;
     private bool _paused;
     private readonly Spring _x = new(0) { Parameters = GiliRules.EyeSpring };
@@ -94,8 +100,30 @@ public sealed class GiliService : IDisposable
     {
         if (_watch is null) return;
         _watch = null;
-        if (_visible) Aim(ToDips(PointerState.Read()));
+        if (_visible) Aim(Held() ?? ToDips(PointerState.Read()));
     }
+
+    /// <summary>An alarm, timer, pomodoro or reminder card shows: startled until it is answered (PRD 6.3 "Ekspresi Gili" #1).</summary>
+    public void SetStartled(bool startled)
+    {
+        if (_startled == startled) return;
+        _startled = startled;
+        UpdateMood();
+    }
+
+    /// <summary>A running timer, stopwatch or focus session holds the slot: focused (PRD 6.3 "Ekspresi Gili" #5).</summary>
+    public void SetFocused(bool focused)
+    {
+        if (_focused == focused) return;
+        _focused = focused;
+        UpdateMood();
+    }
+
+    /// <summary>The minute the slot shows (null without a timer there), read once a second while Gili shows.</summary>
+    public Func<int?>? SlotMinute { get; set; }
+
+    /// <summary>The middle of the slot's digits on screen, in DIPs, which a glance looks at.</summary>
+    public Func<Point?>? SlotDigits { get; set; }
 
     /// <summary>Gili shows (Show Gili on, bar visible, no fullscreen): only then are the pointer and the clock read.</summary>
     public void SetVisible(bool visible)
@@ -137,17 +165,20 @@ public sealed class GiliService : IDisposable
     {
         var sample = PointerState.Read();
         var point = ToDips(sample);
-        // A watched note wins over the pointer, and is followed every read while it moves.
-        if (_watch is { } watched)
+        // A watched note, then a glance at the slot's digits, win over the pointer and are followed every read.
+        if (_watch is not null && DateTime.UtcNow >= _watchUntil) _watch = null;
+        if (_glancing && DateTime.UtcNow >= _glanceUntil)
         {
-            if (DateTime.UtcNow < _watchUntil) Aim(watched());
-            else Unwatch();
+            _glancing = false;
+            if (_watch is null) Aim(point);
         }
+        var held = Held();
+        if (held is { } target) Aim(target);
         if (sample.X != _last.X || sample.Y != _last.Y)
         {
             _lastMove = DateTime.UtcNow;
             Wake();
-            if (_watch is null) Aim(point);
+            if (held is null) Aim(point);
             if (_last.Left && sample.Left && !_dragging && (point - _dragFrom).Length >= GiliRules.DragThreshold)
             {
                 _dragging = true;
@@ -178,13 +209,31 @@ public sealed class GiliService : IDisposable
     {
         _idle = PointerState.IdleTime();
         UpdateMood();
+        // Focused on a timer, the eyes glance at the digits for 1.2 s whenever a new minute shows, at most every 4 s.
+        var minute = SlotMinute?.Invoke();
+        var now = DateTime.UtcNow;
+        if (_mood == GiliMood.Focus && GiliRules.Glances(_minute, minute, _glanceAt, now))
+        {
+            _glanceAt = now;
+            _glanceUntil = now + GiliRules.GlanceFor;
+            _glancing = true;
+            if (Held() is { } digits) Aim(digits);
+        }
+        _minute = minute;
         // After 8 s of a still pointer the eyes drift back to the middle.
-        if (_watch is null && DateTime.UtcNow - _lastMove >= GiliRules.RecentreAfter) Retarget(0, 0);
+        if (Held() is null && now - _lastMove >= GiliRules.RecentreAfter) Retarget(0, 0);
+    }
+
+    /// <summary>What the eyes look at instead of the pointer: a watched note, then the slot's digits during a glance (PRD 6.3 "Arah pandang").</summary>
+    private Point? Held()
+    {
+        if (_watch is { } watched) return watched();
+        return _glancing ? SlotDigits?.Invoke() : null;
     }
 
     private void UpdateMood()
     {
-        var mood = GiliRules.Mood(new(_dragging, _idle, _music, _isHappy));
+        var mood = GiliRules.Mood(new(_dragging, _idle, _music, _isHappy, _startled, _focused));
         if (mood == _mood) return;
         var wasAsleep = _mood == GiliMood.Sleep;
         _mood = mood;

@@ -71,6 +71,8 @@ public partial class IslandWindow : Window
     private readonly ScaleTransform _giliCircleScale = new(0.6, 0.6);
     private bool? _giliInsideOn;
     private bool? _giliCircleOn;
+    // Gili's circle stays beside a startling card, at its top left (PRD 6.3 "Saat pulau mengambang").
+    private bool _startledCircle;
     private readonly ScaleTransform _bubbleScale = new(0, 0);
     private readonly RectangleGeometry _clip = new();
     private readonly DispatcherTimer _awayTimer = new() { Interval = TimeSpan.FromSeconds(3) };
@@ -159,8 +161,12 @@ public partial class IslandWindow : Window
         _todoPage.ContentChanged += () => PageContentChanged(IslandPage.Todo);
         _notesPage.ContentChanged += () => PageContentChanged(IslandPage.Notes);
         // The Timer page's glow follows the segment and the pomodoro phase.
+        gili.SlotMinute = SlotMinute;
+        gili.SlotDigits = SlotDigits;
         island.Timers.Changed += () =>
         {
+            // A timer started, paused or a pomodoro phase changed: Gili's focus follows (PRD 6.3 "Ekspresi Gili" #5).
+            _gili.SetFocused(SlotFocused());
             var key = $"{island.Timers.Mode}{island.Timers.Pomodoro.Phase}";
             if (key == _glowTimer) return;
             _glowTimer = key;
@@ -585,14 +591,14 @@ public partial class IslandWindow : Window
         GiliCircle.Width = GiliCircle.Height = s.IslandHeight;
         GiliCircle.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
         Canvas.SetLeft(GiliCircle, islandLeft - s.IslandHeight / 2.0 + circle * (-IslandLayout.BubbleGap - s.IslandHeight / 2.0));
-        Canvas.SetTop(GiliCircle, slotTop);
+        Canvas.SetTop(GiliCircle, _startledCircle ? IslandLayout.FromEdge(_top.Value, s.IslandHeight, Height, _bottom) : slotTop);
         _giliCircleScale.ScaleX = _giliCircleScale.ScaleY = 0.6 + 0.4 * circle;
 
         // The dots stand left of the island and Gili's circle, camera nearest; down the panel's edge while it floats.
         var use = _island.Privacy;
         var count = _dots;
         var dots = IslandLayout.PrivacyDots(islandLeft, _top.Value, s.IslandHeight, (s.IslandHeight + IslandLayout.BubbleGap) * circle,
-            Floats(_mode), circleBesideFloating: false, count);
+            Floats(_mode), circleBesideFloating: _startledCircle, count);
         var next = 0;
         if (use.Camera && next < count) _cameraAt = dots[next++];
         if (use.Microphone && next < count) _microphoneAt = dots[next];
@@ -636,8 +642,13 @@ public partial class IslandWindow : Window
     private void UpdateGili()
     {
         var show = _settings.Current.ShowGili && _mode != IslandMode.Hidden;
+        // Beside an alarm, timer, pomodoro or reminder card the circle stays, at the card's top left, startled (PRD 6.3).
+        var startled = _mode == IslandMode.Card && GiliRules.Startles(_island.View.Card?.Id);
+        _startledCircle = show && startled;
+        _gili.SetStartled(startled);
+        _gili.SetFocused(SlotFocused());
         var insideOn = show && _mode == IslandMode.Compact && !_vm.HasActivity;
-        var circleOn = show && ((_mode == IslandMode.Compact && _vm.HasActivity) || _mode == IslandMode.Wide);
+        var circleOn = show && ((_mode == IslandMode.Compact && _vm.HasActivity) || _mode == IslandMode.Wide || startled);
         var menuOn = show && _mode == IslandMode.Expanded && !ShowsControl;
         var instant = !SystemParameters.ClientAreaAnimation;
         if (insideOn != _giliInsideOn)
@@ -663,6 +674,44 @@ public partial class IslandWindow : Window
         _gili.SetActiveForm(menuOn ? GiliForm.Menu : circleOn ? GiliForm.Circle : GiliForm.InIsland);
         _gili.SetVisible(insideOn || circleOn || menuOn);
         _gili.SetMusicPlayingInSlot(_vm.ShowMediaSlot && _vm.MusicPlaying);
+    }
+
+    /// <summary>
+    /// A running timer, stopwatch or pomodoro focus phase holds the slot (PRD 6.3 "Ekspresi Gili" #5): the timer the
+    /// slot shows, so a break, a paused timer or music in the slot is not focus.
+    /// </summary>
+    private bool SlotFocused()
+    {
+        var timers = _island.Timers;
+        return _island.View.Slot switch
+        {
+            ActivityKind.Timer => timers.Pomodoro.Clock.IsRunning
+                ? timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus
+                : (timers.SoonestTimer ?? timers.Timer).IsRunning,
+            ActivityKind.Stopwatch => timers.Stopwatch.IsRunning,
+            _ => false,
+        };
+    }
+
+    /// <summary>The minute the slot's timer shows: what is left rounded up, or the stopwatch's whole minutes; null otherwise.</summary>
+    private int? SlotMinute()
+    {
+        var timers = _island.Timers;
+        var now = DateTimeOffset.UtcNow;
+        return _island.View.Slot switch
+        {
+            ActivityKind.Timer => GiliRules.TimerMinute((timers.Pomodoro.Clock.IsRunning ? timers.Pomodoro.Clock : timers.SoonestTimer ?? timers.Timer).Remaining(now)),
+            ActivityKind.Stopwatch => GiliRules.StopwatchMinute(timers.Stopwatch.Elapsed(now)),
+            _ => null,
+        };
+    }
+
+    /// <summary>The middle of the slot's digits on screen in DIPs, which Gili glances at each new minute.</summary>
+    private Point? SlotDigits()
+    {
+        if (!TimerSlotDigits.IsVisible || PresentationSource.FromVisual(TimerSlotDigits) is not { } source) return null;
+        var device = TimerSlotDigits.PointToScreen(new Point(TimerSlotDigits.ActualWidth / 2, TimerSlotDigits.ActualHeight / 2));
+        return source.CompositionTarget?.TransformFromDevice.Transform(device);
     }
 
     private void ShowLayers(IslandMode mode)
