@@ -678,6 +678,7 @@ Suara tiap kartu diatur di 6.6. Kalau alarm atau timer tidak ditanggapi dalam 5 
 - Menyeret tile keluar menawarkan Copy dan Move ke tujuan (Explorer yang memilih; Shift memaksa Move). Setelah Move berhasil, item keluar dari Shelf; setelah Copy, item tetap.
 - File yang sudah tidak ada dibuang dari Shelf saat halaman Shelf dibuka dan setiap 1 menit. Bundel yang semua filenya hilang ikut terhapus.
 - Folder yang dilepas masuk sebagai satu item.
+- Drop di bar maupun di pulau sama-sama masuk Shelf; drop zone menyala hijau saat kursor di atas pulau (Fase 3d). Gili selalu melaporkan efek Copy ke sumber seret, supaya sumber tidak pernah menghapus file asli. Setelah tile diseret keluar, Gili memeriksa ulang file-nya: yang sudah tidak ada di tempat asal (dipindahkan) keluar dari Shelf.
 
 ### 6.4 Bagian kanan
 
@@ -1016,6 +1017,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Caps/Num Lock (Fase 3a) | Dua `GetKeyState` per 125 ms di thread pool, dijeda bersama polling lain | Tidak terukur (< 0,05%) | Turun ke 4×/detik |
 | Modul GPU (Fase 3c) | Satu query PDH wildcard `GPU Engine` per detik (±2 ms, ±470 instance di laptop pengguna) hanya saat modul GPU nyala atau halaman System terbuka | CPU ≤ 0,2% saat nyala; 0 saat mati | Dibaca tiap 2 detik |
 | Modul disk (Fase 3c) | Satu `GetDiskFreeSpaceEx` per 10 detik saat modul nyala atau halaman System terbuka | Tidak terukur | — |
+| Shelf (Fase 3d) | Event drag-and-drop OLE; `File.Exists`/`Directory.Exists` untuk ≤ 8 item saat halaman Shelf dibuka, setelah seret keluar, dan tiap 60 detik hanya selama Shelf berisi (dijeda bersama polling lain) | CPU 0% saat diam; RAM ≤ +1 MB | — |
 | Halaman System (Fase 3c) | Empat garis 60 titik dan lima teks digambar ulang sekali per detik hanya saat halamannya terlihat (jendela layered, digambar CPU) | CPU ≤ 0,5% selama terlihat; 0 saat tertutup | Grafik diperbarui tiap 2 detik |
 | Titik kamera/mic (Fase 3a) | Satu thread menunggu notifikasi registry `ConsentStore`; dua key dibaca hanya saat berubah; nama app dicari sekali per app. Versi MSIX tidak pernah menerima notifikasi itu (registry tervirtualisasi paket), jadi di sana dua key dibaca sekali per detik dan dijeda bersama polling lain | CPU 0% saat diam (versi GitHub), tidak terukur (versi MSIX); RAM ≤ +1 MB | — |
 | Kejadian Bluetooth (Fase 3a) | Properti tambahan di watcher perangkat yang sudah ada | Tidak terukur | — |
@@ -1279,7 +1281,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 | Tidak ada API resmi untuk Do Not Disturb | Notif aplikasi lain tetap muncul saat fokus | Kejadian pulau milik app tetap ditahan; kalau DND gagal, buka quick settings Windows |
 | Wake timer dimatikan di Power Options | Alarm tidak berbunyi saat laptop sleep | Alarm terlewat berbunyi saat bangun; Settings memberi peringatan bila wake timer mati |
 | Windows tidak menyediakan radius blur yang bisa diatur | "Glass" hanya tiga tingkat, bukan slider | Opacity tetap slider kontinu; kaca dipetakan ke Off / blur-behind / acrylic |
-| Drag-and-drop dari aplikasi admin diblokir (UIPI) | File dari jendela admin tidak bisa masuk Shelf | Pesan jelas di drop zone; app utama tetap non-admin supaya drag biasa jalan |
+| Drag-and-drop dari aplikasi admin diblokir (UIPI) | File dari jendela admin tidak bisa masuk Shelf | App utama tetap non-admin supaya drag biasa jalan. Windows tidak memberi tahu aplikasi biasa bahwa seret dari jendela admin diblokir, jadi drop zone memang tidak muncul dan tidak ada pesan (temuan Fase 3d) |
 | App crash meninggalkan ruang AppBar kosong | Ruang 32 px tidak terpakai | Lepas AppBar di semua jalur keluar dan di handler exception; restart otomatis mendaftar ulang |
 | Browser hanya mengirim satu sesi media | Hanya satu sumber terlihat | Pakai sesi yang sedang diputar; kalau beberapa diputar, pilih yang terakhir berubah |
 | Windows di-mute atau volume 0 saat alarm | Alarm tidak terdengar | Peringatan dan tombol Unmute di kartu; animasi kartu tetap jalan; Gili tidak mengubah volume sistem diam-diam |

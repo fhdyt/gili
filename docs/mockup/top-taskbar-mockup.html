@@ -2846,11 +2846,12 @@ function enterDrop(){
 }
 function leaveDrop(){iw.classList.remove('hot');if(S.state==='drop')setState(S.dropReturn)}
 addEventListener('dragenter',e=>{if(!hasFiles(e))return;e.preventDefault();if(++dragDepth===1)enterDrop()});
-addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect=iw.contains(e.target)?'copy':'none';iw.classList.toggle('hot',iw.contains(e.target))});
+addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect=iw.contains(e.target)||$('#bar').contains(e.target)?'copy':'none';iw.classList.toggle('hot',iw.contains(e.target))});
 addEventListener('dragleave',e=>{if(!hasFiles(e))return;if(--dragDepth<=0){dragDepth=0;leaveDrop()}});
 addEventListener('drop',e=>{
   if(!hasFiles(e))return;e.preventDefault();dragDepth=0;iw.classList.remove('hot');
-  if(iw.contains(e.target)&&S.state==='drop')addFiles([...e.dataTransfer.files]);else leaveDrop();
+  // A drop on the bar keeps the files too, like one on the island (PRD 6.2: the Shelf icon takes files like the rest of the bar).
+  if((iw.contains(e.target)||$('#bar').contains(e.target))&&S.state==='drop')addFiles([...e.dataTransfer.files]);else leaveDrop();
 });
 
 /* system and right modules */

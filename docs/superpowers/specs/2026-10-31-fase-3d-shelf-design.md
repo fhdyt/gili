@@ -63,7 +63,7 @@ Tile memulai `DragDrop.DoDragDrop` setelah kursor bergerak 4 px dengan tombol ki
 
 ### Drop zone
 
-Lapisan baru di `IslandWindow` sesuai `.dz`: garis putus-putus 1,5 px `#48484A` dengan jarak 10 px dari tepi dan radius 22, lingkaran 48 px `#1C1C1E` berisi ikon `traydown` 24 px `#8E8E93`, judul `Drop to keep on the Shelf` dan keterangan `Files stay where they are until you drag them out`. Hot: garis dan lingkaran `#30D158`, latar garis `#1430D158`, ikon hitam, lingkaran naik 2 px dan membesar 1,06. Penuh: garis dan ikon oranye `#FF9F0A`, teks `Shelf is full` / `Drag something out first`.
+Lapisan baru di `IslandWindow` sesuai `.dz`: garis putus-putus 1,5 px `#48484A` dengan jarak 10 px dari tepi dan radius 22, lingkaran 48 px `#1C1C1E` berisi ikon `traydown` 24 px `#8E8E93`, judul `Drop to keep on the Shelf` dan keterangan `Files stay where they are until you drag them out`. Hot: garis dan lingkaran `#30D158`, latar garis `#1430D158`, ikon hitam, lingkaran naik 2 px dan membesar 1,06. Penuh: garis dan ikon kuning `#FFD60A` (`--warn` mockup), teks `Shelf is full` / `Drag something out first`.
 
 ## Mode demo
 
@@ -78,3 +78,20 @@ Lapisan baru di `IslandWindow` sesuai `.dz`: garis putus-putus 1,5 px `#48484A` 
 ## Yang diserahkan ke pembangun
 
 Nama kelas dan susunan XAML selama tampilan sesuai mockup, cara mendeteksi ambang seret, dan cara menyimpan urutan (`sort_order` = urutan masuk).
+
+## Temuan saat implementasi
+
+- **Tabel `shelf_items` sudah ada** sejak migrasi pertama, dan mode `DropZone` (420 × 140, radius 30) sudah ada di koordinator dan layout sejak Fase 1, jadi tidak perlu migrasi baru.
+- **Bar perlu latar yang hampir bening** (`#01000000`) di grid akarnya: saat drop zone muncul, backdrop bar memudar ke 0, dan area yang benar-benar bening tidak menerima seret, sehingga drop zone akan menutup sendiri lalu muncul lagi.
+- **Warna penuh** mengikuti `--warn` mockup (`#FFD60A`), bukan oranye seperti draf desain.
+- **Demo tetap di bawah satu menit**: langkah Shelf ada di 29 detik (setelah halaman System), dan pulau Power menggantikannya di 31 detik.
+- **Teks keadaan kosong** harus di `DockPanel`, bukan `StackPanel` horizontal, supaya membungkus di lebar 340 px.
+- **Belum teruji dengan input asli**: menyeret file dari Explorer ke bar/pulau (drop zone, hot, penuh), menyeret tile keluar ke folder (Copy, Move dengan Shift), pantulan ikon, dan demo mode (menu klik kanan bar tidak terjangkau UI Automation). Semua itu butuh seret mouse sungguhan, yang tidak dikirim secara sintetis di laptop pengguna.
+
+## Hasil verifikasi
+
+- Release 0 warning, 730 tes lulus, format bersih.
+- Item yang dimasukkan ke `shelf_items` (PDF 2,4 MB, bundel tiga file, folder) tampil sesuai mockup: `5`, `5 files · 2.8 MB`, lencana `PDF` merah, bundel berlencana `3`, ikon folder; ikon kiri menampilkan `5`.
+- `Remove Photos` (UI Automation Invoke) menghapus item; menghapus `notes.txt` dari disk lalu membuka ulang halaman mengubah bundel menjadi `2 files` (388 000 byte) di layar dan database; `Clear all` mengosongkan database dan angka di ikon kiri.
+- Halaman Shelf terbuka di salinan GitHub (`publish.ps1`) dan MSIX (`package.ps1 -Install`).
+- CPU tidak bisa diukur dalam keadaan diam: pengguna memakai laptop selama pengukuran (121 dari 121 detik ada input), dan angka 1,3–1,5% itu termasuk mata Gili yang mengikuti kursor. Shelf yang kosong tidak menjalankan timer apa pun; timer 60 detik hanya jalan saat Shelf berisi.
