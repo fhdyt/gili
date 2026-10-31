@@ -2895,7 +2895,7 @@ $('#tp').onkeydown=e=>{
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pwr'))closePops()});
 
 /* Control islands (PRD 6.4): Wi-Fi, Bluetooth, volume, brightness and power each open alone in the island, without the page menu */
-const WIFI=[['Home_5G',1],['Home_2.4G',1],['Kopi Kenangan',1],['Rumah Rani',0]];
+const WIFI=[['Home_5G',1],['Home_2.4G',1],['Kopi Kenangan',1],['Rumah Rani',0],['Warung Free WiFi',0,1]];
 const BTD=[['Galaxy Buds2 Pro','headphones',1,80],['MX Master 3S','bt',0],['Xbox Wireless Controller','bt',0]];
 const AUDIO=[['Speakers (Realtek(R) Audio)','vol'],['Galaxy Buds2 Pro','headphones'],['LG HDR 4K (NVIDIA High Definition Audio)','vol']];
 Object.assign(S,{wifiNet:'Home_5G',ctl:'power',wifiOn:true,btOn:true,air:false,vol:46,bri:70,qMuted:false,dev:0});
@@ -2915,7 +2915,7 @@ function renderWifi(){
   $('[data-q="wifi"]').setAttribute('aria-checked',on);$('[data-q="air"]').setAttribute('aria-checked',S.air);
   $('#qiWifi').classList.toggle('on',on);$('#qiAir').classList.toggle('on',S.air);
   $('#qWifiL').innerHTML=on
-    ?WIFI.map(([n,saved],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
+    ?WIFI.map(([n,saved,open],i)=>`<button class="qn ${n===S.wifiNet?'on':''}" data-w="${i}">${icon('wifi')}<b>${n}</b><span>${n===S.wifiNet?'Connected':saved?'Saved':open?'Open':'Secured'}</span></button>`).join('')+`<button class="qn" data-qf="more">${icon('plus')}<b>More Wi‑Fi settings</b></button>`
     :`<div class="cvoff">${S.air?'Airplane mode is on':'Wi‑Fi is off'}</div>`;
   $('#mWifi small').textContent=on?'Strong':'Wi‑Fi';$('#mWifi b').textContent=on?S.wifiNet:'Off';
   $('#mWifi').title=on?'Strong signal · '+S.wifiNet:'Wi‑Fi is off';
@@ -2949,7 +2949,7 @@ $('.pg-ctl').addEventListener('click',e=>{
   if(w){
     const[n,saved]=WIFI[+w.dataset.w];
     if(n===S.wifiNet)return;
-    if(!saved){hint('New network: the Windows network list opens to take the password');return}
+    if(!saved){hint('New network: the Windows network list opens to connect');return}
     w.querySelector('span').textContent='Connecting…';
     setTimeout(()=>{S.wifiNet=n;renderWifi()},900);return;
   }
