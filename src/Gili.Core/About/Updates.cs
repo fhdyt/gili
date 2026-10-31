@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Gili.Core.About;
 
-/// <summary>The latest release on gili-releases (F-PUB-04): its version, its page, and its installer when it has one.</summary>
+/// <summary>The latest release on GitHub (F-PUB-04): its version, its page, and its installer when it has one.</summary>
 public sealed record ReleaseInfo(Version Version, string PageUrl, string? InstallerUrl)
 {
     /// <summary>GitHub's "latest release" JSON; anything else (an error, a tag that is not a version) is null.</summary>

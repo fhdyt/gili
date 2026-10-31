@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Apa ini
 
-Gili: bar kaca di tepi atas layar Windows 11 dengan "pulau" hitam ala Dynamic Island di tengah. Namanya dari kata Indonesia untuk pulau kecil, dan maskot mata di pulau memakai nama yang sama. Sebelum 26 Oktober 2026 app ini bernama TopBar, jadi commit lama memakai path `src/TopBar.*`. Gili akan dirilis gratis untuk umum (kode tetap tertutup, repo privat) lewat Microsoft Store dan installer bertanda tangan di GitHub, setelah Fase 4 (PRD 9.4, Fase 5). Lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan DND Windows ada di Fase 6: update setelah rilis pertama, jangan dikerjakan sebelum Fase 5 selesai. Hanya Windows 11 dan monitor utama. Laptop pengembangan juga laptop uji utama, jadi menjalankan app langsung mengubah desktop pengembang: area kerja Windows berkurang setinggi bar.
+Gili: bar kaca di tepi atas layar Windows 11 dengan "pulau" hitam ala Dynamic Island di tengah. Namanya dari kata Indonesia untuk pulau kecil, dan maskot mata di pulau memakai nama yang sama. Sebelum 26 Oktober 2026 app ini bernama TopBar, jadi commit lama memakai path `src/TopBar.*`. Gili akan dirilis gratis untuk umum lewat Microsoft Store dan installer bertanda tangan di GitHub Releases repo ini (`fhdyt/gili`), yang akan dibuat publik oleh pengguna (PRD revisi 11; repo terpisah `gili-releases` tidak dipakai), setelah Fase 4 (PRD 9.4, Fase 5). Lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan DND Windows ada di Fase 6: update setelah rilis pertama, jangan dikerjakan sebelum Fase 5 selesai. Hanya Windows 11 dan monitor utama. Laptop pengembangan juga laptop uji utama, jadi menjalankan app langsung mengubah desktop pengembang: area kerja Windows berkurang setinggi bar.
 
 Sumber kebenaran:
 - PRD: [docs/superpowers/specs/2026-10-25-top-taskbar-prd.md](docs/superpowers/specs/2026-10-25-top-taskbar-prd.md). Setiap fitur punya ID (`F-BAR-01`, `F-ISL-07`, `F-CLD-03`, …) dan nomor fase (bagian 14). Rencana dan commit merujuk ID ini. `F-ISL-09`, `F-ISL-13`, dan `F-RIGHT-06` (suhu CPU) sudah dihapus; nomornya jangan dipakai lagi.
@@ -82,7 +82,7 @@ Pengguna sudah menolak atau menghapus hal-hal ini saat brainstorming. Jangan diu
 - Panel dropdown untuk Wi‑Fi/Bluetooth/volume/brightness dan menu power: semuanya ada di halaman Controls di pulau, tanpa tab di menu (dibuka dari tombol Controls, modul Wi‑Fi, dan Power).
 - Jam dan tanggal di dalam pulau: pindah ke kanan bar. Pulau tanpa aktivitas berisi maskot Gili, yang matanya berjalan sepanjang pulau mengikuti kursor.
 - Suhu CPU dan helper admin (`Gili.SensorHelper`): dihapus supaya Gili lolos Store dan tidak dianggap malware.
-- Versi berbayar, kode terbuka, dan telemetri: Gili gratis, kode tertutup, tanpa telemetri.
+- Versi berbayar dan telemetri: Gili gratis, tanpa telemetri. Repo kode akan publik (revisi 11); jangan pernah commit rahasia, token, atau data pribadi.
 
 Pengguna minta Gili tetap sangat ringan: setiap fitur baru harus punya anggaran CPU/RAM di PRD 8.1, dan ingatkan pengguna kalau fitur yang diminta berat.
 

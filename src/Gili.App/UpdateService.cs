@@ -9,7 +9,7 @@ using Gili.Platform.Shell;
 namespace Gili.App;
 
 /// <summary>
-/// The update check (F-PUB-04, design 5d): the signed GitHub copy asks gili-releases, the Store copy asks the Store,
+/// The update check (F-PUB-04, design 5d): the signed GitHub copy asks GitHub Releases, the Store copy asks the Store,
 /// 60 seconds after start and then once a day. Failing is quiet (PRD 11); Install update runs only an installer signed
 /// by the same publisher as this Gili.exe.
 /// </summary>

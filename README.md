@@ -4,7 +4,7 @@ Bar kaca di tepi atas layar Windows 11, dengan "pulau" hitam ala Dynamic Island 
 
 Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan sesekali berkedip. Saat ada aktivitas (musik, timer, progres copy, sesi Claude Code), Gili bergeser ke kiri sebagai lingkaran kecil dan pulau menampilkan aktivitas itu. Klik pulau, dan pulau lepas dari bar menjadi panel mengambang berisi halaman Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, dan System.
 
-> **Status:** pra-rilis, versi `0.1.1` (lihat `Directory.Build.props`). Gili sedang di Fase 4 dari 6. Rilis publik gratis lewat Microsoft Store dan installer bertanda tangan di GitHub menyusul setelah Fase 4 (Fase 5); Fase 6 berisi fitur yang dirilis sebagai update sesudahnya. Kode tetap tertutup dan repo ini privat. Sampai saat itu, Gili hanya bisa dipasang dari kode sumber (lihat [Instalasi](#instalasi)).
+> **Status:** pra-rilis, versi `0.1.1` (lihat `Directory.Build.props`). Gili sedang di Fase 4 dari 6. Rilis publik gratis lewat Microsoft Store dan installer bertanda tangan di GitHub menyusul setelah Fase 4 (Fase 5); Fase 6 berisi fitur yang dirilis sebagai update sesudahnya. Repo ini akan dibuat publik; installer dan release notes ada di GitHub Releases repo ini. Sampai saat itu, Gili hanya bisa dipasang dari kode sumber (lihat [Instalasi](#instalasi)).
 
 ## Daftar isi
 

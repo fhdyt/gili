@@ -6,10 +6,10 @@ using Gili.Core.About;
 
 namespace Gili.Platform.Shell;
 
-/// <summary>The latest release on gili-releases (F-PUB-04); only the GitHub copy asks, without any user data (PRD 8.2).</summary>
+/// <summary>The latest release on fhdyt/gili (F-PUB-04, PRD revision 11); only the GitHub copy asks, without any user data (PRD 8.2).</summary>
 public static class GithubReleases
 {
-    public const string LatestUrl = "https://api.github.com/repos/fhdyt/gili-releases/releases/latest";
+    public const string LatestUrl = "https://api.github.com/repos/fhdyt/gili/releases/latest";
 
     private static readonly HttpClient Http = CreateClient();
 

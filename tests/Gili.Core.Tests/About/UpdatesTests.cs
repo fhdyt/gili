@@ -7,11 +7,11 @@ public class ReleaseInfoTests
     private const string Latest = """
         {
           "tag_name": "v0.2.0",
-          "html_url": "https://github.com/fhdyt/gili-releases/releases/tag/v0.2.0",
+          "html_url": "https://github.com/fhdyt/gili/releases/tag/v0.2.0",
           "draft": false,
           "assets": [
             { "name": "SHA256SUMS.txt", "browser_download_url": "https://example.test/SHA256SUMS.txt" },
-            { "name": "Gili-Setup-0.2.0.exe", "browser_download_url": "https://github.com/fhdyt/gili-releases/releases/download/v0.2.0/Gili-Setup-0.2.0.exe" }
+            { "name": "Gili-Setup-0.2.0.exe", "browser_download_url": "https://github.com/fhdyt/gili/releases/download/v0.2.0/Gili-Setup-0.2.0.exe" }
           ]
         }
         """;
@@ -21,8 +21,8 @@ public class ReleaseInfoTests
     {
         var release = ReleaseInfo.Parse(Latest)!;
         Assert.Equal(new Version(0, 2, 0), release.Version);
-        Assert.Equal("https://github.com/fhdyt/gili-releases/releases/tag/v0.2.0", release.PageUrl);
-        Assert.Equal("https://github.com/fhdyt/gili-releases/releases/download/v0.2.0/Gili-Setup-0.2.0.exe", release.InstallerUrl);
+        Assert.Equal("https://github.com/fhdyt/gili/releases/tag/v0.2.0", release.PageUrl);
+        Assert.Equal("https://github.com/fhdyt/gili/releases/download/v0.2.0/Gili-Setup-0.2.0.exe", release.InstallerUrl);
     }
 
     [Fact]

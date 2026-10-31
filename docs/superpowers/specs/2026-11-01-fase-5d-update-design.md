@@ -55,3 +55,7 @@ Satu permintaan HTTPS kecil sehari; timer satu jam yang hanya membandingkan wakt
 - Salinan harian (GitHub, tanpa tanda tangan) lewat UIA: Updates nonaktif dengan `This test build doesn't check. Install a newer Gili-Setup over it`, Release notes nonaktif dengan `Coming in a later version`; tidak ada permintaan jaringan.
 - Paket MSIX dev: setelah 60 detik `StoreContext` menolak paket sideload (`0x803FB112`), log mencatat `Could not check for updates`, baris tetap `Not checked yet` tanpa error di layar; Release notes aktif ke halaman Store paket. Paket dilepas lagi.
 - **Belum teruji** (butuh sertifikat OV, repo `gili-releases`, dan listing Store): cek GitHub yang menemukan versi baru, titik biru di tombol Settings, unduh dan verifikasi installer asli, Install update yang memasang lalu menjalankan Gili lagi, update Store dan `RegisterApplicationRestart`.
+
+## Perubahan sesudahnya (PRD revisi 11)
+
+Pengguna akan membuat repo kode `fhdyt/gili` publik, jadi `gili-releases` tidak dipakai. Cek update membaca `https://api.github.com/repos/fhdyt/gili/releases/latest`; selama repo masih privat, GitHub menjawab 404 tanpa login, yang diperlakukan sebagai gagal yang diam. Issue dan dukungan di `github.com/fhdyt/gili/issues`.
