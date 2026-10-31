@@ -45,7 +45,7 @@ public sealed class SettingsHub
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _log.Write("Could not save settings.json", ex);
+            _log.Write("Could not save settings.json or its keep copy", ex);
         }
     }
 }

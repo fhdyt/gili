@@ -31,6 +31,7 @@ Dipilih yang pertama **(keputusan Claude)**.
 - **Folder salinan**: `%USERPROFILE%\.gili\backups` **(keputusan Claude)**. Folder ini tidak divirtualisasi MSIX (hanya AppData dan HKCU yang divirtualisasi), tidak ikut OneDrive seperti Documents, dan diberi atribut hidden supaya tidak mengotori folder profil. Kedua versi (Store dan GitHub) memakai folder yang sama.
 - **Isi**: `gili-YYYY-MM-DD.db` (salinan lewat SQLite backup API, 7 hari terakhir, format sama dengan backup harian di PRD 10) dan `settings.json`.
 - **Kapan ditulis**: saat start, tiap jam (timer backup yang sudah ada), dan saat Quit. Salinan hari ini ditimpa setiap kali, jadi reinstall kehilangan paling banyak satu jam. Database kecil (puluhan KB), jadi biayanya tidak terukur (PRD 8.1).
+- **Pengaturan** (permintaan susulan pengguna: "pastikan saat saya reinstall, pengaturan juga tidak hilang"): salinan `settings.json` ditulis setiap kali settings disimpan, bukan tiap jam, jadi perubahan terakhir pun ikut kembali. Versi Store yang settings-nya dipulihkan menerapkan `Start with Windows` dari settings ke StartupTask, bukan membaca StartupTask (yang selalu nyala setelah paket dipasang ulang) **(keputusan Claude)**. Versi GitHub sudah menulis entri Run dari settings.
 - **Kapan dipulihkan**: saat start, sebelum apa pun ditulis:
   - `gili.db` belum ada (instalasi baru atau reinstall): salinan terbaru dari folder salinan disalin ke folder data. Log mencatat `Restored gili.db from <file>`.
   - `gili.db` rusak: backup harian lokal dicoba dulu (PRD 11), lalu folder salinan.

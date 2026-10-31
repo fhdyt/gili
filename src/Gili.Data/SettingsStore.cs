@@ -6,8 +6,11 @@ namespace Gili.Data;
 
 public sealed record SettingsLoadResult(AppSettings Settings, bool WasCorrupt);
 
-/// <summary>settings.json in the app data folder (PRD 10).</summary>
-public sealed class SettingsStore(string directory)
+/// <summary>
+/// settings.json in the app data folder (PRD 10). With a keep folder, every save also refreshes the copy there, so a
+/// reinstall brings back even the last change (design 2026-10-31 data tetap).
+/// </summary>
+public sealed class SettingsStore(string directory, string? keepFolder = null)
 {
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -65,5 +68,6 @@ public sealed class SettingsStore(string directory)
         var temp = FilePath + ".tmp";
         File.WriteAllText(temp, JsonSerializer.Serialize(settings, Options));
         File.Move(temp, FilePath, overwrite: true);
+        if (keepFolder is not null) CopyTo(FilePath, keepFolder);
     }
 }

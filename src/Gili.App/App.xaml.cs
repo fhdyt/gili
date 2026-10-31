@@ -87,15 +87,16 @@ public partial class App : Application
             return;
         }
 
-        var store = new SettingsStore(Data.Root);
+        var store = new SettingsStore(Data.Root, AppPaths.KeepFolder);
         _settingsStore = store;
-        RestoreSettings(store);
+        var restored = RestoreSettings(store);
         var loaded = store.Load();
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
         OpenDatabase();
         _settings.Changed += SyncAutostart;
-        if (Kind == InstallKind.Store) _ = AdoptStartupTaskAsync();
+        // Restored settings carry the user's own Start with Windows choice; a reinstalled package's task starts switched on.
+        if (Kind == InstallKind.Store) _ = restored ? SetStartupTaskAsync(_settings.Current.Autostart) : AdoptStartupTaskAsync();
         else SyncAutostart(_settings.Current);
         _transparency = new TransparencyWatcher();
 
@@ -428,15 +429,18 @@ public partial class App : Application
     }
 
     /// <summary>A reinstall starts without settings.json; the keep copy brings the user's settings back.</summary>
-    private void RestoreSettings(SettingsStore store)
+    private bool RestoreSettings(SettingsStore store)
     {
         try
         {
-            if (store.RestoreFrom(AppPaths.KeepFolder)) _log?.Write("Restored settings.json from the keep copy");
+            if (!store.RestoreFrom(AppPaths.KeepFolder)) return false;
+            _log?.Write("Restored settings.json from the keep copy");
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _log?.Write("Could not restore settings.json", ex);
+            return false;
         }
     }
 

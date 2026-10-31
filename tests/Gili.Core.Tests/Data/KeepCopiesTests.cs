@@ -165,6 +165,18 @@ public sealed class KeepCopiesTests : IDisposable
     }
 
     [Fact]
+    public void Every_save_refreshes_the_keep_copy()
+    {
+        var store = new SettingsStore(OldData, Keep);
+        store.Save(new Core.Settings.AppSettings { BarHeight = 36 });
+        store.Save(new Core.Settings.AppSettings { BarHeight = 38 });
+
+        var fresh = new SettingsStore(NewData);
+        Assert.True(fresh.RestoreFrom(Keep));
+        Assert.Equal(38, fresh.Load().Settings.BarHeight);
+    }
+
+    [Fact]
     public void Existing_settings_are_not_replaced()
     {
         Directory.CreateDirectory(OldData);
