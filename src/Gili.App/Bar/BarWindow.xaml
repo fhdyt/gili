@@ -214,7 +214,7 @@
                 </Border>
                 <Border Tag="tray" Style="{StaticResource ClickableModule}" ToolTip="Show hidden icons" MouseLeftButtonUp="OnHiddenIcons"
                         AutomationProperties.Name="Show hidden icons">
-                    <c:IconView Glyph="{StaticResource Icon.ChevronDown}" Width="14" Height="14" />
+                    <c:IconView x:Name="TrayChevron" Glyph="{StaticResource Icon.ChevronDown}" Width="14" Height="14" RenderTransformOrigin="0.5,0.5" />
                 </Border>
                 <!-- Clock: the date is the small label, the time the value (PRD 6.4). Click opens Calendar. -->
                 <Border Tag="clock" Style="{StaticResource ClickableModule}" ToolTip="{Binding ClockTooltip}" MouseLeftButtonUp="OnClock">

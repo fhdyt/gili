@@ -5,7 +5,7 @@ using Gili.Platform.Interop;
 namespace Gili.Platform.Shell;
 
 /// <summary>
-/// Reserves a strip at the top of the primary monitor so maximized windows start below the bar (F-BAR-01), and
+/// Reserves a strip at the top (or bottom, F-BAR-10) of the primary monitor so maximized windows start below the bar (F-BAR-01), and
 /// keeps it reserved across Explorer restarts, display and DPI changes and resume (F-BAR-03).
 /// Unregister must run on every exit path: a strip left registered stays empty until Explorer restarts.
 /// </summary>
@@ -14,7 +14,7 @@ public sealed class AppBarService(IntPtr hwnd)
     private const uint ABM_NEW = 0x0, ABM_REMOVE = 0x1, ABM_QUERYPOS = 0x2, ABM_SETPOS = 0x3;
     private const uint ABM_ACTIVATE = 0x6, ABM_WINDOWPOSCHANGED = 0x9;
     private const uint ABN_POSCHANGED = 0x1, ABN_FULLSCREENAPP = 0x2;
-    private const uint ABE_TOP = 1;
+    private const uint ABE_TOP = 1, ABE_BOTTOM = 3;
 
     private readonly uint _callbackMessage = Win32.RegisterWindowMessage("Gili.AppBarNotify");
     private readonly uint _taskbarCreated = Win32.RegisterWindowMessage("TaskbarCreated");
@@ -23,6 +23,7 @@ public sealed class AppBarService(IntPtr hwnd)
     private bool _registered;
     private bool _positioning;
     private bool _fullscreen;
+    private bool _bottom;
 
     /// <summary>True when an app goes fullscreen on the primary monitor, false when it leaves (F-BAR-02).</summary>
     public event Action<bool>? FullscreenChanged;
@@ -39,6 +40,14 @@ public sealed class AppBarService(IntPtr hwnd)
             data.uCallbackMessage = _callbackMessage;
             _registered = Win32.SHAppBarMessage(ABM_NEW, ref data) != UIntPtr.Zero;
         }
+        Reposition();
+    }
+
+    /// <summary>Moves the strip to the bottom edge or back to the top; set it before <see cref="Register"/> too.</summary>
+    public void SetEdge(bool bottom)
+    {
+        if (bottom == _bottom) return;
+        _bottom = bottom;
         Reposition();
     }
 
@@ -66,10 +75,13 @@ public sealed class AppBarService(IntPtr hwnd)
             var monitor = PrimaryMonitor();
             var height = (int)Math.Round(_heightDip * Win32.GetDpiForWindow(hwnd) / 96.0);
             var data = NewData();
-            data.uEdge = ABE_TOP;
-            data.rc = new Win32.RECT { Left = monitor.Left, Top = monitor.Top, Right = monitor.Right, Bottom = monitor.Top + height };
+            data.uEdge = _bottom ? ABE_BOTTOM : ABE_TOP;
+            data.rc = _bottom
+                ? new Win32.RECT { Left = monitor.Left, Top = monitor.Bottom - height, Right = monitor.Right, Bottom = monitor.Bottom }
+                : new Win32.RECT { Left = monitor.Left, Top = monitor.Top, Right = monitor.Right, Bottom = monitor.Top + height };
             Win32.SHAppBarMessage(ABM_QUERYPOS, ref data);
-            data.rc.Bottom = data.rc.Top + height;
+            if (_bottom) data.rc.Top = data.rc.Bottom - height;
+            else data.rc.Bottom = data.rc.Top + height;
             Win32.SHAppBarMessage(ABM_SETPOS, ref data);
             Win32.SetWindowPos(hwnd, Win32.HWND_TOPMOST, data.rc.Left, data.rc.Top,
                 data.rc.Right - data.rc.Left, height, Win32.SWP_NOACTIVATE);

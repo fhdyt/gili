@@ -115,8 +115,8 @@ Gili dirilis gratis untuk umum (kode tetap tertutup) lewat Microsoft Store dan i
 **Posisi bar** (Settings → General → **Bar position**: `Top` / `Bottom`, default Top)
 - Bottom memindahkan AppBar ke tepi bawah (`ABE_BOTTOM`). Pilihan ini nonaktif selama taskbar Windows masih tampil, dengan keterangan `Hide the Windows taskbar first`, karena dua bar di tepi bawah akan bertumpuk.
 - Di bawah, semua yang mengambang dicerminkan secara vertikal: pulau yang terbuka, kartu, dan drop zone menjaga tepi **bawah** pulau compact dan membesar ke atas. Isi pulau (menu tab di atas, halaman di bawahnya) tidak dibalik.
-- Pindah posisi berlaku langsung: bar keluar dari tepi lama dan masuk dari tepi baru (pegas compact ↔ wide), lalu ruang AppBar didaftarkan ulang.
-- Kalau taskbar Windows dimunculkan lagi saat bar di bawah, bar otomatis pindah ke atas dan Settings menampilkan `Moved to the top because the Windows taskbar is back`.
+- Pindah posisi berlaku langsung: bar pindah ke tepi baru seketika dan ruang AppBar didaftarkan ulang, lalu pulau bergerak ke tempat barunya dengan pegas, seperti mockup (revisi Fase 3g; sebelumnya bar keluar dan masuk dengan pegas, tidak ada di mockup).
+- Kalau taskbar Windows dimunculkan lagi saat bar di bawah, bar otomatis pindah ke atas dan Settings menampilkan `Moved to the top because the Windows taskbar is back`. Keterangan itu tampil di baris Bar position sampai pengguna memilih posisi atau menyembunyikan taskbar lagi.
 
 **Menyembunyikan taskbar Windows** (Settings → General → **Hide Windows taskbar**, default mati)
 - Saat nyala: taskbar Windows (`Shell_TrayWnd`) diubah ke auto-hide lalu disembunyikan, jadi ruangnya kembali ke jendela lain dan tidak muncul saat kursor menyentuh tepi bawah. Tombol Windows di keyboard tetap membuka Start menu.

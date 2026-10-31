@@ -92,6 +92,12 @@ public static class IslandLayout
     public const double DotStep = 13;
 
     /// <summary>A bar element fades while the floating island covers it, with 8 DIP to spare on each side (PRD 6.3).</summary>
+    /// <summary>
+    /// A vertical position measured from the window's top, mirrored to its bottom while the bar is at the bottom, so the
+    /// island keeps the bar's edge and grows away from it (F-BAR-10, PRD 6.3).
+    /// </summary>
+    public static double FromEdge(double y, double height, double envelope, bool bottom) => bottom ? envelope - y - height : y;
+
     public static bool Covers(double islandLeft, double islandRight, double elementLeft, double elementRight) =>
         elementRight > islandLeft - CoverMargin && elementLeft < islandRight + CoverMargin;
 }

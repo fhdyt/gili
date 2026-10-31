@@ -17,6 +17,7 @@ using Gili.Core.Island;
 using Gili.Core.Layout;
 using Gili.Core.Mascot;
 using Gili.Core.Motion;
+using Gili.Core.Settings;
 using Gili.Platform.Interop;
 using Gili.Platform.Shell;
 
@@ -77,6 +78,8 @@ public partial class IslandWindow : Window
     private bool _animating;
     private bool _hovered;
     private bool _floatingEnvelope;
+    /// <summary>The bar is at the bottom: the island keeps its bottom edge and grows up (F-BAR-10).</summary>
+    private bool _bottom;
     private IntPtr _hwnd;
     private IntPtr _previousForeground;
     private static readonly Brush TextBrush = Frozen(0xF5, 0xF5, 0xF7);
@@ -137,8 +140,14 @@ public partial class IslandWindow : Window
         SystemStats = new SystemViewModel(island.Close);
         _shelfPage = new ShelfViewModel(island.Shelf);
         _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
-        settings.Changed += _ =>
+        _bottom = settings.Current.BarPosition == BarPosition.Bottom;
+        settings.Changed += s =>
         {
+            if ((s.BarPosition == BarPosition.Bottom) != _bottom)
+            {
+                _bottom = !_bottom;
+                SetEnvelope(_floatingEnvelope);
+            }
             _alarmsPage.Refresh();
             _todoPage.Refresh();
             _notesPage.Refresh();
@@ -455,7 +464,7 @@ public partial class IslandWindow : Window
         Width = Math.Min(screen, floating ? FloatingEnvelopeWidth : CompactEnvelopeWidth);
         Height = floating ? Math.Min(SystemParameters.PrimaryScreenHeight, IslandLayout.ExpandedMinHeight + ShadowRoom) : _settings.Current.BarHeight;
         Left = (screen - Width) / 2;
-        Top = 0;
+        Top = _bottom ? SystemParameters.PrimaryScreenHeight - Height : 0;
         Apply();
     }
 
@@ -463,7 +472,9 @@ public partial class IslandWindow : Window
     private void GrowEnvelope(double bottom)
     {
         var needed = Math.Min(SystemParameters.PrimaryScreenHeight, bottom + ShadowRoom);
-        if (Height < needed) Height = needed;
+        if (Height >= needed) return;
+        Height = needed;
+        if (_bottom) Top = SystemParameters.PrimaryScreenHeight - Height;
     }
 
     private void Apply()
@@ -472,13 +483,14 @@ public partial class IslandWindow : Window
         var h = _height.Value;
         var r = Math.Max(0, _radius.Value);
         var left = (Width - w) / 2;
+        var top = IslandLayout.FromEdge(_top.Value, h, Height, _bottom);
         Canvas.SetLeft(Body, left);
-        Canvas.SetTop(Body, _top.Value);
+        Canvas.SetTop(Body, top);
         Body.Width = Math.Max(0, w);
         Body.Height = Math.Max(0, h);
         Body.CornerRadius = new CornerRadius(r);
         Canvas.SetLeft(Shadow, left);
-        Canvas.SetTop(Shadow, _top.Value);
+        Canvas.SetTop(Shadow, top);
         Shadow.Width = Math.Max(0, w);
         Shadow.Height = Math.Max(0, h);
         Shadow.CornerRadius = r;
@@ -495,7 +507,8 @@ public partial class IslandWindow : Window
         Bubble.Height = s.IslandHeight;
         Bubble.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
         Canvas.SetLeft(Bubble, Width / 2 + w / 2 + IslandLayout.BubbleGap);
-        Canvas.SetTop(Bubble, (s.BarHeight - s.IslandHeight) / 2.0);
+        var slotTop = IslandLayout.FromEdge((s.BarHeight - s.IslandHeight) / 2.0, s.IslandHeight, Height, _bottom);
+        Canvas.SetTop(Bubble, slotTop);
         var scale = Math.Max(0, _bubble.Value);
         _bubbleScale.ScaleX = scale;
         _bubbleScale.ScaleY = scale;
@@ -511,7 +524,7 @@ public partial class IslandWindow : Window
         GiliCircle.Width = GiliCircle.Height = s.IslandHeight;
         GiliCircle.CornerRadius = new CornerRadius(s.IslandHeight / 2.0);
         Canvas.SetLeft(GiliCircle, islandLeft - s.IslandHeight / 2.0 + circle * (-IslandLayout.BubbleGap - s.IslandHeight / 2.0));
-        Canvas.SetTop(GiliCircle, (s.BarHeight - s.IslandHeight) / 2.0);
+        Canvas.SetTop(GiliCircle, slotTop);
         _giliCircleScale.ScaleX = _giliCircleScale.ScaleY = 0.6 + 0.4 * circle;
 
         // The dots stand left of the island and Gili's circle, camera nearest; down the panel's edge while it floats.
@@ -526,11 +539,11 @@ public partial class IslandWindow : Window
         PlaceDot(MicrophoneDot, _microphoneScale, _microphoneAt, _microphoneDot.Value);
     }
 
-    private static void PlaceDot(Border dot, ScaleTransform scale, DotPosition at, double size)
+    private void PlaceDot(Border dot, ScaleTransform scale, DotPosition at, double size)
     {
-        // The 20 px hover area centres on the 8 px dot.
+        // The 20 px hover area centres on the 8 px dot; at the bottom the dots go up the panel's edge instead of down.
         Canvas.SetLeft(dot, at.X - 6);
-        Canvas.SetTop(dot, at.Y - 6);
+        Canvas.SetTop(dot, IslandLayout.FromEdge(at.Y, 0, Height, _bottom) - 6);
         scale.ScaleX = scale.ScaleY = Math.Max(0, size);
     }
 

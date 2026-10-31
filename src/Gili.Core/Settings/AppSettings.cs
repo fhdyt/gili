@@ -5,6 +5,9 @@ namespace Gili.Core.Settings;
 
 public enum GlassLevel { Off, Light, Strong }
 
+/// <summary>The screen edge the bar sits on (F-BAR-10).</summary>
+public enum BarPosition { Top, Bottom }
+
 /// <summary>Everything stored in settings.json. Later phases add fields with their own defaults.</summary>
 public sealed record AppSettings
 {
@@ -16,6 +19,12 @@ public sealed record AppSettings
 
     /// <summary>Hide Windows taskbar (F-BAR-11); its original auto-hide state lives in taskbar-state.json, not here.</summary>
     public bool HideTaskbar { get; init; }
+
+    /// <summary>Bottom only while the Windows taskbar is hidden, or two bars would share the edge (F-BAR-10).</summary>
+    public BarPosition BarPosition { get; init; } = BarPosition.Top;
+
+    /// <summary>The bar went back to the top because the taskbar came back; Settings says so until the user picks again.</summary>
+    public bool MovedToTop { get; init; }
 
     public bool Use24HourClock { get; init; } = true;
     public int BarOpacity { get; init; } = 100;
@@ -78,8 +87,11 @@ public sealed record AppSettings
     {
         var barHeight = Math.Clamp(BarHeight, MinBarHeight, MaxBarHeight);
         var plan = Pomodoro.Normalize();
+        var bottom = BarPosition == BarPosition.Bottom;
         return this with
         {
+            BarPosition = bottom && HideTaskbar ? BarPosition.Bottom : BarPosition.Top,
+            MovedToTop = MovedToTop || (bottom && !HideTaskbar),
             BarHeight = barHeight,
             IslandHeight = Math.Clamp(IslandHeight, MinIslandHeight, MaxIslandHeight(barHeight)),
             BarOpacity = Math.Clamp(BarOpacity, MinBarOpacity, MaxBarOpacity),

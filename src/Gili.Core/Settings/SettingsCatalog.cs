@@ -55,7 +55,7 @@ public static class SettingsCatalog
     [
         new("General",
         [
-            new("pos", "Bar position", SettingKind.Segment, Options: ["Top", "Bottom"], Default: "Top"),
+            new("pos", "Bar position", SettingKind.Segment, Available: true, Options: ["Top", "Bottom"]),
             new("hideTb", "Hide Windows taskbar", SettingKind.Switch, "Gili gives you Start, tray icons and Controls instead", Available: true),
             new("h12", "12-hour clock", SettingKind.Switch, Available: true),
             new("secs", "Show seconds", SettingKind.Switch, "The clock on the bar ticks every second", Available: true),
@@ -120,6 +120,7 @@ public static class SettingsCatalog
     public static object Read(AppSettings s, string key) => key switch
     {
         "hideTb" => s.HideTaskbar,
+        "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
         "secs" => s.ShowSeconds,
         "auto" => s.Autostart,
@@ -144,7 +145,8 @@ public static class SettingsCatalog
     /// <summary>Applies a row's new value; the result is normalised, so the island shrinks with a lower bar.</summary>
     public static AppSettings Write(AppSettings s, string key, object value) => (key switch
     {
-        "hideTb" => s with { HideTaskbar = (bool)value },
+        "hideTb" => s with { HideTaskbar = (bool)value, MovedToTop = s.MovedToTop && !(bool)value },
+        "pos" => s with { BarPosition = Enum.Parse<BarPosition>((string)value), MovedToTop = false },
         "h12" => s with { Use24HourClock = !(bool)value },
         "secs" => s with { ShowSeconds = (bool)value },
         "auto" => s with { Autostart = (bool)value },
@@ -193,6 +195,8 @@ public static class SettingsCatalog
     /// </summary>
     public static RowState State(AppSettings s, string key)
     {
+        if (key == "pos" && !s.HideTaskbar)
+            return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {
             var page = Page(key);

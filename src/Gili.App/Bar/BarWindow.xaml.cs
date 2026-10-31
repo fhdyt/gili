@@ -355,6 +355,7 @@ public partial class BarWindow : Window
         _appBar = new AppBarService(_hwnd);
         _appBar.FullscreenChanged += OnFullscreenChanged;
         _appBar.ShellRestarted += () => ShellRestarted?.Invoke();
+        ApplyEdge(_settings.Current);
         _appBar.Register(_settings.Current.BarHeight);
         _display = new DisplayMonitor(_hwnd);
         ApplyAppearance();
@@ -400,8 +401,21 @@ public partial class BarWindow : Window
         ApplyModules(settings);
         _clock.Seconds = settings.ShowSeconds && _polling.ShouldPoll;
         _vm.ApplyClock(DateTime.Now, settings);
+        ApplyEdge(settings);
         _appBar?.SetHeight(settings.BarHeight);
         ApplyAppearance();
+    }
+
+    /// <summary>
+    /// At the bottom the hairline moves to the bar's top edge and the Tray chevron points up (F-BAR-10, mockup
+    /// <c>body.bottom</c>); the bar moves at once and the island follows with its springs.
+    /// </summary>
+    private void ApplyEdge(AppSettings settings)
+    {
+        var bottom = settings.BarPosition == BarPosition.Bottom;
+        Backdrop.BorderThickness = bottom ? new Thickness(0, 1, 0, 0) : new Thickness(0, 0, 0, 1);
+        TrayChevron.RenderTransform = bottom ? new RotateTransform(180) : Transform.Identity;
+        _appBar?.SetEdge(bottom);
     }
 
     private void ApplyAppearance()
