@@ -281,7 +281,18 @@ public partial class BarWindow : Window
 
     private void OnBrightness(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Brightness);
 
-    private void OnHiddenIcons(object sender, MouseButtonEventArgs e) => SystemActions.HiddenIcons();
+    /// <summary>A taskbar Gili hid is shown first, since Windows opens the hidden icons from it (design 3f).</summary>
+    private void OnHiddenIcons(object sender, MouseButtonEventArgs e)
+    {
+        Taskbar?.Reveal();
+        SystemActions.HiddenIcons();
+    }
+
+    /// <summary>The Windows taskbar, for the Tray button while Hide Windows taskbar is on.</summary>
+    public TaskbarHider? Taskbar { get; set; }
+
+    /// <summary>Explorer restarted (TaskbarCreated).</summary>
+    public event Action? ShellRestarted;
 
     private void OnPower(object sender, MouseButtonEventArgs e) => ControlRequested?.Invoke(ControlKind.Power);
 
@@ -343,6 +354,7 @@ public partial class BarWindow : Window
         HwndSource.FromHwnd(_hwnd)!.AddHook(WndProc);
         _appBar = new AppBarService(_hwnd);
         _appBar.FullscreenChanged += OnFullscreenChanged;
+        _appBar.ShellRestarted += () => ShellRestarted?.Invoke();
         _appBar.Register(_settings.Current.BarHeight);
         _display = new DisplayMonitor(_hwnd);
         ApplyAppearance();

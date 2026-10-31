@@ -15,6 +15,7 @@ using Gili.Core.Island;
 using Gili.Core.Modules;
 using Gili.Core.Settings;
 using Gili.Core.Shelf;
+using Gili.Core.Taskbar;
 using Gili.Data;
 using Gili.Platform.Power;
 using Gili.Platform.Shell;
@@ -32,6 +33,8 @@ public partial class App : Application
     private SingleInstance? _instance;
     private SettingsHub? _settings;
     private SettingsStore? _settingsStore;
+    private TaskbarHider? _taskbar;
+    private TaskbarKeeper? _taskbarKeeper;
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
     private bool _systemPageShown;
@@ -74,7 +77,17 @@ public partial class App : Application
         Directory.CreateDirectory(Data.Root);
         _log = new FileLog(Data.Logs);
         _log.DeleteOlderThan(TimeSpan.FromDays(7), DateTime.Now);
-        new CrashHandler(_log, Data.CrashMarker, () => _bar?.ReleaseAppBar()).Attach(this);
+        new CrashHandler(_log, Data.CrashMarker, () =>
+        {
+            try
+            {
+                _bar?.ReleaseAppBar();
+            }
+            finally
+            {
+                _taskbarKeeper?.Restore();
+            }
+        }).Attach(this);
 
         var restarted = e.Args.Contains("--restarted");
         _instance = SingleInstance.Acquire(restarted ? TimeSpan.FromSeconds(5) : TimeSpan.Zero,
@@ -164,6 +177,7 @@ public partial class App : Application
             _log?.Write(poll ? "Polling resumed" : $"Polling paused: {_bar.PollingReason}");
         };
         _bar.Show();
+        StartTaskbarKeeper();
 
         // Owned by the bar, so the island stays above it whenever the bar re-asserts its topmost place.
         _gili = new GiliService();
@@ -217,6 +231,8 @@ public partial class App : Application
         _todos?.Stop();
         _media?.Dispose();
         _bar?.ReleaseAppBar();
+        RestoreTaskbar();
+        _taskbar?.Dispose();
         _settings?.Flush();
         _transparency?.Dispose();
         _instance?.Dispose();
@@ -227,8 +243,54 @@ public partial class App : Application
     {
         FlushNotes();
         _bar?.ReleaseAppBar();
+        RestoreTaskbar();
         _settings?.Flush();
         base.OnSessionEnding(e);
+    }
+
+    /// <summary>
+    /// Hide Windows taskbar (F-BAR-11). Applying it at start also restores what a killed run left hidden while the switch
+    /// is now off; an Explorer restart hides the new taskbar again.
+    /// </summary>
+    private void StartTaskbarKeeper()
+    {
+        _taskbar = new TaskbarHider();
+        _taskbarKeeper = new TaskbarKeeper(_taskbar, new TaskbarStateFile(Data.Root));
+        _bar!.Taskbar = _taskbar;
+        var hide = _settings!.Current.HideTaskbar;
+        ApplyTaskbar(hide);
+        _settings.Changed += s =>
+        {
+            if (s.HideTaskbar == hide) return;
+            hide = s.HideTaskbar;
+            ApplyTaskbar(hide);
+        };
+        _bar.ShellRestarted += _taskbarKeeper.ShellRestarted;
+    }
+
+    /// <summary>When the original state cannot be written, the taskbar stays as it is.</summary>
+    private void ApplyTaskbar(bool hide)
+    {
+        try
+        {
+            if (_taskbarKeeper?.Apply(hide) == true) _log?.Write(hide ? "Windows taskbar hidden" : "Windows taskbar shown as it was");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log?.Write("Could not save the taskbar's state, so it stays as it is", ex);
+        }
+    }
+
+    private void RestoreTaskbar()
+    {
+        try
+        {
+            _taskbarKeeper?.Restore();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log?.Write("Could not forget the taskbar's state", ex);
+        }
     }
 
     /// <summary>A note that cannot be written is logged, so quitting still releases the AppBar and never turns into a crash and restart.</summary>

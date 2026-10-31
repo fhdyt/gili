@@ -14,6 +14,9 @@ public sealed record AppSettings
     public const int MinBarOpacity = 40;
     public const int MaxBarOpacity = 100;
 
+    /// <summary>Hide Windows taskbar (F-BAR-11); its original auto-hide state lives in taskbar-state.json, not here.</summary>
+    public bool HideTaskbar { get; init; }
+
     public bool Use24HourClock { get; init; } = true;
     public int BarOpacity { get; init; } = 100;
     public GlassLevel Glass { get; init; } = GlassLevel.Strong;

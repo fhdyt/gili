@@ -141,11 +141,6 @@ body.bottom .pmenu,body.bottom .pop{top:auto;bottom:calc(100% + 6px);animation-n
 body.nosecs .mod[data-m="clock"] b{min-width:0}
 #mTray .ic{width:14px;height:14px}
 body.bottom #mTray .ic{transform:rotate(180deg)}
-/* Tray panel: background apps' notification-area icons. */
-.tp{padding:6px;display:grid;grid-template-columns:repeat(4,32px);gap:2px}
-.tp button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px}
-.tp button:hover,.tp button:focus-visible{background:var(--ctl-h);outline:none}
-.ti{width:16px;height:16px;border-radius:4px;background:var(--c);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;line-height:1}
 /* Controls panel: Wi-Fi, Bluetooth, airplane mode, volume, brightness. */
 .qs{width:320px;padding:12px;display:flex;flex-direction:column;gap:12px;cursor:default}
 .qsg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -1030,8 +1025,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       <button class="mod" data-m="vol" id="mVol" aria-label="Volume" title="Volume 46%"><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg></button>
       <button class="mod" data-m="bri" id="mBri" aria-label="Brightness" title="Brightness 70%"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></button>
       <span class="pwr" data-m="tray">
-        <button class="mod" id="mTray" aria-label="Show hidden icons" aria-haspopup="menu" aria-expanded="false" title="Show hidden icons"><svg class="ic" aria-hidden="true"><use href="#i-chevd"/></svg></button>
-        <span class="pop tp" id="tp" role="menu" aria-label="Background apps" hidden></span>
+        <button class="mod" id="mTray" aria-label="Show hidden icons" title="Show hidden icons"><svg class="ic" aria-hidden="true"><use href="#i-chevd"/></svg></button>
       </span>
       <button class="mod" data-m="clock" id="mClock" title=""><span class="tw"><small id="clkD"></small><b class="num" id="clkT"></b></span></button>
       <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
@@ -2886,22 +2880,9 @@ $('#mStart').onclick=()=>hint('Opening the Windows Start menu');
 $('#mClock').onclick=()=>openFromBar(PAGE.calendar);
 gCirc.onclick=()=>openExpanded(S.lastPage);
 
-/* tray: background apps' notification-area icons in a small panel */
-const TRAY=[['OneDrive','#0f6cbd','O'],['Discord','#5865f2','D'],['Steam','#1b2838','S'],['Windows Security','#2f7d32','W'],['NVIDIA','#5a9e00','N'],['Google Drive','#c48a00','G'],['PowerToys','#6c5ce7','P'],['Logi Options+','#0083b3','L']];
+/* tray: opens Windows' own hidden-icons flyout (design 3f); a second tray host would break every AppBar */
 function closePops(){$$('.pop').forEach(p=>{if(!p.hidden){p.hidden=true;p.previousElementSibling.setAttribute('aria-expanded',false)}})}
-$('#mTray').onclick=()=>{
-  const p=$('#tp'),open=p.hidden;closePops();if(!open)return;
-  p.innerHTML=TRAY.map(([n,c,l])=>`<button role="menuitem" aria-label="${n}" title="${n}"><span class="ti" style="--c:${c}">${l}</span></button>`).join('');
-  p.hidden=false;$('#mTray').setAttribute('aria-expanded',true);p.querySelector('button').focus();
-};
-$('#tp').onclick=e=>{const b=e.target.closest('button');if(b){closePops();hint(b.title+': same as clicking its tray icon')}};
-$('#tp').oncontextmenu=e=>{const b=e.target.closest('button');if(b){e.preventDefault();closePops();hint(b.title+': its own right-click menu opens')}};
-$('#tp').onkeydown=e=>{
-  const items=[...$('#tp').querySelectorAll('button')],i=items.indexOf(document.activeElement);
-  if(/Arrow(Right|Down)/.test(e.key)){e.preventDefault();items[(i+1)%items.length].focus()}
-  if(/Arrow(Left|Up)/.test(e.key)){e.preventDefault();items[(i-1+items.length)%items.length].focus()}
-  if(e.key==='Escape'){e.stopPropagation();closePops();$('#mTray').focus()}
-};
+$('#mTray').onclick=()=>{closePops();hint('Windows opens its hidden icons, as from the taskbar')};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.pwr'))closePops()});
 
 /* Control islands (PRD 6.4): Wi-Fi, Bluetooth, volume, brightness and power each open alone in the island, without the page menu */

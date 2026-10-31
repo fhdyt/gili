@@ -27,6 +27,9 @@ public sealed class AppBarService(IntPtr hwnd)
     /// <summary>True when an app goes fullscreen on the primary monitor, false when it leaves (F-BAR-02).</summary>
     public event Action<bool>? FullscreenChanged;
 
+    /// <summary>Explorer restarted, after the strip was claimed again; its taskbar is a new window (F-BAR-11).</summary>
+    public event Action? ShellRestarted;
+
     public void Register(double heightDip)
     {
         _heightDip = heightDip;
@@ -91,6 +94,7 @@ public sealed class AppBarService(IntPtr hwnd)
             // Explorer restarted and forgot every AppBar.
             _registered = false;
             Register(_heightDip);
+            ShellRestarted?.Invoke();
             return true;
         }
         switch (msg)

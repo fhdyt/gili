@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
+            new HashSet<string> { "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
@@ -101,6 +101,8 @@ public class SettingsCatalogTests
     {
         var s = new AppSettings();
         Assert.False(SettingsCatalog.Write(s, "secs", false).ShowSeconds);
+        Assert.True(SettingsCatalog.Write(s, "hideTb", true).HideTaskbar);
+        Assert.False((bool)SettingsCatalog.Read(s, "hideTb"));
         Assert.False(SettingsCatalog.Write(s, "gili", false).ShowGili);
         Assert.False(SettingsCatalog.Write(s, "glow", false).AmbientGlow);
         Assert.False(SettingsCatalog.Write(s, "motion", false).AmbientMotion);
