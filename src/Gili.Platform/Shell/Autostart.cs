@@ -14,4 +14,11 @@ public static class Autostart
         if (enabled) key.SetValue(ValueName, Core.LaunchRules.RunCommand(exePath));
         else key.DeleteValue(ValueName, throwOnMissingValue: false);
     }
+
+    /// <summary>Prepare to uninstall (PRD 9.4): the entry goes whatever the setting says.</summary>
+    public static void Remove()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
+        key?.DeleteValue(ValueName, throwOnMissingValue: false);
+    }
 }

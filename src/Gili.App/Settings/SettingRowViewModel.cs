@@ -54,8 +54,10 @@ public sealed partial class SettingRowViewModel : ObservableObject
     [ObservableProperty] private bool _isEnabled;
 
     public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null,
-        CitySearcher? searchCities = null)
+        CitySearcher? searchCities = null, string? info = null, Action? run = null)
     {
+        InfoText = info ?? "";
+        RunCommand = new RelayCommand(() => run?.Invoke(), () => run is not null);
         _hotkeys = hotkeys;
         _searchCities = searchCities;
         _hub = hub;
@@ -82,6 +84,18 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public string ShortcutText => IsRecording ? "Press keys" : Shortcut;
 
     public bool IsCity => _row.Kind == SettingKind.City;
+
+    /// <summary>An About row that shows text, like the version (design 5a).</summary>
+    public bool IsInfo => _row.Kind == SettingKind.Info;
+
+    public string InfoText { get; }
+
+    /// <summary>An About row with a button, like Open logs folder.</summary>
+    public bool IsAction => _row.Kind == SettingKind.Action;
+
+    public string ActionText => _row.Options is [var text, ..] ? text : "";
+
+    public IRelayCommand RunCommand { get; }
 
     public ObservableCollection<CityChoice> CityResults { get; } = [];
 
@@ -189,7 +203,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
         var state = _row.Available ? SettingsCatalog.State(settings, _row.Key) : new RowState(false, null);
         IsEnabled = _row.Available && _changeable && state.Enabled;
         Note = state.Note ?? _ownNote;
-        var value = _row.Available ? SettingsCatalog.Read(settings, _row.Key) : _row.Default;
+        var value = _row.Available && _row.Kind is not (SettingKind.Info or SettingKind.Action) ? SettingsCatalog.Read(settings, _row.Key) : _row.Default;
         switch (_row.Kind)
         {
             case SettingKind.Switch:

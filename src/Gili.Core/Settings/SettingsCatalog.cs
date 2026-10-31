@@ -2,11 +2,12 @@ using System.Globalization;
 
 namespace Gili.Core.Settings;
 
-public enum SettingKind { Switch, Segment, Range, Shortcut, City }
+public enum SettingKind { Switch, Segment, Range, Shortcut, City, Info, Action }
 
 /// <summary>
 /// One row of the Settings window (PRD 6.5). <paramref name="Default"/> is what a row that is not available yet shows:
-/// a bool for a switch, an option for a segment, a number for a range.
+/// a bool for a switch, an option for a segment, a number for a range. An action row's one option is its button's text;
+/// info and action rows hold nothing in <see cref="AppSettings"/>.
 /// </summary>
 public sealed record SettingRow(
     string Key,
@@ -116,10 +117,17 @@ public static class SettingsCatalog
             new("keys", "Keyboard shortcuts", SettingKind.Switch, "Click a shortcut, then press the new keys. Esc keeps the old one", Available: true),
             .. Hotkeys.All.Select(h => new SettingRow(h.Key, h.Label, SettingKind.Shortcut, Available: true)),
         ]),
+        // Updates, Privacy policy and Release notes wait for the certificate and the pages online (design 5a).
         new("About",
         [
-            new("updates", "Updates", SettingKind.Switch, Default: true),
-            new("logs", "Open logs folder", SettingKind.Switch, Default: true),
+            new("version", "Version", SettingKind.Info, Available: true),
+            new("updates", "Updates", SettingKind.Info, Default: ""),
+            new("privacy", "Privacy policy", SettingKind.Action, Options: ["Open"], Default: ""),
+            new("notes", "Release notes", SettingKind.Action, Options: ["Open"], Default: ""),
+            new("logs", "Open logs folder", SettingKind.Action, "Logs from the last 7 days, for bug reports", Available: true, Options: ["Open"]),
+            new("prepare", "Prepare to uninstall", SettingKind.Action,
+                "Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next",
+                Available: true, Options: ["Prepare"]),
         ]),
     ];
 
@@ -236,9 +244,13 @@ public static class SettingsCatalog
             ? id
             : null;
 
-    /// <summary>A section's rows as the window lists them: Right side puts the system modules in the bar's order.</summary>
-    public static IReadOnlyList<SettingRow> RowsOf(SettingsSection section, AppSettings s)
+    /// <summary>
+    /// A section's rows as the window lists them: Right side puts the system modules in the bar's order, and only the
+    /// Store copy prepares to uninstall from About, since the GitHub copy's uninstaller does it (PRD 9.4).
+    /// </summary>
+    public static IReadOnlyList<SettingRow> RowsOf(SettingsSection section, AppSettings s, InstallKind kind = InstallKind.Development)
     {
+        if (section.Name == "About" && kind != InstallKind.Store) return [.. section.Rows.Where(r => r.Key != "prepare")];
         if (section.Name != "Right side") return section.Rows;
         var order = s.Order;
         var modules = section.Rows.Where(r => ModuleId(r.Key) is not null).OrderBy(r => IndexIn(order, ModuleId(r.Key)!));

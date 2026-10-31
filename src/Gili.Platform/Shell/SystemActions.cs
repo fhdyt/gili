@@ -41,6 +41,9 @@ public static class SystemActions
         }
     }
 
+    /// <summary>A folder in Explorer, e.g. the logs from Settings → About.</summary>
+    public static void OpenFolder(string path) => OpenSettings(path);
+
     /// <summary>Task Manager, from the System page (PRD 6.3); it asks for elevation itself when its policy wants it.</summary>
     public static void TaskManager() => OpenSettings("taskmgr.exe");
 

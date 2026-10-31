@@ -2998,7 +2998,8 @@ const SET={
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
   Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.clipboard','Clipboard','key',['Ctrl+Alt+V']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
-  About:[['updates','Updates','sw'],['logs','Open logs folder','sw']],
+  // Updates, Privacy policy and Release notes wait for the certificate and the pages online; Prepare to uninstall is the Store copy's (design 5a).
+  About:[['version','Version','info',['0.1.1 · Microsoft Store']],['updates','Updates','info',[''],'Coming in a later version'],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open'],'Coming in a later version'],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
@@ -3037,14 +3038,17 @@ function renderSettings(){
   $('#setp').innerHTML=`<h3>${setSec}</h3>`+setRows(setSec).map(([k,label,type,opts,help])=>{
     const tabOff=k.startsWith('T.')&&leftOff(+k.split('.')[1]),ntfOff=(k==='ntfText'||k.startsWith('A.'))&&!S.ntf,v=sget(k);
     const last=k.startsWith('T.')&&lastTab(+k.split('.')[1])||k.startsWith('L.')&&LEFT_TAB[k.split('.')[1]]!=null&&lastTab(LEFT_TAB[k.split('.')[1]]);
-    const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last;
+    const later=help==='Coming in a later version';
+    const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last||later;
     const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
+      :type==='info'?`<span class="num" style="color:#C7C7CC">${opts[0]}</span>`
+      :type==='btn'?`<button class="kcap" data-act="${k}" aria-label="${label}">${opts[0]}</button>`
       :type==='key'?`<button class="kcap" data-k="${k}" aria-label="${label}" title="Press to record a new shortcut">${opts[0]}</button>`
       :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
     const why=tabOff?'Turned off in Left side':ntfOff?'Turn on Show Windows notifications first':'Hide the Windows taskbar first';
     const mk=k.startsWith('M.')&&S.order.includes(k.slice(2))?k.slice(2):null;
-    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
+    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last&&!later?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
   }).join('');
 }
 // Right side lists the system modules in the bar's order.
@@ -3087,6 +3091,8 @@ $('#setX').onclick=closeSettings;
 $('#setw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeSettings()}});
 $('#setn').onclick=e=>{const b=e.target.closest('[data-sec]');if(b){setSec=b.dataset.sec;renderSettings()}};
 $('#setp').addEventListener('click',e=>{
+  const a=e.target.closest('button[data-act]');
+  if(a){if(!a.closest('.dis'))hint(a.dataset.act==='logs'?'Opens the logs folder in File Explorer':'Gili quits and Windows Settings › Installed apps opens');return}
   const b=e.target.closest('button[data-k]');if(!b)return;
   b.classList.contains('sw')?sput(b.dataset.k,b.getAttribute('aria-checked')==='true'?0:1):sput(b.dataset.k,b.dataset.v);
 });

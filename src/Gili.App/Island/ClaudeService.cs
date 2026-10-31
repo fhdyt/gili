@@ -16,9 +16,6 @@ public sealed class ClaudeService : IDisposable
 {
     public const string HelperName = "Gili.ClaudeHook.exe";
 
-    private static readonly string ClaudeFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude");
-    private static readonly string SettingsPath = Path.Combine(ClaudeFolder, "settings.json");
-
     private readonly Dispatcher _dispatcher;
     private readonly FileLog _log;
     private readonly InstallKind _kind;
@@ -134,7 +131,7 @@ public sealed class ClaudeService : IDisposable
         else
         {
             Stop();
-            if (!startup) Edit(text => ClaudeHookConfig.Uninstall(text ?? ""), onlyIfExists: true);
+            if (!startup) Edit(ClaudeSettingsFile.RemoveHooks);
         }
         StatusChanged?.Invoke();
     }
@@ -147,7 +144,7 @@ public sealed class ClaudeService : IDisposable
             _log.Write($"{HelperName} was not found, so the Claude hooks were not written");
             return;
         }
-        Edit(text => ClaudeHookConfig.Install(text, helper), onlyIfExists: false);
+        Edit(() => ClaudeSettingsFile.Edit(text => ClaudeHookConfig.Install(text, helper), onlyIfExists: false));
     }
 
     /// <summary>
@@ -164,36 +161,19 @@ public sealed class ClaudeService : IDisposable
         return _kind == InstallKind.Development && File.Exists(installed) ? installed : null;
     }
 
-    /// <summary>
-    /// Changes Claude's settings.json through a backup (settings.json.gili-backup) and a temp file. A file Gili cannot
-    /// read is never written (F-CLD-01, PRD 11).
-    /// </summary>
-    private void Edit(Func<string?, string> change, bool onlyIfExists)
+    /// <summary>Writes or removes the hooks; what goes wrong becomes the Settings status line (PRD 11).</summary>
+    private void Edit(Func<bool> change)
     {
         try
         {
-            var exists = File.Exists(SettingsPath);
-            if (!exists && onlyIfExists) return;
-            var text = exists ? File.ReadAllText(SettingsPath) : null;
-            string next;
-            try
-            {
-                next = change(text);
-            }
-            catch (ClaudeSettingsException ex)
-            {
-                _problem = "Can't read Claude settings";
-                _log.Write("~/.claude/settings.json was left as it is", ex);
-                return;
-            }
+            var changed = change();
             _problem = null;
-            if (next == text) return;
-            Directory.CreateDirectory(ClaudeFolder);
-            if (exists) File.Copy(SettingsPath, SettingsPath + ".gili-backup", overwrite: true);
-            var temp = SettingsPath + ".gili-tmp";
-            File.WriteAllText(temp, next);
-            File.Move(temp, SettingsPath, overwrite: true);
-            _log.Write(_on ? "Claude hooks written" : "Claude hooks removed");
+            if (changed) _log.Write(_on ? "Claude hooks written" : "Claude hooks removed");
+        }
+        catch (ClaudeSettingsException ex)
+        {
+            _problem = "Can't read Claude settings";
+            _log.Write("~/.claude/settings.json was left as it is", ex);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -223,7 +203,7 @@ public sealed class ClaudeService : IDisposable
         };
         _pipe.Failed += ex => _log.Write("Could not open the Claude pipe", ex);
         _pipe.Start();
-        _files = new ClaudeSessionFiles(ClaudeFolder);
+        _files = new ClaudeSessionFiles(ClaudeSettingsFile.Folder);
         _files.Read += texts => _dispatcher.InvokeAsync(() => Guard(() =>
         {
             if (!_on) return;

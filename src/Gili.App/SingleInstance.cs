@@ -36,6 +36,25 @@ internal sealed class SingleInstance : IDisposable
         return true;
     }
 
+    /// <summary>True once no instance holds the mutex, at most <paramref name="timeout"/> later.</summary>
+    public static bool WaitForExit(TimeSpan timeout)
+    {
+        if (!Mutex.TryOpenExisting(MutexName, out var mutex)) return true;
+        using (mutex)
+        {
+            try
+            {
+                if (!mutex.WaitOne(timeout)) return false;
+            }
+            catch (AbandonedMutexException)
+            {
+                // The instance died holding it, which is gone too.
+            }
+            mutex.ReleaseMutex();
+            return true;
+        }
+    }
+
     /// <summary>
     /// Returns null when another instance is running. <paramref name="wait"/> lets a restart after a crash wait
     /// for the dying instance to let go of the mutex instead of giving up at once.

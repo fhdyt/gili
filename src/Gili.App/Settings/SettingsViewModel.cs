@@ -10,6 +10,9 @@ public sealed record HotkeyHooks(Action<bool> Suspend, Func<HotkeyAction, bool> 
 /// <summary>The Weather city row's search (design 4c).</summary>
 public delegate Task<IReadOnlyList<Gili.Core.Modules.CityResult>> CitySearcher(string name, CancellationToken cancel);
 
+/// <summary>What Settings → About shows and does (design 5a).</summary>
+public sealed record AboutActions(string VersionLine, Action OpenLogs, Action PrepareUninstall);
+
 /// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -20,13 +23,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly Func<string?>? _claudeStatus;
     private readonly HotkeyHooks? _hotkeys;
     private readonly CitySearcher? _searchCities;
+    private readonly AboutActions? _about;
 
     [ObservableProperty] private SettingsSection _selectedSection;
     [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
     public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null,
-        HotkeyHooks? hotkeys = null, CitySearcher? searchCities = null)
+        HotkeyHooks? hotkeys = null, CitySearcher? searchCities = null, AboutActions? about = null)
     {
+        _about = about;
         _hotkeys = hotkeys;
         _searchCities = searchCities;
         _claudeStatus = claudeStatus;
@@ -49,7 +54,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void BuildRows()
     {
         _order = _hub.Current.ModuleOrder;
-        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities))];
+        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current, _kind).Select(r =>
+            new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities, InfoFor(r.Key), RunFor(r.Key)))];
     }
 
     private string? _order;
@@ -65,6 +71,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         if (row.ModuleId is { } id) _hub.Update(s => s with { ModuleOrder = string.Join(",", RightModuleRules.MoveTo(s.Order, id, index)) });
     }
+
+    private string? InfoFor(string key) => key == "version" ? _about?.VersionLine : null;
+
+    private Action? RunFor(string key) => key switch
+    {
+        "logs" => _about?.OpenLogs,
+        "prepare" => _about?.PrepareUninstall,
+        _ => null,
+    };
 
     /// <summary>The Store copy cannot turn its startup task back on once Task Manager switched it off (PRD 9.4).</summary>
     private bool CanChange(string key) =>

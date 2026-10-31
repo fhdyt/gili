@@ -75,6 +75,12 @@ public partial class App : Application
             Shutdown();
             return;
         }
+        if (e.Args.Contains("--prepare-uninstall"))
+        {
+            PrepareUninstall();
+            Shutdown();
+            return;
+        }
         UseEnglishFormatting();
         Directory.CreateDirectory(Data.Root);
         _log = new FileLog(Data.Logs);
@@ -406,7 +412,8 @@ public partial class App : Application
         _releaseTimer.Stop();
         var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now),
             _hotkeys is null ? null : new HotkeyHooks(_hotkeys.Suspend, action => _hotkeys.Failed.Contains(action)),
-            Platform.Modules.GeocodingClient.SearchAsync);
+            Platform.Modules.GeocodingClient.SearchAsync,
+            new AboutActions(Core.About.AboutInfo.VersionLine(typeof(App).Assembly.GetName().Version!, Kind), OpenLogs, PrepareStoreUninstall));
         if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
         _settingsWindow = new SettingsWindow(model);
@@ -629,6 +636,63 @@ public partial class App : Application
         {
             _log?.Write("Could not change the startup task", ex);
         }
+    }
+
+    /// <summary>
+    /// The GitHub uninstaller's first step (PRD 9.4, design 5a): the running copy quits the normal way, then Claude's
+    /// hooks, a taskbar a killed run left hidden, and the start entry are put back. Always exits with 0; failures are logged.
+    /// </summary>
+    private static void PrepareUninstall()
+    {
+        var log = new FileLog(Data.Logs);
+        log.Write("Preparing to uninstall");
+        // The process lives on for a moment after letting go of the mutex, holding Gili.exe the uninstaller deletes next.
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        if (SingleInstance.RequestQuit() && !(SingleInstance.WaitForExit(TimeSpan.FromSeconds(5)) && OthersExited(deadline)))
+            log.Write("The running Gili did not quit within 5 seconds");
+        Core.About.UninstallSteps.Run(
+        [
+            new("Claude hooks", () => Platform.Claude.ClaudeSettingsFile.RemoveHooks()),
+            new("Windows taskbar", () =>
+            {
+                using var taskbar = new TaskbarHider();
+                new TaskbarKeeper(taskbar, new TaskbarStateFile(Data.Root)).Restore();
+            }),
+            new("Start with Windows", Autostart.Remove),
+        ], (step, ex) => log.Write($"Prepare to uninstall: {step} failed", ex));
+    }
+
+    private static bool OthersExited(DateTime deadline)
+    {
+        foreach (var process in System.Diagnostics.Process.GetProcessesByName("Gili"))
+        {
+            using (process)
+            {
+                if (process.Id == Environment.ProcessId) continue;
+                var left = deadline - DateTime.UtcNow;
+                if (left <= TimeSpan.Zero || !process.WaitForExit(left)) return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Settings → About's Prepare to uninstall on the Store copy, which cannot run code when Windows removes it (PRD 9.4):
+    /// the hooks go, quitting gives the taskbar back, and Installed apps opens for the next step.
+    /// </summary>
+    private void PrepareStoreUninstall()
+    {
+        Core.About.UninstallSteps.Run([new("Claude hooks", () => Platform.Claude.ClaudeSettingsFile.RemoveHooks())],
+            (step, ex) => _log?.Write($"Prepare to uninstall: {step} failed", ex));
+        _log?.Write("Prepared to uninstall");
+        SystemActions.OpenSettings("ms-settings:appsfeatures");
+        Quit();
+    }
+
+    private void OpenLogs()
+    {
+        Directory.CreateDirectory(Data.Logs);
+        SystemActions.OpenFolder(Data.Logs);
     }
 
     private void Quit()
