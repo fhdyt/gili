@@ -1,5 +1,9 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Gili.Core.Modules;
 using Gili.Core.Settings;
 
 namespace Gili.App.Settings;
@@ -15,7 +19,16 @@ public sealed partial class SettingRowViewModel : ObservableObject
     private readonly bool _changeable;
     private readonly string? _ownNote;
     private readonly HotkeyHooks? _hotkeys;
+    private readonly CitySearcher? _searchCities;
+    private DispatcherTimer? _cityDelay;
+    private CancellationTokenSource? _citySearch;
     private bool _loading;
+
+    /// <summary>The Weather city row: the chosen city, or a search field with up to five places under it (design 4c).</summary>
+    [ObservableProperty] private string _city = "";
+    [ObservableProperty] private bool _isSearchingCity;
+    [ObservableProperty] private string _cityQuery = "";
+    [ObservableProperty] private string? _cityMessage;
 
     /// <summary>A Shortcuts row: the combination it holds, or "Press keys" while it records a new one.</summary>
     [ObservableProperty]
@@ -40,9 +53,11 @@ public sealed partial class SettingRowViewModel : ObservableObject
 
     [ObservableProperty] private bool _isEnabled;
 
-    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null)
+    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null,
+        CitySearcher? searchCities = null)
     {
         _hotkeys = hotkeys;
+        _searchCities = searchCities;
         _hub = hub;
         _row = row;
         _changeable = changeable;
@@ -65,6 +80,81 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public bool IsShortcut => _row.Kind == SettingKind.Shortcut;
 
     public string ShortcutText => IsRecording ? "Press keys" : Shortcut;
+
+    public bool IsCity => _row.Kind == SettingKind.City;
+
+    public ObservableCollection<CityChoice> CityResults { get; } = [];
+
+    public void StartCitySearch()
+    {
+        if (!IsEnabled) return;
+        CityQuery = "";
+        CityMessage = null;
+        CityResults.Clear();
+        IsSearchingCity = true;
+    }
+
+    public void CancelCitySearch()
+    {
+        _cityDelay?.Stop();
+        _citySearch?.Cancel();
+        IsSearchingCity = false;
+        CityResults.Clear();
+        CityMessage = null;
+    }
+
+    /// <summary>Enter takes the first place found.</summary>
+    public void PickFirstCity()
+    {
+        if (CityResults.Count > 0) PickCity(CityResults[0].Result);
+    }
+
+    private void PickCity(CityResult city)
+    {
+        CancelCitySearch();
+        _hub.Update(s => s with { WeatherCity = city.Name, WeatherLatitude = city.Latitude, WeatherLongitude = city.Longitude });
+    }
+
+    /// <summary>Asks 400 ms after the last key, and only for two letters or more; a newer search wins.</summary>
+    partial void OnCityQueryChanged(string value)
+    {
+        if (!IsSearchingCity) return;
+        _cityDelay ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        _cityDelay.Stop();
+        _cityDelay.Tick -= OnCityDelay;
+        _cityDelay.Tick += OnCityDelay;
+        if (CitySearch.IsQuery(value)) _cityDelay.Start();
+        else
+        {
+            CityResults.Clear();
+            CityMessage = null;
+        }
+    }
+
+    private void OnCityDelay(object? sender, EventArgs e)
+    {
+        _cityDelay!.Stop();
+        _ = SearchCityAsync(CityQuery);
+    }
+
+    private async Task SearchCityAsync(string query)
+    {
+        if (_searchCities is null) return;
+        _citySearch?.Cancel();
+        var cancel = _citySearch = new CancellationTokenSource();
+        try
+        {
+            var results = await _searchCities(query, cancel.Token);
+            if (cancel.IsCancellationRequested || !IsSearchingCity) return;
+            CityResults.Clear();
+            foreach (var result in results) CityResults.Add(new CityChoice(result, PickCity));
+            CityMessage = results.Count == 0 ? "No places found" : null;
+        }
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TaskCanceledException)
+        {
+            if (!cancel.IsCancellationRequested) CityMessage = "Can't search right now. Check the connection";
+        }
+    }
 
     /// <summary>Starts recording: the hotkeys pause, so pressing the current combination reaches this row.</summary>
     public void StartRecording()
@@ -111,6 +201,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
             case SettingKind.Shortcut:
                 Shortcut = value as string ?? "";
                 break;
+            case SettingKind.City:
+                City = value as string ?? "";
+                break;
             case SettingKind.Range:
                 (Min, Max) = SettingsCatalog.Range(settings, _row.Key);
                 Value = Convert.ToDouble(value, CultureInfo.InvariantCulture);
@@ -138,4 +231,14 @@ public sealed partial class SettingRowViewModel : ObservableObject
         if (_loading || !IsEnabled) return;
         _hub.Update(s => SettingsCatalog.Write(s, _row.Key, value));
     }
+}
+
+/// <summary>One place in the Weather city results.</summary>
+public sealed class CityChoice(CityResult result, Action<CityResult> pick)
+{
+    public CityResult Result { get; } = result;
+
+    public string Display => Result.Display;
+
+    public IRelayCommand PickCommand { get; } = new RelayCommand(() => pick(result));
 }

@@ -12,6 +12,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+            <c:VisibleWhenFalse x:Key="VisibleWhenFalse" />
 
             <!-- Range (mockup input[type=range] with the green accent): 4 px track, 16 px thumb. -->
             <Style x:Key="TrackPart" TargetType="RepeatButton">
@@ -104,12 +105,50 @@
                                     LostKeyboardFocus="OnShortcutLostFocus" AutomationProperties.Name="{Binding Label}"
                                     AutomationProperties.HelpText="Press to record a new shortcut"
                                     Visibility="{Binding IsShortcut, Converter={StaticResource VisibleWhen}}" />
+                            <!-- Weather city: the chosen city; click to search by name (design 4c). -->
+                            <Grid Visibility="{Binding IsCity, Converter={StaticResource VisibleWhen}}">
+                                <Button Style="{StaticResource ShortcutButton}" Content="{Binding City}" Click="OnCityClick"
+                                        AutomationProperties.Name="{Binding Label}" AutomationProperties.HelpText="Press to search for another city"
+                                        Visibility="{Binding IsSearchingCity, Converter={StaticResource VisibleWhenFalse}}" />
+                                <TextBox Style="{StaticResource Field}" Width="220" Text="{Binding CityQuery, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="Search city" AutomationProperties.HelpText="Search city"
+                                         IsVisibleChanged="OnCityFieldShown" PreviewKeyDown="OnCityKey"
+                                         Visibility="{Binding IsSearchingCity, Converter={StaticResource VisibleWhen}}" />
+                            </Grid>
                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
                                 <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
                                         AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding ValueText}" Width="38" Margin="12,0,0,0" TextAlignment="Right"
                                            Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             </StackPanel>
+                        </StackPanel>
+                        <!-- The places found for the city search, under the row; a message when there are none. -->
+                        <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0" Visibility="{Binding IsSearchingCity, Converter={StaticResource VisibleWhen}}">
+                            <TextBlock Text="{Binding CityMessage}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2" />
+                            <ItemsControl ItemsSource="{Binding CityResults}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding PickCommand}" Content="{Binding Display}" AutomationProperties.Name="{Binding Display}"
+                                                FocusVisualStyle="{StaticResource FocusRing}" Cursor="Hand" HorizontalContentAlignment="Left">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bg" Padding="10,6" CornerRadius="6" Background="Transparent">
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                                            <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                         <!-- System modules reorder by this grip (mockup .sgrip) or Alt + Up/Down on their switch. -->
                         <Border DockPanel.Dock="Left" Background="Transparent" Cursor="SizeNS" Margin="-4,0,8,0" Padding="0,6"

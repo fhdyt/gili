@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "clOn", "limOn", "keys", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
+            new HashSet<string> { "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
@@ -200,10 +200,11 @@ public class SettingsCatalogModuleTests
     }
 
     [Fact]
-    public void Module_rows_are_available_but_the_city_is_not()
+    public void Module_rows_and_the_city_are_available()
     {
         Assert.All(RightSide.Rows.Where(r => r.Key.StartsWith("M.", StringComparison.Ordinal)), r => Assert.True(r.Available));
-        Assert.False(RightSide.Rows.Single(r => r.Key == "W.city").Available);
+        Assert.Equal(SettingKind.City, RightSide.Rows.Single(r => r.Key == "W.city").Kind);
+        Assert.Equal("Jakarta", SettingsCatalog.Read(new AppSettings(), "W.city"));
     }
 
     [Fact]

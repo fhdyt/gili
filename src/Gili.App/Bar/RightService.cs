@@ -39,6 +39,17 @@ public sealed class RightService : IDisposable
         _settings = settings;
         _log = log;
         _wifi.Changed += () => _dispatcher.InvokeAsync(ReadWifi);
+        // A new Weather city is fetched at once, not at the next half hour (design 4c).
+        _coords = (settings.Current.WeatherLatitude, settings.Current.WeatherLongitude);
+        settings.Changed += s =>
+        {
+            if ((s.WeatherLatitude, s.WeatherLongitude) == _coords) return;
+            _coords = (s.WeatherLatitude, s.WeatherLongitude);
+            Weather = null;
+            WeatherStale = false;
+            Changed?.Invoke();
+            if (_started && !WeatherOff) _ = RefreshWeatherAsync();
+        };
         _bluetooth.Changed += () => _dispatcher.InvokeAsync(() =>
         {
             Changed?.Invoke();
@@ -75,6 +86,8 @@ public sealed class RightService : IDisposable
 
     /// <summary>The last reading is older than the latest attempt: shown grey (F-RIGHT-05).</summary>
     public bool WeatherStale { get; private set; }
+
+    private (double Latitude, double Longitude) _coords;
 
     public WifiState? Wifi { get; private set; }
 

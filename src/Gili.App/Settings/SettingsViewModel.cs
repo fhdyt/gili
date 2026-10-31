@@ -7,6 +7,9 @@ namespace Gili.App.Settings;
 /// <summary>What the Shortcuts rows need from the hotkeys: pause them while recording, and which ones another app holds.</summary>
 public sealed record HotkeyHooks(Action<bool> Suspend, Func<HotkeyAction, bool> Failed);
 
+/// <summary>The Weather city row's search (design 4c).</summary>
+public delegate Task<IReadOnlyList<Gili.Core.Modules.CityResult>> CitySearcher(string name, CancellationToken cancel);
+
 /// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -16,14 +19,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly StartupState? _startup;
     private readonly Func<string?>? _claudeStatus;
     private readonly HotkeyHooks? _hotkeys;
+    private readonly CitySearcher? _searchCities;
 
     [ObservableProperty] private SettingsSection _selectedSection;
     [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
     public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null,
-        HotkeyHooks? hotkeys = null)
+        HotkeyHooks? hotkeys = null, CitySearcher? searchCities = null)
     {
         _hotkeys = hotkeys;
+        _searchCities = searchCities;
         _claudeStatus = claudeStatus;
         _hub = hub;
         _transparencyEnabled = transparencyEnabled;
@@ -44,7 +49,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void BuildRows()
     {
         _order = _hub.Current.ModuleOrder;
-        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys))];
+        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities))];
     }
 
     private string? _order;

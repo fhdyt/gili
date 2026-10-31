@@ -405,7 +405,8 @@ public partial class App : Application
         }
         _releaseTimer.Stop();
         var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now),
-            _hotkeys is null ? null : new HotkeyHooks(_hotkeys.Suspend, action => _hotkeys.Failed.Contains(action)));
+            _hotkeys is null ? null : new HotkeyHooks(_hotkeys.Suspend, action => _hotkeys.Failed.Contains(action)),
+            Platform.Modules.GeocodingClient.SearchAsync);
         if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
         _settingsWindow = new SettingsWindow(model);

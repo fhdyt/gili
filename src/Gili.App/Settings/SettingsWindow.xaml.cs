@@ -48,6 +48,26 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void OnCityClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.StartCitySearch();
+    }
+
+    private void OnCityFieldShown(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is TextBox { IsVisible: true } field) Dispatcher.InvokeAsync(() => field.Focus(), DispatcherPriority.Input);
+    }
+
+    /// <summary>Enter takes the first place, Esc goes back to the chosen city without closing Settings.</summary>
+    private void OnCityKey(object sender, KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: SettingRowViewModel row }) return;
+        if (e.Key == Key.Enter) row.PickFirstCity();
+        else if (e.Key == Key.Escape) row.CancelCitySearch();
+        else return;
+        e.Handled = true;
+    }
+
     private void OnShortcutLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.StopRecording(null);
@@ -81,6 +101,13 @@ public partial class SettingsWindow : Window
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (Record(e)) return;
+        // The city field answers Esc itself (its own handler runs after this window's).
+        if (e.Key == Key.Escape && (e.OriginalSource as FrameworkElement)?.DataContext is SettingRowViewModel { IsSearchingCity: true } searching)
+        {
+            searching.CancelCitySearch();
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Escape)
         {
             Close();

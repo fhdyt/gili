@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Gili.Core.Settings;
 
-public enum SettingKind { Switch, Segment, Range, Shortcut }
+public enum SettingKind { Switch, Segment, Range, Shortcut, City }
 
 /// <summary>
 /// One row of the Settings window (PRD 6.5). <paramref name="Default"/> is what a row that is not available yet shows:
@@ -88,7 +88,7 @@ public static class SettingsCatalog
         new("Right side",
         [
             .. ModuleIds.Keys.Select(n => new SettingRow("M." + n, n, SettingKind.Switch, Available: true)),
-            new("W.city", "Weather city", SettingKind.Segment, Options: ["Jakarta"], Default: "Jakarta"),
+            new("W.city", "Weather city", SettingKind.City, "Search by name. Only the name you type is sent, to Open-Meteo", Available: true),
             new("W.bat", "Battery alert", SettingKind.Range, "Also at 10%", Available: true, Unit: "%"),
             new("W.unplug", "Unplug reminder", SettingKind.Range, "Only on laptops that keep charging past it. 100% turns it off",
                 Available: true, Unit: "%"),
@@ -130,6 +130,7 @@ public static class SettingsCatalog
         "clOn" => s.ClaudeSessions,
         "limOn" => s.ClaudeUsageTimer,
         "keys" => s.KeyboardShortcuts,
+        "W.city" => s.WeatherCity,
         _ when Hotkeys.ActionOf(key) is { } action => s.HotkeyFor(action),
         "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
