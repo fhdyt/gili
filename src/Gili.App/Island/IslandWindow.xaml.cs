@@ -708,7 +708,8 @@ public partial class IslandWindow : Window
     private void SizeExpanded()
     {
         var showGili = _settings.Current.ShowGili;
-        var need = TabMenuLayout.Need(_tabs.Count, showGili, _names.Max(n => n.Bold));
+        var shown = ShownTabs();
+        var need = TabMenuLayout.Need(shown.Count, showGili, shown.Max(i => _names[i].Bold));
         var width = TabMenuLayout.IslandWidth(need, SystemParameters.PrimaryScreenWidth);
         _tight = TabMenuLayout.IsTight(need, width);
         ExpandedLayer.Width = width;
@@ -802,11 +803,15 @@ public partial class IslandWindow : Window
     {
         if (_tabs.Count == 0) return;
         var selected = _vm.SelectedTab;
-        var widths = TabMenuLayout.TabWidths(Menu.Width, _names, selected, _hoveredTab, _tight);
+        // Widths and the highlight count only the tabs shown, so the rest spread over the menu (F-ISL-23).
+        var shown = ShownTabs();
+        var widths = TabMenuLayout.TabWidths(Menu.Width, [.. shown.Select(i => _names[i])], shown.IndexOf(selected), shown.IndexOf(_hoveredTab), _tight);
         animate &= SystemParameters.ClientAreaAnimation;
         for (var i = 0; i < _tabs.Count; i++)
         {
             var (button, icon, name, meter) = _tabs[i];
+            var at = shown.IndexOf(i);
+            if (at < 0) continue;
             var active = i == selected;
             var open = active || (i == _hoveredTab && !_tight);
             if (active || i == _hoveredTab) button.Foreground = TextBrush;
@@ -819,14 +824,14 @@ public partial class IslandWindow : Window
                 ? new DoubleAnimation(open ? 1 : 0, TimeSpan.FromMilliseconds(active ? 220 : 160)) { BeginTime = TimeSpan.FromMilliseconds(active ? 90 : 0) }
                 : null);
             if (!animate) name.Opacity = open ? 1 : 0;
-            To(button, WidthProperty, widths[i], animate);
+            To(button, WidthProperty, widths[at], animate);
             var playing = meter is not null && _vm.MusicPlaying;
             icon.Visibility = playing ? Visibility.Collapsed : Visibility.Visible;
             if (meter is null) continue;
             meter.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
             meter.IsPlaying = playing;
         }
-        var (x, width) = TabMenuLayout.Highlight(widths, selected);
+        var (x, width) = TabMenuLayout.Highlight(widths, Math.Max(0, shown.IndexOf(selected)));
         // Highlight measures X from the menu's outer edge; the strip already sits inside the 3 px padding.
         To(TabHighlightShift, TranslateTransform.XProperty, x - TabMenuLayout.Padding, animate);
         To(TabHighlight, WidthProperty, width, animate);
@@ -869,7 +874,30 @@ public partial class IslandWindow : Window
     }
 
     private void ShowPage(bool animate) =>
-        Slide(PageShift, -_vm.SelectedTab * ExpandedLayer.Width, 300, animate, BezierEase.Out);
+        Slide(PageShift, -Math.Max(0, ShownTabs().IndexOf(_vm.SelectedTab)) * ExpandedLayer.Width, 300, animate, BezierEase.Out);
+
+    /// <summary>The menu indexes of the tabs shown, in order.</summary>
+    private List<int> ShownTabs() => [.. Enumerable.Range(0, _vm.Tabs.Count).Where(i => _vm.VisiblePages.Contains(_vm.Tabs[i].Page))];
+
+    /// <summary>
+    /// Hidden tabs and their pages leave the menu and the page track (collapsed, so the track slides over shown pages
+    /// only); the first shown tab drops its gap; the island resizes for the tabs left (plan 3a ruling).
+    /// </summary>
+    private void ApplyShownTabs()
+    {
+        var shown = ShownTabs();
+        for (var i = 0; i < _tabs.Count; i++)
+        {
+            var visible = shown.Contains(i) ? Visibility.Visible : Visibility.Collapsed;
+            _tabs[i].Button.Visibility = visible;
+            _tabs[i].Button.Margin = new Thickness(shown.Count > 0 && i == shown[0] ? 0 : TabMenuLayout.Gap, 0, 0, 0);
+            PageTrack.Children[i].Visibility = visible;
+        }
+        SizeExpanded();
+        UpdateTabs(animate: false);
+        ShowPage(animate: false);
+        if (_mode == IslandMode.Expanded) Relayout(SpringParameters.Open);
+    }
 
     private static void Slide(TranslateTransform shift, double x, int milliseconds, bool animate, IEasingFunction ease)
     {
@@ -925,6 +953,9 @@ public partial class IslandWindow : Window
                 if (animate) Relayout(SpringParameters.Open);
                 UpdateGlow();
                 break;
+            case nameof(IslandViewModel.VisiblePages):
+                ApplyShownTabs();
+                break;
             case nameof(IslandViewModel.WideRuns):
                 BuildWideParts();
                 break;
@@ -956,8 +987,9 @@ public partial class IslandWindow : Window
     private void StepPage(int direction)
     {
         if (ShowsControl || _notesPage.IsDragging) return;
-        var next = Math.Clamp(_vm.SelectedTab + direction, 0, _vm.Tabs.Count - 1);
-        if (next != _vm.SelectedTab) _island.Open(_vm.Tabs[next].Page);
+        var page = _island.View.Page;
+        var next = IslandTabs.Step(_vm.VisiblePages, page, direction);
+        if (next != page) _island.Open(next);
     }
 
     /// <summary>

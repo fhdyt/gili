@@ -9,6 +9,7 @@ using Gili.App.Controls;
 using Gili.Core.Apps;
 using Gili.Core.Island;
 using Gili.Core.Motion;
+using Gili.Core.Settings;
 using Gili.Platform.Shell;
 
 namespace Gili.App.Bar;
@@ -30,6 +31,8 @@ public partial class LeftSide : UserControl
     private Point _lastPoint;
     private double _limit = double.PositiveInfinity;
     private StripFit _fit = new(0, 160, 160, false);
+    private LeftIcons? _hidden;
+    private readonly HashSet<FrameworkElement> _leaving = [];
 
     public LeftSide(AppsService apps)
     {
@@ -37,6 +40,65 @@ public partial class LeftSide : UserControl
         InitializeComponent();
         apps.Changed += Sync;
         Loaded += (_, _) => Sync();
+    }
+
+    /// <summary>
+    /// Settings → Left side hides icons (F-BAR-12): one going away shrinks to 0.6 and fades in 160 ms while its slot
+    /// closes over 300 ms, the way a closed app leaves the strip; one coming back pops in. The divider shows only after
+    /// an icon. With Windows animations off, icons just appear and go.
+    /// </summary>
+    public void ApplyHidden(LeftIcons hidden, bool animate)
+    {
+        if (hidden == _hidden) return;
+        animate &= _hidden is not null && SystemParameters.ClientAreaAnimation;
+        _hidden = hidden;
+        ShowIcon(StartButton, !hidden.HasFlag(LeftIcons.Start), animate);
+        foreach (var icon in Launcher.Children.OfType<FrameworkElement>())
+            ShowIcon(icon, !hidden.HasFlag(Enum.Parse<LeftIcons>((string)icon.Tag)), animate);
+        Rule.Visibility = hidden == EveryIcon ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon);
+
+    private void ShowIcon(FrameworkElement icon, bool show, bool animate)
+    {
+        // An icon still shrinking away counts as gone, so turning it back on mid-way brings it back.
+        var shown = icon.Visibility == Visibility.Visible && !_leaving.Contains(icon);
+        if (shown == show) return;
+        if (icon.RenderTransform is not ScaleTransform scale)
+        {
+            scale = new ScaleTransform(1, 1);
+            icon.RenderTransform = scale;
+            icon.RenderTransformOrigin = new Point(0.5, 0.5);
+        }
+        _leaving.Remove(icon);
+        icon.BeginAnimation(WidthProperty, null);
+        if (!animate)
+        {
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            icon.BeginAnimation(OpacityProperty, null);
+            icon.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            return;
+        }
+        icon.Visibility = Visibility.Visible;
+        icon.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var full = icon.DesiredSize.Width - icon.Margin.Left - icon.Margin.Right;
+        var slot = new DoubleAnimation(show ? 0 : full, show ? full : 0, TimeSpan.FromMilliseconds(300)) { EasingFunction = BezierEase.Out };
+        if (!show) _leaving.Add(icon);
+        slot.Completed += (_, _) =>
+        {
+            if (!show && !_leaving.Remove(icon)) return;
+            if (!show) icon.Visibility = Visibility.Collapsed;
+            icon.BeginAnimation(WidthProperty, null);
+        };
+        icon.BeginAnimation(WidthProperty, slot);
+        var size = show
+            ? new DoubleAnimation(0.6, 1, TimeSpan.FromMilliseconds(320)) { EasingFunction = Pop }
+            : new DoubleAnimation(0.6, TimeSpan.FromMilliseconds(160));
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, size);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, size);
+        icon.BeginAnimation(OpacityProperty, new DoubleAnimation(show ? 1 : 0, TimeSpan.FromMilliseconds(show ? 200 : 160)));
     }
 
     /// <summary>A launcher, Shelf or Claude icon asks for its page; the island toggles it.</summary>

@@ -137,6 +137,8 @@ public partial class App : Application
         _bar.QuitRequested += Quit;
         _bar.TimeChanged += _clock.Refresh;
         _settings.Changed += _ => _timers.ApplyPlan();
+        _islandController.ApplyHiddenTabs(_settings.Current.HiddenTabs);
+        _settings.Changed += s => _islandController.ApplyHiddenTabs(s.HiddenTabs);
         _bar.TimeChanged += _timers.Reschedule;
         _bar.TimeChanged += _alarms.Reschedule;
         _bar.TimeChanged += _todos.Reschedule;

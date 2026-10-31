@@ -27,6 +27,7 @@ public sealed class IslandController : IDisposable
     private readonly Func<AppSettings> _settings;
     private BatteryAlerts _battery = new();
     private LockKeys _keys;
+    private PageSet _hiddenTabs;
     // The alarm each alarm card stands for, as it was when it rang, and whether it was late.
     private readonly Dictionary<string, (Alarm Alarm, bool Missed)> _ringing = [];
     // The task each reminder card stands for, as it was when it came.
@@ -263,6 +264,19 @@ public sealed class IslandController : IDisposable
     public PrivacyUse Privacy { get; private set; } = PrivacyUse.None;
 
     public event Action? PrivacyChanged;
+
+    /// <summary>
+    /// Settings hid tabs: the island leaves a page that just went hidden for its nearest shown neighbour (plan 3a). A
+    /// hidden page opened directly afterwards stays, with its tab shown for as long as it is open.
+    /// </summary>
+    public void ApplyHiddenTabs(PageSet hidden)
+    {
+        var added = hidden & ~_hiddenTabs;
+        _hiddenTabs = hidden;
+        var view = _coordinator.View;
+        if (view.Mode == IslandMode.Expanded && view.Page != IslandPage.Controls && added.HasFlag(IslandTabs.Of(view.Page)))
+            _coordinator.Open(IslandTabs.Fallback(hidden, view.Page));
+    }
 
     /// <summary>Lock keys stop being read while the bar pauses its polling (PRD 8.1).</summary>
     public void SetPaused(bool paused) => _lockKeys.SetPaused(paused);

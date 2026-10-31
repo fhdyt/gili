@@ -13,6 +13,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
     private readonly SettingsHub _hub;
     private readonly SettingRow _row;
     private readonly bool _changeable;
+    private readonly string? _ownNote;
     private bool _loading;
 
     [ObservableProperty] private bool _isOn;
@@ -22,19 +23,24 @@ public sealed partial class SettingRowViewModel : ObservableObject
     [ObservableProperty] private double _max;
     [ObservableProperty] private string _valueText = "";
 
+    /// <summary>Some rows lock and say why depending on others, like an island page whose left icon is off (plan 3a).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNote))]
+    private string? _note;
+
+    [ObservableProperty] private bool _isEnabled;
+
     public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true)
     {
         _hub = hub;
         _row = row;
         _changeable = changeable;
-        Note = row.Available ? note ?? row.Help : SettingsCatalog.LaterVersion;
+        _ownNote = row.Available ? note ?? row.Help : SettingsCatalog.LaterVersion;
         Reload(hub.Current);
     }
 
     public string Label => _row.Label;
-    public string? Note { get; }
     public bool HasNote => Note is not null;
-    public bool IsEnabled => _row.Available && _changeable;
     public bool IsSwitch => _row.Kind == SettingKind.Switch;
     public bool IsSegment => _row.Kind == SettingKind.Segment;
     public bool IsRange => _row.Kind == SettingKind.Range;
@@ -44,6 +50,10 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public void Reload(AppSettings settings)
     {
         _loading = true;
+        // A row locked by another says why; otherwise it keeps its own note (help, or one about this machine).
+        var state = _row.Available ? SettingsCatalog.State(settings, _row.Key) : new RowState(false, null);
+        IsEnabled = _row.Available && _changeable && state.Enabled;
+        Note = state.Note ?? _ownNote;
         var value = _row.Available ? SettingsCatalog.Read(settings, _row.Key) : _row.Default;
         switch (_row.Kind)
         {

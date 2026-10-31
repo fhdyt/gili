@@ -145,6 +145,17 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public IReadOnlyList<IslandTab> Tabs { get; }
 
+    /// <summary>The tabs the menu shows: hidden ones leave, a hidden page opened directly shows while open (F-ISL-23).</summary>
+    [ObservableProperty] private IReadOnlyList<IslandPage> _visiblePages = IslandTabs.Menu;
+
+    private void UpdateVisiblePages(IslandPage page)
+    {
+        var hidden = _settings.Current.HiddenTabs;
+        IslandPage? temporary = page != IslandPage.Controls && hidden.HasFlag(IslandTabs.Of(page)) ? page : null;
+        var pages = IslandTabs.Visible(hidden, temporary);
+        if (!pages.SequenceEqual(VisiblePages)) VisiblePages = pages;
+    }
+
     public bool ShowMediaSlot => Slot == ActivityKind.Media && HasMedia;
 
     public bool ShowChargingSlot => Slot == ActivityKind.Charging;
@@ -229,6 +240,7 @@ public sealed partial class IslandViewModel : ObservableObject
 
     private void UpdateSettings()
     {
+        UpdateVisiblePages(_island.View.Page);
         var height = _settings.Current.IslandHeight;
         FontSize = BarMetrics.IslandFontSize(height);
         IslandHeight = height;
@@ -247,6 +259,7 @@ public sealed partial class IslandViewModel : ObservableObject
         Slot = view.Slot;
         UpdateTimerSlot();
         UpdateCard(view);
+        UpdateVisiblePages(view.Page);
         // The control island has no tab; the menu keeps its page for when a page opens again.
         var index = Tabs.ToList().FindIndex(t => t.Page == view.Page);
         if (index >= 0) SelectedTab = index;

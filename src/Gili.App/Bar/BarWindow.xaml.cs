@@ -52,6 +52,7 @@ public partial class BarWindow : Window
         _left = new LeftSide(apps);
         _left.PageRequested += page => PageRequested?.Invoke(page);
         LeftSlot.Content = _left;
+        _left.ApplyHidden(_settings.Current.HiddenLeft, animate: false);
         SizeChanged += (_, _) => UpdateLeftLimit();
         right.Changed += () =>
         {
@@ -275,6 +276,7 @@ public partial class BarWindow : Window
 
     private void OnSettingsChanged(AppSettings settings)
     {
+        _left.ApplyHidden(settings.HiddenLeft, animate: true);
         _clock.Seconds = settings.ShowSeconds && _polling.ShouldPoll;
         _vm.ApplyClock(DateTime.Now, settings);
         _appBar?.SetHeight(settings.BarHeight);
