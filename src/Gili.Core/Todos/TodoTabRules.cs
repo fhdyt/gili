@@ -30,5 +30,4 @@ public static class TodoTabRules
 
     private static List<long> Order(IReadOnlyList<Todo> todos) =>
         [.. todos.OrderBy(t => t.SortOrder).ThenBy(t => t.Id).Select(t => t.Id)];
-
 }

@@ -113,6 +113,40 @@ public class TimerModelsTests
     }
 
     [Fact]
+    public void Slot_shows_the_island_timer_when_it_ends_with_the_labeled_one()
+    {
+        var island = CountdownTimer.Default.WithTotal(60).Start(Now);
+        var labeled = CountdownTimer.Default.WithTotal(60).Start(Now);
+        Assert.False(TimerSchedule.SlotShowsLabeled(island, labeled, pomodoroRunning: false));
+    }
+
+    [Fact]
+    public void Slot_shows_a_labeled_timer_that_ends_first()
+    {
+        var island = CountdownTimer.Default.WithTotal(120).Start(Now);
+        var labeled = CountdownTimer.Default.WithTotal(60).Start(Now);
+        Assert.True(TimerSchedule.SlotShowsLabeled(island, labeled, pomodoroRunning: false));
+        Assert.False(TimerSchedule.SlotShowsLabeled(labeled, island, pomodoroRunning: false));
+    }
+
+    [Fact]
+    public void Slot_shows_a_labeled_timer_when_the_island_timer_is_not_running()
+    {
+        var labeled = CountdownTimer.Default.WithTotal(600).Start(Now);
+        var paused = CountdownTimer.Default.WithTotal(5).Start(Now).Pause(Now.AddSeconds(1));
+        Assert.True(TimerSchedule.SlotShowsLabeled(CountdownTimer.Default, labeled, pomodoroRunning: false));
+        Assert.True(TimerSchedule.SlotShowsLabeled(paused, labeled, pomodoroRunning: false));
+        Assert.False(TimerSchedule.SlotShowsLabeled(CountdownTimer.Default, null, pomodoroRunning: false));
+    }
+
+    [Fact]
+    public void Slot_shows_a_running_pomodoro_over_any_labeled_timer()
+    {
+        var labeled = CountdownTimer.Default.WithTotal(60).Start(Now);
+        Assert.False(TimerSchedule.SlotShowsLabeled(CountdownTimer.Default, labeled, pomodoroRunning: true));
+    }
+
+    [Fact]
     public void Empty_label_reads_timer_and_long_labels_are_cut()
     {
         Assert.Equal("Timer", LabeledTimer.CleanLabel("   "));

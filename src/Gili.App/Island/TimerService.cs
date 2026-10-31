@@ -58,16 +58,9 @@ public sealed class TimerService
     /// <summary>The label of the demo's timer while the demo plays; null otherwise.</summary>
     public string? DemoLabel { get; private set; }
 
-    /// <summary>The labeled timer that ends first, unless the island timer ends sooner (a tie goes to the island timer).</summary>
-    public LabeledTimer? SoonestLabeled
-    {
-        get
-        {
-            var soonest = TimerSchedule.Soonest(_labeled.Select(t => t.Clock), Now);
-            if (soonest is null || (Timer.IsRunning && Timer.EndsAt <= soonest.EndsAt)) return null;
-            return _labeled.First(t => ReferenceEquals(t.Clock, soonest));
-        }
-    }
+    /// <summary>Whether the slot shows a labeled timer rather than the island timer or a pomodoro (a tie goes to the island timer).</summary>
+    public bool SlotShowsLabeled =>
+        TimerSchedule.SlotShowsLabeled(Timer, TimerSchedule.Soonest(_labeled.Select(t => t.Clock), Now), Pomodoro.Clock.IsRunning);
 
     /// <summary>The running timer, island or labeled, that ends first: what the slot shows.</summary>
     public CountdownTimer? SoonestTimer => TimerSchedule.Soonest([Timer, .. _labeled.Select(t => t.Clock)], Now);

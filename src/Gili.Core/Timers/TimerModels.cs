@@ -62,6 +62,15 @@ public static class TimerSchedule
     /// </summary>
     public static CountdownTimer? Soonest(IEnumerable<CountdownTimer> running, DateTimeOffset now) =>
         running.Where(t => t.IsRunning).MinBy(t => t.EndsAt);
+
+    /// <summary>
+    /// Whether the island's timer slot shows a labeled timer (F-TOOL-01): one runs, no pomodoro runs, and the island
+    /// timer is not running or ends later. A tie goes to the island timer. <c>soonestLabeled</c> is the labeled timer
+    /// that ends first (<see cref="Soonest"/>).
+    /// </summary>
+    public static bool SlotShowsLabeled(CountdownTimer island, CountdownTimer? soonestLabeled, bool pomodoroRunning) =>
+        !pomodoroRunning && soonestLabeled is { EndsAt: { } labeledEnd }
+        && !(island.EndsAt is { } islandEnd && islandEnd <= labeledEnd);
 }
 
 /// <summary>A stopwatch: time from earlier runs plus the current run, and the laps taken so far (F-TOOL-02).</summary>

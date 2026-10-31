@@ -243,7 +243,7 @@ public sealed class IslandController : IDisposable
     /// </summary>
     private void OpenActivity(ActivityKind? kind)
     {
-        if (kind == ActivityKind.Timer && !Timers.Pomodoro.Clock.IsRunning && Timers.SoonestLabeled is not null)
+        if (kind == ActivityKind.Timer && Timers.SlotShowsLabeled)
         {
             ToolsRequested?.Invoke("Timer");
             return;
