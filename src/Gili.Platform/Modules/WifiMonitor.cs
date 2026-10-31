@@ -33,14 +33,20 @@ public sealed class WifiMonitor : IDisposable
     private const int FlagConnected = 1;
     private const int FlagHasProfile = 2;
 
-    private readonly nint _handle;
     private readonly NotificationCallback _callback;
+    private readonly object _gate = new();
+    private nint _handle;
+    private bool _disposed;
 
+    /// <summary>
+    /// The WLAN handle opens on a thread-pool thread: in the packaged copy Windows first asks "Let Gili access your precise
+    /// location?" and the call waits for the answer, which must not hold the bar back (PRD 12). Until it opens, Wi‑Fi reads
+    /// as absent; <see cref="Changed"/> fires once it is ready.
+    /// </summary>
     public WifiMonitor()
     {
         _callback = (data, _) => OnNotification(data);
-        if (WlanOpenHandle(ClientVersion, 0, out _, out _handle) != 0) _handle = 0;
-        if (_handle != 0) WlanRegisterNotification(_handle, NotificationSourceAcm | NotificationSourceMsm, true, _callback, 0, 0, out _);
+        Task.Run(Open);
     }
 
     /// <summary>Raised on a thread-pool thread.</summary>
@@ -148,9 +154,32 @@ public sealed class WifiMonitor : IDisposable
         }
     }
 
+    private void Open()
+    {
+        if (WlanOpenHandle(ClientVersion, 0, out _, out var handle) != 0) return;
+        WlanRegisterNotification(handle, NotificationSourceAcm | NotificationSourceMsm, true, _callback, 0, 0, out _);
+        lock (_gate)
+        {
+            if (_disposed)
+            {
+                WlanCloseHandle(handle, 0);
+                return;
+            }
+            _handle = handle;
+        }
+        Changed?.Invoke();
+    }
+
     public void Dispose()
     {
-        if (_handle != 0) WlanCloseHandle(_handle, 0);
+        nint handle;
+        lock (_gate)
+        {
+            _disposed = true;
+            handle = _handle;
+            _handle = 0;
+        }
+        if (handle != 0) WlanCloseHandle(handle, 0);
     }
 
     private Guid? Adapter()
