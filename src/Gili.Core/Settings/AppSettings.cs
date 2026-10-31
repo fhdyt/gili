@@ -43,6 +43,18 @@ public sealed record AppSettings
     public LeftIcons HiddenLeft { get; init; } = LeftIcons.None;
     public PageSet HiddenPages { get; init; } = PageSet.None;
 
+    /// <summary>Right modules switched off in Settings; GPU and disk start off (F-RIGHT-03, F-RIGHT-04).</summary>
+    public RightModules HiddenModules { get; init; } = RightModules.Gpu | RightModules.Disk;
+
+    /// <summary>
+    /// The system modules' order as comma-separated ids, so two settings with the same order are equal; read it through
+    /// <see cref="Order"/>.
+    /// </summary>
+    public string ModuleOrder { get; init; } = string.Join(",", RightModuleRules.DefaultOrder);
+
+    [JsonIgnore]
+    public IReadOnlyList<string> Order => RightModuleRules.Repair((ModuleOrder ?? "").Split(','));
+
     /// <summary>The tabs the island hides: its own switches and the pages of hidden left icons (PRD 6.2).</summary>
     [JsonIgnore]
     public PageSet HiddenTabs => HiddenPages | HiddenRules.PagesOf(HiddenLeft);
@@ -75,6 +87,7 @@ public sealed record AppSettings
             // Media has no left icon, so freeing it always leaves the island one tab.
             HiddenPages = (HiddenPages | HiddenRules.PagesOf(HiddenLeft)) == PageSet.All ? HiddenPages & ~PageSet.Media : HiddenPages,
             TimerSound = Sound.Voices.Find(TimerSound).Name,
+            ModuleOrder = string.Join(",", Order),
             PomodoroFocus = plan.FocusMinutes,
             PomodoroBreak = plan.BreakMinutes,
             PomodoroLongBreak = plan.LongBreakMinutes,

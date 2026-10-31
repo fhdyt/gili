@@ -53,7 +53,7 @@
 
 **Interfaces (Produces):**
 - `[Flags] public enum RightModules { None = 0, Weather = 1, Network = 2, Cpu = 4, Ram = 8, Gpu = 16, Disk = 32, Wifi = 64, Bluetooth = 128, Volume = 256, Brightness = 512, Tray = 1024, Clock = 2048 }`.
-- `AppSettings.HiddenModules` (default `Gpu | Disk`), `AppSettings.ModuleOrder : IReadOnlyList<string>` (default `RightModuleRules.DefaultOrder`).
+- `AppSettings.HiddenModules` (default `Gpu | Disk`), `AppSettings.ModuleOrder : string` (id dipisah koma, default `weather,net,cpu,ram,gpu,disk`) dan `[JsonIgnore] AppSettings.Order : IReadOnlyList<string>`. String, bukan daftar, karena `AppSettings` adalah record yang dibandingkan nilainya (temuan saat implementasi).
 - `static class RightModuleRules`: `DefaultOrder = ["weather","net","cpu","ram","gpu","disk"]`; `RightModules Of(string id)` (id bar → flag, 12 id); `IReadOnlyList<string> Repair(IEnumerable<string>? order)`; `IReadOnlyList<string> Move(IReadOnlyList<string> order, string id, int delta)`; `IReadOnlyList<string> MoveTo(IReadOnlyList<string> order, string id, int index)`.
 - Kunci baris Settings `M.Weather`, `M.Network`, `M.CPU`, `M.RAM`, `M.GPU`, `M.Disk`, `M.Wi‑Fi`, `M.Bluetooth`, `M.Volume`, `M.Brightness`, `M.Tray icons`, `M.Clock and date` (label yang ada) jadi `Available: true`. `SettingsCatalog.ModuleId(string key) → string?` (id untuk enam modul sistem, null untuk lainnya). `SettingsCatalog.RowsOf(SettingsSection section, AppSettings s) → IReadOnlyList<SettingRow>`: Right side menyusun enam baris sistem menurut `ModuleOrder`, bagian lain apa adanya.
 

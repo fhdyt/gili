@@ -19,7 +19,8 @@ public class SettingsCatalogTests
         Assert.Equal(
             new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
-                "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System" },
+                "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
+                "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -39,8 +40,8 @@ public class SettingsCatalogTests
         Assert.Equal(
             ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Weather city", "Battery alert", "Unplug reminder"],
             rows.Select(r => r.Label));
-        Assert.Equal(false, rows.Single(r => r.Label == "GPU").Default);
-        Assert.Equal(false, rows.Single(r => r.Label == "Disk").Default);
+        Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.GPU"));
+        Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.Disk"));
     }
 
     [Fact]
@@ -175,4 +176,55 @@ public class SettingsCatalogTests
 
     [Fact]
     public void Other_rows_are_enabled() => Assert.Equal(new RowState(true, null), SettingsCatalog.State(new AppSettings(), "glow"));
+}
+
+public class SettingsCatalogModuleTests
+{
+    private static SettingsSection RightSide => SettingsCatalog.Sections.Single(s => s.Name == "Right side");
+
+    [Fact]
+    public void Module_switch_reads_and_writes()
+    {
+        var s = new AppSettings();
+        Assert.Equal(false, SettingsCatalog.Read(s, "M.GPU"));
+        Assert.Equal(true, SettingsCatalog.Read(s, "M.Wi‑Fi"));
+        s = SettingsCatalog.Write(s, "M.GPU", true);
+        Assert.Equal(RightModules.Disk, s.HiddenModules);
+        s = SettingsCatalog.Write(s, "M.Clock and date", false);
+        s = SettingsCatalog.Write(s, "M.Tray icons", false);
+        Assert.Equal(RightModules.Disk | RightModules.Clock | RightModules.Tray, s.HiddenModules);
+    }
+
+    [Fact]
+    public void Module_rows_are_available_but_the_city_is_not()
+    {
+        Assert.All(RightSide.Rows.Where(r => r.Key.StartsWith("M.", StringComparison.Ordinal)), r => Assert.True(r.Available));
+        Assert.False(RightSide.Rows.Single(r => r.Key == "W.city").Available);
+    }
+
+    [Fact]
+    public void Right_side_rows_follow_order()
+    {
+        var s = new AppSettings { ModuleOrder = "disk,cpu,weather,net,ram,gpu" };
+        Assert.Equal(
+            ["M.Disk", "M.CPU", "M.Weather", "M.Network", "M.RAM", "M.GPU", "M.Wi‑Fi"],
+            SettingsCatalog.RowsOf(RightSide, s).Take(7).Select(r => r.Key));
+        Assert.Equal(RightSide.Rows.Count, SettingsCatalog.RowsOf(RightSide, s).Count);
+    }
+
+    [Fact]
+    public void Other_sections_keep_their_rows()
+    {
+        var general = SettingsCatalog.Sections[0];
+        Assert.Same(general.Rows, SettingsCatalog.RowsOf(general, new AppSettings()));
+    }
+
+    [Fact]
+    public void Module_id_of_rows()
+    {
+        Assert.Equal("net", SettingsCatalog.ModuleId("M.Network"));
+        Assert.Equal("disk", SettingsCatalog.ModuleId("M.Disk"));
+        Assert.Null(SettingsCatalog.ModuleId("M.Wi‑Fi"));
+        Assert.Null(SettingsCatalog.ModuleId("h12"));
+    }
 }

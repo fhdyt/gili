@@ -102,4 +102,21 @@ public sealed class SettingsStoreTests : IDisposable
         var loaded = Store.Load().Settings;
         Assert.Equal((LeftIcons.Start | LeftIcons.Shelf, PageSet.Timer | PageSet.Notes), (loaded.HiddenLeft, loaded.HiddenPages));
     }
+    [Fact]
+    public void Old_settings_hide_gpu_and_disk()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(SettingsFile, """{ "barHeight": 36 }""");
+        var settings = Store.Load().Settings;
+        Assert.Equal(RightModules.Gpu | RightModules.Disk, settings.HiddenModules);
+        Assert.Equal("weather,net,cpu,ram,gpu,disk", settings.ModuleOrder);
+    }
+
+    [Fact]
+    public void Module_switches_and_order_survive_a_restart()
+    {
+        Store.Save(new AppSettings { HiddenModules = RightModules.Weather, ModuleOrder = "cpu,ram,net,weather,gpu,disk" });
+        var loaded = Store.Load().Settings;
+        Assert.Equal((RightModules.Weather, "cpu,ram,net,weather,gpu,disk"), (loaded.HiddenModules, loaded.ModuleOrder));
+    }
 }

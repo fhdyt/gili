@@ -32,6 +32,23 @@ public static class SettingsCatalog
     public const string LaterVersion = "Coming in a later version";
 
     private static readonly string[] LeftNames = ["Start", "Timer", "Alarms", "Todo", "Notes", "Clipboard", "Shelf", "Claude"];
+    /// <summary>The Right side switches by label, with the bar's id for each module (PRD 6.4).</summary>
+    private static readonly Dictionary<string, string> ModuleIds = new()
+    {
+        ["Weather"] = "weather",
+        ["Network"] = "net",
+        ["CPU"] = "cpu",
+        ["RAM"] = "ram",
+        ["GPU"] = "gpu",
+        ["Disk"] = "disk",
+        ["Wi‑Fi"] = "wifi",
+        ["Bluetooth"] = "bt",
+        ["Volume"] = "vol",
+        ["Brightness"] = "bri",
+        ["Tray icons"] = "tray",
+        ["Clock and date"] = "clock",
+    };
+
     private static readonly string[] Pages = ["Media", "Timer", "Alarms", "Calendar", "Todo", "Notes", "Clipboard", "Shelf", "Claude", "System"];
 
     public static IReadOnlyList<SettingsSection> Sections { get; } =
@@ -67,8 +84,7 @@ public static class SettingsCatalog
         ]),
         new("Right side",
         [
-            .. new[] { "Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date" }
-                .Select(n => new SettingRow("M." + n, n, SettingKind.Switch, Default: n is not ("GPU" or "Disk"))),
+            .. ModuleIds.Keys.Select(n => new SettingRow("M." + n, n, SettingKind.Switch, Available: true)),
             new("W.city", "Weather city", SettingKind.Segment, Options: ["Jakarta"], Default: "Jakarta"),
             new("W.bat", "Battery alert", SettingKind.Range, "Also at 10%", Available: true, Unit: "%"),
             new("W.unplug", "Unplug reminder", SettingKind.Range, "Only on laptops that keep charging past it. 100% turns it off",
@@ -120,6 +136,7 @@ public static class SettingsCatalog
         "W.unplug" => s.UnplugReminder,
         _ when key.StartsWith("L.", StringComparison.Ordinal) => !s.HiddenLeft.HasFlag(Left(key)),
         _ when key.StartsWith("T.", StringComparison.Ordinal) => !s.HiddenTabs.HasFlag(Page(key)),
+        _ when key.StartsWith("M.", StringComparison.Ordinal) => !s.HiddenModules.HasFlag(Module(key)),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     };
 
@@ -148,6 +165,10 @@ public static class SettingsCatalog
         _ when key.StartsWith("T.", StringComparison.Ordinal) => s with
         {
             HiddenPages = (bool)value ? s.HiddenPages & ~Page(key) : s.HiddenPages | Page(key),
+        },
+        _ when key.StartsWith("M.", StringComparison.Ordinal) => s with
+        {
+            HiddenModules = (bool)value ? s.HiddenModules & ~Module(key) : s.HiddenModules | Module(key),
         },
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     }).Normalize();
@@ -182,6 +203,32 @@ public static class SettingsCatalog
     }
 
     private static bool IsLastVisible(AppSettings s, PageSet page) => (s.HiddenTabs | page) == PageSet.All && !s.HiddenTabs.HasFlag(page);
+
+    /// <summary>The id of a system module's row, which Settings can move; null for every other row.</summary>
+    public static string? ModuleId(string key) =>
+        key.StartsWith("M.", StringComparison.Ordinal) && ModuleIds.TryGetValue(key[2..], out var id) && RightModuleRules.DefaultOrder.Contains(id)
+            ? id
+            : null;
+
+    /// <summary>A section's rows as the window lists them: Right side puts the system modules in the bar's order.</summary>
+    public static IReadOnlyList<SettingRow> RowsOf(SettingsSection section, AppSettings s)
+    {
+        if (section.Name != "Right side") return section.Rows;
+        var order = s.Order;
+        var modules = section.Rows.Where(r => ModuleId(r.Key) is not null).OrderBy(r => IndexIn(order, ModuleId(r.Key)!));
+        return [.. modules, .. section.Rows.Where(r => ModuleId(r.Key) is null)];
+    }
+
+    private static int IndexIn(IReadOnlyList<string> order, string id)
+    {
+        for (var i = 0; i < order.Count; i++)
+        {
+            if (order[i] == id) return i;
+        }
+        return order.Count;
+    }
+
+    private static RightModules Module(string key) => RightModuleRules.Of(ModuleIds[key[2..]]);
 
     private static LeftIcons Left(string key) => Enum.Parse<LeftIcons>(key[2..]);
 
