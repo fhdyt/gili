@@ -125,13 +125,14 @@ public sealed class KeepCopiesTests : IDisposable
         {
             AddNote(db, "written by 0.1.0");
             using var downgrade = db.Connection.CreateCommand();
-            downgrade.CommandText = "ALTER TABLE todos DROP COLUMN due_time; UPDATE schema_version SET version = 1;";
+            downgrade.CommandText = "ALTER TABLE todos DROP COLUMN due_time; ALTER TABLE shelf_items DROP COLUMN mode; " +
+                "ALTER TABLE shelf_items DROP COLUMN folder; UPDATE schema_version SET version = 1;";
             downgrade.ExecuteNonQuery();
         }
         SqliteConnection.ClearAllPools();
 
         using var migrated = Database.Open(OldData);
-        var before = Path.Combine(OldData, Backups.FolderName, "gili-before-v2.db");
+        var before = Path.Combine(OldData, Backups.FolderName, "gili-before-v3.db");
         Assert.Equal(before, migrated.MigrationCopy);
         Assert.True(File.Exists(before));
         using var copy = new SqliteConnection($"Data Source={before};Pooling=False");

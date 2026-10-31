@@ -69,6 +69,8 @@ internal static class Migrations
         """,
         // 2: a task's local time, kept apart from remind_at, which only holds a reminder still to come (plan 2e decision 5).
         "ALTER TABLE todos ADD COLUMN due_time TEXT;",
+        // 3: the drop zone's column and the folder Gili copies files from a zip or the temp folder into (F-ISL-30, F-ISL-31).
+        "ALTER TABLE shelf_items ADD COLUMN mode TEXT NOT NULL DEFAULT 'Copy'; ALTER TABLE shelf_items ADD COLUMN folder TEXT;",
     ];
 
     /// <summary>The schema version the file holds; 0 for a new file.</summary>

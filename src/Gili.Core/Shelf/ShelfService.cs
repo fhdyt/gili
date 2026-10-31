@@ -2,7 +2,8 @@ namespace Gili.Core.Shelf;
 
 /// <summary>
 /// The Shelf (F-ISL-12): one drop is one item, at most eight, kept as references and saved; files that are gone leave
-/// the Shelf (a bundle loses only those). Without a database it still works for the session.
+/// the Shelf (a bundle loses only those). An item whose files Gili keeps in a folder of its own takes that folder with
+/// it when it leaves (F-ISL-31). Without a database it still works for the session.
 /// </summary>
 public sealed class ShelfService
 {
@@ -10,14 +11,17 @@ public sealed class ShelfService
 
     private readonly IShelfStore? _store;
     private readonly Func<string, FileFacts?> _probe;
+    private readonly Action<string>? _discard;
     private readonly List<ShelfItem> _items;
     private ShelfItem? _demo;
     private long _nextLocalId = 1;
 
-    public ShelfService(IShelfStore? store, Func<string, FileFacts?> probe)
+    /// <param name="discard">Deletes a kept item's folder once the item is gone.</param>
+    public ShelfService(IShelfStore? store, Func<string, FileFacts?> probe, Action<string>? discard = null)
     {
         _store = store;
         _probe = probe;
+        _discard = discard;
         _items = [.. store?.All() ?? []];
     }
 
@@ -32,13 +36,19 @@ public sealed class ShelfService
 
     public long TotalBytes => Items.Sum(i => i.SizeBytes);
 
-    /// <summary>Adds what was dropped as one item; null when the Shelf is full or nothing dropped is still there.</summary>
-    public ShelfItem? Add(IReadOnlyList<string> paths, DateTimeOffset now)
+    /// <summary>The folders the saved items keep their files in; any other folder in Gili's Shelf folder is left over.</summary>
+    public IReadOnlyList<string> KeptFolders => [.. _items.Where(i => i.IsKept).Select(i => i.Folder!)];
+
+    /// <summary>
+    /// Adds what was dropped as one item, in the column it was dropped on, with the folder Gili copied it into, if any;
+    /// null when the Shelf is full or nothing dropped is still there.
+    /// </summary>
+    public ShelfItem? Add(IReadOnlyList<string> paths, DateTimeOffset now, ShelfMode mode = ShelfMode.Copy, string? folder = null)
     {
         if (IsFull) return null;
         var present = paths.Distinct(StringComparer.OrdinalIgnoreCase).Select(p => (Path: p, Facts: _probe(p))).Where(p => p.Facts is not null).ToList();
         if (present.Count == 0) return null;
-        var item = Describe(new ShelfItem(0, [.. present.Select(p => p.Path)], "", 0, NextOrder(), now), present.Select(p => p.Facts!.Value));
+        var item = Describe(new ShelfItem(0, [.. present.Select(p => p.Path)], "", 0, NextOrder(), now, mode, folder), present.Select(p => p.Facts!.Value));
         item = _store?.Add(item) ?? item with { Id = _nextLocalId++ };
         _items.Add(item);
         Changed?.Invoke();
@@ -47,16 +57,20 @@ public sealed class ShelfService
 
     public void Remove(long id)
     {
-        if (_items.RemoveAll(i => i.Id == id) == 0) return;
+        if (_items.Find(i => i.Id == id) is not { } item) return;
+        _items.Remove(item);
         _store?.Delete(id);
+        Discard(item);
         Changed?.Invoke();
     }
 
     public void Clear()
     {
         if (_items.Count == 0) return;
+        var gone = _items.ToList();
         _items.Clear();
         _store?.Clear();
+        foreach (var item in gone) Discard(item);
         Changed?.Invoke();
     }
 
@@ -97,6 +111,7 @@ public sealed class ShelfService
         {
             _items.RemoveAt(index);
             _store?.Delete(item.Id);
+            Discard(item);
             return true;
         }
         var kept = Describe(item with { Paths = [.. present.Select(p => p.Path)] }, present.Select(p => p.Facts!.Value));
@@ -117,6 +132,11 @@ public sealed class ShelfService
         var trimmed = path.TrimEnd('\\', '/');
         var name = Path.GetFileName(trimmed);
         return name.Length > 0 ? name : trimmed;
+    }
+
+    private void Discard(ShelfItem item)
+    {
+        if (item.Folder is { } folder) _discard?.Invoke(folder);
     }
 
     private int NextOrder() => _items.Count == 0 ? 0 : _items.Max(i => i.SortOrder) + 1;

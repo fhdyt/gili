@@ -136,11 +136,14 @@ public partial class App : Application
         _notes = new NoteService(OpenNotes());
         // One Bluetooth watcher serves the bar's icon and the island's connect notices (plan 3a decision 4).
         var bluetooth = new Gili.Platform.Modules.BluetoothMonitor();
-        var shelf = new ShelfService(_database is null ? null : new ShelfStore(_database), ProbeFile);
+        var shelfFolder = new Gili.Platform.Shelf.ShelfFolder(Data.Shelf);
+        var shelf = new ShelfService(_database is null ? null : new ShelfStore(_database), ProbeFile, shelfFolder.Delete);
+        shelfFolder.Sweep(shelf.KeptFolders);
         var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow);
         _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, shelf, () => _settings.Current, clipboardHistory)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
+            ShelfFolder = shelfFolder,
         };
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);

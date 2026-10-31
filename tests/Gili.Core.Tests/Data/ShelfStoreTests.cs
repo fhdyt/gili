@@ -43,4 +43,18 @@ public sealed class ShelfStoreTests : IDisposable
             Assert.Empty(store.All());
         }
     }
+
+    [Fact]
+    public void Keeps_the_column_and_gilis_folder()
+    {
+        using var db = Database.Open(_folder);
+        var store = new ShelfStore(db);
+        var cut = store.Add(new ShelfItem(0, [@"C:\Gili\shelf\1\a.txt"], "a.txt", 10, 0, Added, ShelfMode.Cut, @"C:\Gili\shelf\1"));
+        store.Add(new ShelfItem(0, [@"C:\b.pdf"], "b.pdf", 10, 1, Added));
+        var all = store.All();
+        Assert.Equal((ShelfMode.Cut, @"C:\Gili\shelf\1"), (all[0].Mode, all[0].Folder));
+        Assert.Equal((ShelfMode.Copy, (string?)null), (all[1].Mode, all[1].Folder));
+        store.Update(cut with { Mode = ShelfMode.Copy, Folder = null });
+        Assert.Equal((ShelfMode.Copy, (string?)null), (store.All()[0].Mode, store.All()[0].Folder));
+    }
 }

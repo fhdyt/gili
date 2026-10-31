@@ -8,6 +8,12 @@ public sealed record DataFolders(string Root)
 {
     public string Logs => Path.Combine(Root, "logs");
     public string CrashMarker => Path.Combine(Root, "last-crash.txt");
+
+    /// <summary>Files the Shelf keeps itself, one folder per drop (F-ISL-31).</summary>
+    public string Shelf => Path.Combine(Root, "shelf");
+
+    /// <summary>Images in the clipboard history, as PNG (F-ISL-32).</summary>
+    public string Clipboard => Path.Combine(Root, "clipboard");
 }
 
 public static class AppPaths

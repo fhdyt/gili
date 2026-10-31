@@ -1,12 +1,14 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Gili.Core.Shelf;
 
 namespace Gili.App.Island;
 
 /// <summary>
-/// The Shelf page as in the mockup (<c>.shsum</c>, <c>.shgrid</c>). A tile dragged 4 px leaves as the files it holds;
-/// the drop target chooses Copy or Move (Shift forces Move), and files that moved away leave the Shelf (PRD 6.3).
+/// The Shelf page as in the mockup (<c>.shsum</c>, <c>.shgrid</c>). A tile dragged 4 px leaves as the files it holds:
+/// a Copy item offers only Copy and stays, a Cut item offers only Move, and files that moved away leave the Shelf
+/// (PRD 6.3, F-ISL-30).
 /// </summary>
 public partial class ShelfPage : UserControl
 {
@@ -43,7 +45,8 @@ public partial class ShelfPage : UserControl
         _island.DraggingOut = true;
         try
         {
-            DragDrop.DoDragDrop(element, new DataObject(DataFormats.FileDrop, paths), DragDropEffects.Copy | DragDropEffects.Move);
+            DragDrop.DoDragDrop(element, new DataObject(DataFormats.FileDrop, paths),
+                tile.Item.Mode == ShelfMode.Cut ? DragDropEffects.Move : DragDropEffects.Copy);
         }
         finally
         {

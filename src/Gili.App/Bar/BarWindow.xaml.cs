@@ -252,7 +252,7 @@ public partial class BarWindow : Window
     private void OnFileDrag(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        if (Island is not { DraggingOut: false } island || !e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (Island is not { DraggingOut: false } island || !Gili.App.Island.ShelfDragData.Has(e.Data))
         {
             e.Effects = DragDropEffects.None;
             return;
@@ -267,7 +267,8 @@ public partial class BarWindow : Window
     private void OnFileDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        e.Effects = Island is { DraggingOut: false } island && e.Data.GetData(DataFormats.FileDrop) is string[] paths && island.DropFiles(paths)
+        // Dropped on the bar rather than one of the island's columns: a Copy (F-ISL-30).
+        e.Effects = Island is { } island && Gili.App.Island.ShelfDragData.Drop(island, e.Data, Core.Shelf.ShelfMode.Copy)
             ? DragDropEffects.Copy
             : DragDropEffects.None;
         if (e.Effects == DragDropEffects.None) Island?.DragLeft();

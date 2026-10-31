@@ -65,8 +65,8 @@ public sealed partial class ShelfTileViewModel : ObservableObject
         Glyph = (Geometry)Application.Current.FindResource(item.IsBundle ? "Icon.Files" : folder ? "Icon.Folder" : "Icon.File");
         // The demo's file isn't on disk, so a single file falls back to the size kept when it was dropped.
         Tooltip = item.IsBundle || facts[0].Item2 is not null
-            ? ShelfText.Tooltip(facts)
-            : ShelfText.Tooltip([(item.Paths[0], new FileFacts(false, item.SizeBytes))]);
+            ? ShelfText.Tooltip(facts, item.Mode, item.IsKept)
+            : ShelfText.Tooltip([(item.Paths[0], new FileFacts(false, item.SizeBytes))], item.Mode, item.IsKept);
         RemoveCommand = new RelayCommand(() => shelf.Remove(item.Id));
     }
 
@@ -81,6 +81,9 @@ public sealed partial class ShelfTileViewModel : ObservableObject
     public string BadgeText { get; }
 
     public bool HasBadge => BadgeText.Length > 0;
+
+    /// <summary>Dropped on Cut: dragging it out moves the files (F-ISL-30).</summary>
+    public bool IsCut => Item.Mode == ShelfMode.Cut;
 
     public Brush BadgeBrush { get; }
 

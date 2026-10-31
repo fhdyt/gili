@@ -19,6 +19,7 @@ using Gili.Core.Mascot;
 using Gili.Core.Motion;
 using Gili.Core.Notes;
 using Gili.Core.Settings;
+using Gili.Core.Shelf;
 using Gili.Platform.Interop;
 using Gili.Platform.Shell;
 
@@ -750,7 +751,8 @@ public partial class IslandWindow : Window
 
     private static readonly SolidColorBrush DropGreen = Frozen(Color.FromRgb(0x30, 0xD1, 0x58));
     private static readonly SolidColorBrush DropGreenWash = Frozen(Color.FromArgb(0x14, 0x30, 0xD1, 0x58));
-    private static readonly SolidColorBrush DropWarn = Frozen(Color.FromRgb(0xFF, 0xD6, 0x0A));
+    private static readonly SolidColorBrush DropOrange = Frozen(Color.FromRgb(0xFF, 0x9F, 0x0A));
+    private static readonly SolidColorBrush DropOrangeWash = Frozen(Color.FromArgb(0x14, 0xFF, 0x9F, 0x0A));
     private static readonly SolidColorBrush DropIdle = Frozen(Color.FromRgb(0x48, 0x48, 0x4A));
     private static readonly SolidColorBrush DropCircleIdle = Frozen(Color.FromRgb(0x1C, 0x1C, 0x1E));
     private static readonly SolidColorBrush DropIconIdle = Frozen(Color.FromRgb(0x8E, 0x8E, 0x93));
@@ -763,38 +765,47 @@ public partial class IslandWindow : Window
     }
 
     /// <summary>
-    /// The drop zone lights green while the pointer is over the island (mockup .hot) and turns yellow when the Shelf is
-    /// full (.full), saying so instead of inviting the drop.
+    /// The drop zone's column under the pointer lights up (mockup .hot): Copy green, Cut orange, its circle filled and a
+    /// little larger (F-ISL-30). While the files are still over the bar both stay grey. A full Shelf shows one yellow
+    /// message instead (.full).
     /// </summary>
     private void ShowDropState()
     {
         var full = _island.Shelf.IsFull;
+        DropChoices.Visibility = full ? Visibility.Collapsed : Visibility.Visible;
+        DropOutline.Visibility = DropFull.Visibility = full ? Visibility.Visible : Visibility.Collapsed;
         var hot = _island.DropHot && !full;
-        DropTitle.Text = full ? "Shelf is full" : "Drop to keep on the Shelf";
-        DropSubtitle.Text = full ? "Drag something out first" : "Files stay where they are until you drag them out";
-        DropOutline.Stroke = full ? DropWarn : hot ? DropGreen : DropIdle;
-        DropOutline.Fill = hot ? DropGreenWash : Brushes.Transparent;
-        DropCircle.Fill = hot ? DropGreen : DropCircleIdle;
-        DropIcon.Foreground = full ? DropWarn : hot ? Brushes.Black : DropIconIdle;
-        var lift = hot ? 1.06 : 1;
-        var duration = TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 260 : 0);
-        var scale = DropBadge.RenderTransform as ScaleTransform ?? (ScaleTransform)(DropBadge.RenderTransform = new ScaleTransform());
-        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
-        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
-        DropBadge.Margin = new Thickness(0, hot ? 4 : 0, 0, 0);
+        LightColumn(DropCopyOutline, DropCopyBadge, DropCopyCircle, DropCopyIcon, hot && _island.DropMode == ShelfMode.Copy, DropGreen, DropGreenWash);
+        LightColumn(DropCutOutline, DropCutBadge, DropCutCircle, DropCutIcon, hot && _island.DropMode == ShelfMode.Cut, DropOrange, DropOrangeWash);
     }
 
-    /// <summary>Files dragged over the island: the drop zone, lit while over it. Only files count (PRD 6.3).</summary>
+    private static void LightColumn(System.Windows.Shapes.Shape outline, FrameworkElement badge, System.Windows.Shapes.Shape circle, IconView icon, bool hot, Brush color, Brush wash)
+    {
+        outline.Stroke = hot ? color : DropIdle;
+        outline.Fill = hot ? wash : Brushes.Transparent;
+        circle.Fill = hot ? color : DropCircleIdle;
+        icon.Foreground = hot ? Brushes.Black : DropIconIdle;
+        var lift = hot ? 1.06 : 1;
+        var duration = TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 260 : 0);
+        var scale = badge.RenderTransform as ScaleTransform ?? (ScaleTransform)(badge.RenderTransform = new ScaleTransform());
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(lift, duration) { EasingFunction = BezierEase.Out });
+    }
+
+    /// <summary>The left half of the drop zone is Copy, the right half Cut (F-ISL-30).</summary>
+    private ShelfMode ModeAt(DragEventArgs e) => e.GetPosition(DropLayer).X >= DropLayer.ActualWidth / 2 ? ShelfMode.Cut : ShelfMode.Copy;
+
+    /// <summary>Files dragged over the island: the drop zone, its column lit while over it. Only files count (PRD 6.3).</summary>
     private void OnFileDrag(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        if (_island.DraggingOut || !e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (_island.DraggingOut || !ShelfDragData.Has(e.Data))
         {
             e.Effects = DragDropEffects.None;
             return;
         }
-        _island.DragEntered(overIsland: true);
-        // Copy, never Move: the source must not delete a file Gili only points at (plan 3d).
+        _island.DragEntered(overIsland: true, ModeAt(e));
+        // Copy, never Move, also on Cut: the source must not delete a file Gili only points at (plan 3d).
         e.Effects = _island.Shelf.IsFull ? DragDropEffects.None : DragDropEffects.Copy;
     }
 
@@ -803,9 +814,7 @@ public partial class IslandWindow : Window
     private void OnFileDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        e.Effects = !_island.DraggingOut && e.Data.GetData(DataFormats.FileDrop) is string[] paths && _island.DropFiles(paths)
-            ? DragDropEffects.Copy
-            : DragDropEffects.None;
+        e.Effects = ShelfDragData.Drop(_island, e.Data, ModeAt(e)) ? DragDropEffects.Copy : DragDropEffects.None;
         if (e.Effects == DragDropEffects.None) _island.DragLeft();
     }
 

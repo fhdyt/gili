@@ -235,20 +235,52 @@
                 <!-- A notification card (PRD 6.3): 560 × 104, as wide as the screen allows. -->
                 <i:CardView x:Name="CardLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False" />
 
-                <!-- The drop zone (mockup .dz): a dashed outline 10 px in, the tray in a circle, and what dropping does. -->
+                <!--
+                    The drop zone (mockup .dz): two dashed columns 10 px in, Copy on the left and Cut on the right (F-ISL-30),
+                    each with its icon in a circle; a full Shelf shows one yellow message instead.
+                -->
                 <Grid x:Name="DropLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False"
                       Background="Transparent">
+                    <Grid x:Name="DropChoices" Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid x:Name="DropCopy" Grid.Column="0">
+                            <Rectangle x:Name="DropCopyOutline" RadiusX="20" RadiusY="20" StrokeThickness="1.5" StrokeDashArray="3 2" Stroke="#48484A" />
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Grid x:Name="DropCopyBadge" Width="36" Height="36" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse x:Name="DropCopyCircle" Fill="#1C1C1E" />
+                                    <c:IconView x:Name="DropCopyIcon" Glyph="{StaticResource Icon.Files}" Width="18" Height="18" Foreground="#8E8E93" />
+                                </Grid>
+                                <TextBlock Text="Copy" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                                <TextBlock Text="Keeps the original where it is" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid x:Name="DropCut" Grid.Column="2">
+                            <Rectangle x:Name="DropCutOutline" RadiusX="20" RadiusY="20" StrokeThickness="1.5" StrokeDashArray="3 2" Stroke="#48484A" />
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Grid x:Name="DropCutBadge" Width="36" Height="36" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse x:Name="DropCutCircle" Fill="#1C1C1E" />
+                                    <c:IconView x:Name="DropCutIcon" Glyph="{StaticResource Icon.Scissors}" Width="18" Height="18" Foreground="#8E8E93" />
+                                </Grid>
+                                <TextBlock Text="Cut" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                                <TextBlock Text="Moves it when you drag it out" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
                     <Rectangle x:Name="DropOutline" Margin="10" RadiusX="22" RadiusY="22" StrokeThickness="1.5" StrokeDashArray="3 2"
-                               Stroke="#48484A" Fill="Transparent" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30,0">
+                               Stroke="#FFD60A" Fill="Transparent" Visibility="Collapsed" />
+                    <StackPanel x:Name="DropFull" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30,0"
+                                Visibility="Collapsed">
                         <Grid x:Name="DropBadge" Width="48" Height="48" RenderTransformOrigin="0.5,0.5">
-                            <Ellipse x:Name="DropCircle" Fill="#1C1C1E" />
-                            <c:IconView x:Name="DropIcon" Glyph="{StaticResource Icon.TrayDown}" Width="24" Height="24" Foreground="#8E8E93" />
+                            <Ellipse Fill="#1C1C1E" />
+                            <c:IconView Glyph="{StaticResource Icon.TrayDown}" Width="24" Height="24" Foreground="#FFD60A" />
                         </Grid>
                         <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="DropTitle" Text="Drop to keep on the Shelf" FontSize="18" FontWeight="Bold" />
-                            <TextBlock x:Name="DropSubtitle" Text="Files stay where they are until you drag them out" FontSize="13"
-                                       Foreground="#8E8E93" Margin="0,2,0,0" />
+                            <TextBlock Text="Shelf is full" FontSize="18" FontWeight="Bold" />
+                            <TextBlock Text="Drag something out first" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>

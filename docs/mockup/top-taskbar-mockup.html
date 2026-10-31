@@ -727,12 +727,26 @@ li.done .chk .ic{opacity:1;transform:none}
 /* drop zone */
 .dz{position:absolute;inset:10px;border:1.5px dashed #48484a;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:16px;padding:0 20px;
   transition:border-color 160ms,background 160ms}
-.iw.hot:not(.full) .dz{border-color:var(--accent);background:rgba(48,209,88,.08)}
+.iw:not(.full) .dz{display:none}
+/* Copy on the left, Cut on the right (F-ISL-30): the column under the pointer lights, Copy green and Cut orange. */
+.dzc{position:absolute;inset:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.iw.full .dzc{display:none}
+.dzk{border:1.5px dashed #48484a;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:border-color 160ms,background 160ms}
+.dzk .dzi{width:36px;height:36px;border-radius:18px}
+.dzk .dzi .ic{width:18px;height:18px}
+.dzk b{font-size:15px;font-weight:700;margin-top:8px}
+.dzk small{font-size:12px;color:var(--text2);margin-top:1px}
+.iw.hot[data-dm="copy"] .dzk[data-k="copy"]{border-color:var(--accent);background:rgba(48,209,88,.08)}
+.iw.hot[data-dm="copy"] .dzk[data-k="copy"] .dzi{color:#000;background:var(--accent);transform:scale(1.06)}
+.iw.hot[data-dm="cut"] .dzk[data-k="cut"]{border-color:var(--orange);background:rgba(255,159,10,.08)}
+.iw.hot[data-dm="cut"] .dzk[data-k="cut"] .dzi{color:#000;background:var(--orange);transform:scale(1.06)}
 .iw.full .dz{border-color:var(--warn)}
 .iw.full .dzi{color:var(--warn)}
 .dzi{width:48px;height:48px;border-radius:24px;background:var(--surface);display:grid;place-items:center;color:var(--text2);flex-shrink:0;transition:color 160ms,background 160ms,transform 260ms var(--pop)}
 .dzi .ic{width:24px;height:24px}
-.iw.hot:not(.full) .dzi{color:#000;background:var(--accent);transform:translateY(2px) scale(1.06)}
+/* A Cut item on the Shelf: a small orange scissors badge on its icon. */
+.fcut{position:absolute;left:-6px;top:-4px;width:14px;height:14px;border-radius:7px;background:var(--orange);display:grid;place-items:center;color:#000}
+.fcut .ic{width:9px;height:9px;stroke-width:2.4}
 
 /* system */
 .sys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
@@ -1215,8 +1229,12 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
       </div>
       <div class="layer L-card" id="lcard"></div>
       <div class="layer L-drop">
+        <div class="dzc">
+          <div class="dzk" data-k="copy"><span class="dzi"><svg class="ic" aria-hidden="true"><use href="#i-files"/></svg></span><b>Copy</b><small>Keeps the original where it is</small></div>
+          <div class="dzk" data-k="cut"><span class="dzi"><svg class="ic" aria-hidden="true"><use href="#i-scissors"/></svg></span><b>Cut</b><small>Moves it when you drag it out</small></div>
+        </div>
         <div class="dz"><span class="dzi"><svg class="ic" aria-hidden="true"><use href="#i-traydown"/></svg></span>
-          <div><div class="ct" id="dzT">Drop to keep on the Shelf</div><div class="cs" id="dzS">Files stay where they are until you drag them out</div></div></div>
+          <div><div class="ct">Shelf is full</div><div class="cs">Drag something out first</div></div></div>
       </div>
     </div>
   </div>
@@ -2887,9 +2905,10 @@ $('#cbClear').onclick=e=>{
 const FILE_COLORS={pdf:'#ff6961',jpg:'#bf5af2',png:'#bf5af2',zip:'#ffd60a',docx:'#64d2ff',xlsx:'#30d158',mp4:'#ff9f0a',mkv:'#ff9f0a'};
 // One drop is one item: a single file, or a bundle when several files land together. Eight items fill the 4 × 2 grid.
 const SHELF_MAX=8;
-function addFiles(files){
+// mode: the column it was dropped on; kept: Gili copied it into its own Shelf folder (from a zip or the temp folder, F-ISL-31).
+function addFiles(files,mode='copy',kept=false){
   if(!files.length||S.shelf.length>=SHELF_MAX){if(files.length)hint('Shelf is full · drag something out first');leaveDrop();return}
-  S.shelf.push({id:S.nextId++,files:files.map(f=>({name:f.name,size:f.size||0}))});
+  S.shelf.push({id:S.nextId++,mode,kept,files:files.map(f=>({name:f.name,size:f.size||0}))});
   renderShelf(S.shelf.length-1);renderSlot();
   if(!S.reduce)$('#mShelf').animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)'});
   setState('compact',true);openExpanded(PAGE.shelf);
@@ -2901,9 +2920,9 @@ function renderShelf(newIdx){
   $('#shClear').hidden=!n;
   $('#shGrid').innerHTML=S.shelf.length?S.shelf.map((it,i)=>{
     const one=it.files.length===1,f=it.files[0],ext=(f.name.split('.').pop()||'').toLowerCase();
-    const name=one?f.name:`${it.files.length} files`,tip=it.files.map(x=>`${x.name} · ${fmtSize(x.size)}`).join('\n');
+    const name=one?f.name:`${it.files.length} files`,tip=[it.mode==='cut'?'Cut · moves when you drag it out':'',it.files.map(x=>`${x.name} · ${fmtSize(x.size)}`).join('\n'),it.kept?'Kept by Gili until you drag it out':''].filter(Boolean).join('\n');
     return `<div class="ftile ${i===newIdx?'new':''}" draggable="true" data-id="${it.id}" title="${esc(tip)}">
-      <span class="fi" style="--fc:${one?(FILE_COLORS[ext]||'#8e8e93'):'#d1d1d6'}">${icon(one?'file':'files')}<b>${one?esc(ext.slice(0,4).toUpperCase()||'FILE'):it.files.length}</b></span>
+      <span class="fi" style="--fc:${one?(FILE_COLORS[ext]||'#8e8e93'):'#d1d1d6'}">${it.mode==='cut'?`<i class="fcut">${icon('scissors')}</i>`:''}${icon(one?'file':'files')}<b>${one?esc(ext.slice(0,4).toUpperCase()||'FILE'):it.files.length}</b></span>
       <span class="fn">${esc(name)}</span>
       <button class="frm" data-rm="${it.id}" aria-label="Remove ${esc(name)}">${icon('x')}</button></div>`}).join('')
     :`<div class="shempty">${icon('tray')}<span>Drag files onto the island to hold them here while you find where they go.</span></div>`;
@@ -2914,8 +2933,10 @@ $('#shGrid').addEventListener('click',e=>{
 });
 $('#shGrid').addEventListener('dragstart',e=>{
   const t=e.target.closest('.ftile');if(!t)return;
-  e.dataTransfer.effectAllowed='copyMove';e.dataTransfer.setData('text/plain',t.title);
-  hint('Drop it in a folder to move or copy the file');
+  // A Copy item only copies and stays; a Cut item only moves and leaves the Shelf.
+  const cut=S.shelf.find(f=>f.id===+t.dataset.id)?.mode==='cut';
+  e.dataTransfer.effectAllowed=cut?'move':'copy';e.dataTransfer.setData('text/plain',t.title);
+  hint(cut?'Drop it in a folder to move the file there':'Drop it in a folder to copy the file there');
 });
 $('#shClear').onclick=()=>{S.shelf=[];renderShelf();renderSlot();hint('Shelf cleared')};
 const hasFiles=e=>[...(e.dataTransfer?.types||[])].includes('Files');
@@ -2925,18 +2946,18 @@ function enterDrop(){
   if(S.state!=='drop')S.dropReturn=S.state==='expanded'?'expanded':'compact';
   const full=S.shelf.length>=SHELF_MAX;
   iw.classList.toggle('full',full);
-  $('#dzT').textContent=full?'Shelf is full':'Drop to keep on the Shelf';
-  $('#dzS').textContent=full?'Drag something out first':'Files stay where they are until you drag them out';
   setState('drop');iw.classList.toggle('full',full);
 }
 function leaveDrop(){iw.classList.remove('hot');if(S.state==='drop')setState(S.dropReturn)}
 addEventListener('dragenter',e=>{if(!hasFiles(e))return;e.preventDefault();if(++dragDepth===1)enterDrop()});
-addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect=iw.contains(e.target)||$('#bar').contains(e.target)?'copy':'none';iw.classList.toggle('hot',iw.contains(e.target))});
+// The left half of the drop zone is Copy, the right half Cut; over the bar both stay grey and a drop there is a Copy.
+const dropMode=e=>{const r=$('.dzc').getBoundingClientRect();return iw.contains(e.target)&&e.clientX>=r.left+r.width/2?'cut':'copy'};
+addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect=iw.contains(e.target)||$('#bar').contains(e.target)?'copy':'none';iw.classList.toggle('hot',iw.contains(e.target));iw.dataset.dm=dropMode(e)});
 addEventListener('dragleave',e=>{if(!hasFiles(e))return;if(--dragDepth<=0){dragDepth=0;leaveDrop()}});
 addEventListener('drop',e=>{
   if(!hasFiles(e))return;e.preventDefault();dragDepth=0;iw.classList.remove('hot');
   // A drop on the bar keeps the files too, like one on the island (PRD 6.2: the Shelf icon takes files like the rest of the bar).
-  if((iw.contains(e.target)||$('#bar').contains(e.target))&&S.state==='drop')addFiles([...e.dataTransfer.files]);else leaveDrop();
+  if((iw.contains(e.target)||$('#bar').contains(e.target))&&S.state==='drop')addFiles([...e.dataTransfer.files],dropMode(e));else leaveDrop();
 });
 
 /* system and right modules */
@@ -3815,8 +3836,9 @@ const ACT={
   xconflict:conflictXop,
   cam:()=>{S.cam=!S.cam;setPressed('cam',S.cam);layout()},
   mic:()=>{S.mic=!S.mic;setPressed('mic',S.mic);layout()},
-  drop:()=>{enterDrop();setTimeout(()=>iw.classList.add('hot'),500);
-    setTimeout(()=>{iw.classList.remove('hot');addFiles(SAMPLE_DROPS[dropN++%SAMPLE_DROPS.length])},1400)},
+  // The pointer over Copy, then over Cut; every other sample comes from inside a zip, so Gili keeps it (F-ISL-30, F-ISL-31).
+  drop:()=>{enterDrop();setTimeout(()=>{iw.dataset.dm='copy';iw.classList.add('hot')},400);setTimeout(()=>iw.dataset.dm='cut',900);
+    setTimeout(()=>{iw.classList.remove('hot');const n=dropN++;addFiles(SAMPLE_DROPS[n%SAMPLE_DROPS.length],n%2?'copy':'cut',n%2===1)},1400)},
   ntfWa:()=>notify(NTF_SAMPLES.wa),ntfWa2:()=>notify(NTF_SAMPLES.wa2),ntfMail:()=>notify(NTF_SAMPLES.mail),ntfTg:()=>notify(NTF_SAMPLES.tg),
   alarm:()=>showCard('alarm'),
   timerDone:()=>{S.timer.total=600;showCard('timer')},

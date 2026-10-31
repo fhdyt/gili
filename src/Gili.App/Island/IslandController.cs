@@ -47,6 +47,11 @@ public sealed class IslandController : IDisposable
         _dragLeave.Tick += (_, _) => EndDrag();
         _shelfCheck.Tick += (_, _) => Shelf.Prune();
         _demoDrop.Tick += (_, _) => DropDemo();
+        _demoCut.Tick += (_, _) =>
+        {
+            _demoCut.Stop();
+            DragEntered(overIsland: true, ShelfMode.Cut);
+        };
         shelf.Changed += SyncShelfCheck;
         SyncShelfCheck();
         _dispatcher = dispatcher;
@@ -147,6 +152,7 @@ public sealed class IslandController : IDisposable
     private readonly DispatcherTimer _dragLeave = new() { Interval = TimeSpan.FromMilliseconds(150) };
     private readonly DispatcherTimer _shelfCheck = new() { Interval = TimeSpan.FromMinutes(1) };
     private readonly DispatcherTimer _demoDrop = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _demoCut = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private bool _dragging;
     private bool _shelfOpen;
     private bool _shelfPaused;
@@ -158,6 +164,12 @@ public sealed class IslandController : IDisposable
     /// <summary>Whether the pointer of a file drag is over the island itself (the drop zone lights up, mockup .hot).</summary>
     public bool DropHot { get; private set; }
 
+    /// <summary>The drop zone's column under the pointer: Copy on the left, Cut on the right (F-ISL-30).</summary>
+    public ShelfMode DropMode { get; private set; }
+
+    /// <summary>Gili's own Shelf folder, for files from a zip or the temp folder (F-ISL-31).</summary>
+    public Gili.Platform.Shelf.ShelfFolder? ShelfFolder { get; init; }
+
     public event Action? DropHotChanged;
 
     /// <summary>A drop landed on the Shelf; the left icon bounces (PRD 6.2).</summary>
@@ -167,11 +179,11 @@ public sealed class IslandController : IDisposable
     /// Files dragged over the bar or the island turn the island into the drop zone (PRD 6.3). Leaving is held for
     /// 150 ms, so moving from the bar onto the island doesn't make it flicker (plan 3d).
     /// </summary>
-    public void DragEntered(bool overIsland)
+    public void DragEntered(bool overIsland, ShelfMode mode = ShelfMode.Copy)
     {
         if (DraggingOut) return;
         _dragLeave.Stop();
-        SetDropHot(overIsland);
+        SetDropHot(overIsland, mode);
         if (_dragging) return;
         _dragging = true;
         _coordinator.SetDropZone(true);
@@ -184,11 +196,50 @@ public sealed class IslandController : IDisposable
         _dragLeave.Start();
     }
 
-    /// <summary>Adds what was dropped as one item and opens the Shelf page; false when the Shelf is full.</summary>
-    public bool DropFiles(IReadOnlyList<string> paths)
+    /// <summary>
+    /// Adds what was dropped as one item in its column and opens the Shelf page; false when the Shelf is full. Files in
+    /// the temp folder are copied into Gili's Shelf folder first, on a worker thread, since they vanish (F-ISL-31).
+    /// </summary>
+    public bool DropFiles(IReadOnlyList<string> paths, ShelfMode mode = ShelfMode.Copy)
     {
         EndDrag();
-        if (Shelf.Add(paths, DateTimeOffset.UtcNow) is null) return false;
+        if (Shelf.IsFull) return false;
+        _ = AddDropped(paths, mode);
+        return true;
+    }
+
+    private async Task AddDropped(IReadOnlyList<string> paths, ShelfMode mode)
+    {
+        var (kept, folder) = ShelfFolder is null ? (paths, null) : await ShelfFolder.KeepTempFiles(paths, System.IO.Path.GetTempPath());
+        Added(Shelf.Add(kept, DateTimeOffset.UtcNow, mode, folder), folder);
+    }
+
+    /// <summary>
+    /// Files dragged without a path (a zip folder, an Outlook attachment): read into a new folder of Gili's own while
+    /// the drop lasts; a drop over 4 GB is refused with a notice (F-ISL-31).
+    /// </summary>
+    public bool DropVirtualFiles(System.Runtime.InteropServices.ComTypes.IDataObject data, ShelfMode mode)
+    {
+        EndDrag();
+        if (Shelf.IsFull || ShelfFolder is null || Gili.Platform.Shelf.VirtualFiles.Describe(data) is not { Count: > 0 } entries) return false;
+        if (!ShelfDrop.FitsLimit(entries.Sum(e => e.Size)))
+        {
+            _coordinator.ShowWide(new WideEvent("shelf-too-big", WideIcon.TrayDown, WideTone.Warn,
+                [new WideRun("Too big for the Shelf"), new WideRun("· 4 GB at most", WideRunStyle.Muted, SpaceBefore: true)], TimeSpan.FromSeconds(2.4)));
+            return false;
+        }
+        var folder = ShelfFolder.Create();
+        var paths = Gili.Platform.Shelf.VirtualFiles.Save(data, entries, folder);
+        return Added(Shelf.Add(paths, DateTimeOffset.UtcNow, mode, folder), folder);
+    }
+
+    private bool Added(ShelfItem? item, string? folder)
+    {
+        if (item is null)
+        {
+            if (folder is not null) ShelfFolder?.Delete(folder);
+            return false;
+        }
         ShelfAdded?.Invoke();
         _coordinator.Open(IslandPage.Shelf);
         return true;
@@ -201,18 +252,23 @@ public sealed class IslandController : IDisposable
         SyncShelfCheck();
     }
 
-    /// <summary>The demo's drop: a second of drop zone, then its item on the Shelf page, never saved (F-BAR-09).</summary>
+    /// <summary>
+    /// The demo's drop: a second of drop zone, the pointer over Copy and then over Cut (F-ISL-30), then its item on the
+    /// Shelf page as a Cut, never saved (F-BAR-09).
+    /// </summary>
     public void ShowDemoShelf(string name, long size)
     {
         _demo = true;
-        _demoShelf = new ShelfItem(-1, [System.IO.Path.Combine(@"C:\Demo", name)], name, size, -1, DateTimeOffset.UtcNow);
-        DragEntered(overIsland: true);
+        _demoShelf = new ShelfItem(-1, [System.IO.Path.Combine(@"C:\Demo", name)], name, size, -1, DateTimeOffset.UtcNow, ShelfMode.Cut);
+        DragEntered(overIsland: true, ShelfMode.Copy);
+        _demoCut.Start();
         _demoDrop.Start();
     }
 
     private void DropDemo()
     {
         _demoDrop.Stop();
+        _demoCut.Stop();
         EndDrag();
         if (_demoShelf is null) return;
         Shelf.ShowDemo(_demoShelf);
@@ -223,16 +279,17 @@ public sealed class IslandController : IDisposable
     private void EndDrag()
     {
         _dragLeave.Stop();
-        SetDropHot(false);
+        SetDropHot(false, ShelfMode.Copy);
         if (!_dragging) return;
         _dragging = false;
         _coordinator.SetDropZone(false);
     }
 
-    private void SetDropHot(bool hot)
+    private void SetDropHot(bool hot, ShelfMode mode)
     {
-        if (DropHot == hot) return;
+        if (DropHot == hot && DropMode == mode) return;
         DropHot = hot;
+        DropMode = mode;
         DropHotChanged?.Invoke();
     }
 
@@ -678,6 +735,7 @@ public sealed class IslandController : IDisposable
     public void EndDemo()
     {
         _demoDrop.Stop();
+        _demoCut.Stop();
         _demoShelf = null;
         EndDrag();
         Shelf.ShowDemo(null);

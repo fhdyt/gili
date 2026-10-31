@@ -42,6 +42,16 @@ public static class ShelfText
     public static string Tooltip(IEnumerable<(string Path, FileFacts? Facts)> files) =>
         string.Join("\n", files.Select(f => $"{Path.GetFileName(f.Path.TrimEnd('\\', '/'))} · {(f.Facts is { IsFolder: true } ? "Folder" : Size(f.Facts?.Size ?? 0))}"));
 
+    /// <summary>The same, led by what Cut does and followed by a note when Gili keeps the files (F-ISL-30, F-ISL-31).</summary>
+    public static string Tooltip(IEnumerable<(string Path, FileFacts? Facts)> files, ShelfMode mode, bool kept)
+    {
+        var lines = new List<string>();
+        if (mode == ShelfMode.Cut) lines.Add("Cut · moves when you drag it out");
+        lines.Add(Tooltip(files));
+        if (kept) lines.Add("Kept by Gili until you drag it out");
+        return string.Join("\n", lines);
+    }
+
     /// <summary>
     /// The badge on a tile's file icon: the extension (at most four letters) in its colour, "FILE" without one, a
     /// bundle's count, and nothing on a folder.

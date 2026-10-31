@@ -63,6 +63,11 @@
                                     <!-- .fi: the type's icon, 24 × 28, with its badge along the bottom. -->
                                     <Grid Width="24" Height="28" HorizontalAlignment="Center">
                                         <c:IconView Glyph="{Binding Glyph}" Width="24" Height="28" Foreground="#D1D1D6" />
+                                        <!-- A Cut item (F-ISL-30): a small orange scissors badge on the icon's top left corner. -->
+                                        <Border Width="14" Height="14" CornerRadius="7" Background="#FF9F0A" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                Margin="-6,-4,0,0" Visibility="{Binding IsCut, Converter={StaticResource VisibleWhen}}">
+                                            <c:IconView Glyph="{StaticResource Icon.Scissors}" Width="9" Height="9" Foreground="Black" />
+                                        </Border>
                                         <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,2" Padding="3,0" CornerRadius="3"
                                                 Background="{Binding BadgeBrush}" Visibility="{Binding HasBadge, Converter={StaticResource VisibleWhen}}">
                                             <TextBlock Text="{Binding BadgeText}" FontSize="8" FontWeight="Bold" Foreground="Black" LineStackingStrategy="BlockLineHeight"
