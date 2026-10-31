@@ -20,6 +20,9 @@ public sealed record SettingRow(
 
 public sealed record SettingsSection(string Name, IReadOnlyList<SettingRow> Rows);
 
+/// <summary>Whether a row can change now, and why not when the reason is worth a note.</summary>
+public readonly record struct RowState(bool Enabled, string? Note);
+
 /// <summary>
 /// The Settings window's sections and rows as in the mockup (<c>SET</c>) and PRD 6.5, and how the rows that already
 /// work map onto <see cref="AppSettings"/>. Rows of later phases show their PRD default, greyed out.
@@ -28,7 +31,7 @@ public static class SettingsCatalog
 {
     public const string LaterVersion = "Coming in a later version";
 
-    private static readonly string[] LeftIcons = ["Start", "Timer", "Alarms", "Todo", "Notes", "Clipboard", "Shelf", "Claude"];
+    private static readonly string[] LeftNames = ["Start", "Timer", "Alarms", "Todo", "Notes", "Clipboard", "Shelf", "Claude"];
     private static readonly string[] Pages = ["Media", "Timer", "Alarms", "Calendar", "Todo", "Notes", "Clipboard", "Shelf", "Claude", "System"];
 
     public static IReadOnlyList<SettingsSection> Sections { get; } =
@@ -52,15 +55,15 @@ public static class SettingsCatalog
         ]),
         new("Left side",
         [
-            .. LeftIcons.Select(n => new SettingRow("L." + n, n, SettingKind.Switch,
-                n == "Start" ? null : $"Turning it off also hides the {n} page in the island", Default: true)),
+            .. LeftNames.Select(n => new SettingRow("L." + n, n, SettingKind.Switch,
+                n == "Start" ? null : $"Turning it off also hides the {n} page in the island", Available: true)),
         ]),
         new("Island",
         [
             new("gili", "Show Gili", SettingKind.Switch, "Eyes in the idle island that follow the pointer", Available: true),
             new("lyrics", "Show lyrics", SettingKind.Switch,
                 "Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent", Default: false),
-            .. Pages.Select(n => new SettingRow("T." + n, n + " page", SettingKind.Switch, Default: true)),
+            .. Pages.Select(n => new SettingRow("T." + n, n + " page", SettingKind.Switch, Available: true)),
         ]),
         new("Right side",
         [
@@ -115,6 +118,8 @@ public static class SettingsCatalog
         "ramp" => s.GraduallyIncrease,
         "W.bat" => s.BatteryAlert,
         "W.unplug" => s.UnplugReminder,
+        _ when key.StartsWith("L.", StringComparison.Ordinal) => !s.HiddenLeft.HasFlag(Left(key)),
+        _ when key.StartsWith("T.", StringComparison.Ordinal) => !s.HiddenTabs.HasFlag(Page(key)),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     };
 
@@ -136,6 +141,14 @@ public static class SettingsCatalog
         "ramp" => s with { GraduallyIncrease = (bool)value },
         "W.bat" => s with { BatteryAlert = Number(value) },
         "W.unplug" => s with { UnplugReminder = Number(value) },
+        // Turning a left icon back on brings its page back too (PRD 6.2 "Saklar kiri ikut mematikan tab pulau").
+        _ when key.StartsWith("L.", StringComparison.Ordinal) => (bool)value
+            ? s with { HiddenLeft = s.HiddenLeft & ~Left(key), HiddenPages = s.HiddenPages & ~Visibility.PageOf(Left(key)) }
+            : s with { HiddenLeft = s.HiddenLeft | Left(key) },
+        _ when key.StartsWith("T.", StringComparison.Ordinal) => s with
+        {
+            HiddenPages = (bool)value ? s.HiddenPages & ~Page(key) : s.HiddenPages | Page(key),
+        },
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     }).Normalize();
 
@@ -150,6 +163,29 @@ public static class SettingsCatalog
         "alertVol" => (0, 100),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not a range row"),
     };
+
+    /// <summary>
+    /// A page whose left icon is off cannot be switched on by itself, and the last visible page (or its icon) cannot be
+    /// switched off, so the island never has no tab (PRD 6.3, plan 3a).
+    /// </summary>
+    public static RowState State(AppSettings s, string key)
+    {
+        if (key.StartsWith("T.", StringComparison.Ordinal))
+        {
+            var page = Page(key);
+            if (Visibility.PagesOf(s.HiddenLeft).HasFlag(page)) return new(false, "Turned off in Left side");
+            if (IsLastVisible(s, page)) return new(false, null);
+        }
+        if (key.StartsWith("L.", StringComparison.Ordinal) && Visibility.PageOf(Left(key)) is var own && own != PageSet.None && IsLastVisible(s, own))
+            return new(false, null);
+        return new(true, null);
+    }
+
+    private static bool IsLastVisible(AppSettings s, PageSet page) => (s.HiddenTabs | page) == PageSet.All && !s.HiddenTabs.HasFlag(page);
+
+    private static LeftIcons Left(string key) => Enum.Parse<LeftIcons>(key[2..]);
+
+    private static PageSet Page(string key) => Enum.Parse<PageSet>(key[2..]);
 
     private static int Number(object value) => (int)Math.Round(Convert.ToDouble(value, CultureInfo.InvariantCulture));
 }

@@ -88,4 +88,17 @@ public class AppSettingsTests
     [Fact]
     public void Unknown_glass_value_falls_back_to_strong() =>
         Assert.Equal(GlassLevel.Strong, new AppSettings { Glass = (GlassLevel)9 }.Normalize().Glass);
+
+    [Fact]
+    public void Normalize_never_hides_every_tab()
+    {
+        var s = new AppSettings { HiddenLeft = LeftIcons.Timer, HiddenPages = PageSet.All }.Normalize();
+        Assert.False(s.HiddenTabs.HasFlag(PageSet.Media));
+        Assert.True(s.HiddenTabs.HasFlag(PageSet.Calendar));
+    }
+
+    [Fact]
+    public void Hidden_tabs_join_pages_and_left_icons() =>
+        Assert.Equal(PageSet.Notes | PageSet.Claude | PageSet.Calendar,
+            new AppSettings { HiddenLeft = LeftIcons.Notes | LeftIcons.Claude | LeftIcons.Start, HiddenPages = PageSet.Calendar }.HiddenTabs);
 }

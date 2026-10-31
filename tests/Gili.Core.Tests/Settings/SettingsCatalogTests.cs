@@ -17,7 +17,9 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug" },
+            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
+                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
+                "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -125,4 +127,52 @@ public class SettingsCatalogTests
         Assert.Equal(90, SettingsCatalog.Write(new AppSettings(), "W.unplug", 90).UnplugReminder);
         Assert.Equal((50, 100), SettingsCatalog.Range(new AppSettings(), "W.unplug"));
     }
+
+    [Fact]
+    public void Left_icon_off_hides_its_page_and_locks_the_switch()
+    {
+        var s = SettingsCatalog.Write(new AppSettings(), "L.Timer", false);
+        Assert.Equal(LeftIcons.Timer, s.HiddenLeft);
+        Assert.Equal(false, SettingsCatalog.Read(s, "L.Timer"));
+        Assert.Equal(false, SettingsCatalog.Read(s, "T.Timer"));
+        Assert.True(s.HiddenTabs.HasFlag(PageSet.Timer));
+        Assert.Equal(new RowState(false, "Turned off in Left side"), SettingsCatalog.State(s, "T.Timer"));
+        Assert.Equal(new RowState(true, null), SettingsCatalog.State(s, "T.Alarms"));
+    }
+
+    [Fact]
+    public void Left_icon_on_brings_its_page_back()
+    {
+        var hidden = new AppSettings { HiddenLeft = LeftIcons.Timer, HiddenPages = PageSet.Timer };
+        var s = SettingsCatalog.Write(hidden, "L.Timer", true);
+        Assert.Equal((LeftIcons.None, PageSet.None), (s.HiddenLeft, s.HiddenPages));
+    }
+
+    [Fact]
+    public void Island_page_switches_write_hidden_pages()
+    {
+        var s = SettingsCatalog.Write(new AppSettings(), "T.Calendar", false);
+        Assert.Equal(PageSet.Calendar, s.HiddenPages);
+        Assert.Equal(true, SettingsCatalog.Read(SettingsCatalog.Write(s, "T.Calendar", true), "T.Calendar"));
+    }
+
+    [Fact]
+    public void Last_visible_page_cannot_be_turned_off()
+    {
+        var s = new AppSettings { HiddenPages = PageSet.All & ~PageSet.Timer };
+        Assert.Equal(new RowState(false, null), SettingsCatalog.State(s, "T.Timer"));
+        Assert.Equal(new RowState(false, null), SettingsCatalog.State(s, "L.Timer"));
+        Assert.Equal(new RowState(true, null), SettingsCatalog.State(s, "T.Media"));
+    }
+
+    [Fact]
+    public void Start_switch_has_no_page()
+    {
+        var s = SettingsCatalog.Write(new AppSettings(), "L.Start", false);
+        Assert.Equal((LeftIcons.Start, PageSet.None), (s.HiddenLeft, s.HiddenTabs));
+        Assert.Equal(new RowState(true, null), SettingsCatalog.State(new AppSettings { HiddenPages = PageSet.All & ~PageSet.Media }, "L.Start"));
+    }
+
+    [Fact]
+    public void Other_rows_are_enabled() => Assert.Equal(new RowState(true, null), SettingsCatalog.State(new AppSettings(), "glow"));
 }

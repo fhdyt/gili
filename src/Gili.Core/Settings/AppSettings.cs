@@ -39,6 +39,14 @@ public sealed record AppSettings
     public int BatteryAlert { get; init; } = 20;
     public int UnplugReminder { get; init; } = 80;
 
+    /// <summary>Left icons and island pages switched off in Settings (F-BAR-12, F-ISL-23).</summary>
+    public LeftIcons HiddenLeft { get; init; } = LeftIcons.None;
+    public PageSet HiddenPages { get; init; } = PageSet.None;
+
+    /// <summary>The tabs the island hides: its own switches and the pages of hidden left icons (PRD 6.2).</summary>
+    [JsonIgnore]
+    public PageSet HiddenTabs => HiddenPages | Visibility.PagesOf(HiddenLeft);
+
     /// <summary>The pomodoro lengths in minutes and the sessions before the long break (F-TOOL-03).</summary>
     public int PomodoroFocus { get; init; } = 25;
     public int PomodoroBreak { get; init; } = 5;
@@ -64,6 +72,8 @@ public sealed record AppSettings
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),
             BatteryAlert = Math.Clamp(BatteryAlert, 5, 50),
             UnplugReminder = Math.Clamp(UnplugReminder, 50, 100),
+            // Media has no left icon, so freeing it always leaves the island one tab.
+            HiddenPages = (HiddenPages | Visibility.PagesOf(HiddenLeft)) == PageSet.All ? HiddenPages & ~PageSet.Media : HiddenPages,
             TimerSound = Sound.Voices.Find(TimerSound).Name,
             PomodoroFocus = plan.FocusMinutes,
             PomodoroBreak = plan.BreakMinutes,

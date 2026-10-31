@@ -93,4 +93,13 @@ public sealed class SettingsStoreTests : IDisposable
         var loaded = Store.Load().Settings;
         Assert.Equal((15, 90), (loaded.BatteryAlert, loaded.UnplugReminder));
     }
+
+    [Fact]
+    public void Hidden_tabs_survive_a_restart()
+    {
+        Store.Save(new AppSettings { HiddenLeft = LeftIcons.Start | LeftIcons.Shelf, HiddenPages = PageSet.Timer | PageSet.Notes });
+        Assert.Contains("\"hiddenPages\": \"timer, notes\"", File.ReadAllText(SettingsFile));
+        var loaded = Store.Load().Settings;
+        Assert.Equal((LeftIcons.Start | LeftIcons.Shelf, PageSet.Timer | PageSet.Notes), (loaded.HiddenLeft, loaded.HiddenPages));
+    }
 }
