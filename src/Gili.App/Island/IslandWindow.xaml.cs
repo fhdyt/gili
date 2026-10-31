@@ -1098,10 +1098,35 @@ public partial class IslandWindow : Window
         }
     }
 
+    /// <summary>The working glyph breathes between 55% and full (mockup clPulse, 0.8 s each way) at 20 fps (PRD 8.1).</summary>
+    private void PulseClaude(bool on)
+    {
+        if (!on || !SystemParameters.ClientAreaAnimation)
+        {
+            ClaudeSlotIcon.BeginAnimation(OpacityProperty, null);
+            return;
+        }
+        var pulse = new DoubleAnimation(0.55, 1, TimeSpan.FromMilliseconds(800))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
+        };
+        Timeline.SetDesiredFrameRate(pulse, 20);
+        ClaudeSlotIcon.BeginAnimation(OpacityProperty, pulse);
+    }
+
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
+            case nameof(IslandViewModel.ClaudeLeft) or nameof(IslandViewModel.ClaudeRight):
+                // A longer name or time widens the island; the same width leaves its springs at rest.
+                if (_vm.ShowClaudeSlot) Relayout();
+                break;
+            case nameof(IslandViewModel.ClaudePulse):
+                PulseClaude(_vm.ClaudePulse);
+                break;
             case nameof(IslandViewModel.SelectedTab):
                 // Opening the island lands on its page; only switching while open slides, and the height follows.
                 var animate = _mode == IslandMode.Expanded;

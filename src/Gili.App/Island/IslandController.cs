@@ -381,6 +381,20 @@ public sealed class IslandController : IDisposable
         _coordinator.SetFocus(Timers.Pomodoro.IsFocusRunning);
     }
 
+    /// <summary>The Claude activity in the slot (F-CLD-02); <see cref="ClaudeService"/> sets it.</summary>
+    public Gili.Core.Claude.ClaudeSlotView Claude { get; private set; } = Gili.Core.Claude.ClaudeSlotView.Empty;
+
+    public event Action? ClaudeChanged;
+
+    /// <summary>All sessions are one activity: waiting or just done at order 2, working at order 6 (PRD 6.3).</summary>
+    public void SetClaude(Gili.Core.Claude.ClaudeSlotView view)
+    {
+        Claude = view;
+        _coordinator.SetActivity(ActivityKind.ClaudeAttention, view.State is Gili.Core.Claude.ClaudeSlotState.NeedsInput or Gili.Core.Claude.ClaudeSlotState.Done);
+        _coordinator.SetActivity(ActivityKind.ClaudeWorking, view.State == Gili.Core.Claude.ClaudeSlotState.Working);
+        ClaudeChanged?.Invoke();
+    }
+
     /// <summary>The latest copy's snippet and its thumbnail (images only), shown while it holds the slot (F-ISL-17).</summary>
     public (ClipboardSnippet Snippet, ImageSource? Thumb)? Clipboard { get; private set; }
 

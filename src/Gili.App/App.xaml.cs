@@ -33,6 +33,7 @@ public partial class App : Application
     private SingleInstance? _instance;
     private SettingsHub? _settings;
     private SettingsStore? _settingsStore;
+    private ClaudeService? _claude;
     private TaskbarHider? _taskbar;
     private TaskbarKeeper? _taskbarKeeper;
     private TransparencyWatcher? _transparency;
@@ -198,6 +199,9 @@ public partial class App : Application
             if (_systemPageShown) _islandWindow.SystemStats.Apply(s);
         };
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
+        _claude = new ClaudeService(Dispatcher, _settings, _log, Kind);
+        _claude.Changed += ShowClaude;
+        ShowClaude();
         _islandWindow.Show();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
         _timers.Reschedule();
@@ -226,6 +230,7 @@ public partial class App : Application
         _apps?.Dispose();
         _right?.Dispose();
         _gili?.Dispose();
+        _claude?.Dispose();
         _islandController?.Dispose();
         _alarms?.Dispose();
         _todos?.Stop();
@@ -293,6 +298,15 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Claude's sessions in the slot and on the left icon (F-CLD-02, F-LEFT-05).</summary>
+    private void ShowClaude()
+    {
+        var sessions = _claude!.Board.Sessions;
+        _islandController!.SetClaude(Core.Claude.ClaudeSlot.For(sessions, DateTimeOffset.Now));
+        _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
+            sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.LauncherTooltip(sessions));
+    }
+
     /// <summary>A note that cannot be written is logged, so quitting still releases the AppBar and never turns into a crash and restart.</summary>
     private void FlushNotes()
     {
@@ -315,9 +329,12 @@ public partial class App : Application
             return;
         }
         _releaseTimer.Stop();
-        _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup));
+        var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now));
+        _claude?.StatusChanged += model.RefreshNotes;
+        _settingsWindow = new SettingsWindow(model);
         _settingsWindow.Closed += (_, _) =>
         {
+            _claude?.StatusChanged -= model.RefreshNotes;
             _settingsWindow = null;
             ReleaseLater();
         };

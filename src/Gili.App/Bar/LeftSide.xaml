@@ -121,8 +121,17 @@
                                Typography.NumeralAlignment="Tabular" Visibility="Collapsed" />
                 </StackPanel>
             </Button>
-            <Button Style="{StaticResource BarIconButton}" Tag="Claude" ToolTip="Claude sessions" AutomationProperties.Name="Open Claude sessions" Click="OnLaunch" Margin="2,0,0,0">
-                <c:IconView Glyph="{StaticResource Icon.Claude}" Filled="True" Width="16" Height="16" />
+            <Button x:Name="ClaudeButton" Style="{StaticResource BarIconButton}" Tag="Claude" ToolTip="Claude sessions" AutomationProperties.Name="Open Claude sessions" Click="OnLaunch" Margin="2,0,0,0">
+                <!-- A waiting session puts a 6 px yellow dot at the icon's top right, ringed in the bar's colour (mockup .lcl.ask). -->
+                <Grid>
+                    <c:IconView x:Name="ClaudeIcon" Glyph="{StaticResource Icon.Claude}" Filled="True" Width="16" Height="16" />
+                    <Ellipse x:Name="ClaudeDot" Width="9" Height="9" Margin="0,-2.5,-3.5,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                             Fill="#FFD60A" Stroke="#161618" StrokeThickness="1.5" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="ClaudeDotScale" ScaleX="0" ScaleY="0" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Grid>
             </Button>
         </StackPanel>
 

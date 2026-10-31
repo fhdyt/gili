@@ -32,6 +32,13 @@ if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 dotnet publish (Join-Path $root 'src/Gili.App/Gili.App.csproj') -c Release -r win-x64 --self-contained -o $layout
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed.' }
 
+# The Claude hook helper is NativeAOT (F-CLD-07); the native linker finds MSVC through vswhere in the VS Installer folder.
+$vsInstaller = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
+if (Test-Path $vsInstaller) { $env:PATH = "$env:PATH;$vsInstaller" }
+dotnet publish (Join-Path $root 'src/Gili.ClaudeHook/Gili.ClaudeHook.csproj') -c Release -r win-x64 -o $layout -p:DebugType=None -p:NativeDebugSymbols=false
+if ($LASTEXITCODE -ne 0) { throw 'Publishing Gili.ClaudeHook failed. It needs the C++ build tools (Desktop development with C++).' }
+Remove-Item (Join-Path $layout 'Gili.ClaudeHook.pdb') -ErrorAction SilentlyContinue
+
 (Get-Content -Raw (Join-Path $root 'packaging/AppxManifest.xml')).Replace('{VERSION}', $version) |
     Set-Content -Encoding utf8 (Join-Path $layout 'AppxManifest.xml')
 Copy-Item -Recurse (Join-Path $root 'packaging/Assets') (Join-Path $layout 'Assets')

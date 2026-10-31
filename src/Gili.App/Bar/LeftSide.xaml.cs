@@ -61,6 +61,41 @@ public partial class LeftSide : UserControl
     private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon);
 
     /// <summary>The Shelf's file count beside its icon and in its tooltip (PRD 6.2); a new drop bounces the tray.</summary>
+    /// <summary>
+    /// The Claude icon (F-LEFT-05, mockup renderClLauncher): a yellow dot pops in while a session waits, the icon breathes
+    /// while one works (at 20 fps, PRD 8.1), and the tooltip counts them.
+    /// </summary>
+    public void ShowClaude(bool waiting, bool working, string tooltip)
+    {
+        ClaudeButton.ToolTip = tooltip;
+        if (_claudeWaiting != waiting)
+        {
+            _claudeWaiting = waiting;
+            var pop = new DoubleAnimation(waiting ? 1 : 0, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 0)) { EasingFunction = Pop };
+            ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleXProperty, pop);
+            ClaudeDotScale.BeginAnimation(ScaleTransform.ScaleYProperty, pop);
+        }
+        var pulse = working && !waiting && SystemParameters.ClientAreaAnimation;
+        if (_claudePulse == pulse) return;
+        _claudePulse = pulse;
+        if (!pulse)
+        {
+            ClaudeIcon.BeginAnimation(OpacityProperty, null);
+            return;
+        }
+        var breathe = new DoubleAnimation(0.55, 1, TimeSpan.FromMilliseconds(800))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
+        };
+        Timeline.SetDesiredFrameRate(breathe, 20);
+        ClaudeIcon.BeginAnimation(OpacityProperty, breathe);
+    }
+
+    private bool _claudeWaiting;
+    private bool _claudePulse;
+
     public void ShowShelf(int files, bool bounce)
     {
         ShelfCount.Text = files.ToString(CultureInfo.InvariantCulture);

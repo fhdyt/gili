@@ -26,6 +26,9 @@ public sealed record AppSettings
     /// <summary>The bar went back to the top because the taskbar came back; Settings says so until the user picks again.</summary>
     public bool MovedToTop { get; init; }
 
+    /// <summary>Show Claude Code sessions (F-CLD-01): off until the user turns it on, since it edits ~/.claude/settings.json.</summary>
+    public bool ClaudeSessions { get; init; }
+
     public bool Use24HourClock { get; init; } = true;
     public int BarOpacity { get; init; } = 100;
     public GlassLevel Glass { get; init; } = GlassLevel.Strong;

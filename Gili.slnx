@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Gili.App/Gili.App.csproj" />
+    <Project Path="src/Gili.ClaudeHook/Gili.ClaudeHook.csproj" />
     <Project Path="src/Gili.Core/Gili.Core.csproj" />
     <Project Path="src/Gili.Data/Gili.Data.csproj" />
     <Project Path="src/Gili.Platform/Gili.Platform.csproj" />

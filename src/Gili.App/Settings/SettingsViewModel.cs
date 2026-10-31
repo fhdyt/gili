@@ -11,12 +11,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly bool _transparencyEnabled;
     private readonly InstallKind _kind;
     private readonly StartupState? _startup;
+    private readonly Func<string?>? _claudeStatus;
 
     [ObservableProperty] private SettingsSection _selectedSection;
     [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
-    public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup)
+    public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null)
     {
+        _claudeStatus = claudeStatus;
         _hub = hub;
         _transparencyEnabled = transparencyEnabled;
         _kind = kind;
@@ -62,9 +64,17 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         "auto" when _kind == InstallKind.Development => "Only the installed copy starts with Windows",
         "auto" when _kind == InstallKind.Store && _startup is { } state => StartupRules.Note(state),
+        // The integration's status line (PRD 9.4): waiting, connected, or what went wrong.
+        "clOn" => _claudeStatus?.Invoke(),
         "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
         _ => null,
     };
+
+    /// <summary>A status line changed outside the settings, e.g. the first Claude hook arrived.</summary>
+    public void RefreshNotes()
+    {
+        if (SelectedSection.Name == "Claude") BuildRows();
+    }
 
     private void Reload(AppSettings settings)
     {

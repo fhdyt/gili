@@ -99,7 +99,7 @@ public static class SettingsCatalog
         ]),
         new("Claude",
         [
-            new("clOn", "Show Claude Code sessions", SettingKind.Switch, Default: true),
+            new("clOn", "Show Claude Code sessions", SettingKind.Switch, Available: true),
             new("limOn", "Show 5-hour usage timer", SettingKind.Switch, "Counts down to the reset and alerts you when the window ends", Default: true),
         ]),
         new("Sounds",
@@ -120,6 +120,7 @@ public static class SettingsCatalog
     public static object Read(AppSettings s, string key) => key switch
     {
         "hideTb" => s.HideTaskbar,
+        "clOn" => s.ClaudeSessions,
         "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
         "secs" => s.ShowSeconds,
@@ -146,6 +147,7 @@ public static class SettingsCatalog
     public static AppSettings Write(AppSettings s, string key, object value) => (key switch
     {
         "hideTb" => s with { HideTaskbar = (bool)value, MovedToTop = s.MovedToTop && !(bool)value },
+        "clOn" => s with { ClaudeSessions = (bool)value },
         "pos" => s with { BarPosition = Enum.Parse<BarPosition>((string)value), MovedToTop = false },
         "h12" => s with { Use24HourClock = !(bool)value },
         "secs" => s with { ShowSeconds = (bool)value },

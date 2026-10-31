@@ -133,6 +133,17 @@
                             <Border />
                         </DockPanel>
 
+                        <!-- Claude (F-CLD-02, mockup clSlotHTML): its glyph, the session's name or the count, then Needs
+                             input, Done · 4m 12s or the running time at the right. -->
+                        <DockPanel MinWidth="172" Background="Transparent" ToolTip="{Binding ClaudeTooltip}"
+                                   Visibility="{Binding ShowClaudeSlot, Converter={StaticResource VisibleWhen}}">
+                            <c:IconView x:Name="ClaudeSlotIcon" DockPanel.Dock="Left" Glyph="{Binding ClaudeGlyph}" Filled="{Binding ClaudeFilled}"
+                                        Foreground="{Binding ClaudeBrush}" Width="14" Height="14" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding ClaudeRight}" Foreground="{Binding ClaudeRightBrush}" Margin="8,0,0,0"
+                                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ClaudeLeft}" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </DockPanel>
+
                         <!-- A copy holds the slot for 3 s (PRD 6.3 "Cuplikan clipboard", mockup showClip): icon or thumbnail
                              at the left end, the text at the right end, or in the middle when an image's size follows it. -->
                         <Grid MinWidth="172" Background="Transparent" ToolTip="{Binding ClipTooltip}"

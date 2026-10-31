@@ -25,6 +25,7 @@ public sealed partial class IslandViewModel : ObservableObject
     private static readonly Brush Warn = Frozen("#FFD60A");
     private static readonly Brush Danger = Frozen("#FF453A");
     private static readonly Brush Muted = Frozen("#8E8E93");
+    private static readonly Brush ClaudeOrange = Frozen("#D97757");
 
     private readonly IslandController _island;
     private readonly SettingsHub _settings;
@@ -36,8 +37,17 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
+
+    [ObservableProperty] private Geometry? _claudeGlyph;
+    [ObservableProperty] private bool _claudeFilled = true;
+    [ObservableProperty] private Brush _claudeBrush = ClaudeOrange;
+    [ObservableProperty] private string _claudeLeft = "";
+    [ObservableProperty] private string _claudeRight = "";
+    [ObservableProperty] private Brush _claudeRightBrush = Muted;
+    [ObservableProperty] private string _claudeTooltip = "";
+    [ObservableProperty] private bool _claudePulse;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(HasActivity))]
@@ -136,6 +146,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.Media.Updated += UpdateMedia;
         island.ClipboardChanged += UpdateClipboard;
         island.Timers.Changed += UpdateTimerSlot;
+        island.ClaudeChanged += UpdateClaude;
         island.CardChanged += () => UpdateCard(_island.View);
         UpdateSettings();
         UpdatePower();
@@ -164,12 +175,38 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool ShowTimerSlot => Slot is ActivityKind.Timer or ActivityKind.Stopwatch;
 
+    public bool ShowClaudeSlot => Slot is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking;
+
     public bool HasCardSubtitle => !string.IsNullOrEmpty(CardSubtitle);
 
     public bool HasCardWarning => CardWarning is not null;
 
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot;
+
+    /// <summary>
+    /// The Claude slot (mockup clSlotHTML): yellow Claude glyph and Needs input, green check and Done · 4m 12s, or the
+    /// orange glyph pulsing with the running time; several sessions show their count instead of a name.
+    /// </summary>
+    private void UpdateClaude()
+    {
+        var claude = _island.Claude;
+        var done = claude.State == Gili.Core.Claude.ClaudeSlotState.Done;
+        ClaudeGlyph = Glyph(done ? "Icon.Check" : "Icon.Claude");
+        ClaudeFilled = !done;
+        ClaudeBrush = claude.State switch
+        {
+            Gili.Core.Claude.ClaudeSlotState.NeedsInput => Warn,
+            Gili.Core.Claude.ClaudeSlotState.Done => Accent,
+            _ => ClaudeOrange,
+        };
+        ClaudeLeft = claude.Name ?? claude.Text;
+        ClaudeRight = claude.Name is null ? "" : claude.State == Gili.Core.Claude.ClaudeSlotState.Working ? claude.Value ?? "" : claude.Text;
+        ClaudeRightBrush = claude.State == Gili.Core.Claude.ClaudeSlotState.NeedsInput ? Warn : Muted;
+        ClaudeTooltip = claude.Tooltip;
+        ClaudePulse = claude.State == Gili.Core.Claude.ClaudeSlotState.Working;
+        UpdateBubble();
+    }
 
     /// <summary>
     /// The slot for a timer, pomodoro or stopwatch (mockup ACT_ICON): an hourglass in orange (timer), red (focus) or green
@@ -287,6 +324,9 @@ public sealed partial class IslandViewModel : ObservableObject
                 ? (_island.Timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green)
                 : TimerViewModel.Orange, false),
             ActivityKind.Stopwatch => (Glyph("Icon.Stopwatch"), TimerViewModel.Orange, false),
+            ActivityKind.ClaudeAttention when _island.Claude.State == Gili.Core.Claude.ClaudeSlotState.Done => (Glyph("Icon.Check"), Accent, false),
+            ActivityKind.ClaudeAttention => (Glyph("Icon.Claude"), Warn, true),
+            ActivityKind.ClaudeWorking => (Glyph("Icon.Claude"), ClaudeOrange, true),
             _ => ((Geometry?)null, Text, false),
         };
     }

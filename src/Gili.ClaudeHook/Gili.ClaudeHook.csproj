@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- A GUI-subsystem exe never opens a console window, even when Claude Desktop runs the hook (design 3h). -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Gili.ClaudeHook</AssemblyName>
+    <RootNamespace>Gili.ClaudeHook</RootNamespace>
+    <!-- F-CLD-07: native code starts in milliseconds; no reflection, no globalization data. -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <StackTraceSupport>false</StackTraceSupport>
+    <OptimizationPreference>Speed</OptimizationPreference>
+  </PropertyGroup>
+</Project>

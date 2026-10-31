@@ -246,6 +246,8 @@ public partial class BarWindow : Window
 
     public void ShowShelf(int files, bool bounce) => _left.ShowShelf(files, bounce);
 
+    public void ShowClaude(bool waiting, bool working, string tooltip) => _left.ShowClaude(waiting, working, tooltip);
+
     /// <summary>Files dragged over the bar open the drop zone; dropping them on the bar keeps them too (PRD 6.2).</summary>
     private void OnFileDrag(object sender, DragEventArgs e)
     {
