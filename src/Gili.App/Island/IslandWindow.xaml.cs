@@ -1255,6 +1255,9 @@ public partial class IslandWindow : Window
     {
         switch (e.PropertyName)
         {
+            case nameof(IslandViewModel.UsageLabel) or nameof(IslandViewModel.UsageLeft):
+                if (_vm.ShowUsageSlot) Relayout();
+                break;
             case nameof(IslandViewModel.ClaudeLeft) or nameof(IslandViewModel.ClaudeRight):
                 // A longer name or time widens the island; the same width leaves its springs at rest.
                 if (_vm.ShowClaudeSlot) Relayout();

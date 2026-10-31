@@ -34,6 +34,61 @@
     <Grid Margin="32,0,38,0" VerticalAlignment="Center">
         <TextBlock Text="No Claude sessions" FontSize="14" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center"
                    Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
+        <StackPanel>
+        <!-- The 5-hour window (mockup .lrow): a 22 px ring of the time left, 5-hour window, when it resets, and the time
+             left; yellow once the limit is reached. Not a button: it has no hover. -->
+        <Border MinHeight="44" Padding="12,6" CornerRadius="12" Background="#1C1C1E" Margin="0,0,0,6" ToolTip="{Binding WindowTooltip}"
+                Visibility="{Binding HasWindow, Converter={StaticResource VisibleWhen}}">
+            <DockPanel>
+                <Grid DockPanel.Dock="Left" Width="22" Height="22" VerticalAlignment="Center">
+                    <Ellipse Width="19.25" Height="19.25" Stroke="#2C2C2E" StrokeThickness="2.75" />
+                    <Ellipse Width="19.25" Height="19.25" StrokeThickness="2.75" StrokeDashCap="Round" StrokeDashArray="{Binding WindowArc}"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform Angle="-90" />
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Stroke" Value="#D97757" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
+                                        <Setter Property="Stroke" Value="#FFD60A" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                </Grid>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding WindowLeft}" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                           Typography.NumeralAlignment="Tabular">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#8E8E93" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
+                                    <Setter Property="Foreground" Value="#FFD60A" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="5-hour window" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding WindowResets}" FontSize="12" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#8E8E93" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFD60A" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </Border>
         <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
             <ItemsControl.ItemContainerStyle>
                 <!-- Each row reads by its session's name, not by its view model's type. -->
@@ -98,5 +153,6 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        </StackPanel>
     </Grid>
 </UserControl>

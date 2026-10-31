@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "clOn", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
+            new HashSet<string> { "clOn", "limOn", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
@@ -243,5 +243,16 @@ public class SettingsCatalogModuleTests
         var on = off with { ClaudeSessions = true };
         Assert.False(on.HiddenTabs.HasFlag(PageSet.Claude));
         Assert.True(SettingsCatalog.State(on, "L.Claude").Enabled);
+    }
+
+    [Fact]
+    public void The_usage_timer_is_on_by_default_and_waits_for_the_integration()
+    {
+        var off = new AppSettings();
+        Assert.True((bool)SettingsCatalog.Read(off, "limOn"));
+        Assert.Equal(new RowState(false, SettingsCatalog.ClaudeOff), SettingsCatalog.State(off, "limOn"));
+        var on = off with { ClaudeSessions = true };
+        Assert.True(SettingsCatalog.State(on, "limOn").Enabled);
+        Assert.False(SettingsCatalog.Write(on, "limOn", false).ClaudeUsageTimer);
     }
 }

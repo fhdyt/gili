@@ -146,4 +146,14 @@ public sealed class ClaudeSeenTests
         _board.SetHost("s1", "Windows Terminal");
         Assert.Equal("Windows Terminal", ClaudeSlot.AppName(S()));
     }
+
+    [Fact]
+    public void A_turn_ended_by_an_api_error_is_idle_without_done()
+    {
+        Hook("UserPromptSubmit");
+        _board.Apply(new ClaudeHookMessage("StopFailure", "s1", Cwd, null, null, "API Error: Rate limit reached", null, "rate_limit"));
+        Assert.Equal(ClaudeStatus.Idle, S().Status);
+        Assert.False(S().Unseen);
+        Assert.Equal("rate_limit", ClaudeHookMessage.Parse("{\"event\":\"StopFailure\",\"session_id\":\"s1\",\"error\":\"rate_limit\"}")!.Error);
+    }
 }

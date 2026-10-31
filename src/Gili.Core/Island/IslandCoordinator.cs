@@ -219,9 +219,12 @@ public sealed class IslandCoordinator
         ActivityKind.Media => IslandPage.Media,
         ActivityKind.ClipboardSnippet => IslandPage.Clipboard,
         ActivityKind.Timer or ActivityKind.Stopwatch => IslandPage.Timer,
-        ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking => IslandPage.Claude,
+        ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking or ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow => IslandPage.Claude,
         _ => null,
     };
+
+    /// <summary>Fullscreen and a focus phase hold reminders; a focus phase also holds urgent cards that ask to wait.</summary>
+    private bool Shows(IslandCard card) => card.Priority == CardPriority.Urgent ? !(_focus && card.HoldInFocus) : !(_fullscreen || _focus);
 
     private static bool IsClaude(ActivityKind? kind) => kind is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking;
 
@@ -249,7 +252,7 @@ public sealed class IslandCoordinator
         }
 
         // Cards outrank everything; within a priority the oldest goes first (OrderBy is stable).
-        var card = _cards.Where(c => !(_fullscreen || _focus) || c.Priority == CardPriority.Urgent).OrderBy(c => c.Priority).FirstOrDefault();
+        var card = _cards.Where(Shows).OrderBy(c => c.Priority).FirstOrDefault();
         if (card != _shownCard)
         {
             _shownCard = card;

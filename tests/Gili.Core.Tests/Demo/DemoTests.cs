@@ -117,7 +117,18 @@ public class DemoTests
     }
 
     [Fact]
-    public void Lasts_about_a_minute_and_a_half() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 95);
+    public void Lasts_under_two_minutes() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 120);
+
+    [Fact]
+    public void The_claude_window_shows_its_limit_then_ends_with_its_card()
+    {
+        var windows = Steps.Where(s => s.Action is DemoClaudeWindow).ToList();
+        Assert.Equal([true, false], windows.Select(s => ((DemoClaudeWindow)s.Action).LimitHit));
+        var ends = windows[1].At + TimeSpan.FromSeconds(((DemoClaudeWindow)windows[1].Action).SecondsLeft);
+        var dismiss = Steps.Single(s => s.Action is DemoDismiss { Card: DemoScript.ResetCard });
+        // The card rings a few seconds before the demo answers it.
+        Assert.InRange((dismiss.At - ends).TotalSeconds, 3, 8);
+    }
 
     [Fact]
     public void Claude_asks_is_answered_then_both_sessions_finish_before_its_page_opens()

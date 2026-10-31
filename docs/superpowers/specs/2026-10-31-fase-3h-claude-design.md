@@ -163,3 +163,38 @@ Tidak ada timer baru saat diam. Penelusuran proses (satu snapshot Toolhelp + sat
 - `claude -p` mengirim `SessionEnd` tepat setelah `Stop`, jadi sesinya hilang setelah Done 4 detik dan tidak meninggalkan gelembung hijau (benar: halaman hanya mendaftar sesi yang hidup).
 - Catatan: sesi CLI yang dijalankan lewat `Start-Process pwsh` tidak menulis `~/.claude/sessions/<pid>.json`, jadi Gili hanya mengenalnya dari hook (tanpa PID, jadi tanpa jendela). Klik baris sesi seperti itu hanya menandainya dilihat.
 - **Belum teruji langsung, butuh pengguna** (tanpa input sintetis): kartu `Claude needs your input` + Ping dari pertanyaan sungguhan, gelembung hijau (butuh sesi ini tidak bekerja), klik baris/slot yang membawa jendela ke depan, dan klik gelembung. Semuanya bisa dilihat di mode demo (klik kanan bar → Demo mode, detik 60–92).
+
+## Rancangan 3j
+
+Fitur: F-CLD-08 (jendela pemakaian 5 jam). Semua bagian **(keputusan Claude)** adalah pilihan saya.
+
+### Sumber data (diverifikasi 2026-10-31, Claude Code 2.1.316)
+
+- Tidak ada input hook yang memuat `rate_limits`, `five_hour`, atau `resets_at` (dokumentasi hook resmi). Waktu reset resmi tetap hanya untuk statusline (temuan 3h).
+- Hook **`StopFailure`** (matcher jenis error: `rate_limit`, `overloaded`, …) dipanggil *sebagai ganti* `Stop` saat giliran berakhir karena error API. Inputnya `error`, `error_details`, dan `last_assistant_message` (teks error yang tampil, misalnya `API Error: Rate limit reached`).
+- Jadi: **mulai jendela** = `UserPromptSubmit` pertama saat tidak ada jendela berjalan, dibulatkan ke bawah ke jam penuh, berakhir 5 jam kemudian (PRD sumber 2, tooltip `Estimated`). **Batas tercapai** = `StopFailure` dengan error `rate_limit`. Bila teks errornya memuat waktu reset (`|1730000000` atau `resets 7pm` / `resets 7:30pm` / `resets at 19:00`), waktu itu menggantikan perkiraan dan tooltip tidak lagi `Estimated` **(keputusan Claude)**. Persen terpakai tidak tersedia, jadi ring halaman selalu menunjukkan waktu yang sudah lewat.
+
+### Pendekatan
+
+| Pendekatan | Untung | Rugi |
+|---|---|---|
+| **A. `ClaudeUsage` di Core + `ClaudeWindowStore` di Data (dipilih)** | Aturan mulai/batas/berakhir/restart dites tanpa WPF; baris `claude_window` yang sudah ada di skema dipakai | Satu kelas Core dan satu store baru |
+| B. Membungkus statusline pengguna untuk membaca waktu resmi | Waktu dan persen resmi | Mengubah konfigurasi statusline pengguna yang dipakai skrip lain (ditolak di 3h) |
+| C. Hanya perkiraan, tanpa `StopFailure` | Paling sederhana | `Limit reached` tidak pernah tampil, padahal PRD memintanya |
+
+### Aturan
+
+- `StopFailure` juga mengakhiri giliran sesinya: Working/Needs input → Idle tanpa Done (bukan selesai normal) **(keputusan Claude)**.
+- Batas tercapai tanpa jendela berjalan (dipakai dari perangkat lain): jendela dibuat dari waktu reset di teks error; kalau tidak ada, perkiraan dari jam penuh sekarang.
+- Jendela berakhir → kartu `Claude usage reset` / `Your 5-hour limit is available again` (prioritas 1, ikon jam pasir oranye Claude, pulse), tombol **Close** dan **Open Claude**, suara timer berulang maksimal 5 menit. Kartu ditahan selama fase fokus pomodoro (bendera baru `IslandCard.HoldInFocus`), tetap tampil saat fullscreen seperti kartu timer.
+- **Open Claude**: jendela sesi Claude Desktop yang hidup, kalau tidak ada sesi terminal terakhir; tanpa sesi → halaman Claude.
+- Jendela yang berakhir saat Gili mati atau laptop tidur lebih dari 1 menit: tandai `notified` tanpa kartu **(keputusan Claude: kartu basi tidak berguna; jendela berikutnya mulai dari prompt berikutnya)**. Bangun dari tidur sebelum itu tetap memunculkan kartu.
+- Slot: aktivitas `ClaudeWindow` (urutan 9) `Resets in 3:12:40` oranye; `ClaudeLimit` (tepat setelah urutan 2) `Limit reached 1:04:12` kuning. Teks diperbarui tiap detik hanya saat tampil di slot (PRD 8.1). Klik slot/gelembung → halaman Claude.
+- Halaman Claude: baris ringkasan di atas sesi (mockup `limRow`): ring 22 px, `5-hour window`, `Resets 19:00` (atau `Limit reached · Resets 19:00`), sisa waktu di kanan.
+- Saklar `Show 5-hour usage timer` (default nyala) aktif hanya saat integrasi nyala, dengan keterangan yang sama seperti saklar Claude lain.
+- **(keputusan Claude)** Toast tanpa suara untuk kartu ini menunggu layanan toast, yang juga belum ada untuk kartu timer; dicatat sebagai sisa.
+- Demo: setelah halaman Claude, slot `Limit reached`, lalu jendela demo yang berakhir 8 detik kemudian dengan kartunya.
+
+### Anggaran (PRD 8.1)
+
+Satu timer tenggat di waktu reset; teks slot 1 detik hanya saat tampil di slot; satu baris SQLite saat jendela mulai, batas tercapai, dan berakhir.

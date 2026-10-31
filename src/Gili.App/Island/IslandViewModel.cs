@@ -37,8 +37,14 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
+
+    /// <summary>Claude's 5-hour window in the slot (mockup slotHTML 'lim'): the hourglass, Resets in or Limit reached, the time.</summary>
+    [ObservableProperty] private Brush _usageBrush = ClaudeOrange;
+    [ObservableProperty] private string _usageLabel = "";
+    [ObservableProperty] private string _usageLeft = "";
+    [ObservableProperty] private string _usageTooltip = "";
 
     [ObservableProperty] private Geometry? _claudeGlyph;
     [ObservableProperty] private bool _claudeFilled = true;
@@ -161,6 +167,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.ClipboardChanged += UpdateClipboard;
         island.Timers.Changed += UpdateTimerSlot;
         island.ClaudeChanged += UpdateClaude;
+        island.ClaudeWindowTick += UpdateUsage;
         island.CardChanged += () => UpdateCard(_island.View);
         UpdateSettings();
         UpdatePower();
@@ -191,6 +198,8 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool ShowClaudeSlot => Slot is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking;
 
+    public bool ShowUsageSlot => Slot is ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow;
+
     public bool HasCardSubtitle => !string.IsNullOrEmpty(CardSubtitle);
 
     public bool HasCardWarning => CardWarning is not null;
@@ -198,7 +207,7 @@ public sealed partial class IslandViewModel : ObservableObject
     public bool HasCardQuote => !string.IsNullOrEmpty(CardQuote);
 
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot || ShowUsageSlot;
 
     /// <summary>
     /// The Claude slot (mockup clSlotHTML): yellow Claude glyph and Needs input, green check and Done · 4m 12s, or the
@@ -226,6 +235,7 @@ public sealed partial class IslandViewModel : ObservableObject
         DoneCount = unseen.Count.ToString(CultureInfo.InvariantCulture);
         HasDoneCount = unseen.Count > 1;
         (DoneTooltip, DoneName) = Gili.Core.Claude.ClaudeSlot.Bubble(unseen);
+        UpdateUsage();
         UpdateBubble();
     }
 
@@ -253,6 +263,16 @@ public sealed partial class IslandViewModel : ObservableObject
             TimerSlotValue = Gili.Core.Timers.TimerText.Clock(clock.Remaining(now));
         }
         UpdateBubble();
+    }
+
+    private void UpdateUsage()
+    {
+        if (_island.ClaudeWindow is not { } window) return;
+        var view = Gili.Core.Claude.ClaudeUsageText.For(window, DateTimeOffset.Now, _settings.Current.Use24HourClock);
+        UsageBrush = view.LimitHit ? Warn : ClaudeOrange;
+        UsageLabel = view.Label;
+        UsageLeft = view.Left;
+        UsageTooltip = view.Tooltip;
     }
 
     private void UpdateCard(IslandView view)
@@ -352,6 +372,8 @@ public sealed partial class IslandViewModel : ObservableObject
             ActivityKind.ClaudeAttention when _island.Claude.State == Gili.Core.Claude.ClaudeSlotState.Done => (Glyph("Icon.Check"), Accent, false),
             ActivityKind.ClaudeAttention => (Glyph("Icon.Claude"), Warn, true),
             ActivityKind.ClaudeWorking => (Glyph("Icon.Claude"), ClaudeOrange, true),
+            ActivityKind.ClaudeLimit => (Glyph("Icon.Hourglass"), Warn, false),
+            ActivityKind.ClaudeWindow => (Glyph("Icon.Hourglass"), ClaudeOrange, false),
             _ => ((Geometry?)null, Text, false),
         };
     }

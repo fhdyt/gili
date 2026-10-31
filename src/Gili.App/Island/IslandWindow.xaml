@@ -150,6 +150,16 @@
                             <TextBlock Text="{Binding ClaudeLeft}" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                         </DockPanel>
 
+                        <!-- Claude's 5-hour window (F-CLD-08, mockup slotHTML 'lim'): the hourglass in Claude orange, or yellow once
+                             the limit is reached, the label in grey and the time left at the right end. -->
+                        <DockPanel MinWidth="172" Background="Transparent" ToolTip="{Binding UsageTooltip}"
+                                   Visibility="{Binding ShowUsageSlot, Converter={StaticResource VisibleWhen}}">
+                            <c:IconView DockPanel.Dock="Left" Glyph="{StaticResource Icon.Hourglass}" Foreground="{Binding UsageBrush}" Width="14" Height="14" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding UsageLeft}" Margin="8,0,0,0" Typography.NumeralAlignment="Tabular"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding UsageLabel}" Foreground="#8E8E93" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </DockPanel>
+
                         <!-- A copy holds the slot for 3 s (PRD 6.3 "Cuplikan clipboard", mockup showClip): icon or thumbnail
                              at the left end, the text at the right end, or in the middle when an image's size follows it. -->
                         <Grid MinWidth="172" Background="Transparent" ToolTip="{Binding ClipTooltip}"

@@ -25,6 +25,8 @@ public static class ClaudeHookConfig
         ("Notification", null),
         ("PostToolUse", "*"),
         ("Stop", null),
+        // A turn that ended on a rate limit: the 5-hour window's "Limit reached" (design 3j).
+        ("StopFailure", "rate_limit"),
         ("SessionEnd", null),
     ];
 

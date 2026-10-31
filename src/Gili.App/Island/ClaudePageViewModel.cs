@@ -21,12 +21,23 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     [ObservableProperty] private bool _isEmpty = true;
 
+    /// <summary>The 5-hour window's row above the sessions (mockup limRow): ring, Resets 19:00, the time left.</summary>
+    [ObservableProperty] private bool _hasWindow;
+    [ObservableProperty] private bool _windowLimitHit;
+    [ObservableProperty] private string _windowResets = "";
+    [ObservableProperty] private string _windowLeft = "";
+    [ObservableProperty] private string _windowTooltip = "";
+
+    /// <summary>The ring's arc for the time left, in stroke widths (the ring is 2.75 px thick on a 51.8 px circle).</summary>
+    [ObservableProperty] private System.Windows.Media.DoubleCollection _windowArc = [0, 100];
+
     public ClaudePageViewModel(IslandController island, Func<bool> use24Hour)
     {
         _island = island;
         _use24Hour = use24Hour;
         _second.Tick += (_, _) => Refresh();
         island.ClaudeChanged += Refresh;
+        island.ClaudeWindowTick += RefreshWindow;
         island.ViewChanged += view =>
         {
             _shown = view.Mode == IslandMode.Expanded && view.Page == IslandPage.Claude;
@@ -40,8 +51,26 @@ public sealed partial class ClaudePageViewModel : ObservableObject
     /// <summary>Rows came or went, so the open island fits the list again.</summary>
     public event Action? ContentChanged;
 
+    private void RefreshWindow()
+    {
+        var hadWindow = HasWindow;
+        HasWindow = _island.ClaudeWindow is not null;
+        if (_island.ClaudeWindow is { } window)
+        {
+            var view = ClaudeUsageText.For(window, DateTimeOffset.Now, _use24Hour());
+            WindowLimitHit = view.LimitHit;
+            WindowResets = view.Resets;
+            WindowLeft = view.Left;
+            WindowTooltip = view.Tooltip;
+            const double Circle = 18.85;
+            WindowArc = [Math.Max(0.001, Circle * (1 - view.Elapsed)), 100];
+        }
+        if (hadWindow != HasWindow) ContentChanged?.Invoke();
+    }
+
     public void Refresh()
     {
+        RefreshWindow();
         var rows = Gili.Core.Claude.ClaudePage.Rows(_island.ClaudeSessions, DateTimeOffset.Now, _use24Hour());
         // The same sessions in the same order only change their text; otherwise the list is built again.
         if (rows.Select(r => r.Id).SequenceEqual(Rows.Select(r => r.Id)))
@@ -52,9 +81,10 @@ public sealed partial class ClaudePageViewModel : ObservableObject
         {
             Rows.Clear();
             foreach (var row in rows) Rows.Add(new ClaudeRowViewModel(row, _island.OpenClaudeSession));
-            IsEmpty = rows.Count == 0;
+            IsEmpty = rows.Count == 0 && _island.ClaudeWindow is null;
             ContentChanged?.Invoke();
         }
+        IsEmpty = rows.Count == 0 && _island.ClaudeWindow is null;
         _second.IsEnabled = _shown && rows.Any(r => r.Kind == ClaudeRowKind.Work);
     }
 }

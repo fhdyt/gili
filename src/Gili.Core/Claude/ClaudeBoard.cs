@@ -69,6 +69,12 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now, Func<ClaudeSession, bo
                 s.Status = ClaudeStatus.Working;
                 ClearWait(s);
                 break;
+            case "StopFailure" when s.Status is ClaudeStatus.Working or ClaudeStatus.NeedsInput:
+                // An API error ended the turn: no Done, since Claude did not finish (design 3j).
+                s.Status = ClaudeStatus.Idle;
+                s.IdleSince = now();
+                ClearWait(s);
+                break;
             case "Stop" when s.Status is ClaudeStatus.Working or ClaudeStatus.NeedsInput:
                 s.Status = ClaudeStatus.Done;
                 s.FinishedAt = now();

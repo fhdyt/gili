@@ -64,10 +64,13 @@ public sealed record DemoClaudeSession(string Id, string? Title, string Cwd, boo
 /// <summary>One of Claude Code's hooks for a demo session (PRD 9.2): a prompt, a question, a tool done, a stop.</summary>
 public sealed record DemoClaudeHook(string Event, string Id, string? Tool = null, string? Question = null) : DemoAction;
 
+/// <summary>The demo's 5-hour window, ending <paramref name="SecondsLeft"/> from now; never stored (plan 3j).</summary>
+public sealed record DemoClaudeWindow(double SecondsLeft, bool LimitHit) : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
-/// The demo of every island state so far, about a minute and a half (plan 1g decision 2, plan 3i): a copy in the slot, a 10 s timer and its card, music in the slot, the charger as a wide
+/// The demo of every island state so far, just under two minutes (plan 1g decision 2, plans 3i and 3j): a copy in the slot, a 10 s timer and its card, music in the slot, the charger as a wide
 /// notice and a bubble, the Media page, a walk through the tabs, the Power island, the charger out, then the music
 /// pausing and leaving so Gili returns to the island.
 /// </summary>
@@ -132,9 +135,16 @@ public static class DemoScript
             Step(81.5, new DemoClaudeHook("Stop", Term)),
             Step(87, new DemoOpen(IslandPage.Claude)),
             Step(91, new DemoClose()),
-            Step(92, new DemoEnd()),
+            // The 5-hour window (plan 3j): the limit reached, then a window that ends 6 s later with its card.
+            Step(92, new DemoClaudeWindow(3852, LimitHit: true)),
+            Step(97, new DemoClaudeWindow(6, LimitHit: false)),
+            Step(108, new DemoDismiss(ResetCard)),
+            Step(109.5, new DemoEnd()),
         ];
     }
+
+    /// <summary>The Claude usage reset card's id, as the island raises it.</summary>
+    public const string ResetCard = "claude-reset";
 
     private const string Desk = "demo-desktop";
     private const string Term = "demo-terminal";

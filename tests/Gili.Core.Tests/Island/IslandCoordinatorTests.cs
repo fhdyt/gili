@@ -472,4 +472,31 @@ public class IslandCoordinatorTests
         _island.SetFullscreen(true);
         Assert.False(_island.View.DoneBubble);
     }
+
+    [Fact]
+    public void A_focus_phase_holds_the_claude_reset_card_but_not_a_timer()
+    {
+        _island.SetFocus(true);
+        _island.ShowCard(new IslandCard("claude-reset", CardPriority.Urgent, TimeSpan.Zero, HoldInFocus: true));
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
+        _island.ShowCard(Urgent("timer"));
+        Assert.Equal("timer", _island.View.Card!.Id);
+        _island.DismissCard("timer");
+        _island.SetFocus(false);
+        Assert.Equal("claude-reset", _island.View.Card!.Id);
+    }
+
+    [Fact]
+    public void A_reached_limit_follows_a_waiting_session_and_a_running_window_comes_last()
+    {
+        _island.SetActivity(ActivityKind.ClaudeWindow, true);
+        _island.SetActivity(ActivityKind.Charging, true);
+        Assert.Equal((ActivityKind.Charging, ActivityKind.ClaudeWindow), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+        _island.SetActivity(ActivityKind.ClaudeWindow, false);
+        _island.SetActivity(ActivityKind.ClaudeLimit, true);
+        _island.SetActivity(ActivityKind.FileOperation, true);
+        Assert.Equal(ActivityKind.ClaudeLimit, _island.View.Slot);
+        _island.SetActivity(ActivityKind.ClaudeAttention, true);
+        Assert.Equal((ActivityKind.ClaudeAttention, ActivityKind.ClaudeLimit), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+    }
 }

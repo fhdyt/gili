@@ -39,11 +39,19 @@ public sealed class ClaudeService : IDisposable
     private readonly Dictionary<int, SessionWindow?> _windows = [];
     private readonly HashSet<int> _hostTried = [];
 
-    public ClaudeService(Dispatcher dispatcher, SettingsHub settings, FileLog log, InstallKind kind)
+    public ClaudeService(Dispatcher dispatcher, SettingsHub settings, FileLog log, InstallKind kind, IClaudeWindowStore? windows)
     {
         _dispatcher = dispatcher;
         _log = log;
         _kind = kind;
+        _usage = new ClaudeUsage(windows, () => DateTimeOffset.Now);
+        _usage.Changed += OnUsageChanged;
+        _reset.Tick += (_, _) =>
+        {
+            _reset.Stop();
+            if (Usage.Tick()) UsageEnded?.Invoke();
+            ScheduleReset();
+        };
         _real = new ClaudeBoard(() => DateTimeOffset.Now, IsFront);
         _real.Changed += OnBoardChanged;
         _deadline.Tick += (_, _) =>
@@ -69,6 +77,21 @@ public sealed class ClaudeService : IDisposable
 
     private readonly ClaudeBoard _real;
     private readonly ClaudeCards _cards = new();
+    private readonly ClaudeUsage _usage;
+    private readonly DispatcherTimer _reset = new();
+    private ClaudeUsage? _demoUsage;
+
+    /// <summary>The Claude 5-hour window (F-CLD-08): the demo's while it plays.</summary>
+    public ClaudeUsage Usage => _demoUsage ?? _usage;
+
+    /// <summary>Show Claude Code sessions is on.</summary>
+    public bool IsOn => _on;
+
+    /// <summary>The demo's sessions and window are on screen.</summary>
+    public bool InDemo => _demo is not null;
+
+    /// <summary>The 5-hour window has just ended: the Claude usage reset card rings (PRD 6.3).</summary>
+    public event Action? UsageEnded;
 
     /// <summary>The sessions on show: the demo's while it plays (F-BAR-09), else the real ones.</summary>
     public ClaudeBoard Board => _demo ?? _real;
@@ -192,6 +215,9 @@ public sealed class ClaudeService : IDisposable
                 var first = _lastEvent is null;
                 _lastEvent = DateTimeOffset.Now;
                 _real.Apply(message);
+                // The first prompt starts the 5-hour window; a turn ended on a rate limit marks it reached (design 3j).
+                if (message.Event == "UserPromptSubmit") _usage.Prompted();
+                else if (message is { Event: "StopFailure", Error: "rate_limit" }) _usage.LimitReached(message.Message);
                 if (first) StatusChanged?.Invoke();
             }));
         };
@@ -209,6 +235,7 @@ public sealed class ClaudeService : IDisposable
             NameHosts();
         }));
         _files.Start();
+        _usage.Load();
     }
 
     private void Stop()
@@ -224,6 +251,40 @@ public sealed class ClaudeService : IDisposable
         _real.Clear();
         _windows.Clear();
         _hostTried.Clear();
+        _reset.Stop();
+    }
+
+    /// <summary>
+    /// The reset card's Open Claude: Claude Desktop's window when a Desktop session lives, else the latest terminal
+    /// session's; false when there is no session to show, so the island opens the Claude page instead.
+    /// </summary>
+    public bool OpenClaude()
+    {
+        var sessions = Board.Sessions;
+        var session = sessions.LastOrDefault(s => s.App == ClaudeApp.Desktop) ?? sessions.LastOrDefault();
+        if (session is not { Pid: > 0 } || FindWindow(session.Pid!.Value, fresh: true) is not { } window) return false;
+        SessionWindows.BringToFront(window);
+        return true;
+    }
+
+    /// <summary>The clock jumped or the laptop woke: the reset is due at its own time again.</summary>
+    public void RescheduleUsage() => ScheduleReset();
+
+    /// <summary>The demo's own 5-hour window, never stored (F-BAR-09).</summary>
+    public void ApplyDemo(ClaudeUsageWindow window) => _demoUsage?.ShowDemo(window);
+
+    private void OnUsageChanged()
+    {
+        ScheduleReset();
+        Raise();
+    }
+
+    private void ScheduleReset()
+    {
+        _reset.Stop();
+        if (Usage.NextDeadline is not { } at || (!_on && _demoUsage is null)) return;
+        _reset.Interval = TimeSpan.FromMilliseconds(Math.Clamp((at - DateTimeOffset.Now).TotalMilliseconds, 1, int.MaxValue));
+        _reset.Start();
     }
 
     /// <summary>
@@ -253,6 +314,8 @@ public sealed class ClaudeService : IDisposable
         if (_demo is not null) return;
         _demo = new ClaudeBoard(() => DateTimeOffset.Now, _ => false);
         _demoCards = new ClaudeCards();
+        _demoUsage = new ClaudeUsage(null, () => DateTimeOffset.Now);
+        _demoUsage.Changed += OnUsageChanged;
         _demo.Changed += OnBoardChanged;
         OnBoardChanged();
     }
@@ -267,6 +330,9 @@ public sealed class ClaudeService : IDisposable
         _demo.Changed -= OnBoardChanged;
         _demo = null;
         _demoCards = null;
+        _demoUsage!.Changed -= OnUsageChanged;
+        _demoUsage = null;
+        ScheduleReset();
         OnBoardChanged();
     }
 

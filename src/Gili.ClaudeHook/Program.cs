@@ -49,12 +49,12 @@ internal static class Program
     /// <summary>The fields of PRD 9.2's hook table, read from the top level without parsing tool output.</summary>
     internal static byte[]? Message(string hookEvent, byte[] input)
     {
-        string? session = null, cwd = null, tool = null, type = null, message = null, question = null;
+        string? session = null, cwd = null, tool = null, type = null, message = null, question = null, error = null;
         var reader = new Utf8JsonReader(input, new JsonReaderOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
         try
         {
             if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject) return null;
-            ReadFields(ref reader, hookEvent, ref session, ref cwd, ref tool, ref type, ref message, ref question);
+            ReadFields(ref reader, hookEvent, ref session, ref cwd, ref tool, ref type, ref message, ref question, ref error);
         }
         catch (JsonException)
         {
@@ -73,6 +73,7 @@ internal static class Program
             Write(writer, "notification_type", type);
             Write(writer, "message", message);
             Write(writer, "question", question);
+            Write(writer, "error", error);
             writer.WriteEndObject();
         }
         output.WriteByte((byte)'\n');
@@ -80,7 +81,7 @@ internal static class Program
     }
 
     private static void ReadFields(ref Utf8JsonReader reader, string hookEvent, ref string? session, ref string? cwd, ref string? tool,
-        ref string? type, ref string? message, ref string? question)
+        ref string? type, ref string? message, ref string? question, ref string? error)
     {
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
         {
@@ -93,6 +94,10 @@ internal static class Program
                 case "tool_name": tool = Text(ref reader); break;
                 case "notification_type": type = Text(ref reader); break;
                 case "message": message = Text(ref reader); break;
+                case "error" when hookEvent == "StopFailure": error = Text(ref reader); break;
+                // StopFailure's last_assistant_message is the error Claude showed (with the reset time when there is one);
+                // in Stop it is Claude's own answer, which never leaves Claude.
+                case "last_assistant_message" when hookEvent == "StopFailure": message = Cut(Text(ref reader)); break;
                 case "tool_input" when hookEvent == "PreToolUse":
                     question = FirstQuestion(ref reader);
                     break;
@@ -123,6 +128,8 @@ internal static class Program
         reader.Skip();
         return null;
     }
+
+    private static string? Cut(string? text) => text is { Length: > QuestionLength } ? text[..QuestionLength] : text;
 
     private static void Write(Utf8JsonWriter writer, string name, string? value)
     {

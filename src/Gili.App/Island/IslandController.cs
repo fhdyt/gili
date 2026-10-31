@@ -62,9 +62,11 @@ public sealed class IslandController : IDisposable
             _coordinator.Tick();
             ScheduleDeadline();
         };
+        _windowSecond.Tick += (_, _) => ClaudeWindowTick?.Invoke();
         _coordinator.Changed += view =>
         {
             ScheduleDeadline();
+            SyncWindowSecond();
             // Files gone since the last look leave as the Shelf page opens (PRD 6.3).
             var shelfOpen = view.Mode == IslandMode.Expanded && view.Page == IslandPage.Shelf;
             if (shelfOpen && !_shelfOpen) Shelf.Prune();
@@ -326,6 +328,14 @@ public sealed class IslandController : IDisposable
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
             ClaudeCards.CardId when _claudeCard is { } claude => ClaudeContent(id, claude),
+            ClaudeResetCard => new("Icon.Hourglass", Color.FromRgb(0xD9, 0x77, 0x57), "Claude usage reset", "Your 5-hour limit is available again",
+                [
+                    new("Close", false, Card(id, () => { })),
+                    new("Open Claude", true, Card(id, () =>
+                    {
+                        if (OpenClaude?.Invoke() != true) _coordinator.Open(IslandPage.Claude);
+                    })),
+                ]),
             _ => null,
         };
         return content is null ? null : WithMuteWarning(id, content);
@@ -471,6 +481,42 @@ public sealed class IslandController : IDisposable
     {
         if (ClaudeUnseen.Count == 1) OpenClaudeSession(ClaudeUnseen[0].Id);
         else _coordinator.Open(IslandPage.Claude);
+    }
+
+    public const string ClaudeResetCard = "claude-reset";
+
+    /// <summary>The Claude 5-hour window on show (F-CLD-08); null while there is none or its switch is off.</summary>
+    public ClaudeUsageWindow? ClaudeWindow { get; private set; }
+
+    /// <summary>A second passed while the window's countdown shows in the slot or on the Claude page (PRD 8.1).</summary>
+    public event Action? ClaudeWindowTick;
+
+    /// <summary>The reset card's Open Claude: the App brings Claude forward, or says it could not.</summary>
+    public Func<bool>? OpenClaude { get; set; }
+
+    private readonly DispatcherTimer _windowSecond = new() { Interval = TimeSpan.FromSeconds(1) };
+
+    /// <summary>A running window is the last activity; a reached limit comes right after a waiting session (PRD 6.3).</summary>
+    public void SetClaudeWindow(ClaudeUsageWindow? window)
+    {
+        ClaudeWindow = window;
+        _coordinator.SetActivity(ActivityKind.ClaudeLimit, window is { LimitHit: true });
+        _coordinator.SetActivity(ActivityKind.ClaudeWindow, window is { LimitHit: false });
+        SyncWindowSecond();
+        ClaudeChanged?.Invoke();
+    }
+
+    /// <summary>The window ended: a card like a finished timer's, held during a focus phase (PRD 6.3).</summary>
+    public void ShowClaudeReset() =>
+        _coordinator.ShowCard(new IslandCard(ClaudeResetCard, CardPriority.Urgent, TimeSpan.Zero, HoldInFocus: true));
+
+    private void SyncWindowSecond()
+    {
+        var view = View;
+        var shown = ClaudeWindow is not null && (
+            (view.Mode == IslandMode.Compact && view.Slot is ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow)
+            || (view.Mode == IslandMode.Expanded && view.Page == IslandPage.Claude));
+        _windowSecond.IsEnabled = shown;
     }
 
     /// <summary>Whether a fullscreen app hides the bar: a new Claude wait is skipped, not kept (PRD 6.3).</summary>
@@ -626,6 +672,7 @@ public sealed class IslandController : IDisposable
     {
         _clipboard.Dispose();
         _deadline.Stop();
+        _windowSecond.Stop();
         _power.Dispose();
         _lockKeys.Dispose();
         _privacy.Dispose();

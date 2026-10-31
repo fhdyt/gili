@@ -63,6 +63,7 @@ public sealed class DemoService
         _island.DismissCard(DemoAlarm.CardId);
         _island.DismissCard(DemoReminder.CardId);
         _island.DismissClaudeCard();
+        _island.DismissCard(IslandController.ClaudeResetCard);
         Claude?.EndDemo();
         _island.EndDemo();
         Changed?.Invoke();
@@ -137,6 +138,11 @@ public sealed class DemoService
                     break;
                 case DemoClaudeHook hook:
                     Claude?.ApplyDemo(new ClaudeHookMessage(hook.Event, hook.Id, null, hook.Tool, null, null, hook.Question));
+                    break;
+                case DemoClaudeWindow window:
+                    var end = DateTimeOffset.Now.AddSeconds(window.SecondsLeft);
+                    Claude?.ApplyDemo(new ClaudeUsageWindow(0, end - ClaudeUsage.Length, end, ClaudeWindowSource.Estimated,
+                        window.LimitHit ? DateTimeOffset.Now : null, false));
                     break;
                 case DemoNoteHome:
                     NoteCameHome?.Invoke();

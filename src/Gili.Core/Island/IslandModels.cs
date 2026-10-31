@@ -11,8 +11,11 @@ public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard,
 /// <summary>The control a control island shows (PRD 6.4 "Pulau kontrol"): one per bar icon.</summary>
 public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
 
-/// <summary>Activities that can hold the compact slot, best first (PRD 6.3 activity order).</summary>
-public enum ActivityKind { ClipboardSnippet, ClaudeAttention, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging }
+/// <summary>
+/// Activities that can hold the compact slot, best first (PRD 6.3 activity order). Claude's 5-hour window is last while it
+/// runs and comes right after a waiting session once its limit is reached.
+/// </summary>
+public enum ActivityKind { ClipboardSnippet, ClaudeAttention, ClaudeLimit, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging, ClaudeWindow }
 
 public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone }
 
@@ -34,8 +37,11 @@ public sealed record WideEvent(string Key, WideIcon Icon, WideTone Tone, IReadOn
 
 public enum CardPriority { Urgent = 1, Reminder = 2 }
 
-/// <summary>A notification card. Urgent cards stay until answered; reminders close after <paramref name="Timeout"/>.</summary>
-public sealed record IslandCard(string Id, CardPriority Priority, TimeSpan Timeout);
+/// <summary>
+/// A notification card. Urgent cards stay until answered; reminders close after <paramref name="Timeout"/>. An urgent card
+/// that <paramref name="HoldInFocus"/> waits for a pomodoro break like a reminder (Claude usage reset, PRD 6.3).
+/// </summary>
+public sealed record IslandCard(string Id, CardPriority Priority, TimeSpan Timeout, bool HoldInFocus = false);
 
 /// <summary>
 /// What the island shows right now. <see cref="Bubble"/> is only set while compact; <see cref="Control"/> picks the

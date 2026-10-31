@@ -103,7 +103,7 @@ public static class SettingsCatalog
         new("Claude",
         [
             new("clOn", "Show Claude Code sessions", SettingKind.Switch, Available: true),
-            new("limOn", "Show 5-hour usage timer", SettingKind.Switch, "Counts down to the reset and alerts you when the window ends", Default: true),
+            new("limOn", "Show 5-hour usage timer", SettingKind.Switch, "Counts down to the reset and alerts you when the window ends", Available: true),
         ]),
         new("Sounds",
         [
@@ -124,6 +124,7 @@ public static class SettingsCatalog
     {
         "hideTb" => s.HideTaskbar,
         "clOn" => s.ClaudeSessions,
+        "limOn" => s.ClaudeUsageTimer,
         "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
         "secs" => s.ShowSeconds,
@@ -151,6 +152,7 @@ public static class SettingsCatalog
     {
         "hideTb" => s with { HideTaskbar = (bool)value, MovedToTop = s.MovedToTop && !(bool)value },
         "clOn" => s with { ClaudeSessions = (bool)value },
+        "limOn" => s with { ClaudeUsageTimer = (bool)value },
         "pos" => s with { BarPosition = Enum.Parse<BarPosition>((string)value), MovedToTop = false },
         "h12" => s with { Use24HourClock = !(bool)value },
         "secs" => s with { ShowSeconds = (bool)value },
@@ -202,7 +204,7 @@ public static class SettingsCatalog
     {
         if (key == "pos" && !s.HideTaskbar)
             return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
-        if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude") return new(false, ClaudeOff);
+        if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude" or "limOn") return new(false, ClaudeOff);
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {
             var page = Page(key);

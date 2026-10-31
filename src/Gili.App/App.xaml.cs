@@ -200,11 +200,18 @@ public partial class App : Application
             if (_systemPageShown) _islandWindow.SystemStats.Apply(s);
         };
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
-        _claude = new ClaudeService(Dispatcher, _settings, _log, Kind);
+        _claude = new ClaudeService(Dispatcher, _settings, _log, Kind, _database is null ? null : new Data.ClaudeWindowStore(_database));
         _claude.Changed += ShowClaude;
         _islandController.ClaudeSessionRequested += _claude.Focus;
         _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
         _apps.ForegroundChanged += _claude.OnForeground;
+        _claude.UsageEnded += () =>
+        {
+            if (_claude.InDemo || _settings.Current.ClaudeUsageTimer) _islandController.ShowClaudeReset();
+        };
+        _islandController.OpenClaude = _claude.OpenClaude;
+        _bar.TimeChanged += _claude.RescheduleUsage;
+        _settings.Changed += _ => ShowClaude();
         _demo.Claude = _claude;
         ShowClaude();
         _islandWindow.Show();
@@ -339,6 +346,9 @@ public partial class App : Application
                 _islandController.DismissClaudeCard();
                 break;
         }
+        // The 5-hour window shows while the integration and its own switch are on, and always in the demo (F-CLD-08).
+        var showWindow = _claude.InDemo || (_claude.IsOn && _settings!.Current.ClaudeUsageTimer);
+        _islandController.SetClaudeWindow(showWindow ? _claude.Usage.Current : null);
         _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
             sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.Unseen(sessions).Count > 0,
             Core.Claude.ClaudeSlot.LauncherTooltip(sessions));

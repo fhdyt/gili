@@ -13,7 +13,8 @@ public enum ClaudeApp { Terminal, Desktop }
 
 /// <summary>
 /// One line from <c>Gili.ClaudeHook</c> over the pipe (PRD 9.2 "Hook Claude Code"). The prompt's text is never sent;
-/// <paramref name="Question"/> is the first question of AskUserQuestion, at most 200 characters.
+/// <paramref name="Question"/> is the first question of AskUserQuestion, at most 200 characters. <paramref name="Error"/>
+/// is StopFailure's error type (rate_limit); its <paramref name="Message"/> is then Claude's error text.
 /// </summary>
 public sealed record ClaudeHookMessage(
     string Event,
@@ -22,7 +23,8 @@ public sealed record ClaudeHookMessage(
     string? Tool,
     string? NotificationType,
     string? Message,
-    string? Question)
+    string? Question,
+    string? Error = null)
 {
     /// <summary>Null for anything that is not a JSON object with an event and a session.</summary>
     public static ClaudeHookMessage? Parse(string line)
@@ -36,7 +38,7 @@ public sealed record ClaudeHookMessage(
             var session = Text(root, "session_id");
             if (string.IsNullOrEmpty(hookEvent) || string.IsNullOrEmpty(session)) return null;
             return new(hookEvent, session, Text(root, "cwd"), Text(root, "tool"), Text(root, "notification_type"), Text(root, "message"),
-                Text(root, "question"));
+                Text(root, "question"), Text(root, "error"));
         }
         catch (JsonException)
         {
