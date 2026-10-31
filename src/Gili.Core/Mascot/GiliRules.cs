@@ -6,13 +6,13 @@ namespace Gili.Core.Mascot;
 public enum GiliForm { InIsland, Circle, Menu }
 
 /// <summary>
-/// Gili's expressions available so far, lowest first in priority. Phase 2 adds Focus, Surprise and Happy (PRD 6.3
+/// Gili's expressions available so far, lowest first in priority. Focus and Surprise come later (PRD 6.3
 /// "Ekspresi Gili").
 /// </summary>
-public enum GiliMood { Neutral, Enjoy, Sleep, Wide }
+public enum GiliMood { Neutral, Enjoy, Sleep, Wide, Happy }
 
-/// <summary>What the expression depends on: a mouse drag, time since the last input, and music playing in the slot.</summary>
-public readonly record struct GiliInputs(bool Dragging, TimeSpan Idle, bool MusicPlayingInSlot);
+/// <summary>What the expression depends on: a mouse drag, time since the last input, music playing in the slot, and a note just home.</summary>
+public readonly record struct GiliInputs(bool Dragging, TimeSpan Idle, bool MusicPlayingInSlot, bool Happy = false);
 
 /// <summary>Side, corner radius and gap of Gili's two eyes in one form.</summary>
 public readonly record struct GiliEyeSize(double Side, double Radius, double Gap);
@@ -29,15 +29,22 @@ public static class GiliRules
     private const double IslandReach = 0.4;
     private const double CircleReach = 400;
 
-    /// <summary>The highest expression that applies: wide eyes while dragging, then asleep, then enjoying music.</summary>
+    /// <summary>The highest expression that applies: happy for a note come home, wide eyes while dragging, then asleep, then enjoying music.</summary>
     public static GiliMood Mood(GiliInputs inputs) =>
-        inputs.Dragging ? GiliMood.Wide
+        inputs.Happy ? GiliMood.Happy
+        : inputs.Dragging ? GiliMood.Wide
         : inputs.Idle >= SleepAfter ? GiliMood.Sleep
         : inputs.MusicPlayingInSlot ? GiliMood.Enjoy
         : GiliMood.Neutral;
 
-    /// <summary>Closed and wide eyes don't blink, on a timer or on a click.</summary>
-    public static bool CanBlink(GiliMood mood) => mood is not (GiliMood.Sleep or GiliMood.Wide);
+    /// <summary>Closed, wide and happy eyes don't blink, on a timer or on a click.</summary>
+    public static bool CanBlink(GiliMood mood) => mood is not (GiliMood.Sleep or GiliMood.Wide or GiliMood.Happy);
+
+    /// <summary>How long Gili is happy when a floating note comes home into the closed island.</summary>
+    public static readonly TimeSpan HappyFor = TimeSpan.FromMilliseconds(900);
+
+    /// <summary>How long the eyes stay on a note let go outside the island.</summary>
+    public static readonly TimeSpan WatchLanded = TimeSpan.FromSeconds(1.5);
 
     /// <summary>
     /// Where the eyes look, from −1 to 1 on each axis. Across: the pointer relative to the eyes, at full reach 40% of the

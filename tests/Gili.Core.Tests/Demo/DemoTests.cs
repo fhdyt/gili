@@ -141,4 +141,15 @@ public class DemoTests
         Assert.Equal(new DemoControl(ControlKind.Power), next.Action);
         Assert.True(next.At - shelf.At >= TimeSpan.FromSeconds(2));
     }
+
+    [Fact]
+    public void Demo_brings_a_note_home_once_the_island_has_closed()
+    {
+        var home = Steps.Single(s => s.Action is DemoNoteHome);
+        var before = Steps.TakeWhile(s => s != home).Last(s => s.Action is DemoClose or DemoOpen or DemoControl);
+        Assert.IsType<DemoClose>(before.Action);
+        // The island has shrunk back (about 0.4 s) before the note goes in, and nothing else happens within a second.
+        Assert.True(home.At - before.At >= TimeSpan.FromSeconds(0.5));
+        Assert.True(Steps.SkipWhile(s => s != home).Skip(1).First().At - home.At >= TimeSpan.FromSeconds(0.9));
+    }
 }

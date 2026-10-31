@@ -36,6 +36,9 @@ public sealed class DemoService
 
     public event Action? Changed;
 
+    /// <summary>The script brings a floating note home: the island bulges and Gili is happy (plan 2h).</summary>
+    public event Action? NoteCameHome;
+
     public void Toggle()
     {
         if (IsRunning) Stop();
@@ -120,6 +123,9 @@ public sealed class DemoService
                     break;
                 case DemoShelf shelf:
                     _island.ShowDemoShelf(shelf.Name, shelf.Size);
+                    break;
+                case DemoNoteHome:
+                    NoteCameHome?.Invoke();
                     break;
                 case DemoClose:
                     _island.Close();

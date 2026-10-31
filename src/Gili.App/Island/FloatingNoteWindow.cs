@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -6,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using Gili.App.Controls;
 using Gili.Core.Motion;
 using Gili.Core.Notes;
@@ -43,7 +43,6 @@ public sealed class FloatingNoteWindow : Window
     // A move by the header or a resize from an edge: where it started, in screen DIPs.
     private (Point From, NoteRect Start, ResizeEdges Edges)? _hold;
     private EventHandler? _motion;
-    private TaskCompletionSource? _flown;
 
     public FloatingNoteWindow(Note note, NoteService notes, Func<NoteRect> workArea)
     {
@@ -272,55 +271,37 @@ public sealed class FloatingNoteWindow : Window
         });
     }
 
-    /// <summary>
-    /// Back to island (mockup returnFloat): the content fades in 100 ms while the note flies to <paramref name="to"/>,
-    /// 440 ms on cubic-bezier(.55, 0, .75, .2), speeding up like something pulled in. Its corners and fill go to
-    /// <paramref name="radius"/> and <paramref name="fill"/>; the window fades out over the last quarter when
-    /// <paramref name="vanish"/>. Without Windows animations it fades out in 100 ms where it is.
-    /// </summary>
-    public Task FlyAsync(NoteRect to, double radius, Color fill, bool vanish)
+    /// <summary>The note's fill now, which a flight home starts from.</summary>
+    public Color Fill => _fill.Color;
+
+    /// <summary>The note as it is on screen, for a flight home to fade out from (NoteFlightWindow).</summary>
+    public ImageSource Snapshot()
     {
-        _flown?.TrySetResult();
-        var flown = _flown = new TaskCompletionSource();
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var image = new RenderTargetBitmap(
+            Math.Max(1, (int)Math.Ceiling(_note.ActualWidth * dpi.DpiScaleX)),
+            Math.Max(1, (int)Math.Ceiling(_note.ActualHeight * dpi.DpiScaleY)),
+            dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+        image.Render(_note);
+        image.Freeze();
+        return image;
+    }
+
+    /// <summary>Back to island without Windows animations: the note fades out where it is in 100 ms.</summary>
+    public Task FadeOutAsync()
+    {
+        var faded = new TaskCompletionSource();
         IsHitTestVisible = false;
-        if (!SystemParameters.ClientAreaAnimation)
-        {
-            var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(100));
-            fade.Completed += (_, _) => flown.TrySetResult();
-            BeginAnimation(OpacityProperty, fade);
-            _shadow.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(100)));
-            return flown.Task;
-        }
-        Fade(_content, 1, 0, 100);
-        // The shadow goes first: a pill at the island has none.
-        _shadow.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(220)));
-        var from = _bounds;
-        var fromFill = _fill.Color;
-        var ease = new CubicBezier(0.55, 0, 0.75, 0.2);
-        var clock = Stopwatch.StartNew();
-        Run((_, _) =>
-        {
-            var t = Math.Min(1, clock.Elapsed.TotalMilliseconds / 440);
-            var k = ease.Ease(t);
-            Place(new NoteRect(
-                from.X + (to.X - from.X) * k,
-                from.Y + (to.Y - from.Y) * k,
-                Math.Max(1, from.Width + (to.Width - from.Width) * k),
-                Math.Max(1, from.Height + (to.Height - from.Height) * k)));
-            _note.CornerRadius = new CornerRadius(12 + (radius - 12) * k);
-            _fill.Color = Mix(fromFill, fill, k);
-            if (vanish) Opacity = t < 0.75 ? 1 : 1 - (t - 0.75) / 0.25;
-            if (t < 1) return false;
-            flown.TrySetResult();
-            return true;
-        });
-        return flown.Task;
+        var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(100));
+        fade.Completed += (_, _) => faded.TrySetResult();
+        BeginAnimation(OpacityProperty, fade);
+        _shadow.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(100)));
+        return faded.Task;
     }
 
     protected override void OnClosed(EventArgs e)
     {
         StopMotion();
-        _flown?.TrySetResult();
         _shadow.Close();
         base.OnClosed(e);
     }
@@ -502,12 +483,6 @@ public sealed class FloatingNoteWindow : Window
 
     private static void Fade(UIElement element, double from, double to, int milliseconds) =>
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(from, to, TimeSpan.FromMilliseconds(milliseconds)));
-
-    private static Color Mix(Color a, Color b, double k) => Color.FromArgb(
-        (byte)Math.Round(a.A + (b.A - a.A) * k),
-        (byte)Math.Round(a.R + (b.R - a.R) * k),
-        (byte)Math.Round(a.G + (b.G - a.G) * k),
-        (byte)Math.Round(a.B + (b.B - a.B) * k));
 
     private static SolidColorBrush Frozen(Color color)
     {

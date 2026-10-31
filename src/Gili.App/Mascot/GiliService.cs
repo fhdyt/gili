@@ -18,6 +18,10 @@ public sealed class GiliService : IDisposable
     private readonly DispatcherTimer _poll = new(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(33) };
     private readonly DispatcherTimer _second = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer _blink = new();
+    private readonly DispatcherTimer _happy = new();
+    private bool _isHappy;
+    private Func<Point>? _watch;
+    private DateTime _watchUntil;
     private bool _shown;
     private bool _paused;
     private readonly Spring _x = new(0) { Parameters = GiliRules.EyeSpring };
@@ -38,6 +42,12 @@ public sealed class GiliService : IDisposable
 
     public GiliService()
     {
+        _happy.Tick += (_, _) =>
+        {
+            _happy.Stop();
+            _isHappy = false;
+            UpdateMood();
+        };
         _poll.Tick += (_, _) => Poll();
         _second.Tick += (_, _) => EverySecond();
         _blink.Tick += (_, _) => RandomBlink();
@@ -57,6 +67,34 @@ public sealed class GiliService : IDisposable
     {
         _music = playing;
         UpdateMood();
+    }
+
+    /// <summary>A floating note came home into the closed island: happy for 0.9 s (PRD 6.3 "Ekspresi Gili" #2).</summary>
+    public void BeHappy()
+    {
+        _happy.Stop();
+        _happy.Interval = GiliRules.HappyFor;
+        _happy.Start();
+        _isHappy = true;
+        UpdateMood();
+    }
+
+    /// <summary>
+    /// The eyes follow this point (screen DIPs) instead of the pointer for a while: a floating note being moved or
+    /// flying home, or one just let go outside the island (PRD 6.3 "Arah pandang"). Ends early with <see cref="Unwatch"/>.
+    /// </summary>
+    public void Watch(Func<Point> target, TimeSpan duration)
+    {
+        _watch = target;
+        _watchUntil = DateTime.UtcNow + duration;
+        if (_visible) Aim(target());
+    }
+
+    public void Unwatch()
+    {
+        if (_watch is null) return;
+        _watch = null;
+        if (_visible) Aim(ToDips(PointerState.Read()));
     }
 
     /// <summary>Gili shows (Show Gili on, bar visible, no fullscreen): only then are the pointer and the clock read.</summary>
@@ -99,11 +137,17 @@ public sealed class GiliService : IDisposable
     {
         var sample = PointerState.Read();
         var point = ToDips(sample);
+        // A watched note wins over the pointer, and is followed every read while it moves.
+        if (_watch is { } watched)
+        {
+            if (DateTime.UtcNow < _watchUntil) Aim(watched());
+            else Unwatch();
+        }
         if (sample.X != _last.X || sample.Y != _last.Y)
         {
             _lastMove = DateTime.UtcNow;
             Wake();
-            Aim(point);
+            if (_watch is null) Aim(point);
             if (_last.Left && sample.Left && !_dragging && (point - _dragFrom).Length >= GiliRules.DragThreshold)
             {
                 _dragging = true;
@@ -135,12 +179,12 @@ public sealed class GiliService : IDisposable
         _idle = PointerState.IdleTime();
         UpdateMood();
         // After 8 s of a still pointer the eyes drift back to the middle.
-        if (DateTime.UtcNow - _lastMove >= GiliRules.RecentreAfter) Retarget(0, 0);
+        if (_watch is null && DateTime.UtcNow - _lastMove >= GiliRules.RecentreAfter) Retarget(0, 0);
     }
 
     private void UpdateMood()
     {
-        var mood = GiliRules.Mood(new(_dragging, _idle, _music));
+        var mood = GiliRules.Mood(new(_dragging, _idle, _music, _isHappy));
         if (mood == _mood) return;
         var wasAsleep = _mood == GiliMood.Sleep;
         _mood = mood;

@@ -55,6 +55,9 @@ public sealed record DemoEnd : DemoAction;
 /// <summary>Files dragged over the island and dropped: a demo item shows on the Shelf page, never saved (plan 3d).</summary>
 public sealed record DemoShelf(string Name, long Size) : DemoAction;
 
+/// <summary>A floating note comes home into the closed island: it bulges once and Gili is happy (plan 2h).</summary>
+public sealed record DemoNoteHome : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
@@ -101,6 +104,7 @@ public static class DemoScript
             Step(32.5, new DemoControl(ControlKind.Volume)),
             Step(33, new DemoPrivacy(PrivacyUse.None)),
             Step(34, new DemoClose()),
+            Step(34.6, new DemoNoteHome()),
             Step(35.5, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 64))),
             Step(36.5, new DemoAlarm(new TimeOnly(14, 30), "Take medicine")),
             Step(39, new DemoMedia(paused)),

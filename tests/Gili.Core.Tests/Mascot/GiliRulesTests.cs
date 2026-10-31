@@ -5,7 +5,10 @@ namespace Gili.Core.Tests.Mascot;
 public class GiliRulesTests
 {
     [Fact]
-    public void Dragging_beats_everything() => Assert.Equal(GiliMood.Wide, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true)));
+    public void Happy_beats_dragging_and_sleep() => Assert.Equal(GiliMood.Happy, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true, Happy: true)));
+
+    [Fact]
+    public void Dragging_beats_sleep_and_music() => Assert.Equal(GiliMood.Wide, GiliRules.Mood(new(true, TimeSpan.FromHours(1), true)));
 
     [Fact]
     public void Sleep_beats_enjoy() => Assert.Equal(GiliMood.Sleep, GiliRules.Mood(new(false, TimeSpan.FromMinutes(5), true)));
@@ -17,10 +20,11 @@ public class GiliRulesTests
     public void Nothing_going_on_is_neutral() => Assert.Equal(GiliMood.Neutral, GiliRules.Mood(new(false, TimeSpan.Zero, false)));
 
     [Fact]
-    public void Sleeping_and_wide_eyes_do_not_blink()
+    public void Sleeping_wide_and_happy_eyes_do_not_blink()
     {
         Assert.False(GiliRules.CanBlink(GiliMood.Sleep));
         Assert.False(GiliRules.CanBlink(GiliMood.Wide));
+        Assert.False(GiliRules.CanBlink(GiliMood.Happy));
         Assert.True(GiliRules.CanBlink(GiliMood.Enjoy));
     }
 

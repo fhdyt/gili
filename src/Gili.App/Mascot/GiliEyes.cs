@@ -121,13 +121,21 @@ public sealed class GiliEyes : Grid
             GiliMood.Enjoy => (1.0, 0.5, 0.0),
             GiliMood.Wide => (1.3, 1.3, 0.0),
             GiliMood.Sleep => (1.0, 0.16, 1.0),
+            GiliMood.Happy => (1.0, 0.42, 0.0),
             _ => (1.0, 1.0, 0.0),
         };
         foreach (var eye in _eyes)
         {
-            // Enjoying music closes the top half, so the eyes shrink toward their bottom edge.
-            eye.RenderTransformOrigin = mood == GiliMood.Enjoy ? new Point(0.5, 1) : new Point(0.5, 0.5);
-            eye.CornerRadius = new CornerRadius(mood == GiliMood.Wide ? _size.Side / 2 : mood == GiliMood.Sleep ? 2 : _size.Radius);
+            // Enjoying music closes the top half, and happy eyes lose their bottom half: both shrink toward their
+            // bottom edge. Happy eyes are arcs, round on top (mockup .x-happy: radius 50% 50% 1px 1px).
+            eye.RenderTransformOrigin = mood is GiliMood.Enjoy or GiliMood.Happy ? new Point(0.5, 1) : new Point(0.5, 0.5);
+            eye.CornerRadius = mood switch
+            {
+                GiliMood.Wide => new CornerRadius(_size.Side / 2),
+                GiliMood.Happy => new CornerRadius(_size.Side / 2, _size.Side / 2, 1, 1),
+                GiliMood.Sleep => new CornerRadius(2),
+                _ => new CornerRadius(_size.Radius),
+            };
         }
         Animate(_shape, ScaleTransform.ScaleXProperty, scaleX, duration, animate);
         Animate(_shape, ScaleTransform.ScaleYProperty, scaleY, duration, animate);

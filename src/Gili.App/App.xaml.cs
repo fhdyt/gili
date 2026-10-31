@@ -208,6 +208,14 @@ public partial class App : Application
         _floating = new FloatingNotes(_notes, _islandWindow);
         _islandWindow.Floating = _floating;
         _bar.FullscreenChanged += _floating.SetFullscreen;
+        _floating.WatchRequested += _gili.Watch;
+        _floating.WatchEnded += _gili.Unwatch;
+        _floating.CameHome += _gili.BeHappy;
+        _demo.NoteCameHome += () =>
+        {
+            _islandWindow.Gulp();
+            _gili.BeHappy();
+        };
         _floating.Restore();
         // A timer or pomodoro phase that ended while Gili was closed shows its card now (plan 2b decision 4).
         _timers.Reschedule();

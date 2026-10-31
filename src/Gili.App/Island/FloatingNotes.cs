@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Gili.Core.Mascot;
 using Gili.Core.Notes;
 using Gili.Platform.Shell;
 using Microsoft.Win32;
@@ -37,8 +38,13 @@ public sealed class FloatingNotes
         SystemEvents.DisplaySettingsChanged += (_, _) => KeepInsideSoon();
     }
 
-    /// <summary>A note being moved or flying home, and whether it still is (false once it stops): Gili watches it.</summary>
-    public event Action<FloatingNoteWindow, bool>? Moving;
+    /// <summary>
+    /// Gili's eyes should follow this point (screen DIPs) for this long (PRD 6.3 "Arah pandang"): a note moved by its
+    /// header or flying home, until <see cref="WatchEnded"/>, or one just let go outside the island for 1.5 s.
+    /// </summary>
+    public event Action<Func<Point>, TimeSpan>? WatchRequested;
+
+    public event Action? WatchEnded;
 
     /// <summary>A note came home into the closed island (Gili is happy for a moment).</summary>
     public event Action? CameHome;
@@ -71,7 +77,13 @@ public sealed class FloatingNotes
     public bool BeginLanding(long id, NoteRect rect)
     {
         _landing.Add(id);
-        if (_notes.Float(id, rect, fromButton: false)) return true;
+        if (_notes.Float(id, rect, fromButton: false))
+        {
+            // The island closes, and Gili looks at the note for 1.5 s.
+            var inside = NoteFloat.Clamp(rect, WorkArea());
+            WatchRequested?.Invoke(() => new Point(inside.X + inside.Width / 2, inside.Y + inside.Height / 2), GiliRules.WatchLanded);
+            return true;
+        }
         _landing.Remove(id);
         return false;
     }
@@ -117,7 +129,7 @@ public sealed class FloatingNotes
     {
         var window = new FloatingNoteWindow(note, _notes, WorkArea);
         window.BackRequested += w => _ = ReturnAsync(w);
-        window.Moving += (w, moving) => Moving?.Invoke(w, moving);
+        window.Moving += (w, moving) => Follow(w, moving);
         _windows[note.Id] = window;
         window.ShowAt(rect);
         if (_fullscreen) window.SetHidden(true);
@@ -135,35 +147,69 @@ public sealed class FloatingNotes
         var intoGrid = _island.ShowsNotes;
         if (intoGrid) _island.ExpectNote(window.Id);
         var dropped = _notes.Return(window.Id);
-        var dpi = VisualTreeHelper.GetDpi(_island);
-        Moving?.Invoke(window, true);
-        if (intoGrid && !dropped && _island.NoteSlot(window.Id) is { } slot)
+        var slot = intoGrid && !dropped ? _island.NoteSlot(window.Id) : null;
+        if (intoGrid && slot is null) _island.ReleaseNote(window.Id);
+        if (!SystemParameters.ClientAreaAnimation)
         {
-            var rgb = NoteStyle.Colors[NoteStyle.ClampColor(_notes.Notes.FirstOrDefault(n => n.Id == window.Id)?.Color ?? 0)].Rgb;
-            await window.FlyAsync(Dips(slot, dpi), 12, Color.FromRgb((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb), vanish: false);
-            _island.ReleaseNote(window.Id);
+            await window.FadeOutAsync();
+            window.Close();
+            if (slot is not null) _island.ReleaseNote(window.Id);
+            else CameHomeToClosedIsland();
+            return;
+        }
+        NoteRect to;
+        Color fill;
+        double radius;
+        if (slot is { } device)
+        {
+            var dpi = VisualTreeHelper.GetDpi(_island);
+            to = new NoteRect(device.X / dpi.DpiScaleX, device.Y / dpi.DpiScaleY, device.Width / dpi.DpiScaleX, device.Height / dpi.DpiScaleY);
+            fill = window.Fill;
+            radius = NoteFloat.Corner;
         }
         else
         {
-            if (intoGrid) _island.ReleaseNote(window.Id);
+            // A black pill as tall as the compact island, at its middle, where the note disappears.
             var island = _island.IslandBounds();
             var h = Math.Min(island.Height, _island.CompactHeight);
             var w = Math.Min(island.Width, h * 3);
-            var pill = new NoteRect(island.X + island.Width / 2 - w / 2, island.Y + (Math.Min(island.Height, _island.CompactHeight) - h) / 2, w, h);
-            await window.FlyAsync(pill, h / 2, Colors.Black, vanish: true);
-            if (!_island.IsOpen)
-            {
-                _island.Gulp();
-                CameHome?.Invoke();
-            }
+            to = new NoteRect(island.X + island.Width / 2 - w / 2, island.Y, w, h);
+            fill = Colors.Black;
+            radius = h / 2;
         }
-        Moving?.Invoke(window, false);
-        // The card is drawn in this frame; the window goes once it is on screen, so nothing blinks.
+        // The flight takes over from the note in the same place; the note goes once the flight is on screen.
+        var flight = new NoteFlightWindow(window.Bounds, to, window.Fill, fill, radius, vanish: slot is null, window.Snapshot());
+        flight.ShowStill();
         Rendered(window.Close);
+        WatchRequested?.Invoke(() => Centre(flight.Current), TimeSpan.FromHours(1));
+        await flight.FlyAsync();
+        WatchEnded?.Invoke();
+        if (slot is not null) _island.ReleaseNote(window.Id);
+        else CameHomeToClosedIsland();
+        // The card (or the island) is drawn in this frame; the flight goes once it is on screen, so nothing blinks.
+        Rendered(flight.Close);
     }
 
-    private static NoteRect Dips(Rect device, DpiScale dpi) =>
-        new(device.X / dpi.DpiScaleX, device.Y / dpi.DpiScaleY, device.Width / dpi.DpiScaleX, device.Height / dpi.DpiScaleY);
+    /// <summary>The closed island bulges once as the note arrives, and Gili is happy (PRD 6.3).</summary>
+    private void CameHomeToClosedIsland()
+    {
+        if (_island.IsOpen) return;
+        _island.Gulp();
+        CameHome?.Invoke();
+    }
+
+    /// <summary>A note moved by its header is watched until it stops (an hour at most, in case a stop is never heard).</summary>
+    private void Follow(FloatingNoteWindow window, bool moving)
+    {
+        if (!moving)
+        {
+            WatchEnded?.Invoke();
+            return;
+        }
+        WatchRequested?.Invoke(() => Centre(window.Bounds), TimeSpan.FromHours(1));
+    }
+
+    private static Point Centre(NoteRect rect) => new(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
 
     /// <summary>A note's colour or size changed (Ctrl+= in its window, or a restyle in the island).</summary>
     private void Restyle()
