@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Gili.Core;
+using Gili.Core.About;
 using Gili.Core.Settings;
 
 namespace Gili.App.Settings;
@@ -12,7 +13,10 @@ public delegate Task<IReadOnlyList<Gili.Core.Modules.CityResult>> CitySearcher(s
 
 /// <summary>What Settings → About shows and does (design 5a).</summary>
 /// <param name="AnotherCopy">The Version row's note when the other release path is installed too (F-PUB-07); found off the UI thread.</param>
-public sealed record AboutActions(string VersionLine, Action OpenLogs, Action PrepareUninstall, Task<string?>? AnotherCopy = null);
+/// <param name="Updates">Where the update check stands (design 5d).</param>
+/// <param name="ReleaseNotes">The release page to open, once one is known.</param>
+public sealed record AboutActions(string VersionLine, Action OpenLogs, Action PrepareUninstall, Task<string?>? AnotherCopy = null,
+    Func<UpdateState>? Updates = null, Action? InstallUpdate = null, Func<string?>? ReleaseNotes = null, Action<string>? Open = null);
 
 /// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
@@ -58,7 +62,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         _order = _hub.Current.ModuleOrder;
         Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current, _kind).Select(r =>
-            new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities, InfoFor(r.Key), RunFor(r.Key)))];
+            new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities, InfoFor(r.Key), RunFor(r.Key),
+                r.Key == "updates" && Update is { } update ? UpdateRules.Button(update) : null))];
     }
 
     private string? _order;
@@ -75,7 +80,22 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (row.ModuleId is { } id) _hub.Update(s => s with { ModuleOrder = string.Join(",", RightModuleRules.MoveTo(s.Order, id, index)) });
     }
 
-    private string? InfoFor(string key) => key == "version" ? _about?.VersionLine : null;
+    private UpdateState? Update => _about?.Updates?.Invoke();
+
+    private string? ReleaseNotes => _about?.ReleaseNotes?.Invoke();
+
+    private string? InfoFor(string key) => key switch
+    {
+        "version" => _about?.VersionLine,
+        "updates" when Update is { } update => UpdateRules.Row(update).Text,
+        _ => null,
+    };
+
+    /// <summary>The update check changed: About shows it at once.</summary>
+    public void RefreshUpdates()
+    {
+        if (SelectedSection.Name == "About") BuildRows();
+    }
 
     private string? _anotherCopy;
 
@@ -88,13 +108,20 @@ public sealed partial class SettingsViewModel : ObservableObject
     private Action? RunFor(string key) => key switch
     {
         "logs" => _about?.OpenLogs,
+        "updates" when Update?.Status == UpdateStatus.Available => _about?.InstallUpdate,
+        "notes" when ReleaseNotes is { } page && _about?.Open is { } open => () => open(page),
         "prepare" => _about?.PrepareUninstall,
         _ => null,
     };
 
     /// <summary>The Store copy cannot turn its startup task back on once Task Manager switched it off (PRD 9.4).</summary>
-    private bool CanChange(string key) =>
-        key != "auto" || _kind != InstallKind.Store || _startup is not { } state || StartupRules.CanChange(state);
+    private bool CanChange(string key) => key switch
+    {
+        "auto" => _kind != InstallKind.Store || _startup is not { } state || StartupRules.CanChange(state),
+        "updates" => Update is { Status: not UpdateStatus.Off },
+        "notes" => ReleaseNotes is not null,
+        _ => true,
+    };
 
     /// <summary>Notes that depend on the machine instead of the row (plan 1f decision 5).</summary>
     private string? NoteFor(string key) => key switch
@@ -104,6 +131,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         // The integration's status line (PRD 9.4): waiting, connected, or what went wrong.
         "clOn" => _claudeStatus?.Invoke(),
         "version" => _anotherCopy,
+        "updates" when Update is { } update => UpdateRules.Row(update).Note,
+        "notes" when ReleaseNotes is null => SettingsCatalog.LaterVersion,
         "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
         // PRD 11: a combination another app holds stays off.
         _ when Hotkeys.ActionOf(key) is { } action && _hotkeys?.Failed(action) == true => "Used by another app",

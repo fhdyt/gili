@@ -76,6 +76,9 @@ public sealed record AppSettings
     public double WeatherLatitude { get; init; } = -6.2088;
     public double WeatherLongitude { get; init; } = 106.8456;
 
+    /// <summary>The last update check that got an answer, so a restart does not ask again and PRD 11's 3 days survive one (design 5d).</summary>
+    public DateTimeOffset? LastUpdateCheck { get; init; }
+
     /// <summary>The low battery alert (5–50 %, also at 10 %) and the unplug reminder (50–100 %, 100 is off), F-ISL-11.</summary>
     public int BatteryAlert { get; init; } = 20;
     public int UnplugReminder { get; init; } = 80;

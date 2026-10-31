@@ -117,13 +117,13 @@ public static class SettingsCatalog
             new("keys", "Keyboard shortcuts", SettingKind.Switch, "Click a shortcut, then press the new keys. Esc keeps the old one", Available: true),
             .. Hotkeys.All.Select(h => new SettingRow(h.Key, h.Label, SettingKind.Shortcut, Available: true)),
         ]),
-        // Updates, Privacy policy and Release notes wait for the certificate and the pages online (design 5a).
+        // Privacy policy waits for its page online (design 5a); Updates and Release notes follow the update check (design 5d).
         new("About",
         [
             new("version", "Version", SettingKind.Info, Available: true),
-            new("updates", "Updates", SettingKind.Info, Default: ""),
+            new("updates", "Updates", SettingKind.Info, Available: true),
             new("privacy", "Privacy policy", SettingKind.Action, Options: ["Open"], Default: ""),
-            new("notes", "Release notes", SettingKind.Action, Options: ["Open"], Default: ""),
+            new("notes", "Release notes", SettingKind.Action, Available: true, Options: ["Open"]),
             new("logs", "Open logs folder", SettingKind.Action, "Logs from the last 7 days, for bug reports", Available: true, Options: ["Open"]),
             new("prepare", "Prepare to uninstall", SettingKind.Action,
                 "Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next",

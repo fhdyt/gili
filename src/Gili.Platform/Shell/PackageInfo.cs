@@ -24,6 +24,9 @@ public static class PackageInfo
         }
     }
 
+    /// <summary>The package family name, for the Store copy's page in the Store; null outside a package.</summary>
+    public static string? FamilyName() => IsPackaged ? Windows.ApplicationModel.Package.Current.Id.FamilyName : null;
+
     /// <summary>%LOCALAPPDATA%\Packages\&lt;package&gt;\LocalState, or null outside a package.</summary>
     public static string? LocalFolder() => IsPackaged ? ApplicationData.Current.LocalFolder.Path : null;
 

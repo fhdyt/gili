@@ -486,6 +486,12 @@ public partial class BarWindow : Window
     /// <summary>The menu's Demo mode item shows a check while the demo plays.</summary>
     public void SetDemoRunning(bool running) => DemoItem.IsChecked = running;
 
+    public void ShowGiliUpdate(bool waiting)
+    {
+        _vm.GiliUpdate = waiting;
+        _vm.SettingsTooltip = waiting ? "Settings · a new version of Gili is ready" : "Settings";
+    }
+
     private void OnSettingsButton(object sender, MouseButtonEventArgs e) => SettingsRequested?.Invoke();
 
     private void OnClock(object sender, MouseButtonEventArgs e) => ClockClicked?.Invoke();

@@ -113,6 +113,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .pwr{position:relative;display:flex}
 #mPower{position:relative}
 .udot{position:absolute;top:3px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 1.5px rgb(var(--bar-rgb))}
+/* A newer Gili waits (design 5d): the same dot in blue on the Settings button. */
+.gdot{background:var(--blue)}
 .pmenu{position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--surface);border-radius:12px;padding:4px;z-index:5;text-shadow:none;
   box-shadow:0 16px 32px -10px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.07);animation:dropIn 160ms var(--out)}
 @keyframes dropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
@@ -1032,7 +1034,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <button class="mod" id="mTray" aria-label="Show hidden icons" title="Show hidden icons"><svg class="ic" aria-hidden="true"><use href="#i-chevd"/></svg></button>
       </span>
       <button class="mod" data-m="clock" id="mClock" title=""><span class="tw"><small id="clkD"></small><b class="num" id="clkT"></b></span></button>
-      <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg></button>
+      <button class="mod" id="mSet" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg><i class="udot gdot" id="gDot" hidden></i></button>
       <span class="pwr">
         <button class="mod" id="mPower" aria-label="Power" title="Power"><svg class="ic" aria-hidden="true"><use href="#i-power"/></svg><i class="udot" id="uDot" hidden></i></button>
       </span>
@@ -2998,8 +3000,8 @@ const SET={
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
   Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.clipboard','Clipboard','key',['Ctrl+Alt+V']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
-  // Updates, Privacy policy and Release notes wait for the certificate and the pages online; Prepare to uninstall is the Store copy's (design 5a).
-  About:[['version','Version','info',['0.1.1 · Microsoft Store']],['updates','Updates','info',[''],'Coming in a later version'],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open'],'Coming in a later version'],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
+  // Privacy policy waits for its page online; Updates and Release notes follow the update check (design 5d); Prepare to uninstall is the Store copy's (design 5a).
+  About:[['version','Version','info',['0.1.1 · Microsoft Store']],['updates','Updates','info',['Up to date']],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open']],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.

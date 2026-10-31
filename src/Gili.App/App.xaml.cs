@@ -34,6 +34,7 @@ public partial class App : Application
     private SettingsHub? _settings;
     private SettingsStore? _settingsStore;
     private ClaudeService? _claude;
+    private UpdateService? _updates;
     private TaskbarHider? _taskbar;
     private TaskbarKeeper? _taskbarKeeper;
     private TransparencyWatcher? _transparency;
@@ -224,6 +225,7 @@ public partial class App : Application
         ShowClaude();
         _islandWindow.Show();
         StartHotkeys();
+        StartUpdates();
         // Notes that floated when Gili closed come back where they were (F-TOOL-12).
         _floating = new FloatingNotes(_notes, _islandWindow);
         _islandWindow.Floating = _floating;
@@ -266,6 +268,7 @@ public partial class App : Application
         _gili?.Dispose();
         // Stopping clears the sessions, and the island's windows are already closed: nothing may show them again.
         _hotkeys?.Dispose();
+        _updates?.Dispose();
         _claude?.Changed -= ShowClaude;
         _claude?.Dispose();
         _islandController?.Dispose();
@@ -416,13 +419,16 @@ public partial class App : Application
             Platform.Modules.GeocodingClient.SearchAsync,
             new AboutActions(Core.About.AboutInfo.VersionLine(typeof(App).Assembly.GetName().Version!, Kind), OpenLogs, PrepareStoreUninstall,
                 Kind == InstallKind.Development ? null : Task.Run(() => Core.About.AboutInfo.AnotherCopyNote(Kind,
-                    Kind == InstallKind.Installed && OtherCopies.StoreInstalled(), Kind == InstallKind.Store && OtherCopies.GithubInstalled()))));
+                    Kind == InstallKind.Installed && OtherCopies.StoreInstalled(), Kind == InstallKind.Store && OtherCopies.GithubInstalled())),
+                () => _updates!.State, InstallUpdate, ReleaseNotesPage, SystemActions.OpenSettings));
+        _updates?.Changed += model.RefreshUpdates;
         if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
         _settingsWindow = new SettingsWindow(model);
         _settingsWindow.Closed += (_, _) =>
         {
             _claude?.StatusChanged -= model.RefreshNotes;
+            _updates?.Changed -= model.RefreshUpdates;
             _hotkeys?.FailuresChanged -= model.RefreshShortcutNotes;
             // A recording cut short by closing the window must not leave the hotkeys off.
             _hotkeys?.Suspend(false);
@@ -698,6 +704,25 @@ public partial class App : Application
         SystemActions.OpenSettings("ms-settings:appsfeatures");
         Quit();
     }
+
+    /// <summary>The update check (F-PUB-04): the blue dot follows it; the Store copy comes back after Windows updates it (PRD 11).</summary>
+    private void StartUpdates()
+    {
+        _updates = new UpdateService(_settings!, _log!, Kind);
+        _updates.Changed += () => _bar?.ShowGiliUpdate(_updates.State.Status is Core.About.UpdateStatus.Available or Core.About.UpdateStatus.Installing);
+        _ = _updates.StartAsync();
+        if (Kind == InstallKind.Store) RestartRegistration.ForUpdates();
+    }
+
+    private void InstallUpdate()
+    {
+        var owner = _settingsWindow is null ? 0 : new System.Windows.Interop.WindowInteropHelper(_settingsWindow).Handle;
+        _ = _updates?.InstallAsync(owner, SystemActions.OpenSettings);
+    }
+
+    /// <summary>The release page the check found; the Store copy's notes are on its Store page.</summary>
+    private string? ReleaseNotesPage() =>
+        Kind == InstallKind.Store && PackageInfo.FamilyName() is { } family ? "ms-windows-store://pdp/?PFN=" + family : _updates?.State.PageUrl;
 
     private void OpenLogs()
     {

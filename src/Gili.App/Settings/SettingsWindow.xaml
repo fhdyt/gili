@@ -117,10 +117,10 @@
                             </Grid>
                             <!-- About: the version as text, and buttons in the key cap's style (design 5a). -->
                             <TextBlock Text="{Binding InfoText}" Foreground="#C7C7CC" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center"
-                                       Visibility="{Binding IsInfo, Converter={StaticResource VisibleWhen}}" />
-                            <Button Style="{StaticResource ShortcutButton}" Content="{Binding ActionText}" Command="{Binding RunCommand}"
+                                       Visibility="{Binding ShowInfo, Converter={StaticResource VisibleWhen}}" />
+                            <Button Style="{StaticResource ShortcutButton}" Content="{Binding ButtonText}" Command="{Binding RunCommand}"
                                     AutomationProperties.Name="{Binding Label}"
-                                    Visibility="{Binding IsAction, Converter={StaticResource VisibleWhen}}" />
+                                    Visibility="{Binding ShowButton, Converter={StaticResource VisibleWhen}}" />
                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
                                 <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
                                         AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />

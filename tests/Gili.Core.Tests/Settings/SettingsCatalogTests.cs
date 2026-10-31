@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "version", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
+            new HashSet<string> { "version", "updates", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date" },
@@ -268,8 +268,8 @@ public class SettingsCatalogAboutTests
             About.Rows.Select(r => r.Label));
 
     [Fact]
-    public void Rows_waiting_for_the_certificate_and_pages_come_later() =>
-        Assert.Equal(["version", "logs", "prepare"], About.Rows.Where(r => r.Available).Select(r => r.Key));
+    public void Only_the_privacy_policy_waits_for_its_page() =>
+        Assert.Equal(["privacy"], About.Rows.Where(r => !r.Available).Select(r => r.Key));
 
     [Fact]
     public void About_rows_are_text_or_buttons()

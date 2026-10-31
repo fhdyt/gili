@@ -54,9 +54,10 @@ public sealed partial class SettingRowViewModel : ObservableObject
     [ObservableProperty] private bool _isEnabled;
 
     public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null,
-        CitySearcher? searchCities = null, string? info = null, Action? run = null)
+        CitySearcher? searchCities = null, string? info = null, Action? run = null, string? button = null)
     {
         InfoText = info ?? "";
+        ButtonText = button ?? (row.Kind == SettingKind.Action && row.Options is [var text, ..] ? text : null);
         RunCommand = new RelayCommand(() => run?.Invoke(), () => run is not null);
         _hotkeys = hotkeys;
         _searchCities = searchCities;
@@ -90,10 +91,12 @@ public sealed partial class SettingRowViewModel : ObservableObject
 
     public string InfoText { get; }
 
-    /// <summary>An About row with a button, like Open logs folder.</summary>
-    public bool IsAction => _row.Kind == SettingKind.Action;
+    public bool ShowInfo => InfoText.Length > 0;
 
-    public string ActionText => _row.Options is [var text, ..] ? text : "";
+    /// <summary>An About button, like Open logs folder, or Install update while an update waits (design 5d).</summary>
+    public string? ButtonText { get; }
+
+    public bool ShowButton => ButtonText is not null;
 
     public IRelayCommand RunCommand { get; }
 

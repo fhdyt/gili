@@ -46,6 +46,10 @@ public sealed partial class BarViewModel : ObservableObject
     [ObservableProperty] private bool _hasBrightness;
     [ObservableProperty] private string? _brightnessTooltip;
     [ObservableProperty] private bool _updatesPending;
+
+    /// <summary>A newer Gili waits: a small blue dot on the Settings button (PRD 9.4, design 5d).</summary>
+    [ObservableProperty] private bool _giliUpdate;
+    [ObservableProperty] private string _settingsTooltip = "Settings";
     [ObservableProperty] private string _powerTooltip = "Power";
     [ObservableProperty] private string _clockTime = "";
     [ObservableProperty] private string _clockDate = "";

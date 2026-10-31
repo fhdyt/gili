@@ -226,8 +226,13 @@
                         </Grid>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="Settings" MouseLeftButtonUp="OnSettingsButton">
-                    <c:IconView Glyph="{StaticResource Icon.Gear}" Width="16" Height="16" />
+                <!-- Settings: a small blue dot in the corner while a newer Gili waits (PRD 9.4, design 5d). -->
+                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding SettingsTooltip}" MouseLeftButtonUp="OnSettingsButton" AutomationProperties.Name="Settings">
+                    <Grid>
+                        <c:IconView Glyph="{StaticResource Icon.Gear}" Width="16" Height="16" />
+                        <Ellipse Width="9" Height="9" Fill="#0A84FF" Stroke="#161618" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                 Margin="0,1.5,-3.5,0" Visibility="{Binding GiliUpdate, Converter={StaticResource VisibleWhen}}" />
+                    </Grid>
                 </Border>
                 <!-- Power: a small orange dot in the corner while Windows has updates waiting (F-RIGHT-08, mockup .udot). -->
                 <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding PowerTooltip}" MouseLeftButtonUp="OnPower" AutomationProperties.Name="Power">
