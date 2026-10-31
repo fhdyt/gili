@@ -4,7 +4,7 @@ Bar kaca di tepi atas layar Windows 11, dengan "pulau" hitam ala Dynamic Island 
 
 Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan sesekali berkedip. Saat ada aktivitas (musik, timer, progres copy, sesi Claude Code), Gili bergeser ke kiri sebagai lingkaran kecil dan pulau menampilkan aktivitas itu. Klik pulau, dan pulau lepas dari bar menjadi panel mengambang berisi halaman Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, dan System.
 
-> **Status:** pra-rilis, versi `0.1.1` (lihat `Directory.Build.props`). Gili sedang di Fase 3 dari 5. Rilis publik gratis lewat Microsoft Store dan installer bertanda tangan di GitHub menyusul setelah Fase 4. Kode tetap tertutup dan repo ini privat. Sampai saat itu, Gili hanya bisa dipasang dari kode sumber (lihat [Instalasi](#instalasi)).
+> **Status:** pra-rilis, versi `0.1.1` (lihat `Directory.Build.props`). Gili sedang di Fase 4 dari 6. Rilis publik gratis lewat Microsoft Store dan installer bertanda tangan di GitHub menyusul setelah Fase 4 (Fase 5); Fase 6 berisi fitur yang dirilis sebagai update sesudahnya. Kode tetap tertutup dan repo ini privat. Sampai saat itu, Gili hanya bisa dipasang dari kode sumber (lihat [Instalasi](#instalasi)).
 
 ## Daftar isi
 
@@ -43,7 +43,7 @@ Bar dibagi tiga bagian.
 - Bar position Bottom, setelah taskbar Windows disembunyikan.
 - Demo mode: skenario palsu ±30 detik untuk melihat semua keadaan pulau.
 
-**Belum ada (menyusul di Fase 3–4):** halaman Clipboard dan riwayat clipboard, kartu `Claude needs your input`, halaman Claude, timer jendela 5 jam Claude, lirik lagu, notifikasi Windows di pulau, hotkey global (`Ctrl+Alt+N`, `Ctrl+Alt+V`, `Ctrl+Alt+Space`), dan pilihan kota cuaca (sementara Jakarta). Baris Settings untuk fitur ini tampil abu-abu dengan keterangan `Coming in a later version`.
+**Belum ada, menyusul di Fase 4 (sebelum rilis pertama):** halaman Clipboard dan riwayat clipboard, hotkey global (`Ctrl+Alt+N`, `Ctrl+Alt+V`, `Ctrl+Alt+Space`), dan pilihan kota cuaca (sementara Jakarta). **Menyusul sebagai update setelah rilis (Fase 6):** lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan menyalakan Do Not Disturb Windows saat fase fokus. Baris Settings untuk fitur ini tampil abu-abu dengan keterangan `Coming in a later version`.
 
 Semua teks di app berbahasa Inggris, tanpa pilihan bahasa.
 
@@ -68,7 +68,7 @@ Belum tersedia. Setelah rilis publik, ada dua jalur yang dibangun dari kode yang
 | Update | Lewat Store | Gili memeriksa update tiap 24 jam |
 | Butuh .NET terpasang | Tidak | Tidak |
 
-Installer GitHub adalah satu file `.exe` (dibangun dengan Inno Setup): unduh, klik dua kali, selesai, tanpa UAC. Installer ini baru dibuat setelah semua fitur selesai (awal Fase 5). Sebelum rilis publik, versi tanpa tanda tangan dibagikan dulu ke beberapa teman penguji; Windows akan menampilkan "Windows protected your PC" sekali, lalu pilih **More info → Run anyway**. Rinciannya di PRD 9.4.
+Installer GitHub adalah satu file `.exe` (dibangun dengan Inno Setup): unduh, klik dua kali, selesai, tanpa UAC. Installer ini baru dibuat setelah semua fitur Fase 1–4 selesai (awal Fase 5). Sebelum rilis publik, versi tanpa tanda tangan dibagikan dulu ke beberapa teman penguji; Windows akan menampilkan "Windows protected your PC" sekali, lalu pilih **More info → Run anyway**. Rinciannya di PRD 9.4.
 
 ### Dari kode sumber
 
