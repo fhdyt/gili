@@ -253,9 +253,9 @@ public sealed partial class IslandViewModel : ObservableObject
         if (view.Wide is { } wide)
         {
             WideText = wide.Text;
-            WideValue = wide.Value;
+            WideValue = null;
             WideHasIcon = wide.Icon != WideIcon.None;
-            WideIconBrush = wide.Icon == WideIcon.Charging ? Accent : Text;
+            WideIconBrush = wide.Tone == WideTone.Accent ? Accent : Text;
         }
         UpdateBubble();
     }

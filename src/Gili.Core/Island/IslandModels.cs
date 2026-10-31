@@ -11,10 +11,23 @@ public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard,
 /// <summary>Activities that can hold the compact slot, best first (PRD 6.3 activity order).</summary>
 public enum ActivityKind { ClipboardSnippet, ClaudeAttention, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging }
 
-public enum WideIcon { None, Charging, OnBattery }
+public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone }
 
-/// <summary>A short notice in the wide island, shown as "Text · Value". A newer event with the same key replaces it.</summary>
-public sealed record WideEvent(string Key, WideIcon Icon, string Text, string? Value, TimeSpan Duration);
+/// <summary>The colour of a wide notice's icon (PRD 8.3 tokens).</summary>
+public enum WideTone { Text, Accent, Warn, Danger, Blue, Muted }
+
+/// <summary>Strong is semibold with tabular digits, Number only tabular digits, Muted the secondary grey.</summary>
+public enum WideRunStyle { Normal, Strong, Muted, Number }
+
+/// <summary>One piece of a wide notice's text; <paramref name="SpaceBefore"/> puts the 8 px gap of the mockup before it.</summary>
+public sealed record WideRun(string Text, WideRunStyle Style = WideRunStyle.Normal, bool SpaceBefore = false);
+
+/// <summary>A short notice in the wide island. A newer event with the same key replaces it.</summary>
+public sealed record WideEvent(string Key, WideIcon Icon, WideTone Tone, IReadOnlyList<WideRun> Runs, TimeSpan Duration)
+{
+    /// <summary>The notice as one line, a space for each gap: for tests and the accessible name.</summary>
+    public string Text => string.Concat(Runs.Select(r => r.SpaceBefore ? " " + r.Text : r.Text));
+}
 
 public enum CardPriority { Urgent = 1, Reminder = 2 }
 

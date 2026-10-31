@@ -1,3 +1,4 @@
+using Gili.Core.Devices;
 using Gili.Core.Island;
 
 namespace Gili.Core.Tests.Island;
@@ -15,8 +16,8 @@ public class IslandCoordinatorTests
         _island.Tick();
     }
 
-    private static WideEvent Wide(string key, double seconds = 3) =>
-        new(key, WideIcon.None, key, null, TimeSpan.FromSeconds(seconds));
+    private static WideEvent Wide(string key, double seconds = 3, string? text = null) =>
+        new(key, WideIcon.None, WideTone.Text, [new WideRun(text ?? key)], TimeSpan.FromSeconds(seconds));
 
     private static IslandCard Urgent(string id) => new(id, CardPriority.Urgent, TimeSpan.Zero);
 
@@ -71,7 +72,7 @@ public class IslandCoordinatorTests
     {
         _island.ShowWide(Wide("caps", 1.5));
         _island.ShowWide(Wide("charger", 3));
-        _island.ShowWide(Wide("charger", 2) with { Text = "On battery" });
+        _island.ShowWide(Wide("charger", 2, "On battery"));
 
         Advance(1.5);
         Assert.Equal("On battery", _island.View.Wide?.Text);
@@ -84,9 +85,24 @@ public class IslandCoordinatorTests
     {
         _island.ShowWide(Wide("caps", 1.5));
         Advance(1);
-        _island.ShowWide(Wide("caps", 1.5) with { Text = "Caps Lock off" });
+        _island.ShowWide(Wide("caps", 1.5, "Caps Lock off"));
         Advance(1);
         Assert.Equal("Caps Lock off", _island.View.Wide?.Text);
+    }
+
+    [Fact]
+    public void Bluetooth_flapping_keeps_only_the_latest()
+    {
+        var buds = new BluetoothChange("buds", "Galaxy Buds2 Pro", BluetoothKind.Audio, Connected: true, Battery: null);
+        _island.ShowWide(Wide("caps", 1.5));
+        _island.ShowWide(BluetoothRules.WideFor(buds));
+        _island.ShowWide(BluetoothRules.WideFor(buds with { Connected = false }));
+        _island.ShowWide(BluetoothRules.WideFor(buds));
+
+        Advance(1.5);
+        Assert.Equal("Galaxy Buds2 Pro Connected", _island.View.Wide?.Text);
+        Advance(4);
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
     }
 
     [Fact]

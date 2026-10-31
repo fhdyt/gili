@@ -15,14 +15,20 @@ public class PowerRulesTests
     public void Plugging_in_shows_charging_for_3_seconds()
     {
         var wide = PowerRules.WideFor(OnBattery(), Charging(64));
-        Assert.Equal(new WideEvent("charger", WideIcon.Charging, "Charging", "64%", TimeSpan.FromSeconds(3)), wide);
+        Assert.Equal("charger", wide?.Key);
+        Assert.Equal(WideIcon.Bolt, wide?.Icon);
+        Assert.Equal(WideTone.Accent, wide?.Tone);
+        Assert.Equal([new WideRun("Charging · "), new WideRun("64%", WideRunStyle.Strong)], wide?.Runs);
+        Assert.Equal(TimeSpan.FromSeconds(3), wide?.Duration);
     }
 
     [Fact]
     public void Unplugging_shows_on_battery_for_2_seconds()
     {
         var wide = PowerRules.WideFor(Charging(), OnBattery(63));
-        Assert.Equal(new WideEvent("charger", WideIcon.OnBattery, "On battery", "63%", TimeSpan.FromSeconds(2)), wide);
+        Assert.Equal(WideTone.Text, wide?.Tone);
+        Assert.Equal("On battery · 63%", wide?.Text);
+        Assert.Equal(TimeSpan.FromSeconds(2), wide?.Duration);
     }
 
     [Fact]
