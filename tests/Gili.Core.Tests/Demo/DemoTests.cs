@@ -1,4 +1,5 @@
 using Gili.Core.Demo;
+using Gili.Core.Devices;
 using Gili.Core.Island;
 
 namespace Gili.Core.Tests.Demo;
@@ -62,12 +63,39 @@ public class DemoTests
             Steps.Select(s => s.Action).OfType<DemoOpen>().Select(o => o.Page));
 
     [Fact]
-    public void Charger_goes_in_then_out()
+    public void Charger_goes_in_out_then_the_battery_runs_low_and_charging_holds()
     {
         var power = Steps.Select(s => s.Action).OfType<DemoPower>().Select(p => p.Power).ToList();
-        Assert.Equal(2, power.Count);
+        Assert.Equal(4, power.Count);
         Assert.True(power[0] is { Charging: true, PluggedIn: true, Percent: 64, HasBattery: true });
         Assert.True(power[1] is { Charging: false, PluggedIn: false });
+        Assert.True(power[2] is { PluggedIn: false, Percent: 20 });
+        Assert.True(power[3] is { PluggedIn: true, Charging: false, Percent: 79, OnHold: true });
+    }
+
+    [Fact]
+    public void Caps_lock_and_earbuds_show_before_the_timer_card()
+    {
+        var card = Steps.Single(s => s.Action is DemoTimer).At + TimeSpan.FromSeconds(10);
+        var caps = Steps.Single(s => s.Action is DemoLockKeys);
+        Assert.Equal(new LockKeys(Caps: true, Num: false), ((DemoLockKeys)caps.Action).Keys);
+        var bluetooth = Steps.Where(s => s.Action is DemoBluetooth).ToList();
+        Assert.Equal(
+            [new BluetoothChange("demo", "Galaxy Buds2 Pro", BluetoothKind.Audio, true, 80), new BluetoothChange("demo", "Galaxy Buds2 Pro", BluetoothKind.Audio, false, 80)],
+            bluetooth.Select(s => ((DemoBluetooth)s.Action).Change));
+        // Caps 1.5 s, then connected 4 s and disconnected 2 s, each after the last ends.
+        Assert.True(bluetooth[0].At >= caps.At + TimeSpan.FromSeconds(1.5));
+        Assert.True(bluetooth[1].At >= bluetooth[0].At + TimeSpan.FromSeconds(4));
+        Assert.True(bluetooth[1].At + TimeSpan.FromSeconds(2) <= card);
+    }
+
+    [Fact]
+    public void Privacy_dots_show_while_the_island_is_open()
+    {
+        var privacy = Steps.Where(s => s.Action is DemoPrivacy).ToList();
+        Assert.Equal([new PrivacyUse(["Zoom"], ["Discord"]), PrivacyUse.None], privacy.Select(s => ((DemoPrivacy)s.Action).Use));
+        Assert.True(privacy[0].At > Steps.First(s => s.Action is DemoOpen).At);
+        Assert.True(privacy[1].At > Steps.Last(s => s.Action is DemoOpen).At);
     }
 
     [Fact]
@@ -80,7 +108,7 @@ public class DemoTests
     }
 
     [Fact]
-    public void Lasts_under_a_minute() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 50);
+    public void Lasts_under_a_minute() => Assert.InRange(Steps[^1].At.TotalSeconds, 25, 60);
 
     [Fact]
     public void Due_returns_each_step_once()

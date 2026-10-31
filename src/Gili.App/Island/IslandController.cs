@@ -2,11 +2,15 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Gili.Core.Alarms;
 using Gili.Core.Clipboard;
+using Gili.Core.Devices;
 using Gili.Core.Island;
 using Gili.Core.Power;
+using Gili.Core.Settings;
 using Gili.Core.Sound;
 using Gili.Core.Timers;
 using Gili.Core.Todos;
+using Gili.Platform.Devices;
+using Gili.Platform.Modules;
 using Gili.Platform.Power;
 
 namespace Gili.App.Island;
@@ -18,6 +22,11 @@ public sealed class IslandController : IDisposable
     private readonly DispatcherTimer _deadline = new(DispatcherPriority.Normal);
     private readonly PowerMonitor _power = new();
     private readonly ClipboardService _clipboard = new();
+    private readonly LockKeyMonitor _lockKeys = new();
+    private readonly PrivacyMonitor _privacy = new();
+    private readonly Func<AppSettings> _settings;
+    private BatteryAlerts _battery = new();
+    private LockKeys _keys;
     // The alarm each alarm card stands for, as it was when it rang, and whether it was late.
     private readonly Dictionary<string, (Alarm Alarm, bool Missed)> _ringing = [];
     // The task each reminder card stands for, as it was when it came.
@@ -25,8 +34,10 @@ public sealed class IslandController : IDisposable
     private bool _demo;
     private string? _soundCard;
 
-    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes)
+    public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes,
+        BluetoothMonitor bluetooth, Func<AppSettings> settings)
     {
+        _settings = settings;
         Media = media;
         Timers = timers;
         Alarms = alarms;
@@ -55,6 +66,21 @@ public sealed class IslandController : IDisposable
             if (!_demo) ApplyPower(snapshot);
         });
         ApplyPower(PowerMonitor.Read());
+        // Lock keys, Bluetooth devices and the privacy dots wait during the demo like the charger does.
+        _keys = _lockKeys.Current;
+        _lockKeys.Changed += keys => dispatcher.InvokeAsync(() =>
+        {
+            if (!_demo) ApplyLockKeys(keys);
+        });
+        bluetooth.DeviceChanged += change => dispatcher.InvokeAsync(() =>
+        {
+            if (!_demo) _coordinator.ShowWide(BluetoothRules.WideFor(change));
+        });
+        _privacy.Changed += use => dispatcher.InvokeAsync(() =>
+        {
+            if (!_demo) SetPrivacy(use);
+        });
+        _privacy.Start();
         _clipboard.Copied += ShowClipboard;
         timers.Changed += ApplyTimers;
         timers.Finished += id => _coordinator.ShowCard(new IslandCard(id, CardPriority.Urgent, TimeSpan.Zero));
@@ -233,6 +259,14 @@ public sealed class IslandController : IDisposable
 
     public event Action? PowerChanged;
 
+    /// <summary>The apps using the camera and the microphone, for the dots beside the island (F-ISL-14).</summary>
+    public PrivacyUse Privacy { get; private set; } = PrivacyUse.None;
+
+    public event Action? PrivacyChanged;
+
+    /// <summary>Lock keys stop being read while the bar pauses its polling (PRD 8.1).</summary>
+    public void SetPaused(bool paused) => _lockKeys.SetPaused(paused);
+
     public void OpenFromIsland() => OpenActivity(View.Slot);
 
     public void OpenBubble() => OpenActivity(View.Bubble);
@@ -269,12 +303,30 @@ public sealed class IslandController : IDisposable
     /// <summary>The pointer went down outside the open island.</summary>
     public void Dismiss() => _coordinator.Dismiss();
 
+    /// <summary>
+    /// The demo starts from a laptop on battery at full, so its charger, battery and lock key notices show the same on
+    /// every machine (F-BAR-09).
+    /// </summary>
+    public void BeginDemo()
+    {
+        _demo = true;
+        _battery = new BatteryAlerts();
+        _battery.Update(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, 100), 20, 80);
+        _keys = default;
+    }
+
     /// <summary>The demo's charger, shown like a real reading, wide notice included (F-BAR-09).</summary>
     public void SetDemoPower(PowerSnapshot snapshot)
     {
         _demo = true;
         ApplyPower(snapshot);
     }
+
+    public void SetDemoLockKeys(LockKeys keys) => ApplyLockKeys(keys);
+
+    public void ShowDemoBluetooth(BluetoothChange change) => _coordinator.ShowWide(BluetoothRules.WideFor(change));
+
+    public void SetDemoPrivacy(PrivacyUse use) => SetPrivacy(use);
 
     /// <summary>Closes the island and puts the real charger state back, without a wide notice for the change.</summary>
     public void EndDemo()
@@ -286,6 +338,11 @@ public sealed class IslandController : IDisposable
         Power = real;
         PowerChanged?.Invoke();
         _coordinator.SetActivity(ActivityKind.Charging, PowerRules.IsCharging(real));
+        // The real state comes back quietly: a fresh first reading, the keys as they are, and the real dots.
+        _battery = new BatteryAlerts();
+        _battery.Update(real, _settings().BatteryAlert, _settings().UnplugReminder);
+        _keys = _lockKeys.Current;
+        SetPrivacy(_privacy.Current);
     }
 
     public void SetFullscreen(bool fullscreen) => _coordinator.SetFullscreen(fullscreen);
@@ -295,6 +352,8 @@ public sealed class IslandController : IDisposable
         _clipboard.Dispose();
         _deadline.Stop();
         _power.Dispose();
+        _lockKeys.Dispose();
+        _privacy.Dispose();
     }
 
     private void ShowClipboard(ClipboardSnippet snippet, ImageSource? thumb)
@@ -306,11 +365,25 @@ public sealed class IslandController : IDisposable
 
     private void ApplyPower(PowerSnapshot snapshot)
     {
-        var wide = PowerRules.WideFor(Power, snapshot);
+        var settings = _settings();
+        var notices = _battery.Update(snapshot, settings.BatteryAlert, settings.UnplugReminder);
         Power = snapshot;
         PowerChanged?.Invoke();
         _coordinator.SetActivity(ActivityKind.Charging, PowerRules.IsCharging(snapshot));
-        if (wide is not null) _coordinator.ShowWide(wide);
+        foreach (var notice in notices) _coordinator.ShowWide(notice);
+    }
+
+    private void ApplyLockKeys(LockKeys keys)
+    {
+        foreach (var notice in LockKeyRules.WideFor(_keys, keys)) _coordinator.ShowWide(notice);
+        _keys = keys;
+    }
+
+    private void SetPrivacy(PrivacyUse use)
+    {
+        if (use == Privacy) return;
+        Privacy = use;
+        PrivacyChanged?.Invoke();
     }
 
     private void ScheduleDeadline()

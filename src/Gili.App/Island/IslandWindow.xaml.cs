@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -812,6 +813,29 @@ public partial class IslandWindow : Window
         shift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(x, TimeSpan.FromMilliseconds(milliseconds)) { EasingFunction = ease });
     }
 
+    /// <summary>
+    /// The wide notice as the mockup marks it up: a part per 8 px-spaced span, bold numbers semibold and tabular, the
+    /// secondary words grey (plan 3a decision 1).
+    /// </summary>
+    private void BuildWideParts()
+    {
+        WideParts.Children.Clear();
+        TextBlock? part = null;
+        foreach (var piece in _vm.WideRuns)
+        {
+            if (part is null || piece.SpaceBefore)
+            {
+                part = new TextBlock { Margin = new Thickness(part is null ? 0 : 8, 0, 0, 0) };
+                WideParts.Children.Add(part);
+            }
+            var run = new Run(piece.Text);
+            if (piece.Style is WideRunStyle.Strong or WideRunStyle.Number) Typography.SetNumeralAlignment(run, FontNumeralAlignment.Tabular);
+            if (piece.Style == WideRunStyle.Strong) run.FontWeight = FontWeights.SemiBold;
+            if (piece.Style == WideRunStyle.Muted) run.Foreground = IslandViewModel.ToneBrush(WideTone.Muted);
+            part.Inlines.Add(run);
+        }
+    }
+
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
@@ -831,6 +855,9 @@ public partial class IslandWindow : Window
                 _pageHeight = PageHeight();
                 if (animate) Relayout(SpringParameters.Open);
                 UpdateGlow();
+                break;
+            case nameof(IslandViewModel.WideRuns):
+                BuildWideParts();
                 break;
             case nameof(IslandViewModel.CardShake):
                 CardLayer.SetPulsing(_mode == IslandMode.Card, _vm.CardShake);

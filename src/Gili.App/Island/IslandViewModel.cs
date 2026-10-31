@@ -22,6 +22,9 @@ public sealed partial class IslandViewModel : ObservableObject
     private static readonly Brush VideoOrange = Frozen("#FF9F0A");
     private static readonly Brush Text = Frozen("#F5F5F7");
     private static readonly Brush Blue = Frozen("#0A84FF");
+    private static readonly Brush Warn = Frozen("#FFD60A");
+    private static readonly Brush Danger = Frozen("#FF453A");
+    private static readonly Brush Muted = Frozen("#8E8E93");
 
     private readonly IslandController _island;
     private readonly SettingsHub _settings;
@@ -69,13 +72,12 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private bool _canSeek;
     [ObservableProperty] private bool _canSkip;
     [ObservableProperty] private string _chargePercent = "";
-    [ObservableProperty] private string _wideText = "";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasWideValue))]
-    private string? _wideValue;
-
+    /// <summary>The wide notice's text pieces; the window lays them out (plan 3a decision 1).</summary>
+    [ObservableProperty] private IReadOnlyList<WideRun> _wideRuns = [];
+    [ObservableProperty] private string _wideName = "";
     [ObservableProperty] private bool _wideHasIcon;
+    [ObservableProperty] private Geometry? _wideGlyph;
+    [ObservableProperty] private bool _wideFilled;
     [ObservableProperty] private Brush _wideIconBrush = Text;
     [ObservableProperty] private Geometry? _bubbleGlyph;
     [ObservableProperty] private Brush _bubbleBrush = Text;
@@ -225,8 +227,6 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool HasArtwork => Artwork is not null;
 
-    public bool HasWideValue => WideValue is not null;
-
     private void UpdateSettings()
     {
         var height = _settings.Current.IslandHeight;
@@ -252,10 +252,12 @@ public sealed partial class IslandViewModel : ObservableObject
         if (index >= 0) SelectedTab = index;
         if (view.Wide is { } wide)
         {
-            WideText = wide.Text;
-            WideValue = null;
+            WideName = wide.Text;
             WideHasIcon = wide.Icon != WideIcon.None;
-            WideIconBrush = wide.Tone == WideTone.Accent ? Accent : Text;
+            WideGlyph = wide.Icon == WideIcon.None ? null : Glyph(WideGlyphKey(wide.Icon));
+            WideFilled = wide.Icon == WideIcon.Bolt;
+            WideIconBrush = ToneBrush(wide.Tone);
+            WideRuns = wide.Runs;
         }
         UpdateBubble();
     }
@@ -363,6 +365,19 @@ public sealed partial class IslandViewModel : ObservableObject
     }
 
     private static Geometry Glyph(string key) => (Geometry)Application.Current.FindResource(key);
+
+    private static string WideGlyphKey(WideIcon icon) => "Icon." + icon;
+
+    /// <summary>PRD 8.3 tokens for a wide notice's icon.</summary>
+    public static Brush ToneBrush(WideTone tone) => tone switch
+    {
+        WideTone.Accent => Accent,
+        WideTone.Warn => Warn,
+        WideTone.Danger => Danger,
+        WideTone.Blue => Blue,
+        WideTone.Muted => Muted,
+        _ => Text,
+    };
 
     private static SolidColorBrush Frozen(string hex) => Frozen((Color)ColorConverter.ConvertFromString(hex));
 

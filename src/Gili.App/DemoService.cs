@@ -62,6 +62,7 @@ public sealed class DemoService
     private void Start()
     {
         _player = new DemoPlayer(DemoScript.Phase1(DateTimeOffset.Now));
+        _island.BeginDemo();
         _clock.Restart();
         _timer.Start();
         Changed?.Invoke();
@@ -101,6 +102,15 @@ public sealed class DemoService
                     break;
                 case DemoPower power:
                     _island.SetDemoPower(power.Power);
+                    break;
+                case DemoLockKeys keys:
+                    _island.SetDemoLockKeys(keys.Keys);
+                    break;
+                case DemoBluetooth bluetooth:
+                    _island.ShowDemoBluetooth(bluetooth.Change);
+                    break;
+                case DemoPrivacy privacy:
+                    _island.SetDemoPrivacy(privacy.Use);
                     break;
                 case DemoOpen open:
                     _island.Open(open.Page);

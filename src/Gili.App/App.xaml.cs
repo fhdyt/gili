@@ -102,13 +102,15 @@ public partial class App : Application
         _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
         _todos = new TodoService(_database is null ? null : new TodoStore(_database));
         _notes = new NoteService(OpenNotes());
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes)
+        // One Bluetooth watcher serves the bar's icon and the island's connect notices (plan 3a decision 4).
+        var bluetooth = new Gili.Platform.Modules.BluetoothMonitor();
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, () => _settings.Current)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
         };
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
-        _right = new RightService(Dispatcher, _settings, _log);
+        _right = new RightService(Dispatcher, _settings, _log, bluetooth);
         _sound = new SoundService(Dispatcher, _settings, _log);
         _islandController.CardShown += id => _sound.PlayForCard(id, _islandController.AlarmSound(id));
         _islandController.Volume = () => _right.Volume;
@@ -144,6 +146,7 @@ public partial class App : Application
             _right.SetPaused(!poll);
             _media.SetPaused(!poll);
             _gili?.SetPaused(!poll);
+            _islandController.SetPaused(!poll);
             _log?.Write(poll ? "Polling resumed" : $"Polling paused: {_bar.PollingReason}");
         };
         _bar.Show();

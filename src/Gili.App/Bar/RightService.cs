@@ -17,15 +17,16 @@ public sealed class RightService : IDisposable
     private readonly SettingsHub _settings;
     private readonly FileLog _log;
     private readonly WifiMonitor _wifi = new();
-    private readonly BluetoothMonitor _bluetooth = new();
+    private readonly BluetoothMonitor _bluetooth;
     private readonly AudioMonitor _audio = new();
     private readonly DispatcherTimer _weatherTimer = new();
     private readonly DispatcherTimer _wifiTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly CancellationTokenSource _stop = new();
     private int _weatherFailures;
 
-    public RightService(Dispatcher dispatcher, SettingsHub settings, FileLog log)
+    public RightService(Dispatcher dispatcher, SettingsHub settings, FileLog log, BluetoothMonitor bluetooth)
     {
+        _bluetooth = bluetooth;
         _dispatcher = dispatcher;
         _settings = settings;
         _log = log;
