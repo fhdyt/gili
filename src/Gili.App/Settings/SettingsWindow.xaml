@@ -11,9 +11,6 @@
     </WindowChrome.WindowChrome>
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/WindowControls.xaml" />
-            </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="VisibleWhen" />
 
             <!-- Range (mockup input[type=range] with the green accent): 4 px track, 16 px thumb. -->

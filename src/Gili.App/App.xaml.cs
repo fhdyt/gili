@@ -46,11 +46,14 @@ public partial class App : Application
     private NoteService? _notes;
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
+    private readonly System.Windows.Threading.DispatcherTimer _releaseTimer = new() { Interval = TimeSpan.FromSeconds(30) };
     private SettingsWindow? _settingsWindow;
     private ToolsWindow? _toolsWindow;
     private bool? _autostartApplied;
     private StartupState? _startup;
     private bool _quitting;
+
+    public App() => _releaseTimer.Tick += OnReleaseTimer;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -172,6 +175,7 @@ public partial class App : Application
         _demo?.Stop();
         _sound?.Dispose();
         _backupTimer.Stop();
+        _releaseTimer.Stop();
         _database?.Dispose();
         _stats?.Dispose();
         _apps?.Dispose();
@@ -217,8 +221,13 @@ public partial class App : Application
             _settingsWindow.Activate();
             return;
         }
+        _releaseTimer.Stop();
         _settingsWindow = new SettingsWindow(new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup));
-        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Closed += (_, _) =>
+        {
+            _settingsWindow = null;
+            ReleaseLater();
+        };
         _settingsWindow.Show();
         // Show alone can leave it behind the active app, since the bar never takes focus (F-BAR-13).
         _settingsWindow.Activate();
@@ -237,14 +246,37 @@ public partial class App : Application
             _toolsWindow.Activate();
             return;
         }
+        _releaseTimer.Stop();
         var alarms = new AlarmsTabViewModel(_alarms!, () => _settings!.Current.Use24HourClock, voice => _sound?.Preview(voice));
         var model = new ToolsViewModel(new TimersTabViewModel(_timers!), new StopwatchTabViewModel(_timers!),
             new PomodoroTabViewModel(_timers!, _settings!), alarms, new TodoTabViewModel(_todos!, () => _settings!.Current.Use24HourClock), tab);
         _toolsWindow = new ToolsWindow(model);
-        _toolsWindow.Closed += (_, _) => _toolsWindow = null;
+        _toolsWindow.Closed += (_, _) =>
+        {
+            _toolsWindow = null;
+            ReleaseLater();
+        };
         _toolsWindow.Show();
         // The bar never takes focus, so Show alone can leave it behind the active app.
         _toolsWindow.Activate();
+    }
+
+    /// <summary>
+    /// A closed Tools or Settings window leaves nothing referenced, but the GC keeps its memory in gen2 until something
+    /// forces a collection. 30 s after the last close, with neither window open again, one full compacting collection
+    /// gives it back (PRD 8.1). Each close restarts the wait; opening either window cancels it.
+    /// </summary>
+    private void ReleaseLater()
+    {
+        _releaseTimer.Stop();
+        _releaseTimer.Start();
+    }
+
+    private void OnReleaseTimer(object? sender, EventArgs e)
+    {
+        _releaseTimer.Stop();
+        if (_toolsWindow is not null || _settingsWindow is not null) return;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
     }
 
     /// <summary>

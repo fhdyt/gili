@@ -51,7 +51,8 @@
         </Setter>
     </Style>
 
-    <!-- Thin dark scroll bar (mockup scrollbar-width:thin, #48484A on transparent). -->
+    <!-- Thin dark scroll bar (mockup scrollbar-width:thin, #48484A on transparent). Merged in App.xaml, so it is app-wide;
+         the island's scrollers hide their bars or name their own style (NotesPage ThinBar). -->
     <Style TargetType="ScrollBar">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Width" Value="8" />

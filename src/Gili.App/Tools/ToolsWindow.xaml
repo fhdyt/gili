@@ -12,9 +12,6 @@
     </WindowChrome.WindowChrome>
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/WindowControls.xaml" />
-            </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="VisibleWhen" />
 
             <Style x:Key="FieldName" TargetType="TextBlock">

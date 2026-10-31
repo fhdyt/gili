@@ -988,7 +988,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 
 **Aturan ringan** (pengguna meminta Gili tetap sangat ringan dan minta diingatkan bila fitur berat):
 - Tidak ada animasi yang berjalan terus saat diam, kecuali kedipan Gili (sekitar 230 ms tiap 3–6 detik) dan detik di jam (satu teks per detik). Animasi yang tidak terlihat (pulau tertutup, bar tersembunyi, layar mati) dihentikan, bukan sekadar disembunyikan.
-- Panel tray dan jendela Settings dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup.
+- Panel tray dan jendela Settings dibuat saat dibuka dan dilepas dari memori 30 detik setelah ditutup. Jendela Tools dan Settings tidak menyisakan referensi setelah ditutup, tetapi memorinya baru kembali ke Windows setelah GC berjalan: 30 detik setelah salah satunya ditutup, kalau keduanya tidak sedang terbuka, Gili menjalankan satu GC penuh yang memadatkan heap (`GC.Collect` mode Aggressive). Biayanya satu GC penuh per penutupan; membuka salah satu jendela sebelum 30 detik membatalkannya.
 - Modul atau fitur yang dimatikan di Settings berhenti mengambil datanya.
 - Tidak ada hook mouse atau keyboard global selain hook Caps/Num Lock yang sudah ada.
 
