@@ -71,7 +71,8 @@ public partial class App : Application
         base.OnStartup(e);
         if (e.Args.Contains("--quit"))
         {
-            SingleInstance.RequestQuit();
+            // Returns once the running copy is gone, so the installer can replace its files next (design 5b).
+            if (SingleInstance.RequestQuit()) WaitForOthers();
             Shutdown();
             return;
         }
@@ -646,10 +647,7 @@ public partial class App : Application
     {
         var log = new FileLog(Data.Logs);
         log.Write("Preparing to uninstall");
-        // The process lives on for a moment after letting go of the mutex, holding Gili.exe the uninstaller deletes next.
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-        if (SingleInstance.RequestQuit() && !(SingleInstance.WaitForExit(TimeSpan.FromSeconds(5)) && OthersExited(deadline)))
-            log.Write("The running Gili did not quit within 5 seconds");
+        if (SingleInstance.RequestQuit() && !WaitForOthers()) log.Write("The running Gili did not quit within 5 seconds");
         Core.About.UninstallSteps.Run(
         [
             new("Claude hooks", () => Platform.Claude.ClaudeSettingsFile.RemoveHooks()),
@@ -660,6 +658,16 @@ public partial class App : Application
             }),
             new("Start with Windows", Autostart.Remove),
         ], (step, ex) => log.Write($"Prepare to uninstall: {step} failed", ex));
+    }
+
+    /// <summary>
+    /// Up to 5 seconds for the running copy to let go of the mutex and then to end: the process lives on for a moment
+    /// after the mutex, holding Gili.exe that an installer or uninstaller replaces next.
+    /// </summary>
+    private static bool WaitForOthers()
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        return SingleInstance.WaitForExit(TimeSpan.FromSeconds(5)) && OthersExited(deadline);
     }
 
     private static bool OthersExited(DateTime deadline)
