@@ -36,7 +36,8 @@ public static class ClipboardReader
             var (width, height) = ImageSize();
             return new ClipboardContent(
                 Sensitive: false,
-                Text: ReadUnicode(CF_UNICODETEXT, 4096),
+                // Whole copies up to the history's limit (design 4a); the snippet reads only the first line.
+                Text: ReadUnicode(CF_UNICODETEXT, Gili.Core.Clipboard.ClipboardHistory.MaxLength),
                 Files: files,
                 Cut: files.Count > 0 && IsClipboardFormatAvailable(DropEffect) && (ReadDword(DropEffect) & DROPEFFECT_MOVE) != 0,
                 HasImage: width > 0,
@@ -44,7 +45,8 @@ public static class ClipboardReader
                 ImageHeight: height,
                 Html: ReadUtf8(Html, 64 * 1024),
                 Url: ReadUnicode(Url, 2048),
-                OwnerProcess: owner);
+                OwnerProcess: owner,
+                OwnerWindow: GetClipboardOwner());
         }
         finally
         {

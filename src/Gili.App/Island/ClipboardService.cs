@@ -20,9 +20,26 @@ public sealed class ClipboardService : IDisposable
     private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".ico"];
 
     private readonly ClipboardMonitor _monitor = new();
+    private readonly ClipboardHistory? _history;
     private int _copy;
+    private string? _own;
+    private DateTimeOffset _ownUntil;
 
-    public ClipboardService() => _monitor.Changed += () => _ = ReadAsync(++_copy);
+    public ClipboardService(ClipboardHistory? history = null)
+    {
+        _history = history;
+        _monitor.Changed += () => _ = ReadAsync(++_copy);
+    }
+
+    /// <summary>
+    /// Gili is about to put this text on the clipboard itself (the Clipboard page's paste): that change shows no snippet
+    /// and adds no row (PRD 6.3).
+    /// </summary>
+    public void Ignore(string text)
+    {
+        _own = text;
+        _ownUntil = DateTimeOffset.UtcNow.AddSeconds(3);
+    }
 
     /// <summary>Raised on the UI thread.</summary>
     public event Action<ClipboardSnippet, ImageSource?>? Copied;
@@ -45,7 +62,15 @@ public sealed class ClipboardService : IDisposable
             if (copy != _copy) return;
             content = ClipboardReader.TryRead();
         }
-        if (content is null || ClipboardSnippets.For(content, ImageFileSize) is not { } snippet) return;
+        if (content is null) return;
+        if (_own is not null && content.Text == _own && DateTimeOffset.UtcNow < _ownUntil)
+        {
+            _own = null;
+            return;
+        }
+        if (ClipboardSnippets.For(content, ImageFileSize) is not { } snippet) return;
+        // Only copied text joins the history (F-LEFT-03); files, images and sensitive copies stay snippets.
+        if (snippet.Kind == SnippetKind.Text && content.Text is { } text) _history?.Add(text, ClipboardPaste.SourceApp(content.OwnerWindow));
         var thumb = snippet.Kind != SnippetKind.Image ? null
             : content.Files.Count == 1 ? FileThumb(content.Files[0])
             : ClipboardThumb();

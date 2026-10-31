@@ -155,7 +155,7 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Calendar, "Calendar", Glyph("Icon.Calendar"), null),
             new(IslandPage.Todo, "Todo", Glyph("Icon.Todo"), null),
             new(IslandPage.Notes, "Notes", Glyph("Icon.Note"), null),
-            new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), Phase4),
+            new(IslandPage.Clipboard, "Clipboard", Glyph("Icon.Clipboard"), null),
             new(IslandPage.Shelf, "Shelf", Glyph("Icon.Tray"), null),
             new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), null),
             new(IslandPage.System, "System", Glyph("Icon.Cpu"), null),
