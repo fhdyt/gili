@@ -695,6 +695,12 @@ li.done .chk .ic{opacity:1;transform:none}
 .cbr.gone{animation:gone 260ms var(--out) forwards}
 .cbp{display:flex;flex-direction:column;justify-content:center;gap:2px;width:100%;min-height:44px;padding:6px 44px 6px 12px;text-align:left;border-radius:12px}
 .cbp b{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* An image's thumbnail or a file's icon before the text (F-ISL-32). */
+.cbp.lead{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:10px;row-gap:2px;align-content:center}
+.cbp.lead .cbt{grid-row:1/3;align-self:center}
+.cbt{width:40px;height:28px;border-radius:6px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.16);display:block}
+span.cbt{box-shadow:none;background:var(--ctl);display:grid;place-items:center;color:#aeaeb2}
+span.cbt .ic{width:16px;height:16px}
 .cbp span{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbx{position:absolute;top:50%;right:8px;width:28px;height:28px;margin-top:-14px;border-radius:14px;display:grid;place-items:center;color:var(--text2);opacity:0;transition:opacity 120ms,background 120ms,color 120ms}
 .cbr:hover .cbx,.cbr.sel .cbx,.cbx:focus-visible{opacity:1}
@@ -2836,22 +2842,31 @@ S.cb=[
   {id:4,t:'INV-2026-1043',app:'Excel',at:Date.now()-5*3600e3},
   {id:5,t:'Can we move the review to Thursday morning?',app:'Slack',at:Date.now()-26*3600e3},
 ];
+// Images and files join the history too (F-ISL-32): k is the kind, t what search reads (the image's or files' names).
+S.cb.splice(1,0,{id:90,k:'image',t:'Screenshot',name:'Screenshot',w:1920,h:1080,app:'Snipping Tool',at:Date.now()-12*60e3});
+S.cb.splice(3,0,{id:91,k:'files',t:'Q3 report.pdf',files:['C:\\Users\\me\\Documents\\Q3 report.pdf'],app:'File Explorer',at:Date.now()-55*60e3});
 S.cbSel=-1;
 const CB_MAX=50;
 function ago(t){const m=Math.floor((Date.now()-t)/60e3);return m<1?'now':m<60?m+' min':m<1440?Math.floor(m/60)+' h':m<2880?'Yesterday':Math.floor(m/1440)+' days'}
 const cbVisible=()=>{const q=$('#cbSearch').value.trim().toLowerCase();return S.cb.filter(c=>!q||c.t.toLowerCase().includes(q))};
-// Copying the same text again moves it to the top instead of adding a second row.
-function cbAdd(t,app){
-  S.cb=S.cb.filter(c=>c.t!==t);S.cb.unshift({id:S.nextId++,t,app,at:Date.now(),fresh:1});S.cb.length=Math.min(S.cb.length,CB_MAX);
+// Copying the same text, image or files again moves it to the top instead of adding a second row; at most 20 images.
+function cbAdd(t,app,extra={}){
+  const k=extra.k||'text';
+  S.cb=S.cb.filter(c=>!((c.k||'text')===k&&c.t===t));S.cb.unshift({id:S.nextId++,t,app,at:Date.now(),fresh:1,...extra});
+  const imgs=S.cb.filter(c=>c.k==='image');if(imgs.length>20)S.cb=S.cb.filter(c=>c!==imgs[imgs.length-1]);
+  S.cb.length=Math.min(S.cb.length,CB_MAX);
   renderClipPage();
 }
+const cbLine=c=>c.k==='image'?`${c.name} · ${c.w} × ${c.h}`:c.k==='files'?(c.files.length===1?c.files[0].split('\\').pop():c.files.length+' files'):c.t.replace(/\s+/g,' ');
+const cbTip=c=>c.k==='image'?cbLine(c):c.k==='files'?c.files.join('\n').slice(0,400):c.t.slice(0,400);
+const cbLead=c=>c.k==='image'?`<img class="cbt" src="${SHOT}" alt="">`:c.k==='files'?`<span class="cbt">${icon(c.files.length>1?'files':'file')}</span>`:'';
 function renderClipPage(){
   const list=cbVisible(),q=$('#cbSearch').value.trim();
   S.cbSel=Math.min(S.cbSel,list.length-1);
-  $('#cbList').innerHTML=list.length?list.map((c,k)=>`<div class="cbr ${k===S.cbSel?'sel':''} ${c.fresh?'new':''}" role="option" aria-selected="${k===S.cbSel}" data-cb="${c.id}" title="${esc(c.t.slice(0,400))}">
-      <button class="cbp" tabindex="-1"><b>${esc(c.t.replace(/\s+/g,' '))}</b><span>${esc(c.app)} · ${ago(c.at)}</span></button>
+  $('#cbList').innerHTML=list.length?list.map((c,k)=>`<div class="cbr ${k===S.cbSel?'sel':''} ${c.fresh?'new':''}" role="option" aria-selected="${k===S.cbSel}" data-cb="${c.id}" title="${esc(cbTip(c))}">
+      <button class="cbp ${c.k?'lead':''}" tabindex="-1">${cbLead(c)}<b>${esc(cbLine(c))}</b><span>${esc(c.app)} · ${ago(c.at)}</span></button>
       <button class="cbx" aria-label="Remove from history" title="Remove">${icon('x')}</button></div>`).join('')
-    :q?'<div class="cbnone">No matches</div>':'<div class="cbnone">Nothing copied yet<small>Text you copy shows up here</small></div>';
+    :q?'<div class="cbnone">No matches</div>':'<div class="cbnone">Nothing copied yet<small>Text, images and files you copy show up here</small></div>';
   S.cb.forEach(c=>delete c.fresh);
   $('#cbClear').hidden=!S.cb.length;
   if(S.state==='expanded'&&S.page===PAGE.clipboard)layout();
@@ -3825,9 +3840,9 @@ const ACT={
   bat80:()=>{if(!S.charging){S.charging=true;setPressed('charge',true)}S.battery=80;renderSlot();
     showWide('b80',`<span style="color:var(--accent)">${icon('bolt')}</span><span><b class="num">${S['W.unplug']}%</b> reached · unplug</span>`,5000)},
   copyText:()=>{const t=COPY_SAMPLES[copyN++%COPY_SAMPLES.length];showClip(`${icon('clip')}<span class="tt">"${esc(trunc(t,40))}"</span>`,'Copied: '+t);cbAdd(t,S.fgName)},
-  copyImg:()=>showClip(`<img class="thumb" src="${SHOT}" width="36" height="20" alt="Copied image"><span class="tt">bali-sunset.jpg</span><span class="k2 num">1920 × 1080</span>`,'Image copied · bali-sunset.jpg · 1920 × 1080'),
-  copyFile:()=>showClip(`${icon('file')}<span>3 files</span>`,'Copied: report.pdf, budget.xlsx, logo.png'),
-  cutFile:()=>showClip(`<span style="color:var(--blue)">${icon('scissors')}</span><span>3 files</span>`,'Cut: report.pdf, budget.xlsx, logo.png'),
+  copyImg:()=>(cbAdd('bali-sunset.jpg',S.fgName,{k:'image',name:'bali-sunset.jpg',w:1920,h:1080}),showClip(`<img class="thumb" src="${SHOT}" width="36" height="20" alt="Copied image"><span class="tt">bali-sunset.jpg</span><span class="k2 num">1920 × 1080</span>`,'Image copied · bali-sunset.jpg · 1920 × 1080')),
+  copyFile:()=>{cbAdd('report.pdf budget.xlsx logo.png','File Explorer',{k:'files',files:['C:\\Work\\report.pdf','C:\\Work\\budget.xlsx','C:\\Work\\logo.png']});showClip(`${icon('file')}<span>3 files</span>`,'Copied: report.pdf, budget.xlsx, logo.png')},
+  cutFile:()=>{cbAdd('report.pdf budget.xlsx logo.png','File Explorer',{k:'files',files:['C:\\Work\\report.pdf','C:\\Work\\budget.xlsx','C:\\Work\\logo.png']});showClip(`<span style="color:var(--blue)">${icon('scissors')}</span><span>3 files</span>`,'Cut: report.pdf, budget.xlsx, logo.png')},
   copySecret:()=>showClip(`${icon('lock')}<span>Copied (hidden)</span>`,'Hidden because the app marked it as sensitive'),
   explorer:()=>explorerOp('copy'),
   xmove:()=>explorerOp('move'),

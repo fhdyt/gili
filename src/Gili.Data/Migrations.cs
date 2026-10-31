@@ -71,6 +71,9 @@ internal static class Migrations
         "ALTER TABLE todos ADD COLUMN due_time TEXT;",
         // 3: the drop zone's column and the folder Gili copies files from a zip or the temp folder into (F-ISL-30, F-ISL-31).
         "ALTER TABLE shelf_items ADD COLUMN mode TEXT NOT NULL DEFAULT 'Copy'; ALTER TABLE shelf_items ADD COLUMN folder TEXT;",
+        // 4: images and files in the clipboard history (F-ISL-32).
+        "ALTER TABLE clipboard_history ADD COLUMN kind TEXT NOT NULL DEFAULT 'Text'; ALTER TABLE clipboard_history ADD COLUMN name TEXT; " +
+        "ALTER TABLE clipboard_history ADD COLUMN width INTEGER NOT NULL DEFAULT 0; ALTER TABLE clipboard_history ADD COLUMN height INTEGER NOT NULL DEFAULT 0;",
     ];
 
     /// <summary>The schema version the file holds; 0 for a new file.</summary>

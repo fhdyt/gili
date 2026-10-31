@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,8 +12,8 @@ namespace Gili.App.Island;
 
 /// <summary>
 /// The Clipboard page (PRD 6.3 "Halaman Clipboard", F-ISL-28, mockup renderClipPage): a search field and Clear all, then
-/// the history, newest first. Picking a row pastes it where the user was typing; × removes one; Clear all asks once.
-/// The rows are built only while the page shows (PRD 8.1).
+/// the history of text, images and files, newest first (F-ISL-32). Picking a row pastes it where the user was typing;
+/// × removes one; Clear all asks once. The rows are built only while the page shows (PRD 8.1).
 /// </summary>
 public sealed partial class ClipboardPageViewModel : ObservableObject
 {
@@ -48,7 +51,8 @@ public sealed partial class ClipboardPageViewModel : ObservableObject
             {
                 Query = "";
                 Selected = -1;
-                Refresh();
+                // Copied files that are all gone since leave first (F-ISL-32).
+                if (!island.ClipboardHistory.PruneFiles(p => File.Exists(p) || Directory.Exists(p))) Refresh();
             }
         };
         Refresh();
@@ -111,7 +115,7 @@ public sealed partial class ClipboardPageViewModel : ObservableObject
         var entries = _island.ClipboardHistory.Search(Query);
         Rows.Clear();
         foreach (var entry in entries)
-            Rows.Add(new ClipboardRowViewModel(entry, now, () => _island.Paste(entry.Id), () => _island.ClipboardHistory.Remove(entry.Id)));
+            Rows.Add(new ClipboardRowViewModel(entry, now, () => _island.Paste(entry.Id), () => _island.ClipboardHistory.Remove(entry.Id), _island.ClipboardImages));
         HasItems = _island.ClipboardHistory.Items.Count > 0;
         IsEmpty = !HasItems;
         NoMatches = HasItems && Rows.Count == 0;
@@ -134,22 +138,83 @@ public sealed partial class ClipboardPageViewModel : ObservableObject
     }
 }
 
-/// <summary>One copied text: the text on one line, the app and how long ago, and up to 400 characters as the tooltip.</summary>
+/// <summary>
+/// One copy: the text on one line (an image's name and size, a file's name or "3 files"), the app and how long ago, and
+/// the tooltip. Images show a thumbnail and files their icon at the start of the row (F-ISL-32).
+/// </summary>
 public sealed partial class ClipboardRowViewModel : ObservableObject
 {
+    private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"];
+
+    private readonly ClipboardEntry _entry;
+    private readonly ClipboardImages? _images;
+    private ImageSource? _thumb;
+    private bool _thumbRead;
+
     [ObservableProperty] private bool _isSelected;
 
-    public ClipboardRowViewModel(ClipboardEntry entry, DateTimeOffset now, Action paste, Action remove)
+    public ClipboardRowViewModel(ClipboardEntry entry, DateTimeOffset now, Action paste, Action remove, ClipboardImages? images = null)
     {
+        _entry = entry;
+        _images = images;
         Id = entry.Id;
-        Text = ClipboardText.Line(entry.Text);
+        Text = ClipboardText.Line(entry);
         Detail = ClipboardText.Detail(entry, now);
-        Tooltip = ClipboardText.Tooltip(entry.Text);
+        Tooltip = ClipboardText.Tooltip(entry);
         PasteCommand = new RelayCommand(paste);
         RemoveCommand = new RelayCommand(remove);
+        if (entry.Kind == ClipKind.Files)
+            Glyph = (Geometry)Application.Current.FindResource(entry.Files.Count > 1 ? "Icon.Files" : Directory.Exists(entry.Files[0]) ? "Icon.Folder" : "Icon.File");
     }
 
     public long Id { get; }
+
+    /// <summary>Text rows have nothing before the text.</summary>
+    public bool HasLead => _entry.Kind != ClipKind.Text;
+
+    /// <summary>A thumbnail shows for an image and for one copied image file; other files show <see cref="Glyph"/>.</summary>
+    public bool HasThumb => Thumb is not null;
+
+    public bool HasGlyph => Glyph is not null && !HasThumb;
+
+    public Geometry? Glyph { get; }
+
+    /// <summary>Decoded small, the first time the row is drawn, so a closed page decodes nothing (PRD 8.1).</summary>
+    public ImageSource? Thumb
+    {
+        get
+        {
+            if (_thumbRead) return _thumb;
+            _thumbRead = true;
+            _thumb = _entry.Kind switch
+            {
+                ClipKind.Image => _images?.Thumb(_entry.Text),
+                ClipKind.Files when _entry.Files.Count == 1 && ImageExtensions.Contains(Path.GetExtension(_entry.Files[0]), StringComparer.OrdinalIgnoreCase)
+                    => FileThumb(_entry.Files[0]),
+                _ => null,
+            };
+            return _thumb;
+        }
+    }
+
+    private static ImageSource? FileThumb(string path)
+    {
+        try
+        {
+            var image = new System.Windows.Media.Imaging.BitmapImage();
+            image.BeginInit();
+            image.UriSource = new Uri(path);
+            image.DecodePixelWidth = 80;
+            image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException)
+        {
+            return null;
+        }
+    }
 
     public string Text { get; }
 

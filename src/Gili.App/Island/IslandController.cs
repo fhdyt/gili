@@ -38,10 +38,11 @@ public sealed class IslandController : IDisposable
     private string? _soundCard;
 
     public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes,
-        BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings, ClipboardHistory clipboardHistory)
+        BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings, ClipboardHistory clipboardHistory, ClipboardImages? clipboardImages = null)
     {
         ClipboardHistory = clipboardHistory;
-        _clipboard = new ClipboardService(clipboardHistory);
+        ClipboardImages = clipboardImages;
+        _clipboard = new ClipboardService(clipboardHistory, clipboardImages);
         _settings = settings;
         Shelf = shelf;
         _dragLeave.Tick += (_, _) => EndDrag();
@@ -589,18 +590,46 @@ public sealed class IslandController : IDisposable
     /// <summary>The last 50 texts copied (F-LEFT-03).</summary>
     public ClipboardHistory ClipboardHistory { get; }
 
+    /// <summary>The history's images on disk (F-ISL-32); null without a data folder.</summary>
+    public ClipboardImages? ClipboardImages { get; }
+
     /// <summary>A history row was picked: the island closes and the text goes where the user was typing (F-ISL-28).</summary>
     public event Action? PasteRequested;
 
     /// <summary>
-    /// Puts the row's text on the clipboard (without a snippet or a new row) and moves it to the top, then asks the
-    /// island to close and paste it.
+    /// Puts the row on the clipboard (without a snippet or a new row): text as plain text, an image as a bitmap, files
+    /// as a file list to copy (F-ISL-32). It moves to the top, then the island closes and pastes it. A row whose image
+    /// or files are gone pastes nothing and leaves.
     /// </summary>
     public void Paste(long id)
     {
         if (ClipboardHistory.Items.FirstOrDefault(e => e.Id == id) is not { } entry) return;
-        _clipboard.Ignore(entry.Text);
-        Gili.Platform.Clipboard.ClipboardPaste.SetText(entry.Text);
+        switch (entry.Kind)
+        {
+            case ClipKind.Image:
+                if (ClipboardImages?.Load(entry.Text) is not { } image)
+                {
+                    ClipboardHistory.Remove(id);
+                    return;
+                }
+                _clipboard.IgnoreNext();
+                if (!ClipboardWrite.Image(image)) return;
+                break;
+            case ClipKind.Files:
+                var files = entry.Files.Where(p => System.IO.File.Exists(p) || System.IO.Directory.Exists(p)).ToList();
+                if (files.Count == 0)
+                {
+                    ClipboardHistory.Remove(id);
+                    return;
+                }
+                _clipboard.IgnoreNext();
+                if (!ClipboardWrite.Files(files)) return;
+                break;
+            default:
+                _clipboard.Ignore(entry.Text);
+                Gili.Platform.Clipboard.ClipboardPaste.SetText(entry.Text);
+                break;
+        }
         ClipboardHistory.Use(id);
         PasteRequested?.Invoke();
     }

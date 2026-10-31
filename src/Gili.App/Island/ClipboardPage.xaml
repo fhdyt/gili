@@ -99,7 +99,7 @@
             <StackPanel>
                 <StackPanel Margin="2,8" Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}">
                     <TextBlock Text="Nothing copied yet" FontSize="13" Foreground="#8E8E93" />
-                    <TextBlock Text="Text you copy shows up here" FontSize="12" Foreground="#636366" Margin="0,2,0,0" />
+                    <TextBlock Text="Text, images and files you copy show up here" FontSize="12" Foreground="#636366" Margin="0,2,0,0" />
                 </StackPanel>
                 <TextBlock Text="No matches" FontSize="13" Foreground="#8E8E93" Margin="2,8"
                            Visibility="{Binding NoMatches, Converter={StaticResource VisibleWhen}}" />
@@ -119,12 +119,27 @@
                                     <Button Command="{Binding PasteCommand}" AutomationProperties.Name="{Binding Text}" FocusVisualStyle="{StaticResource FocusRing}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
-                                                <StackPanel MinHeight="44" Margin="12,6,44,6" VerticalAlignment="Center" Background="Transparent">
-                                                    <TextBlock Text="{Binding Text}" FontSize="13.5" FontWeight="Medium" Foreground="#F5F5F7"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2,0,0"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
+                                                <DockPanel MinHeight="44" Margin="12,6,44,6" Background="Transparent">
+                                                    <!-- .cbt: an image's thumbnail (40 × 28, radius 6, white 16% line) or a file's icon (F-ISL-32). -->
+                                                    <Grid DockPanel.Dock="Left" Width="40" Height="28" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                          Visibility="{Binding HasLead, Converter={StaticResource VisibleWhen}}">
+                                                        <Border CornerRadius="6" Background="#2C2C2E" Visibility="{Binding HasGlyph, Converter={StaticResource VisibleWhen}}">
+                                                            <c:IconView Glyph="{Binding Glyph}" Width="16" Height="16" Foreground="#AEAEB2" />
+                                                        </Border>
+                                                        <Border CornerRadius="6" BorderBrush="#29FFFFFF" BorderThickness="1"
+                                                                Visibility="{Binding HasThumb, Converter={StaticResource VisibleWhen}}">
+                                                            <Border.Background>
+                                                                <ImageBrush ImageSource="{Binding Thumb}" Stretch="UniformToFill" />
+                                                            </Border.Background>
+                                                        </Border>
+                                                    </Grid>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Text}" FontSize="13.5" FontWeight="Medium" Foreground="#F5F5F7"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2,0,0"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </DockPanel>
                                             </ControlTemplate>
                                         </Button.Template>
                                     </Button>

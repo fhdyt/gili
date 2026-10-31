@@ -73,12 +73,13 @@ public sealed class TodoStoreTests : IDisposable
                 "CREATE TABLE todos (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, due_date TEXT, remind_at TEXT, done_at TEXT, sort_order INTEGER NOT NULL, created_at TEXT NOT NULL);" +
                 "INSERT INTO todos (title, due_date, sort_order, created_at) VALUES ('Old task', '2026-10-20', 0, '2026-10-20T01:00:00.0000000+00:00');" +
                 // Later steps change these version 1 tables too.
-                "CREATE TABLE shelf_items (id INTEGER PRIMARY KEY AUTOINCREMENT, paths TEXT NOT NULL, display_name TEXT NOT NULL, size_bytes INTEGER NOT NULL, sort_order INTEGER NOT NULL, added_at TEXT NOT NULL);";
+                "CREATE TABLE shelf_items (id INTEGER PRIMARY KEY AUTOINCREMENT, paths TEXT NOT NULL, display_name TEXT NOT NULL, size_bytes INTEGER NOT NULL, sort_order INTEGER NOT NULL, added_at TEXT NOT NULL);" +
+                "CREATE TABLE clipboard_history (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, source_app TEXT, copied_at TEXT NOT NULL);";
             command.ExecuteNonQuery();
         }
         SqliteConnection.ClearAllPools();
         using var db = Database.Open(_folder);
-        Assert.Equal(3, db.Version);
+        Assert.Equal(4, db.Version);
         var old = Assert.Single(new TodoStore(db).All());
         Assert.Equal(("Old task", new DateOnly(2026, 10, 20), (TimeOnly?)null), (old.Title, old.DueDate!.Value, old.DueTime));
     }

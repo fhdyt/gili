@@ -139,8 +139,11 @@ public partial class App : Application
         var shelfFolder = new Gili.Platform.Shelf.ShelfFolder(Data.Shelf);
         var shelf = new ShelfService(_database is null ? null : new ShelfStore(_database), ProbeFile, shelfFolder.Delete);
         shelfFolder.Sweep(shelf.KeptFolders);
-        var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow);
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, shelf, () => _settings.Current, clipboardHistory)
+        var clipboardImages = new ClipboardImages(Data.Clipboard);
+        var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow,
+            clipboardImages.Delete);
+        clipboardImages.Sweep(clipboardHistory.ImageFiles);
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, shelf, () => _settings.Current, clipboardHistory, clipboardImages)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
             ShelfFolder = shelfFolder,

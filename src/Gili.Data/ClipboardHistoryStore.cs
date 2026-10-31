@@ -3,19 +3,26 @@ using Gili.Core.Clipboard;
 
 namespace Gili.Data;
 
-/// <summary>The clipboard_history table (PRD 10): text, the app it came from, copied_at in UTC.</summary>
+/// <summary>
+/// The clipboard_history table (PRD 10): text (or an image's PNG name, or paths one per line), the app it came from,
+/// copied_at in UTC, and the kind with an image's name and size (F-ISL-32).
+/// </summary>
 public sealed class ClipboardHistoryStore(Database db) : IClipboardHistoryStore
 {
     public IReadOnlyList<ClipboardEntry> All()
     {
         using var command = db.Connection.CreateCommand();
-        command.CommandText = "SELECT id, text, source_app, copied_at FROM clipboard_history ORDER BY copied_at DESC, id DESC";
+        command.CommandText = "SELECT id, text, source_app, copied_at, kind, name, width, height FROM clipboard_history ORDER BY copied_at DESC, id DESC";
         using var reader = command.ExecuteReader();
         var items = new List<ClipboardEntry>();
         while (reader.Read())
         {
             items.Add(new ClipboardEntry(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2),
-                DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)));
+                DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal),
+                Enum.TryParse<ClipKind>(reader.GetString(4), out var kind) ? kind : ClipKind.Text,
+                reader.IsDBNull(5) ? null : reader.GetString(5),
+                reader.GetInt32(6),
+                reader.GetInt32(7)));
         }
         return items;
     }
@@ -24,12 +31,16 @@ public sealed class ClipboardHistoryStore(Database db) : IClipboardHistoryStore
     {
         using var command = db.Connection.CreateCommand();
         command.CommandText = entry.Id == 0
-            ? "INSERT INTO clipboard_history (text, source_app, copied_at) VALUES ($text, $app, $at); SELECT last_insert_rowid();"
-            : "UPDATE clipboard_history SET text = $text, source_app = $app, copied_at = $at WHERE id = $id";
+            ? "INSERT INTO clipboard_history (text, source_app, copied_at, kind, name, width, height) VALUES ($text, $app, $at, $kind, $name, $w, $h); SELECT last_insert_rowid();"
+            : "UPDATE clipboard_history SET text = $text, source_app = $app, copied_at = $at, kind = $kind, name = $name, width = $w, height = $h WHERE id = $id";
         command.Parameters.AddWithValue("$id", entry.Id);
         command.Parameters.AddWithValue("$text", entry.Text);
         command.Parameters.AddWithValue("$app", (object?)entry.SourceApp ?? DBNull.Value);
         command.Parameters.AddWithValue("$at", entry.CopiedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("$kind", entry.Kind.ToString());
+        command.Parameters.AddWithValue("$name", (object?)entry.Name ?? DBNull.Value);
+        command.Parameters.AddWithValue("$w", entry.Width);
+        command.Parameters.AddWithValue("$h", entry.Height);
         if (entry.Id != 0)
         {
             command.ExecuteNonQuery();
