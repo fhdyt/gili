@@ -26,7 +26,7 @@ public sealed class IslandController : IDisposable
     private readonly PrivacyMonitor _privacy = new();
     private readonly Func<AppSettings> _settings;
     private BatteryAlerts _battery = new();
-    private LockKeys _keys;
+    private LockKeys _demoKeys;
     private PageSet _hiddenTabs;
     // The alarm each alarm card stands for, as it was when it rang, and whether it was late.
     private readonly Dictionary<string, (Alarm Alarm, bool Missed)> _ringing = [];
@@ -68,10 +68,10 @@ public sealed class IslandController : IDisposable
         });
         ApplyPower(PowerMonitor.Read());
         // Lock keys, Bluetooth devices and the privacy dots wait during the demo like the charger does.
-        _keys = _lockKeys.Current;
-        _lockKeys.Changed += keys => dispatcher.InvokeAsync(() =>
+        _lockKeys.Changed += (before, now) => dispatcher.InvokeAsync(() =>
         {
-            if (!_demo) ApplyLockKeys(keys);
+            if (_demo) return;
+            foreach (var notice in LockKeyRules.WideFor(before, now)) _coordinator.ShowWide(notice);
         });
         bluetooth.DeviceChanged += change => dispatcher.InvokeAsync(() =>
         {
@@ -330,7 +330,7 @@ public sealed class IslandController : IDisposable
         _demo = true;
         _battery = new BatteryAlerts();
         _battery.Update(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, 100), 20, 80);
-        _keys = default;
+        _demoKeys = default;
     }
 
     /// <summary>The demo's charger, shown like a real reading, wide notice included (F-BAR-09).</summary>
@@ -340,7 +340,12 @@ public sealed class IslandController : IDisposable
         ApplyPower(snapshot);
     }
 
-    public void SetDemoLockKeys(LockKeys keys) => ApplyLockKeys(keys);
+    /// <summary>The demo's lock keys, compared with the demo's own last state (F-BAR-09).</summary>
+    public void SetDemoLockKeys(LockKeys keys)
+    {
+        foreach (var notice in LockKeyRules.WideFor(_demoKeys, keys)) _coordinator.ShowWide(notice);
+        _demoKeys = keys;
+    }
 
     public void ShowDemoBluetooth(BluetoothChange change) => _coordinator.ShowWide(BluetoothRules.WideFor(change));
 
@@ -359,7 +364,6 @@ public sealed class IslandController : IDisposable
         // The real state comes back quietly: a fresh first reading, the keys as they are, and the real dots.
         _battery = new BatteryAlerts();
         _battery.Update(real, _settings().BatteryAlert, _settings().UnplugReminder);
-        _keys = _lockKeys.Current;
         SetPrivacy(_privacy.Current);
     }
 
@@ -389,12 +393,6 @@ public sealed class IslandController : IDisposable
         PowerChanged?.Invoke();
         _coordinator.SetActivity(ActivityKind.Charging, PowerRules.IsCharging(snapshot));
         foreach (var notice in notices) _coordinator.ShowWide(notice);
-    }
-
-    private void ApplyLockKeys(LockKeys keys)
-    {
-        foreach (var notice in LockKeyRules.WideFor(_keys, keys)) _coordinator.ShowWide(notice);
-        _keys = keys;
     }
 
     private void SetPrivacy(PrivacyUse use)

@@ -148,7 +148,8 @@ public partial class IslandWindow : Window
         BuildTabs();
         BuildPages();
         ControlLayer.Child = _powerPage = new PowerPage(island);
-        SizeExpanded();
+        // Tabs hidden in Settings before this start leave the menu now; later changes arrive through VisiblePages.
+        ApplyShownTabs();
         vm.PropertyChanged += OnViewModelChanged;
         island.ViewChanged += OnViewChanged;
         settings.Changed += _ =>

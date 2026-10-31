@@ -22,8 +22,11 @@ public sealed class LockKeyMonitor : IDisposable
 
     public LockKeys Current { get; private set; }
 
-    /// <summary>Raised on a thread-pool thread, only when a key changed.</summary>
-    public event Action<LockKeys>? Changed;
+    /// <summary>
+    /// Raised on a thread-pool thread, only when a key changed, with the reading before it: a change made while
+    /// paused was taken in quietly, so the next one compares against what the keys really were.
+    /// </summary>
+    public event Action<LockKeys, LockKeys>? Changed;
 
     /// <summary>Stops reading while polling is paused; a change made meanwhile is taken in quietly on resume.</summary>
     public void SetPaused(bool paused)
@@ -41,15 +44,16 @@ public sealed class LockKeyMonitor : IDisposable
 
     private void Poll()
     {
-        LockKeys now;
+        LockKeys before, now;
         lock (_gate)
         {
             if (_paused) return;
             now = Read();
             if (now == Current) return;
+            before = Current;
             Current = now;
         }
-        Changed?.Invoke(now);
+        Changed?.Invoke(before, now);
     }
 
     private static LockKeys Read() => new((GetKeyState(VkCapital) & 1) != 0, (GetKeyState(VkNumLock) & 1) != 0);
