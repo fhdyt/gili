@@ -785,6 +785,12 @@ li.done .chk .ic{opacity:1;transform:none}
 .srow>span{flex:1;min-width:0}
 .srow small{display:block;color:var(--text2);font-size:11.5px;margin-top:2px}
 .srow.dis{opacity:.45;pointer-events:none}
+/* The system modules in Right side reorder by their grip (PRD 6.4). */
+.srow .sgrip{flex:0 0 auto;margin:0 -4px 0 -4px;color:var(--text2);cursor:ns-resize;touch-action:none;display:grid;place-items:center}
+.srow .sgrip .ic{width:14px;height:14px}
+.srow.mv{user-select:none;transition:transform 200ms var(--out)}
+.srow.mv.lift{transition:none;position:relative;z-index:2;box-shadow:0 8px 24px rgba(0,0,0,.5);background:#2c2c2e}
+.reduce .srow.mv{transition:none}
 .srow input[type=range]{width:150px;accent-color:var(--accent)}
 .srow .num{width:38px;text-align:right}
 /* Tools window (PRD 7.5): the Settings window's frame, resizable; tabs on the left */
@@ -1323,6 +1329,8 @@ const S={
   cpu:12,gpu:4,ram:54,down:2100,up:300,
   hist:{cpu:[],ram:[],gpu:[],down:[]},
   mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1},
+  // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
+  order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,notes:1,clipboard:1,shelf:1,claude:1},tabs:[1,1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
@@ -1630,6 +1638,7 @@ function fitBar(cw){
   const rightSide=innerWidth/2-Math.max(half+bub,150)-GAP-10;
   const leftSide=innerWidth/2-Math.max(half+priv,150)-GAP-10;
   const right=$('#right'),more=$('#mMore');
+  for(const k of S.order)right.insertBefore(right.querySelector(`[data-m="${k}"]`),more);
   $$('#right [data-m]').forEach(m=>m.hidden=!S.mods[m.dataset.m]);
   more.hidden=true;const hidden=[];
   for(const k of HIDE_ORDER){
@@ -3037,7 +3046,7 @@ function applySettings(){
 }
 function renderSettings(){
   $('#setn').innerHTML=Object.keys(SET).map(n=>`<button role="tab" aria-selected="${n===setSec}" data-sec="${n}">${n}</button>`).join('');
-  $('#setp').innerHTML=`<h3>${setSec}</h3>`+SET[setSec].map(([k,label,type,opts,help])=>{
+  $('#setp').innerHTML=`<h3>${setSec}</h3>`+setRows(setSec).map(([k,label,type,opts,help])=>{
     const tabOff=k.startsWith('T.')&&leftOff(+k.split('.')[1]),ntfOff=(k==='ntfText'||k.startsWith('A.'))&&!S.ntf,v=sget(k);
     const last=k.startsWith('T.')&&lastTab(+k.split('.')[1])||k.startsWith('L.')&&LEFT_TAB[k.split('.')[1]]!=null&&lastTab(LEFT_TAB[k.split('.')[1]]);
     const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last;
@@ -3045,9 +3054,43 @@ function renderSettings(){
       :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
     const why=tabOff?'Turned off in Left side':ntfOff?'Turn on Show Windows notifications first':'Hide the Windows taskbar first';
-    return `<div class="srow ${dis?'dis':''}"><span>${label}${dis&&!last?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
+    const mk=k.startsWith('M.')&&S.order.includes(k.slice(2))?k.slice(2):null;
+    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
   }).join('');
 }
+// Right side lists the system modules in the bar's order.
+function setRows(sec){
+  if(sec!=='Right side')return SET[sec];
+  const rows=SET[sec],sys=k=>S.order.indexOf(k.slice(2)),mods=rows.filter(r=>sys(r[0])>=0).sort((a,b)=>sys(a[0])-sys(b[0]));
+  return mods.concat(rows.filter(r=>sys(r[0])<0));
+}
+function moveModule(k,to){
+  const o=S.order.filter(x=>x!==k);o.splice(Math.max(0,Math.min(o.length,to)),0,k);
+  if(o.join()===S.order.join())return false;
+  S.order=o;layout();renderSettings();return true;
+}
+// Alt + Up/Down on a module's switch moves it one step; focus stays on its switch.
+$('#setp').addEventListener('keydown',e=>{
+  const row=e.target.closest('.srow.mv');if(!row||!e.altKey||(e.key!=='ArrowUp'&&e.key!=='ArrowDown'))return;
+  e.preventDefault();const k=row.dataset.mk;
+  if(moveModule(k,S.order.indexOf(k)+(e.key==='ArrowUp'?-1:1)))$(`#setp [data-k="M.${k}"]`).focus();
+});
+// Dragging a grip lifts the row; the others slide aside, and the order is saved once on release.
+$('#setp').addEventListener('pointerdown',e=>{
+  const grip=e.target.closest('.sgrip');if(!grip)return;
+  const row=grip.closest('.srow'),rows=$$('#setp .srow.mv'),from=rows.indexOf(row),h=row.offsetHeight+4,y0=e.clientY;let to=from;
+  row.classList.add('lift');grip.setPointerCapture(e.pointerId);
+  const move=ev=>{
+    const dy=ev.clientY-y0;row.style.transform=`translateY(${dy}px)`;
+    to=Math.max(0,Math.min(rows.length-1,from+Math.round(dy/h)));
+    rows.forEach((r,i)=>{if(r!==row)r.style.transform=i>from&&i<=to?`translateY(${-h}px)`:i<from&&i>=to?`translateY(${h}px)`:''});
+  };
+  const up=()=>{
+    grip.removeEventListener('pointermove',move);grip.removeEventListener('pointerup',up);grip.removeEventListener('pointercancel',up);
+    if(!moveModule(row.dataset.mk,to))renderSettings();
+  };
+  grip.addEventListener('pointermove',move);grip.addEventListener('pointerup',up);grip.addEventListener('pointercancel',up);
+});
 function openSettings(){$('#setw').hidden=false;renderSettings();$('#setn [aria-selected="true"]').focus()}
 function closeSettings(){$('#setw').hidden=true;$('#mSet').focus()}
 $('#mSet').onclick=()=>$('#setw').hidden?openSettings():closeSettings();

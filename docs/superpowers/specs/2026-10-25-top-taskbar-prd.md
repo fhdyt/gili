@@ -699,7 +699,7 @@ Urutan default dari kiri ke kanan:
 | CPU | Nyala | `CPU` / `12%` | Klik: halaman System |
 | RAM | Nyala | `RAM` / `54%` | Hover: `8.6 / 16 GB`. Klik: halaman System |
 | GPU | Mati | `GPU` / `4%` | Klik: halaman System |
-| Disk | Mati | `C: FREE` / `120 GB` | Klik: halaman System |
+| Disk | Mati | `C: FREE` / `120 GB` (huruf drive Windows; satuan GB seperti Explorer) | Hover: `Free space on C:`. Klik: halaman System |
 | Wi‑Fi | Nyala | Ikon sinyal + kekuatan sinyal / nama jaringan (`STRONG` / `Home_5G`, nama maks. 16 karakter) | Klik: pulau Wi‑Fi (lihat "Pulau kontrol") |
 | Bluetooth | Nyala | Ikon Bluetooth saja; titik biru kecil di pojok saat ada perangkat tersambung | Klik: pulau Bluetooth. Hover: `Bluetooth · Galaxy Buds2 Pro` atau `Bluetooth · Off` |
 | Volume | Nyala | Ikon speaker yang mengikuti keadaan: mute, pelan (< 34%), sedang, keras (≥ 67%) | Klik: pulau Volume. Hover: `Volume 46%` atau `Muted` |
@@ -710,14 +710,14 @@ Urutan default dari kiri ke kanan:
 | Power | Selalu, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: pulau Power |
 
 - Ikon baterai tidak ditampilkan di bar; status ngecas tampil di pulau, dan sisa baterai ada di pulau Power.
-- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem bisa diurutkan dengan seret. Settings dan Power selalu tampil. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
+- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, dan Jam masing-masing punya saklar, dan modul sistem (Cuaca, Jaringan, CPU, RAM, GPU, Disk) bisa diurutkan dengan seret lewat pegangan titik-titik di kiri barisnya, atau Alt + panah atas/bawah pada saklarnya (Fase 3c). Modul yang sedang di "…" tetap dibaca karena daftarnya menampilkan angka. Settings dan Power selalu tampil. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
 - Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil.
 - **Sampai Fase 3** (rencana 1e, keputusan pengguna 2026-10-27: tampilan bar lengkap dengan data asli dan fungsi dasar):
   - Cuaca memakai kota default Jakarta (−6,2088, 106,8456) sampai Settings punya pilihan kota; nama kota tampil di tooltip.
   - Klik Wi‑Fi, Bluetooth, Volume, dan Brightness membuka Quick Settings Windows (`Win+A`) sampai Fase 3b, yang menggantinya dengan pulau kontrol; klik Tray membuka ikon tersembunyi Windows (`Win+B` lalu `Enter`). Pulau kontrolnya dan panel tray menyusul di Fase 3.
   - Power membuka pulau Power tanpa item `Update and …`, karena deteksi update yang menunggu baru diverifikasi di Fase 3.
   - Tanpa izin Location, Wi‑Fi hanya menampilkan ikon dengan tooltip `Allow location access for Gili to show the Wi‑Fi name (Settings > Privacy & security > Location)`.
-  - Klik CPU dan RAM membuka tab System yang berisi `Coming in Phase 3`, seperti mockup.
+  - Klik CPU dan RAM membuka tab System yang berisi `Coming in Phase 3`, seperti mockup (selesai di Fase 3c: halaman System berisi grafik).
 
 **Panel tray** (ikon aplikasi latar belakang)
 - Panel kecil yang turun dari tombol Tray (latar `#1C1C1E`, radius 12 px, bayangan lembut), berisi grid ikon notification area **semua** aplikasi latar belakang (yang di taskbar Windows tampil langsung maupun yang tersembunyi di overflow), 16 px dalam sel 32 × 32 px, maksimal 6 kolom.
@@ -1014,6 +1014,9 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Lirik lagu (revisi 8) | Satu permintaan HTTPS kecil per lagu (hanya bila Show lyrics nyala); parsing LRC sekali; pengecekan baris 4×/detik hanya selama lirik tampil dan musik diputar, dan teks diperbarui hanya saat baris berganti (sekitar tiap 4 detik) | RAM ≤ +2 MB; CPU tidak terukur; 0 saat mati | Pengecekan baris turun ke 2×/detik |
 | Ukuran teks note (revisi 8) | Satu angka per note; teks ditata ulang hanya saat ukurannya diganti | Tidak terukur | — |
 | Caps/Num Lock (Fase 3a) | Dua `GetKeyState` per 125 ms di thread pool, dijeda bersama polling lain | Tidak terukur (< 0,05%) | Turun ke 4×/detik |
+| Modul GPU (Fase 3c) | Satu query PDH wildcard `GPU Engine` per detik (±2 ms, ±470 instance di laptop pengguna) hanya saat modul GPU nyala atau halaman System terbuka | CPU ≤ 0,2% saat nyala; 0 saat mati | Dibaca tiap 2 detik |
+| Modul disk (Fase 3c) | Satu `GetDiskFreeSpaceEx` per 10 detik saat modul nyala atau halaman System terbuka | Tidak terukur | — |
+| Halaman System (Fase 3c) | Empat garis 60 titik dan lima teks digambar ulang sekali per detik hanya saat halamannya terlihat (jendela layered, digambar CPU) | CPU ≤ 0,5% selama terlihat; 0 saat tertutup | Grafik diperbarui tiap 2 detik |
 | Titik kamera/mic (Fase 3a) | Satu thread menunggu notifikasi registry `ConsentStore`; dua key dibaca hanya saat berubah; nama app dicari sekali per app. Versi MSIX tidak pernah menerima notifikasi itu (registry tervirtualisasi paket), jadi di sana dua key dibaca sekali per detik dan dijeda bersama polling lain | CPU 0% saat diam (versi GitHub), tidak terukur (versi MSIX); RAM ≤ +1 MB | — |
 | Kejadian Bluetooth (Fase 3a) | Properti tambahan di watcher perangkat yang sudah ada | Tidak terukur | — |
 | Peringatan baterai (Fase 3a) | Event `PowerManager` yang sudah ada | Tidak terukur | — |
@@ -1135,7 +1138,7 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Aplikasi berjalan dan aktif | Daftar aplikasi dari jendela yang tampil di taskbar: `EnumWindows` + `SetWinEventHook(EVENT_OBJECT_SHOW/HIDE/DESTROY)`, disaring seperti taskbar (terlihat, tanpa owner atau `WS_EX_APPWINDOW`, bukan `WS_EX_TOOLWINDOW`, tidak `DWMWA_CLOAKED`), dikelompokkan per AppUserModelID/proses. Aplikasi aktif: `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` → `GetWindowThreadProcessId` → `QueryFullProcessImageName`. Ikon dari .exe lewat `SHGetFileInfo` / `IShellItemImageFactory` (ukuran sesuai DPI); aplikasi Store dikenali dari `AppUserModelID` dan memakai logo paketnya (`Package.Logo`). Nama dari `FileDescription` versi file atau nama tampilan paket. Ikon di-cache per path atau AppUserModelID | Event |
 | Daya | `PowerManager` / `SystemInformation.PowerStatus`, `WM_POWERBROADCAST` (hanya untuk kejadian charger dan peringatan baterai) | Event |
 | Caps/Num Lock | Low-level keyboard hook + `GetKeyState` | Event |
-| CPU, GPU, disk | Performance counter (PDH): `Processor Information`, `GPU Engine`, `LogicalDisk` | Tiap 1 detik |
+| CPU, GPU, disk | CPU: performance counter `Processor Information`. GPU: PDH wildcard `\GPU Engine(*)\Utilization Percentage`, dijumlah per engine lalu diambil maksimum (rumus kolom GPU Task Manager). Disk: `GetDiskFreeSpaceEx` drive Windows (Fase 3c, menggantikan `LogicalDisk`). Semuanya hanya saat modulnya nyala atau halaman System terbuka | CPU dan GPU tiap 1 detik, disk tiap 10 detik |
 | RAM | `GlobalMemoryStatusEx` | Tiap 1 detik |
 | Jaringan | `NetworkInterface.GetIPv4Statistics` (selisih byte) | Tiap 1 detik |
 | Wi‑Fi | Native WLAN API (`WlanQueryInterface`) | Tiap 10 detik + event koneksi |
