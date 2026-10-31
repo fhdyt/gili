@@ -89,6 +89,8 @@ public static class DemoScript
             Step(24.5, new DemoOpen(IslandPage.Timer)),
             Step(26, new DemoOpen(IslandPage.Calendar)),
             Step(27.5, new DemoOpen(IslandPage.Todo)),
+            // The System page shows the laptop's own readings (plan 3c).
+            Step(28.5, new DemoOpen(IslandPage.System)),
             Step(29.5, new DemoClose()),
             // A control island, then another bar icon swaps its control without closing (plan 3b).
             Step(31, new DemoControl(ControlKind.Power)),

@@ -19,6 +19,15 @@ public static class StatText
         return (bytesPerSecond / (1024 * 1024)).ToString("0.0", Invariant) + " MB/s";
     }
 
+    /// <summary>Free disk space in Explorer's GB (1024³): whole numbers from 10 GB, one decimal below.</summary>
+    public static string Disk(ulong bytes)
+    {
+        var gb = bytes / BytesPerGB;
+        return gb >= 10 ? Math.Round(gb, MidpointRounding.AwayFromZero).ToString("0", Invariant) + " GB" : gb.ToString("0.0", Invariant) + " GB";
+    }
+
+    public static string DiskFree(ulong bytes) => Disk(bytes) + " free";
+
     public static string MemoryUsage(ulong usedBytes, ulong totalBytes) =>
         $"{(usedBytes / BytesPerGB).ToString("0.0", Invariant)} / {(totalBytes / BytesPerGB).ToString("0.#", Invariant)} GB";
 }

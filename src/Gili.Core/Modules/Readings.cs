@@ -2,6 +2,11 @@ namespace Gili.Core.Modules;
 
 public sealed record CpuReading(double Percent);
 
+public sealed record GpuReading(double Percent);
+
+/// <summary>Free space on Windows' own drive; <paramref name="Drive"/> is its letter with a colon ("C:").</summary>
+public sealed record DiskReading(string Drive, ulong FreeBytes, ulong TotalBytes);
+
 public sealed record MemoryReading(double Percent, ulong UsedBytes, ulong TotalBytes);
 
 /// <summary>

@@ -17,6 +17,17 @@ public class StatTextTests
         Assert.Equal(expected, StatText.Percent(value));
 
     [Theory]
+    [InlineData(113702154240UL, "106 GB")]
+    [InlineData(10UL * 1024 * 1024 * 1024, "10 GB")]
+    [InlineData(9019431321UL, "8.4 GB")]
+    [InlineData(0UL, "0.0 GB")]
+    public void Disk_uses_whole_gigabytes_from_ten_up(ulong bytes, string expected)
+    {
+        Assert.Equal(expected, StatText.Disk(bytes));
+        Assert.Equal(expected + " free", StatText.DiskFree(bytes));
+    }
+
+    [Theory]
     [InlineData(0, "0 B/s")]
     [InlineData(-5, "0 B/s")]
     [InlineData(512, "512 B/s")]
