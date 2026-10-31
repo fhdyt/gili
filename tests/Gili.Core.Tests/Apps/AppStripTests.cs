@@ -107,5 +107,9 @@ public class AppStripTests
         Assert.Equal(768 - (158 + 30 + 13) - 24 - 10, BarSpacing.LeftLimit(1536, 300, 24, giliCircle: true, privacyDots: 1));
 
     [Fact]
+    public void Both_privacy_dots_push_the_left_side_away() =>
+        Assert.Equal(768 - (158 + 30 + 26) - 24 - 10, BarSpacing.LeftLimit(1536, 300, 24, giliCircle: true, privacyDots: 2));
+
+    [Fact]
     public void Bubbles_push_the_right_side_away() => Assert.Equal(768 - (158 + 30) - 24 - 10, BarSpacing.RightLimit(1536, 300, 24, bubbles: 1));
 }

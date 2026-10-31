@@ -2,6 +2,9 @@ namespace Gili.Core.Island;
 
 public readonly record struct IslandGeometry(double Width, double Height, double Top, double CornerRadius);
 
+/// <summary>The top-left corner of an 8 DIP privacy dot.</summary>
+public readonly record struct DotPosition(double X, double Y);
+
 /// <summary>The bar and island heights from Settings and the primary screen's size, in DIPs.</summary>
 public readonly record struct IslandScreen(int BarHeight, int IslandHeight, double Width, double Height);
 
@@ -59,6 +62,30 @@ public static class IslandLayout
                 radius),
         };
     }
+
+    /// <summary>
+    /// The camera and microphone dots' top-left corners, camera first (PRD 6.3, mockup <c>layout()</c>): a row 6 left of the
+    /// island and Gili's circle, 13 apart, centred on the compact island; down the panel's left edge while it floats,
+    /// below Gili's circle when that shows beside a card. <paramref name="circleSpace"/> is the circle's width plus its gap
+    /// as far as its spring has come.
+    /// </summary>
+    public static IReadOnlyList<DotPosition> PrivacyDots(
+        double islandLeft, double islandTop, double islandHeight, double circleSpace, bool floating, bool circleBesideFloating, int count)
+    {
+        var dots = new DotPosition[count];
+        for (var k = 0; k < count; k++)
+        {
+            dots[k] = floating
+                ? new(islandLeft - BubbleGap - DotSize, islandTop + (circleBesideFloating ? islandHeight + 8 : 20) + k * DotStep)
+                : new(islandLeft - BubbleGap - DotSize - circleSpace - k * DotStep, islandTop + islandHeight / 2 - DotSize / 2);
+        }
+        return dots;
+    }
+
+    public const double DotSize = 8;
+
+    /// <summary>A dot and the 5 DIP after it.</summary>
+    public const double DotStep = 13;
 
     /// <summary>A bar element fades while the floating island covers it, with 8 DIP to spare on each side (PRD 6.3).</summary>
     public static bool Covers(double islandLeft, double islandRight, double elementLeft, double elementRight) =>
