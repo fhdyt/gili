@@ -43,6 +43,14 @@ public partial class IslandWindow : Window
     private readonly Spring _bubble = new(0);
     private readonly Spring _giliInside = new(1) { Parameters = GiliRules.ShapeSpring };
     private readonly Spring _giliCircle = new(0) { Parameters = GiliRules.ShapeSpring };
+    private readonly Spring _cameraDot = new(0) { Parameters = GiliRules.ShapeSpring };
+    private readonly Spring _microphoneDot = new(0) { Parameters = GiliRules.ShapeSpring };
+    private readonly ScaleTransform _cameraScale = new(0, 0);
+    private readonly ScaleTransform _microphoneScale = new(0, 0);
+    // Where each dot last stood, so one that goes away shrinks in place.
+    private DotPosition _cameraAt;
+    private DotPosition _microphoneAt;
+    private int _dots;
     private readonly Spring[] _springs;
     private readonly GiliService _gili;
     private readonly PowerPage _powerPage;
@@ -100,9 +108,12 @@ public partial class IslandWindow : Window
         _vm = vm;
         _settings = settings;
         _gili = gili;
-        _springs = [_width, _height, _top, _radius, _float, _bubble, _giliInside, _giliCircle];
+        _springs = [_width, _height, _top, _radius, _float, _bubble, _giliInside, _giliCircle, _cameraDot, _microphoneDot];
         InitializeComponent();
         DataContext = vm;
+        CameraDot.RenderTransform = _cameraScale;
+        MicrophoneDot.RenderTransform = _microphoneScale;
+        island.PrivacyChanged += UpdatePrivacy;
         Body.Clip = _clip;
         Bubble.RenderTransform = _bubbleScale;
         GiliInside.RenderTransform = new TransformGroup { Children = { _giliInsideScale, _giliInsideShift } };
@@ -173,7 +184,8 @@ public partial class IslandWindow : Window
     public event Action<bool, double>? FloatingChanged;
 
     /// <summary>The compact island's width without hover, and whether Gili's circle shows beside it.</summary>
-    public event Action<double, bool>? CompactChanged;
+    /// <summary>The compact island's width, whether Gili's circle shows beside it, and how many privacy dots do.</summary>
+    public event Action<double, bool, int>? CompactChanged;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -192,15 +204,52 @@ public partial class IslandWindow : Window
         return new(s.BarHeight, s.IslandHeight, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight);
     }
 
-    private (double Width, bool Circle) _compactSent;
+    private (double Width, bool Circle, int Dots) _compactSent;
 
     private void NotifyCompact(double content)
     {
         var width = Math.Max(IslandLayout.MinCompactWidth, content + IslandLayout.CompactPadding);
-        var sent = (width, _giliCircleOn == true);
+        var sent = (width, _giliCircleOn == true, _dots);
         if (sent == _compactSent) return;
         _compactSent = sent;
-        CompactChanged?.Invoke(sent.width, sent.Item2);
+        CompactChanged?.Invoke(sent.width, sent.Item2, sent.Item3);
+    }
+
+    /// <summary>
+    /// The privacy dots show in every island state but fullscreen, where the bar hides too (PRD 6.3): they grow from
+    /// nothing on a spring, or cross-fade in 100 ms with Windows animations off.
+    /// </summary>
+    private void UpdatePrivacy()
+    {
+        var use = _island.Privacy;
+        var shown = _mode != IslandMode.Hidden;
+        var instant = !SystemParameters.ClientAreaAnimation;
+        ShowDot(CameraDot, _cameraDot, shown && use.Camera, use.Camera ? Gili.Core.Devices.PrivacyText.Camera(use.CameraApps) : null, instant);
+        ShowDot(MicrophoneDot, _microphoneDot, shown && use.Microphone,
+            use.Microphone ? Gili.Core.Devices.PrivacyText.Microphone(use.MicrophoneApps) : null, instant);
+        _dots = shown ? use.Count : 0;
+        NotifyCompact(CompactContent.ActualWidth);
+        if (instant) Apply();
+        else StartAnimating();
+    }
+
+    private static void ShowDot(Border dot, Spring scale, bool on, string? text, bool instant)
+    {
+        if (text is not null)
+        {
+            dot.ToolTip = text;
+            AutomationProperties.SetName(dot, text);
+        }
+        dot.IsHitTestVisible = on;
+        if (instant)
+        {
+            scale.SnapTo(on ? 1 : 0);
+            dot.BeginAnimation(OpacityProperty, new DoubleAnimation(on ? 1 : 0, TimeSpan.FromMilliseconds(100)));
+            return;
+        }
+        dot.BeginAnimation(OpacityProperty, null);
+        dot.Opacity = 1;
+        scale.Target = on ? 1 : 0;
     }
 
     private static bool Floats(IslandMode mode) => mode is IslandMode.Expanded or IslandMode.Card or IslandMode.DropZone;
@@ -223,6 +272,7 @@ public partial class IslandWindow : Window
         ShowLayers(view.Mode);
         Relayout(Floats(view.Mode) ? SpringParameters.Open : Floats(previous) ? SpringParameters.Close : SpringParameters.Resize);
         UpdateGili();
+        UpdatePrivacy();
         UpdateGlow();
         FloatingChanged?.Invoke(Floats(view.Mode), Floats(view.Mode) ? Target(0, false).Width : 0);
     }
@@ -378,6 +428,25 @@ public partial class IslandWindow : Window
         Canvas.SetLeft(GiliCircle, islandLeft - s.IslandHeight / 2.0 + circle * (-IslandLayout.BubbleGap - s.IslandHeight / 2.0));
         Canvas.SetTop(GiliCircle, (s.BarHeight - s.IslandHeight) / 2.0);
         _giliCircleScale.ScaleX = _giliCircleScale.ScaleY = 0.6 + 0.4 * circle;
+
+        // The dots stand left of the island and Gili's circle, camera nearest; down the panel's edge while it floats.
+        var use = _island.Privacy;
+        var count = _dots;
+        var dots = IslandLayout.PrivacyDots(islandLeft, _top.Value, s.IslandHeight, (s.IslandHeight + IslandLayout.BubbleGap) * circle,
+            Floats(_mode), circleBesideFloating: false, count);
+        var next = 0;
+        if (use.Camera && next < count) _cameraAt = dots[next++];
+        if (use.Microphone && next < count) _microphoneAt = dots[next];
+        PlaceDot(CameraDot, _cameraScale, _cameraAt, _cameraDot.Value);
+        PlaceDot(MicrophoneDot, _microphoneScale, _microphoneAt, _microphoneDot.Value);
+    }
+
+    private static void PlaceDot(Border dot, ScaleTransform scale, DotPosition at, double size)
+    {
+        // The 20 px hover area centres on the 8 px dot.
+        Canvas.SetLeft(dot, at.X - 6);
+        Canvas.SetTop(dot, at.Y - 6);
+        scale.ScaleX = scale.ScaleY = Math.Max(0, size);
     }
 
     /// <summary>

@@ -31,6 +31,7 @@ public partial class BarWindow : Window
     private readonly RightService _right;
     private double _compactWidth = IslandLayout.MinCompactWidth;
     private bool _giliCircle;
+    private int _privacyDots;
     private AppBarService? _appBar;
     private IntPtr _hwnd;
     private bool _quitting;
@@ -95,10 +96,11 @@ public partial class BarWindow : Window
     /// The compact island's width (without hover) and whether Gili's circle sits beside it: the left side stays 24 px
     /// away from both (PRD 6.1 "Aturan jarak").
     /// </summary>
-    public void SetIslandCompact(double width, bool giliCircle)
+    public void SetIslandCompact(double width, bool giliCircle, int privacyDots)
     {
         _compactWidth = width;
         _giliCircle = giliCircle;
+        _privacyDots = privacyDots;
         UpdateLeftLimit();
     }
 
@@ -106,7 +108,7 @@ public partial class BarWindow : Window
     {
         if (ActualWidth <= 0) return;
         var s = _settings.Current;
-        _left.SetLimit(BarSpacing.LeftLimit(ActualWidth, _compactWidth, s.IslandHeight, _giliCircle, privacyDots: 0));
+        _left.SetLimit(BarSpacing.LeftLimit(ActualWidth, _compactWidth, s.IslandHeight, _giliCircle, _privacyDots));
         FitRight();
     }
 

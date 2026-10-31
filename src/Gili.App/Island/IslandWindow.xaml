@@ -231,6 +231,17 @@
             </Grid>
         </Border>
 
+        <!-- Camera and microphone dots (PRD 6.3 "Indikator kamera dan mikrofon"): 8 px with a thin dark edge, in a 20 px
+             area so the pointer finds them; the near-clear fill keeps that area hit-testable in the layered window. -->
+        <Border x:Name="CameraDot" Width="20" Height="20" Background="#01000000" RenderTransformOrigin="0.5,0.5" Opacity="0"
+                IsHitTestVisible="False" ToolTipService.InitialShowDelay="300">
+            <Ellipse Width="8" Height="8" Fill="#30D158" Stroke="#59000000" StrokeThickness="1.5" />
+        </Border>
+        <Border x:Name="MicrophoneDot" Width="20" Height="20" Background="#01000000" RenderTransformOrigin="0.5,0.5" Opacity="0"
+                IsHitTestVisible="False" ToolTipService.InitialShowDelay="300">
+            <Ellipse Width="8" Height="8" Fill="#FF9F0A" Stroke="#59000000" StrokeThickness="1.5" />
+        </Border>
+
         <!-- Gili's circle 6 px left of the island while an activity shows (PRD 6.3 "Maskot Gili"). -->
         <Border x:Name="GiliCircle" Background="#000000" RenderTransformOrigin="0.5,0.5" Opacity="0" IsHitTestVisible="False"
                 MouseLeftButtonUp="OnBodyClick">
