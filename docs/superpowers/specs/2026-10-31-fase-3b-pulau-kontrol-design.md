@@ -122,3 +122,18 @@ Sudah ada baris "Pulau kontrol": 0 saat tidak tampil. Fase ini menambah: satu `W
 ## Yang diserahkan ke pembangun
 
 Nama kelas dan pembagian file di dalam lapisan, cara memudarkan isi lama saat ganti kontrol, dan susunan XAML selama tampilannya sama dengan mockup.
+
+## Temuan saat implementasi
+
+- **Query association endpoint Bluetooth bisa menggantung selamanya.** Di laptop pengguna, `DeviceInformation.FindAllAsync` dengan `DeviceInformationKind.AssociationEndpoint` awalnya cepat, lalu tidak pernah selesai (dicek sampai 15 detik), sementara selector `BluetoothDevice/BluetoothLEDevice.GetDeviceSelectorFromPairingState(true)` tetap menjawab dalam ±90 ms dengan properti yang sama (`IsConnected`, `ContainerId`, kelas perangkat, appearance, baterai). Daftar perangkat memakai selector itu, dan `RightService` memberi batas 5 detik plus log bila tetap macet.
+- **Dua kelas `[ComImport]` dengan CLSID yang sama di satu assembly** (enumerator perangkat audio di `AudioMonitor` dan `AudioDevices`) membuat runtime mengembalikan wrapper kelas yang lain, dan pulau Volume crash saat dibuka. `AudioDevices` membuat objek COM lewat CLSID (`Type.GetTypeFromCLSID`).
+- **Tinggi pulau setelah daftar terisi**: mengukur kontrol langsung memakai hasil ukur lama, karena daftar yang baru diisi hanya ditandai untuk layout. `IslandWindow` menata ulang kontrol dulu (`UpdateLayout`) sebelum mengukurnya.
+- **Saklar dan pembaca layar**: `Toggle` dari UI Automation tidak memicu `Click`, jadi saklar Wi‑Fi, Airplane, dan Bluetooth memakai `Checked`/`Unchecked` dengan penjaga saat tampilan diperbarui dari kode.
+- **Paket MSIX dengan capability baru** tidak mau didaftarkan ulang di versi yang sama dalam Developer Mode; versi dinaikkan ke 0.1.1 (menghapus paket lama akan ikut menghapus data di LocalState).
+- **Belum teruji dengan perangkat nyata**: menyambung/memutus earbuds (perintah KS diterima Windows, tetapi tidak ada earbuds yang menyala), menyambung ke jaringan Wi‑Fi tersimpan lain, dan Airplane mode (tidak diuji karena memutus jaringan sesi pengembangan). Modul kanan di bar (Wi‑Fi, Bluetooth, Volume, Brightness, Power) tidak punya peer UI Automation, jadi klik sungguhan di ikon bar perlu dicek pengguna.
+
+## Hasil verifikasi
+
+- Release 0 warning, 662 tes lulus, format bersih.
+- Kelima pulau tampil sesuai mockup di build pengembangan; daftar Wi‑Fi dan saklar Bluetooth bekerja di salinan GitHub dan MSIX.
+- Build Debug: CPU diam 0,43% sebelum dan 0,49% sesudah; RAM 79,9 MB di awal, ±100 MB saat pulau baru saja dibuka, 78,1 MB 30 detik setelah kelima pulau dibuka 5 kali.
