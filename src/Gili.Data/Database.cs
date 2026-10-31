@@ -15,13 +15,16 @@ public sealed class Database : IDisposable
 {
     public const string FileName = "gili.db";
 
-    private Database(SqliteConnection connection, string filePath, int version, OpenOutcome outcome, string? corruptCopy)
+    private Database(SqliteConnection connection, string filePath, int version, OpenOutcome outcome, string? corruptCopy,
+        string? restoredFrom, string? migrationCopy)
     {
         Connection = connection;
         FilePath = filePath;
         Version = version;
         Outcome = outcome;
         CorruptCopy = corruptCopy;
+        RestoredFrom = restoredFrom;
+        MigrationCopy = migrationCopy;
     }
 
     public SqliteConnection Connection { get; }
@@ -35,18 +38,49 @@ public sealed class Database : IDisposable
     /// <summary>Where the corrupt file was kept, when there was one.</summary>
     public string? CorruptCopy { get; }
 
-    public static Database Open(string folder)
+    /// <summary>The backup or keep copy the file came from, when it was restored.</summary>
+    public string? RestoredFrom { get; }
+
+    /// <summary>The copy made before an older schema was migrated, when there was one.</summary>
+    public string? MigrationCopy { get; }
+
+    /// <summary>
+    /// Opens gili.db in <paramref name="folder"/>. A missing file, as after a reinstall, comes from the newest copy in
+    /// <paramref name="keepFolder"/>; a corrupt one from the daily backups, then the keep copies (design 2026-10-31
+    /// data tetap). An older schema is copied to backups\gili-before-v&lt;N&gt;.db before it is migrated.
+    /// </summary>
+    public static Database Open(string folder, string? keepFolder = null)
     {
         Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, FileName);
-        if (!File.Exists(path) || TryOpen(path) is not { } connection)
+        var outcome = OpenOutcome.Normal;
+        string? corrupt = null, restoredFrom = null;
+        var connection = File.Exists(path) ? TryOpen(path) : null;
+        if (connection is null)
         {
-            var corrupt = File.Exists(path) ? SetAside(path) : null;
-            var (restored, outcome) = corrupt is null ? (null, OpenOutcome.Normal) : Restore(path, Path.Combine(folder, Backups.FolderName));
-            connection = restored ?? TryOpen(path) ?? throw new InvalidOperationException("Could not create " + path);
-            return new Database(connection, path, Migrations.Apply(connection), outcome, corrupt);
+            if (File.Exists(path)) corrupt = SetAside(path);
+            IEnumerable<string> sources = corrupt is null
+                ? Backups.List(keepFolder)
+                : [.. Backups.List(Path.Combine(folder, Backups.FolderName)), .. Backups.List(keepFolder)];
+            (connection, restoredFrom) = Restore(path, sources);
+            if (connection is not null) outcome = OpenOutcome.RestoredFromBackup;
+            else if (corrupt is not null) outcome = OpenOutcome.CreatedNew;
+            connection ??= TryOpen(path) ?? throw new InvalidOperationException("Could not create " + path);
         }
-        return new Database(connection, path, Migrations.Apply(connection), OpenOutcome.Normal, null);
+        var migrationCopy = CopyBeforeMigration(connection, folder);
+        return new Database(connection, path, Migrations.Apply(connection), outcome, corrupt, restoredFrom, migrationCopy);
+    }
+
+    /// <summary>A file written by an older Gili is copied as it was, so a faulty migration step never costs the notes.</summary>
+    private static string? CopyBeforeMigration(SqliteConnection connection, string folder)
+    {
+        var stored = Migrations.Stored(connection);
+        if (stored == 0 || stored >= Migrations.Steps.Count) return null;
+        var backups = Path.Combine(folder, Backups.FolderName);
+        Directory.CreateDirectory(backups);
+        var copy = Path.Combine(backups, $"gili-before-v{Migrations.Steps.Count}.db");
+        Backups.Copy(connection, copy);
+        return copy;
     }
 
     public void Dispose() => Connection.Dispose();
@@ -83,14 +117,14 @@ public sealed class Database : IDisposable
         return target;
     }
 
-    private static (SqliteConnection? Connection, OpenOutcome Outcome) Restore(string path, string backups)
+    private static (SqliteConnection? Connection, string? Source) Restore(string path, IEnumerable<string> sources)
     {
-        foreach (var backup in Backups.List(backups))
+        foreach (var backup in sources)
         {
             File.Copy(backup, path, overwrite: true);
-            if (TryOpen(path) is { } connection) return (connection, OpenOutcome.RestoredFromBackup);
+            if (TryOpen(path) is { } connection) return (connection, backup);
             File.Delete(path);
         }
-        return (null, OpenOutcome.CreatedNew);
+        return (null, null);
     }
 }

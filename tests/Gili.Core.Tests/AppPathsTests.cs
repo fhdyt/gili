@@ -16,6 +16,10 @@ public class AppPathsTests
 
 public class DataFoldersTests
 {
+    [Fact]
+    public void Keep_copies_live_outside_every_data_folder() =>
+        Assert.Equal(@"C:\Users\a\.gili\backups", AppPaths.KeepFolderIn(@"C:\Users\a"));
+
     private const string Install = @"C:\Users\a\AppData\Local\Programs\Gili";
 
     [Fact]

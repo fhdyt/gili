@@ -71,10 +71,16 @@ internal static class Migrations
         "ALTER TABLE todos ADD COLUMN due_time TEXT;",
     ];
 
-    public static int Apply(SqliteConnection connection)
+    /// <summary>The schema version the file holds; 0 for a new file.</summary>
+    public static int Stored(SqliteConnection connection)
     {
         Execute(connection, null, "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)");
-        var version = Current(connection);
+        return Current(connection);
+    }
+
+    public static int Apply(SqliteConnection connection)
+    {
+        var version = Stored(connection);
         for (var step = version; step < Steps.Count; step++)
         {
             using var transaction = connection.BeginTransaction();

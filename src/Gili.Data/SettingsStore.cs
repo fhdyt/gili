@@ -35,6 +35,29 @@ public sealed class SettingsStore(string directory)
         }
     }
 
+    /// <summary>
+    /// Puts the keep copy in place when there is no settings.json yet, as after a reinstall (design 2026-10-31 data
+    /// tetap). An existing file is never replaced.
+    /// </summary>
+    public bool RestoreFrom(string folder)
+    {
+        var copy = Path.Combine(folder, Path.GetFileName(FilePath));
+        if (File.Exists(FilePath) || !File.Exists(copy)) return false;
+        Directory.CreateDirectory(directory);
+        File.Copy(copy, FilePath);
+        return true;
+    }
+
+    /// <summary>Copies settings.json into the keep folder, through a temp file; nothing happens before the first save.</summary>
+    public static void CopyTo(string settingsPath, string folder)
+    {
+        if (!File.Exists(settingsPath)) return;
+        Directory.CreateDirectory(folder);
+        var target = Path.Combine(folder, Path.GetFileName(settingsPath));
+        File.Copy(settingsPath, target + ".tmp", overwrite: true);
+        File.Move(target + ".tmp", target, overwrite: true);
+    }
+
     /// <summary>Writes to a temp file first so a crash mid-write never leaves a half-written settings.json.</summary>
     public void Save(AppSettings settings)
     {

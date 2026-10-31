@@ -31,6 +31,7 @@ public partial class App : Application
     private FileLog? _log;
     private SingleInstance? _instance;
     private SettingsHub? _settings;
+    private SettingsStore? _settingsStore;
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
     private bool _systemPageShown;
@@ -87,6 +88,8 @@ public partial class App : Application
         }
 
         var store = new SettingsStore(Data.Root);
+        _settingsStore = store;
+        RestoreSettings(store);
         var loaded = store.Load();
         if (loaded.WasCorrupt) _log.Write("settings.json could not be read; renamed to settings.json.bak and using defaults");
         _settings = new SettingsHub(store, loaded.Settings, _log);
@@ -196,6 +199,9 @@ public partial class App : Application
     {
         // Before the database closes: what was typed in the last half second is written too (F-TOOL-09).
         FlushNotes();
+        // So a reinstall right after quitting finds everything that was typed (design 2026-10-31 data tetap).
+        _settings?.Flush();
+        KeepCopy();
         _demo?.Stop();
         _sound?.Dispose();
         _backupTimer.Stop();
@@ -348,15 +354,17 @@ public partial class App : Application
     {
         try
         {
-            _database = Database.Open(Data.Root);
+            _database = Database.Open(Data.Root, AppPaths.KeepFolder);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
         {
             _log?.Write("Could not open gili.db", ex);
             return;
         }
-        if (_database.Outcome != OpenOutcome.Normal)
+        if (_database.CorruptCopy is not null)
             _log?.Write($"gili.db was corrupt ({_database.Outcome}); the broken file is kept at {_database.CorruptCopy}");
+        if (_database.RestoredFrom is not null) _log?.Write($"Restored gili.db from {_database.RestoredFrom}");
+        if (_database.MigrationCopy is not null) _log?.Write($"Copied gili.db to {_database.MigrationCopy} before migrating it");
         BackUp();
         _backupTimer.Tick += (_, _) => BackUp();
         _backupTimer.Start();
@@ -396,6 +404,39 @@ public partial class App : Application
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException)
         {
             _log?.Write("Could not back up gili.db", ex);
+        }
+        KeepCopy();
+    }
+
+    /// <summary>
+    /// Refreshes today's keep copy of gili.db and settings.json in %USERPROFILE%\.gili, at start, hourly and on quit, so a
+    /// reinstall loses at most an hour (design 2026-10-31 data tetap). The folder is hidden to keep the profile tidy.
+    /// </summary>
+    private void KeepCopy()
+    {
+        try
+        {
+            if (_database is not null) Backups.Refresh(_database, AppPaths.KeepFolder, DateOnly.FromDateTime(DateTime.Now));
+            if (_settingsStore is not null) SettingsStore.CopyTo(_settingsStore.FilePath, AppPaths.KeepFolder);
+            var root = new DirectoryInfo(Path.GetDirectoryName(AppPaths.KeepFolder)!);
+            if (root.Exists && !root.Attributes.HasFlag(FileAttributes.Hidden)) root.Attributes |= FileAttributes.Hidden;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            _log?.Write("Could not write the keep copy", ex);
+        }
+    }
+
+    /// <summary>A reinstall starts without settings.json; the keep copy brings the user's settings back.</summary>
+    private void RestoreSettings(SettingsStore store)
+    {
+        try
+        {
+            if (store.RestoreFrom(AppPaths.KeepFolder)) _log?.Write("Restored settings.json from the keep copy");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log?.Write("Could not restore settings.json", ex);
         }
     }
 

@@ -16,6 +16,15 @@ public static class AppPaths
 
     public static string InstallDirectory { get; } = Path.Combine(LocalAppData, "Programs", "Gili");
 
+    /// <summary>
+    /// Copies of gili.db and settings.json outside every data folder, which a reinstall finds again: uninstalling the
+    /// Store copy deletes its package folder, backups included (design 2026-10-31 data tetap). Packages don't
+    /// virtualize the profile folder, so the Store and GitHub copies share it.
+    /// </summary>
+    public static string KeepFolder { get; } = KeepFolderIn(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+
+    public static string KeepFolderIn(string userProfile) => Path.Combine(userProfile, ".gili", "backups");
+
     /// <summary>The Store package keeps its data in the package's own folder; every other copy in %LOCALAPPDATA%\Gili.</summary>
     public static DataFolders Data(string? packageLocalFolder) => new(packageLocalFolder ?? Path.Combine(LocalAppData, "Gili"));
 
