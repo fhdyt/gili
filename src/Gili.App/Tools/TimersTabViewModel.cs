@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Gili.App.Island;
@@ -10,13 +9,10 @@ namespace Gili.App.Tools;
 /// <summary>A labeled timer in Tools: its time, Start / Pause / Resume, Reset, Edit and a Delete that asks for a second click within 3 s.</summary>
 public sealed partial class ToolTimerRowViewModel : ObservableObject
 {
-    private readonly DispatcherTimer _confirm = new() { Interval = TimeSpan.FromSeconds(3) };
-
     [ObservableProperty] private string _time = "";
     [ObservableProperty] private string _label = "";
     [ObservableProperty] private string _detail = "";
     [ObservableProperty] private string _buttonText = "Start";
-    [ObservableProperty] private string _deleteText = "Delete";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ResetCommand))]
@@ -28,18 +24,7 @@ public sealed partial class ToolTimerRowViewModel : ObservableObject
         StartCommand = new RelayCommand(() => timers.StartOrPause(Id));
         ResetCommand = new RelayCommand(() => timers.ResetTimer(Id), () => CanReset);
         EditCommand = new RelayCommand(() => edit(Id));
-        DeleteCommand = new RelayCommand(() =>
-        {
-            if (_confirm.IsEnabled)
-            {
-                Reset();
-                timers.DeleteTimer(Id);
-                return;
-            }
-            DeleteText = "Click again to delete";
-            _confirm.Start();
-        });
-        _confirm.Tick += (_, _) => Reset();
+        Delete = new DeleteConfirm(() => timers.DeleteTimer(Id));
     }
 
     public long Id { get; }
@@ -50,7 +35,7 @@ public sealed partial class ToolTimerRowViewModel : ObservableObject
 
     public IRelayCommand EditCommand { get; }
 
-    public IRelayCommand DeleteCommand { get; }
+    public DeleteConfirm Delete { get; }
 
     public void Show(LabeledTimer timer, DateTimeOffset now)
     {
@@ -62,11 +47,7 @@ public sealed partial class ToolTimerRowViewModel : ObservableObject
         CanReset = clock.IsRunning || clock.IsPaused;
     }
 
-    public void Reset()
-    {
-        _confirm.Stop();
-        DeleteText = "Delete";
-    }
+    public void Reset() => Delete.Reset();
 }
 
 /// <summary>The Timer tab in Tools (F-TOOL-01): New timer, the list, and the editor above it while open. Follows <c>TimerService.Changed</c>.</summary>

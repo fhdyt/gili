@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Gili.App.Island;
@@ -9,36 +8,17 @@ namespace Gili.App.Tools;
 /// <summary>An alarm in Tools: the page's row plus Edit and a Delete that asks for a second click within 3 s.</summary>
 public sealed partial class ToolAlarmRowViewModel : AlarmRowViewModel
 {
-    private readonly DispatcherTimer _confirm = new() { Interval = TimeSpan.FromSeconds(3) };
-
-    [ObservableProperty] private string _deleteText = "Delete";
-
     public ToolAlarmRowViewModel(long id, AlarmService alarms, Action<long> edit) : base(id, alarms.SetEnabled)
     {
         EditCommand = new RelayCommand(() => edit(Id));
-        DeleteCommand = new RelayCommand(() =>
-        {
-            if (_confirm.IsEnabled)
-            {
-                Reset();
-                alarms.Delete(Id);
-                return;
-            }
-            DeleteText = "Click again to delete";
-            _confirm.Start();
-        });
-        _confirm.Tick += (_, _) => Reset();
+        Delete = new DeleteConfirm(() => alarms.Delete(Id));
     }
 
     public IRelayCommand EditCommand { get; }
 
-    public IRelayCommand DeleteCommand { get; }
+    public DeleteConfirm Delete { get; }
 
-    public void Reset()
-    {
-        _confirm.Stop();
-        DeleteText = "Delete";
-    }
+    public void Reset() => Delete.Reset();
 }
 
 /// <summary>The Alarms tab in Tools (F-TOOL-05): New alarm, the list, and the editor above it while open.</summary>

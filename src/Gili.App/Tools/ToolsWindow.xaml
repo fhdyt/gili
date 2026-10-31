@@ -159,8 +159,8 @@
                                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource ToolButton}" Content="Edit" Margin="12,0,0,0" Command="{Binding EditCommand}"
                                                         AutomationProperties.Name="{Binding Time, StringFormat='Edit alarm {0}'}" />
-                                                <Button Style="{StaticResource DangerToolButton}" Content="{Binding DeleteText}" Margin="12,0,0,0"
-                                                        Command="{Binding DeleteCommand}" AutomationProperties.Name="{Binding Time, StringFormat='Delete alarm {0}'}" />
+                                                <Button Style="{StaticResource DangerToolButton}" Content="{Binding Delete.Text}" Margin="12,0,0,0"
+                                                        Command="{Binding Delete.Command}" AutomationProperties.Name="{Binding Time, StringFormat='Delete alarm {0}'}" />
                                                 <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IsOn}" Margin="12,0,0,0"
                                                               AutomationProperties.Name="{Binding Time, StringFormat='Alarm {0}'}" />
                                             </StackPanel>

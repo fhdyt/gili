@@ -61,7 +61,7 @@
                                         AutomationProperties.Name="{Binding Label, StringFormat='Reset {0}'}" />
                                 <Button Style="{StaticResource ToolButton}" Content="Edit" Margin="12,0,0,0" Command="{Binding EditCommand}"
                                         AutomationProperties.Name="{Binding Label, StringFormat='Edit {0}'}" />
-                                <Button Style="{StaticResource DangerToolButton}" Content="{Binding DeleteText}" Margin="12,0,0,0" Command="{Binding DeleteCommand}"
+                                <Button Style="{StaticResource DangerToolButton}" Content="{Binding Delete.Text}" Margin="12,0,0,0" Command="{Binding Delete.Command}"
                                         AutomationProperties.Name="{Binding Label, StringFormat='Delete {0}'}" />
                             </StackPanel>
                             <StackPanel VerticalAlignment="Center">

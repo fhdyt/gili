@@ -185,10 +185,12 @@ public sealed class TimerService
     {
         if (Find(id) is not { } timer) return;
         var clock = seconds == timer.Clock.TotalSeconds ? timer.Clock : timer.Clock.WithTotal(seconds);
-        var cleaned = LabeledTimer.CleanLabel(label);
-        Replace(timer with { Label = cleaned, Clock = clock });
-        if (!ReferenceEquals(clock, timer.Clock)) Stale?.Invoke(CardId(id));
-        else if (cleaned != timer.Label) Relabeled?.Invoke(CardId(id));
+        Replace(timer with { Label = LabeledTimer.CleanLabel(label), Clock = clock });
+        switch (TimerCardRules.ForEdit(timer, label, seconds))
+        {
+            case CardEffect.Dismiss: Stale?.Invoke(CardId(id)); break;
+            case CardEffect.Refresh: Relabeled?.Invoke(CardId(id)); break;
+        }
     }
 
     public void DeleteTimer(long id)
@@ -204,7 +206,7 @@ public sealed class TimerService
     public void StartOrPause(long id)
     {
         if (Find(id) is not { } timer) return;
-        var starting = !timer.Clock.IsRunning;
+        var starting = TimerCardRules.StartOrPauseDismisses(timer.Clock);
         Replace(timer with { Clock = starting ? timer.Clock.Start(Now) : timer.Clock.Pause(Now) });
         // Started from Tools while its card shows: the card is answered.
         if (starting) Stale?.Invoke(CardId(id));
@@ -214,7 +216,7 @@ public sealed class TimerService
     {
         if (Find(id) is not { } timer) return;
         Replace(timer with { Clock = timer.Clock.Reset() });
-        Stale?.Invoke(CardId(id));
+        if (TimerCardRules.ResetDismisses) Stale?.Invoke(CardId(id));
     }
 
     public void RepeatTimer(long id)
