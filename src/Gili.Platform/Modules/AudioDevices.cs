@@ -27,6 +27,8 @@ public static class AudioDevices
     private const int OneShotDisconnect = 1;
     private const int PropertyGet = 1;
 
+    private static readonly Guid EnumeratorClass = new("BCDE0395-E52F-467C-8E3D-C4579291692E");
+    private static readonly Guid PolicyConfigClass = new("870af99c-171d-4f9e-af0d-e63df40c2bc9");
     private static readonly Guid BtAudioProperties = new("7fa06c40-b8f6-4c7e-8556-e8c33a12e54d");
     private static readonly PropertyKey FriendlyName = new(new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), 14);
     private static readonly PropertyKey ContainerId = new(new Guid("8c7ed206-3f8a-4827-b3ab-ae9e1faefc6c"), 2);
@@ -38,7 +40,7 @@ public static class AudioDevices
         var outputs = new List<AudioOutput>();
         try
         {
-            var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+            var enumerator = (IMMDeviceEnumerator)Create(EnumeratorClass);
             string? defaultId = null;
             if (enumerator.GetDefaultAudioEndpoint(Render, 1, out var device) == 0 && device is not null) device.GetId(out defaultId);
             foreach (var endpoint in Endpoints(enumerator, Render, StateActive))
@@ -49,7 +51,7 @@ public static class AudioDevices
                 outputs.Add(new AudioOutput(id, name, id == defaultId, form is FormHeadphones or FormHeadset));
             }
         }
-        catch (COMException)
+        catch (Exception e) when (e is COMException or InvalidCastException)
         {
             // No audio service: the island shows "Not available".
         }
@@ -61,7 +63,7 @@ public static class AudioDevices
     {
         try
         {
-            var policy = (IPolicyConfig)new PolicyConfigClient();
+            var policy = (IPolicyConfig)Create(PolicyConfigClass);
             for (var role = 0; role < 3; role++)
             {
                 if (policy.SetDefaultEndpoint(id, role) != 0) return false;
@@ -80,10 +82,10 @@ public static class AudioDevices
         var containers = new HashSet<Guid>();
         try
         {
-            var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+            var enumerator = (IMMDeviceEnumerator)Create(EnumeratorClass);
             foreach (var (container, _) in BluetoothFilters(enumerator)) containers.Add(container);
         }
-        catch (COMException)
+        catch (Exception e) when (e is COMException or InvalidCastException)
         {
         }
         return containers;
@@ -98,7 +100,7 @@ public static class AudioDevices
         var asked = false;
         try
         {
-            var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+            var enumerator = (IMMDeviceEnumerator)Create(EnumeratorClass);
             foreach (var (found, filter) in BluetoothFilters(enumerator))
             {
                 if (found != container) continue;
@@ -106,7 +108,7 @@ public static class AudioDevices
                 if (filter.KsProperty(ref property, Marshal.SizeOf<KsProperty>(), 0, 0, out _) == 0) asked = true;
             }
         }
-        catch (COMException)
+        catch (Exception e) when (e is COMException or InvalidCastException)
         {
         }
         return asked;
@@ -196,6 +198,13 @@ public static class AudioDevices
         }
     }
 
+    /// <summary>
+    /// Creates a COM object by class ID. A second <c>[ComImport]</c> class for the device enumerator (AudioMonitor has
+    /// one) would make the runtime hand back the other class's wrapper, and the cast to this one would fail.
+    /// </summary>
+    private static object Create(Guid clsid) =>
+        Activator.CreateInstance(Type.GetTypeFromCLSID(clsid, throwOnError: true)!)!;
+
     [DllImport("ole32.dll")]
     private static extern int PropVariantClear(ref PropVariant value);
 
@@ -221,12 +230,6 @@ public static class AudioDevices
         public int Id = id;
         public int Flags = flags;
     }
-
-    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-    private class MMDeviceEnumerator;
-
-    [ComImport, Guid("870af99c-171d-4f9e-af0d-e63df40c2bc9")]
-    private class PolicyConfigClient;
 
     [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IMMDeviceEnumerator
