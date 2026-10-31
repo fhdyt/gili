@@ -76,6 +76,16 @@ public class AppSettingsTests
         Assert.Equal(expected, new AppSettings { BarOpacity = input }.Normalize().BarOpacity);
 
     [Fact]
+    public void Battery_settings_are_clamped()
+    {
+        Assert.Equal((20, 80), (new AppSettings().BatteryAlert, new AppSettings().UnplugReminder));
+        Assert.Equal(5, new AppSettings { BatteryAlert = 2 }.Normalize().BatteryAlert);
+        Assert.Equal(50, new AppSettings { BatteryAlert = 70 }.Normalize().BatteryAlert);
+        Assert.Equal(50, new AppSettings { UnplugReminder = 30 }.Normalize().UnplugReminder);
+        Assert.Equal(100, new AppSettings { UnplugReminder = 120 }.Normalize().UnplugReminder);
+    }
+
+    [Fact]
     public void Unknown_glass_value_falls_back_to_strong() =>
         Assert.Equal(GlassLevel.Strong, new AppSettings { Glass = (GlassLevel)9 }.Normalize().Glass);
 }

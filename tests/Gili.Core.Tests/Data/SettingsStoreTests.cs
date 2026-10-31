@@ -85,4 +85,12 @@ public sealed class SettingsStoreTests : IDisposable
         Store.Save(saved);
         Assert.Equal(new PomodoroPlan(50, 10, 30, 3), Store.Load().Settings.Pomodoro);
     }
+
+    [Fact]
+    public void Battery_settings_survive_a_restart()
+    {
+        Store.Save(new AppSettings { BatteryAlert = 15, UnplugReminder = 90 });
+        var loaded = Store.Load().Settings;
+        Assert.Equal((15, 90), (loaded.BatteryAlert, loaded.UnplugReminder));
+    }
 }

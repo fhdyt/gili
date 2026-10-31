@@ -67,7 +67,9 @@ public static class SettingsCatalog
             .. new[] { "Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date" }
                 .Select(n => new SettingRow("M." + n, n, SettingKind.Switch, Default: n is not ("GPU" or "Disk"))),
             new("W.city", "Weather city", SettingKind.Segment, Options: ["Jakarta"], Default: "Jakarta"),
-            new("W.bat", "Battery alert", SettingKind.Range, Unit: "%", Default: 20),
+            new("W.bat", "Battery alert", SettingKind.Range, "Also at 10%", Available: true, Unit: "%"),
+            new("W.unplug", "Unplug reminder", SettingKind.Range, "Only on laptops that keep charging past it. 100% turns it off",
+                Available: true, Unit: "%"),
         ]),
         new("Notifications",
         [
@@ -111,6 +113,8 @@ public static class SettingsCatalog
         "snd" => s.TimerSound,
         "alertVol" => s.AlertVolume,
         "ramp" => s.GraduallyIncrease,
+        "W.bat" => s.BatteryAlert,
+        "W.unplug" => s.UnplugReminder,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     };
 
@@ -130,6 +134,8 @@ public static class SettingsCatalog
         "snd" => s with { TimerSound = (string)value },
         "alertVol" => s with { AlertVolume = Number(value) },
         "ramp" => s with { GraduallyIncrease = (bool)value },
+        "W.bat" => s with { BatteryAlert = Number(value) },
+        "W.unplug" => s with { UnplugReminder = Number(value) },
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not an available row"),
     }).Normalize();
 
@@ -140,6 +146,7 @@ public static class SettingsCatalog
         "barH" => (AppSettings.MinBarHeight, AppSettings.MaxBarHeight),
         "islH" => (AppSettings.MinIslandHeight, AppSettings.MaxIslandHeight(s.BarHeight)),
         "W.bat" => (5, 50),
+        "W.unplug" => (50, 100),
         "alertVol" => (0, 100),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Not a range row"),
     };

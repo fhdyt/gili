@@ -35,6 +35,10 @@ public sealed record AppSettings
     public double WeatherLatitude { get; init; } = -6.2088;
     public double WeatherLongitude { get; init; } = 106.8456;
 
+    /// <summary>The low battery alert (5–50 %, also at 10 %) and the unplug reminder (50–100 %, 100 is off), F-ISL-11.</summary>
+    public int BatteryAlert { get; init; } = 20;
+    public int UnplugReminder { get; init; } = 80;
+
     /// <summary>The pomodoro lengths in minutes and the sessions before the long break (F-TOOL-03).</summary>
     public int PomodoroFocus { get; init; } = 25;
     public int PomodoroBreak { get; init; } = 5;
@@ -58,6 +62,8 @@ public sealed record AppSettings
             BarOpacity = Math.Clamp(BarOpacity, MinBarOpacity, MaxBarOpacity),
             Glass = Enum.IsDefined(Glass) ? Glass : GlassLevel.Strong,
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),
+            BatteryAlert = Math.Clamp(BatteryAlert, 5, 50),
+            UnplugReminder = Math.Clamp(UnplugReminder, 50, 100),
             TimerSound = Sound.Voices.Find(TimerSound).Name,
             PomodoroFocus = plan.FocusMinutes,
             PomodoroBreak = plan.BreakMinutes,

@@ -3,7 +3,11 @@ using Gili.Core.Island;
 
 namespace Gili.Core.Power;
 
-public sealed record PowerSnapshot(bool HasBattery, bool PluggedIn, bool Charging, int Percent);
+public sealed record PowerSnapshot(bool HasBattery, bool PluggedIn, bool Charging, int Percent)
+{
+    /// <summary>The laptop stopped charging by itself below full: a charge limit such as Lenovo Vantage's (plan 3a).</summary>
+    public bool OnHold => HasBattery && PluggedIn && !Charging && Percent < 100;
+}
 
 public static class PowerRules
 {

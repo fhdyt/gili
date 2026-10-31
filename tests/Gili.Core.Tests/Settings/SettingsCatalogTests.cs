@@ -17,7 +17,7 @@ public class SettingsCatalogTests
     [Fact]
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
-            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp" },
+            new HashSet<string> { "h12", "secs", "auto", "opacity", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -35,7 +35,7 @@ public class SettingsCatalogTests
     {
         var rows = Section("Right side").Rows;
         Assert.Equal(
-            ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Weather city", "Battery alert"],
+            ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Weather city", "Battery alert", "Unplug reminder"],
             rows.Select(r => r.Label));
         Assert.Equal(false, rows.Single(r => r.Label == "GPU").Default);
         Assert.Equal(false, rows.Single(r => r.Label == "Disk").Default);
@@ -103,5 +103,26 @@ public class SettingsCatalogTests
         Assert.False(SettingsCatalog.Write(s, "motion", false).AmbientMotion);
         Assert.False(SettingsCatalog.Write(s, "auto", false).Autostart);
         Assert.Equal(70, SettingsCatalog.Write(s, "opacity", 70).BarOpacity);
+    }
+
+    [Fact]
+    public void Battery_alert_reads_writes_and_says_ten_too()
+    {
+        var row = AllRows.Single(r => r.Key == "W.bat");
+        Assert.Equal("Also at 10%", row.Help);
+        Assert.Equal(20, SettingsCatalog.Read(new AppSettings(), "W.bat"));
+        Assert.Equal(15, SettingsCatalog.Write(new AppSettings(), "W.bat", 15).BatteryAlert);
+        Assert.Equal((5, 50), SettingsCatalog.Range(new AppSettings(), "W.bat"));
+    }
+
+    [Fact]
+    public void Unplug_reminder_row_reads_and_writes()
+    {
+        var row = AllRows.Single(r => r.Key == "W.unplug");
+        Assert.Equal(("Unplug reminder", SettingKind.Range, "%"), (row.Label, row.Kind, row.Unit));
+        Assert.Equal("Only on laptops that keep charging past it. 100% turns it off", row.Help);
+        Assert.Equal(80, SettingsCatalog.Read(new AppSettings(), "W.unplug"));
+        Assert.Equal(90, SettingsCatalog.Write(new AppSettings(), "W.unplug", 90).UnplugReminder);
+        Assert.Equal((50, 100), SettingsCatalog.Range(new AppSettings(), "W.unplug"));
     }
 }
