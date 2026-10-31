@@ -45,51 +45,66 @@
 
 **Files:** Create `src/Gili.Core/Notes/NoteFloat.cs`; Modify `Note.cs`, `src/Gili.Data/NoteStore.cs`; Test `tests/Gili.Core.Tests/Notes/NoteFloatTests.cs`, tes `NoteStore` yang ada.
 
-- [ ] `Note` mendapat parameter terakhir `NoteRect? Float = null`.
-- [ ] `NoteFloat`: konstanta `Width 260`, `Height 220`, `MinWidth 200`, `MinHeight 140`, `MaxWidth 520`, `MaxHeight 640`, `Max 6`, `Cascade 24`, `EdgeBand 6`, `CornerBand 12`; `bool CanFloat(int floating)`; `NoteRect Default(int floating, NoteRect work)`; `NoteRect Clamp(NoteRect rect, NoteRect work)` (ukuran dijepit ke batas dan ke area kerja, lalu posisi masuk); `NoteRect Released(double px, double py, double rx, double ry, NoteRect work)` (260 × 220 di sekitar titik lepas, sebelum dijepit); `ResizeEdges HitEdge(double x, double y, double w, double h)` (`[Flags] enum ResizeEdges { None, Left, Top, Right, Bottom }`); `NoteRect Resize(NoteRect start, ResizeEdges edges, double dx, double dy, NoteRect work)` (sisi seberang tetap, batas min/max dan area kerja, algoritma mockup); `double Radius(double from, double progress)` (lerp ke 12).
-- [ ] `NoteStore.All()` membaca `float_*` (keempatnya ada → persegi, selain itu null); `SetFloat(long id, NoteRect? rect)`.
-- [ ] Tes: posisi Float on top ke-1/ke-2, jepit di keempat sisi dan ukuran lebih besar dari area kerja, resize dari 8 arah termasuk batas, hit edge di tepi/sudut/tengah, titik lepas tetap, `CanFloat(5/6)`, store pulang-pergi termasuk null.
-- [ ] Build, test, format, publish, commit.
+- [x] `Note` mendapat parameter terakhir `NoteRect? Float = null`.
+- [x] `NoteFloat`: konstanta `Width 260`, `Height 220`, `MinWidth 200`, `MinHeight 140`, `MaxWidth 520`, `MaxHeight 640`, `Max 6`, `Cascade 24`, `EdgeBand 6`, `CornerBand 12`; `bool CanFloat(int floating)`; `NoteRect Default(int floating, NoteRect work)`; `NoteRect Clamp(NoteRect rect, NoteRect work)` (ukuran dijepit ke batas dan ke area kerja, lalu posisi masuk); `NoteRect Released(double px, double py, double rx, double ry, NoteRect work)` (260 × 220 di sekitar titik lepas, sebelum dijepit); `ResizeEdges HitEdge(double x, double y, double w, double h)` (`[Flags] enum ResizeEdges { None, Left, Top, Right, Bottom }`); `NoteRect Resize(NoteRect start, ResizeEdges edges, double dx, double dy, NoteRect work)` (sisi seberang tetap, batas min/max dan area kerja, algoritma mockup); `double Radius(double from, double progress)` (lerp ke 12).
+- [x] `NoteStore.All()` membaca `float_*` (keempatnya ada → persegi, selain itu null); `SetFloat(long id, NoteRect? rect)`.
+- [x] Tes: posisi Float on top ke-1/ke-2, jepit di keempat sisi dan ukuran lebih besar dari area kerja, resize dari 8 arah termasuk batas, hit edge di tepi/sudut/tengah, titik lepas tetap, `CanFloat(5/6)`, store pulang-pergi termasuk null.
+- [x] Build, test, format, publish, commit.
 
 ### Task 2: Jendela note mengambang, Float on top, Back to island, restart, fullscreen (App)
 
 **Files:** Create `src/Gili.App/Island/FloatingNoteWindow.cs`, `FloatingNoteShadow.cs`, `FloatingNotes.cs`; Modify `NoteService.cs`, `NotesViewModel.cs`, `NotesPage.xaml(.cs)`, `IslandWindow.xaml.cs`, `App.xaml.cs`, `SoftShadow.cs`, `IconView`/ikon.
 
-- [ ] `NoteService`: `Float(id, rect) → bool` (batas 6, tulis), `MoveFloat(id, rect)` (tulis), `Return(id) → bool dropped` (flush, float null, kosong dibuang), event `Floated`, `Returned`; `Notes` tetap semua note.
-- [ ] `NotesViewModel.Refresh` hanya note tanpa `Float`; `FloatEditing()` untuk tombol; `Hint` 2,4 detik.
-- [ ] `FloatingNoteWindow`: header seret (dijepit ke area kerja), resize 8 arah lewat `NoteFloat`, area teks dengan simpan 0,5 detik dan `Ctrl+=`/`Ctrl+-`/`Ctrl+0`, Esc, Back to island, lahir/ping, pantul masuk.
-- [ ] `FloatingNoteShadow` tembus klik, ikut posisi dan urutan z jendela note.
-- [ ] `FloatingNotes`: pulihkan saat start, jepit saat area kerja berubah, sembunyikan saat fullscreen, Float on top (posisi bertingkat), Back to island ke slot kartu (Notes terbuka) atau kapsul di tengah pulau, gembung pulau.
-- [ ] Tombol Float on top di editor; `IslandWindow` memasang ulang topmost saat membuka.
-- [ ] Build, test, format, uji di app, publish, commit.
+- [x] `NoteService`: `Float(id, rect) → bool` (batas 6, tulis), `MoveFloat(id, rect)` (tulis), `Return(id) → bool dropped` (flush, float null, kosong dibuang), event `Floated`, `Returned`; `Notes` tetap semua note.
+- [x] `NotesViewModel.Refresh` hanya note tanpa `Float`; `FloatEditing()` untuk tombol; `Hint` 2,4 detik.
+- [x] `FloatingNoteWindow`: header seret (dijepit ke area kerja), resize 8 arah lewat `NoteFloat`, area teks dengan simpan 0,5 detik dan `Ctrl+=`/`Ctrl+-`/`Ctrl+0`, Esc, Back to island, lahir/ping, pantul masuk.
+- [x] `FloatingNoteShadow` tembus klik, ikut posisi dan urutan z jendela note.
+- [x] `FloatingNotes`: pulihkan saat start, jepit saat area kerja berubah, sembunyikan saat fullscreen, Float on top (posisi bertingkat), Back to island ke slot kartu (Notes terbuka) atau kapsul di tengah pulau, gembung pulau.
+- [x] Tombol Float on top di editor; `IslandWindow` memasang ulang topmost saat membuka.
+- [x] Build, test, format, uji di app, publish, commit.
 
 ### Task 3: Seret kartu keluar pulau (robek, batal, mendarat)
 
 **Files:** Modify `NotesPage.xaml.cs`, `NoteDragWindow.cs`, `FloatingNotes.cs`.
 
-- [ ] Pointer di luar persegi pulau → robek: kartu keluar dari grid (kartu lain merapat), bayangan makin dalam 220 ms; kembali ke dalam → batal.
-- [ ] Dilepas di luar: pulau menutup, ukuran pegas ke 260 × 220 di sekitar titik lepas, isi cross-fade ke tampilan jendela, lalu jendela note mengambil alih dan fokus di akhir teks; dijepit/pantul ke area kerja.
-- [ ] Note ketujuh: tidak robek, pesan batas sekali.
-- [ ] Build, test, format, uji di app, publish, commit.
+- [x] Pointer di luar persegi pulau → robek: kartu keluar dari grid (kartu lain merapat), bayangan makin dalam 220 ms; kembali ke dalam → batal.
+- [x] Dilepas di luar: pulau menutup, ukuran pegas ke 260 × 220 di sekitar titik lepas, isi cross-fade ke tampilan jendela, lalu jendela note mengambil alih dan fokus di akhir teks; dijepit/pantul ke area kerja.
+- [x] Note ketujuh: tidak robek, pesan batas sekali.
+- [x] Build, test, format, uji di app, publish, commit.
 
 ### Task 4: Seret editor dari grip
 
 **Files:** Modify `NotesPage.xaml(.cs)`, `NoteDragWindow.cs`.
 
-- [ ] Grip 16 px di tepi atas editor (ikon grip putih 30%, 65% saat hover, tooltip). Seret menyimpan dulu, jendela seret seukuran editor dengan teks editor dan radius 16.
-- [ ] Dilepas di dalam: kembali ke bingkai editor, editor fokus. Di luar: editor tertutup tanpa animasi, note mengambang (radius 16 → 12), pulau menutup.
-- [ ] Build, test, format, uji di app, publish, commit.
+- [x] Grip 16 px di tepi atas editor (ikon grip putih 30%, 65% saat hover, tooltip). Seret menyimpan dulu, jendela seret seukuran editor dengan teks editor dan radius 16.
+- [x] Dilepas di dalam: kembali ke bingkai editor, editor fokus. Di luar: editor tertutup tanpa animasi, note mengambang (radius 16 → 12), pulau menutup.
+- [x] Build, test, format, uji di app, publish, commit.
 
 ### Task 5: Gili senang dan mengikuti note
 
 **Files:** Modify `src/Gili.Core/Mascot/GiliRules.cs`, `GiliService.cs`, `GiliEyes.cs`, `FloatingNotes.cs`; Test `GiliRulesTests`.
 
-- [ ] `GiliMood.Happy` (prioritas di atas Wide, tidak berkedip; rupa: lengkung, skala tinggi 0,42 dari bawah, sudut atas bulat) selama 0,9 detik saat note masuk ke pulau tertutup.
-- [ ] `GiliService.Watch(Func<Point?> centre, TimeSpan)`: mata mengikuti note yang dipindah dari header, yang terbang pulang, dan 1,5 detik setelah dilepas di luar pulau.
-- [ ] Demo: tidak ada keadaan pulau baru selain ekspresi; skenario demo mendapat satu "note masuk" (senang + gembung).
-- [ ] Build, test, format, uji di app, publish, commit.
+- [x] `GiliMood.Happy` (prioritas di atas Wide, tidak berkedip; rupa: lengkung, skala tinggi 0,42 dari bawah, sudut atas bulat) selama 0,9 detik saat note masuk ke pulau tertutup.
+- [x] `GiliService.Watch(Func<Point?> centre, TimeSpan)`: mata mengikuti note yang dipindah dari header, yang terbang pulang, dan 1,5 detik setelah dilepas di luar pulau.
+- [x] Demo: tidak ada keadaan pulau baru selain ekspresi; skenario demo mendapat satu "note masuk" (senang + gembung).
+- [x] Build, test, format, uji di app, publish, commit.
 
 ### Task 6: PRD, mockup, dan verifikasi akhir
 
-- [ ] PRD 6.3/8.1 mengikuti keputusan 2, 3, dan 6. Checklist manual PRD 13 untuk note mengambang dijalankan sejauh bisa tanpa input sintetis; sisanya dicatat untuk pengguna.
-- [ ] Publish, commit.
+- [x] PRD 6.3/8.1 mengikuti keputusan 2, 3, dan 6. Checklist manual PRD 13 untuk note mengambang dijalankan sejauh bisa tanpa input sintetis; sisanya dicatat untuk pengguna.
+- [x] Publish, commit.
+
+## Temuan dan verifikasi (31 Oktober 2026)
+
+11. **Penerbangan pulang di jendela sendiri** (keputusan tambahan saat Task 5). Back to island semula mengubah ukuran jendela note setiap frame; rekaman layar per 50 ms menunjukkan frame macet (307–407 ms), sudut persegi di tengah jalan, dan kapsul yang masih hijau di pulau. Jendela layered yang di-resize setiap frame tertinggal dari animasinya. Penerbangan sekarang digambar di `NoteFlightWindow`: tembus klik, ukurannya ditetapkan sekali (gabungan posisi awal dan tujuan), hanya bentuk di dalamnya yang bergerak, dan isi note memudar dari potretnya (`RenderTargetBitmap`). Rekaman ulang: mengecil dan menggelap mulus, hilang sekitar 550 ms, lalu pulau menggembung. PRD 6.3 dan 8.1 diperbarui.
+12. **Crash saat keluar (bug lama Fase 3h).** `ClaudeService.Dispose()` mengosongkan sesi, `ShowClaude` memperbarui pulau, dan `IslandWindow` memanggil `Show()` pada jendela yang sudah ditutup, jadi `--quit` berakhir crash lalu Gili restart sendiri. `App.OnExit` sekarang melepas `Changed` sebelum dispose. Diverifikasi: `--quit` tiga kali tanpa entri `Unhandled exception` baru.
+13. **Satuan dan DPI.** Laptop ini 1920 px pada DPI 125% (area kerja 1536 DIP). Note uji yang disimpan di x = 1400 DIP dijepit ke tepi kanan saat start, sesuai `NoteFloat.Clamp`.
+
+Diverifikasi tanpa input sintetis (UI Automation Invoke dan potret layar), memakai satu note uji yang ditulis langsung ke `gili.db` lalu dihapus lagi (cadangan database di scratchpad sesi):
+
+- Note mengambang dipulihkan setelah restart di tempatnya, sudut 12 px, cincin putih 10% di tepi, bayangan menggelapkan latar di bawahnya (piksel 14 → 25), jendela bayangan tepat di bawah jendela note dalam urutan z dan bergaya `WS_EX_TRANSPARENT`.
+- Back to island dengan pulau tertutup: jendela dan bayangannya hilang, `float_*` kosong lagi, pulau menggembung.
+- RAM: +3,7 MB memori privat untuk satu note 260 × 220 (anggaran 5 MB).
+- 854 tes unit lulus, `dotnet format` bersih.
+
+Belum diverifikasi, butuh mouse pengguna (checklist PRD 13): seret kartu keluar lalu masuk lagi sebelum dilepas, lepas di luar (tumbuh, pulau menutup, langsung mengetik), seret dari grip editor (lepas di dalam dan di luar, termasuk note baru kosong), Float on top, pindah dari header, resize dari keempat tepi dan sudut sampai batas, note ketujuh, Back to island saat halaman Notes terbuka, fullscreen YouTube, dan mata Gili mengikuti note yang dipindah.
