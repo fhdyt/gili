@@ -26,6 +26,7 @@ public sealed partial class IslandViewModel : ObservableObject
     private static readonly Brush Danger = Frozen("#FF453A");
     private static readonly Brush Muted = Frozen("#8E8E93");
     private static readonly Brush ClaudeOrange = Frozen("#D97757");
+    private static readonly Brush ShelfBlue = Frozen("#64D2FF");
 
     private readonly IslandController _island;
     private readonly SettingsHub _settings;
@@ -37,7 +38,7 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _artworkSize = 18;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(ShowShelfSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
 
     /// <summary>Claude's 5-hour window in the slot (mockup slotHTML 'lim'): the hourglass, Resets in or Limit reached, the time.</summary>
@@ -116,6 +117,12 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private string _clipTooltip = "";
     [ObservableProperty] private int _clipTextColumn = 4;
 
+    /// <summary>Files waiting on the Shelf (issue 37): the newest item's name or the file count, and the total size.</summary>
+    [ObservableProperty] private string _shelfSlotText = "";
+    [ObservableProperty] private string? _shelfSlotDetail;
+    [ObservableProperty] private string _shelfSlotTooltip = "";
+    [ObservableProperty] private int _shelfSlotTextColumn = 4;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasClipThumb))]
     private ImageSource? _clipThumb;
@@ -165,6 +172,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.PowerChanged += UpdatePower;
         island.Media.Updated += UpdateMedia;
         island.ClipboardChanged += UpdateClipboard;
+        island.Shelf.Changed += UpdateShelfSlot;
         island.Timers.Changed += UpdateTimerSlot;
         island.ClaudeChanged += UpdateClaude;
         island.ClaudeWindowTick += UpdateUsage;
@@ -172,6 +180,7 @@ public sealed partial class IslandViewModel : ObservableObject
         UpdateSettings();
         UpdatePower();
         UpdateMedia();
+        UpdateShelfSlot();
         UpdateView(island.View);
     }
 
@@ -200,6 +209,8 @@ public sealed partial class IslandViewModel : ObservableObject
 
     public bool ShowUsageSlot => Slot is ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow;
 
+    public bool ShowShelfSlot => Slot == ActivityKind.Shelf;
+
     public bool HasCardSubtitle => !string.IsNullOrEmpty(CardSubtitle);
 
     public bool HasCardWarning => CardWarning is not null;
@@ -207,7 +218,7 @@ public sealed partial class IslandViewModel : ObservableObject
     public bool HasCardQuote => !string.IsNullOrEmpty(CardQuote);
 
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot || ShowUsageSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot || ShowUsageSlot || ShowShelfSlot;
 
     /// <summary>
     /// The Claude slot (mockup clSlotHTML): yellow Claude glyph and Needs input, green check and Done · 4m 12s, or the
@@ -315,6 +326,15 @@ public sealed partial class IslandViewModel : ObservableObject
         ClipTooltip = snippet.Tooltip;
     }
 
+    private void UpdateShelfSlot()
+    {
+        var shelf = _island.Shelf;
+        if (shelf.Items.Count == 0) return;
+        (ShelfSlotText, ShelfSlotDetail) = Gili.Core.Shelf.ShelfText.Slot(shelf.Items);
+        ShelfSlotTextColumn = ShelfSlotDetail is null ? 4 : 2;
+        ShelfSlotTooltip = Gili.Core.Shelf.ShelfText.BarTooltip(shelf.FileCount);
+    }
+
     public bool HasCover => Cover is not null;
 
     public bool HasArtwork => Artwork is not null;
@@ -365,6 +385,7 @@ public sealed partial class IslandViewModel : ObservableObject
         {
             ActivityKind.Media => (Glyph(IsVideo ? "Icon.Film" : "Icon.Music"), IsVideo ? VideoOrange : Accent, false),
             ActivityKind.Charging => (Glyph("Icon.Bolt"), Accent, true),
+            ActivityKind.Shelf => (Glyph("Icon.Tray"), ShelfBlue, false),
             ActivityKind.Timer => (Glyph("Icon.Hourglass"), _island.Timers.Pomodoro.Clock.IsRunning
                 ? (_island.Timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green)
                 : TimerViewModel.Orange, false),

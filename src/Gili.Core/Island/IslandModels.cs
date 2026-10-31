@@ -13,9 +13,10 @@ public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
 
 /// <summary>
 /// Activities that can hold the compact slot, best first (PRD 6.3 activity order). Claude's 5-hour window is last while it
-/// runs and comes right after a waiting session once its limit is reached.
+/// runs and comes right after a waiting session once its limit is reached. Files on the Shelf come right after the
+/// short-lived ones and above every running activity (issue 37).
 /// </summary>
-public enum ActivityKind { ClipboardSnippet, ClaudeAttention, ClaudeLimit, FileOperation, Timer, Stopwatch, ClaudeWorking, Media, Charging, ClaudeWindow }
+public enum ActivityKind { ClipboardSnippet, ClaudeAttention, ClaudeLimit, FileOperation, Shelf, Timer, Stopwatch, ClaudeWorking, Media, Charging, ClaudeWindow }
 
 public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone, Clipboard, TrayDown }
 

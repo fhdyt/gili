@@ -1565,6 +1565,8 @@ function activities(){
   // The 5-hour window jumps up once the limit is hit; otherwise it is the quietest activity.
   if(S.limOn&&S.lim&&S.lim.hit)a.push('lim');
   if(S.xop||S.xopEnd)a.push('xop');
+  // Files waiting on the Shelf hold the slot above every running activity (issue 37).
+  if(S.shelf.length)a.push('shelf');
   if(S.pomo.running)a.push('pomo');else if(S.timer.running||LT.some(t=>t.run))a.push('timer');
   if(S.sw.running)a.push('sw');
   if(!a.includes('cl')&&clBy('work').length)a.push('cl');
@@ -1739,6 +1741,7 @@ function pageFor(k){
   if(k==='media')return PAGE.media;
   if(k==='timer'||k==='pomo'||k==='sw'){S.timer.mode=k;return PAGE.timer}
   if(k==='cl'||k==='lim')return PAGE.claude;
+  if(k==='shelf')return PAGE.shelf;
   return S.lastPage;
 }
 function openExpanded(p){
@@ -1902,7 +1905,7 @@ lcard.addEventListener('click',e=>{
 
 /* ---------- compact: clock and activity slot ---------- */
 let slotSig='';
-const ACT_ICON={lim:['hourglass','var(--claude)'],timer:['hourglass','var(--orange)'],pomo:['hourglass','var(--danger)'],sw:['stopwatch','var(--orange)'],charge:['bolt','var(--accent)']};
+const ACT_ICON={shelf:['tray','#64d2ff'],lim:['hourglass','var(--claude)'],timer:['hourglass','var(--orange)'],pomo:['hourglass','var(--danger)'],sw:['stopwatch','var(--orange)'],charge:['bolt','var(--accent)']};
 const cur=()=>MEDIA[S.media.i];
 const pct=()=>Math.min(100,S.media.pos/cur().d*100);
 function swMs(){return S.sw.acc+(S.sw.running?Date.now()-S.sw.start:0)}
@@ -1919,6 +1922,7 @@ function slotValue(k){
 function slotHTML(k){
   if(k==='clip')return S.clip.html;
   if(k==='cl')return clSlotHTML();
+  if(k==='shelf')return shelfSlotHTML();
   if(k==='lim')return `<span style="color:${S.lim.hit?'var(--warn)':'var(--claude)'}">${icon('hourglass')}</span><span class="k2">${S.lim.hit?'Limit reached':'Resets in'}</span><span class="num sv">${slotValue(k)}</span>`;
   if(k==='xop'){
     const x=S.xop,o=XOPS[(x||S.xopEnd).kind];
@@ -1933,17 +1937,24 @@ function slotHTML(k){
   const ly=curLyric();
   return `${artHTML(m)}${ly?`<span class="tt lyin" title="${esc(ly)}">${esc(trunc(ly,44))}</span>`:`<span class="tt">${esc(trunc(m.t+' – '+m.a,36))}</span>`}<span class="viz ${S.media.playing?'':'off'}" style="color:${m.c[0]}"><i></i><i></i><i></i><i></i></span><button class="pp" data-pp aria-label="${S.media.playing?'Pause':'Play'}">${icon(S.media.playing?'pause':'play')}</button>`;
 }
+// The Shelf in the slot (issue 37): the tray in the Shelf's blue, one item's name or the file count, then the total size
+// in grey at the right end; folders alone have no size.
+function shelfSlotHTML(){
+  const files=S.shelf.flatMap(it=>it.files),total=files.reduce((a,f)=>a+f.size,0),it=S.shelf[0];
+  const name=S.shelf.length===1?(it.files.length===1?it.files[0].name:`${it.files.length} files`):`${files.length} files`;
+  return `<span style="color:#64d2ff">${icon('tray')}</span><span class="tt">${esc(trunc(name,28))}</span>${total?`<span class="num k2">${fmtSize(total)}</span>`:''}`;
+}
 // The track's artwork (the mockup draws it from the cover's two colours); a note glyph when the player sends none.
 const artHTML=(m,round)=>m.c?`<span class="art${round?' round':''}" style="--art:linear-gradient(135deg,${m.c[0]},${m.c[1]})" aria-hidden="true"></span>`:`<span class="art${round?' round':''}" aria-hidden="true">${icon('music')}</span>`;
 function renderSlot(){
   const a=activities(),k=a[0];
   const xs=k==='xop'?(S.xop?(S.xop.paused?'p':'r')+S.xop.kind:S.xopEnd.status+S.xopEnd.kind):'';
-  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing+(curLyric()?'L':''):'')+(k==='lim'?S.lim.hit:'')+'|'+(a[1]||'')+(a[1]==='media'?S.media.i:'')+'|'+clSig();
+  const sig=(k||'none')+xs+(k==='clip'?S.clip.n:'')+(k==='media'?S.media.i+''+S.media.playing+(curLyric()?'L':''):'')+(k==='lim'?S.lim.hit:'')+(k==='shelf'?shelfSlotHTML():'')+'|'+(a[1]||'')+(a[1]==='media'?S.media.i:'')+'|'+clSig();
   if(sig!==slotSig){
     slotSig=sig;
     // Clock and date only show while the island has nothing else to say.
     slot.innerHTML=k?slotHTML(k):'';slot.dataset.k=k||'';
-    slot.title=k==='lim'?limTip():k==='xop'?XOPS[(S.xop||S.xopEnd).kind].run:k==='clip'?S.clip.tip:k==='cl'?clTip():'';
+    slot.title=k==='shelf'?(n=>`Shelf · ${n} ${n===1?'file':'files'}`)(S.shelf.flatMap(it=>it.files).length):k==='lim'?limTip():k==='xop'?XOPS[(S.xop||S.xopEnd).kind].run:k==='clip'?S.clip.tip:k==='cl'?clTip():'';
     if(S.state==='compact'&&!S.reduce)setMotion(SP_WIDE);
     if(a[1]==='cl')bubble.innerHTML=clIcon();
     else if(a[1]){
@@ -3925,6 +3936,8 @@ const DEMO=[
   [2000,()=>ACT.drop()],
   [4200,()=>closeExpanded()],
   [1400,()=>ACT.alarm()],[3600,()=>closeCard()],
+  // The dropped files held the closed island's slot (issue 37); they leave as if dragged out.
+  [1600,()=>{S.shelf=[];renderShelf();renderSlot();hint('Dragged out of the Shelf')}],
   [1200,()=>ACT.explorer()],[7400,()=>ACT.caps()],
   [2000,()=>ACT.video()],[2600,()=>openExpanded(PAGE.media)],[3200,()=>closeExpanded()],
   [1400,()=>ACT.clWork()],[3200,()=>ACT.clAsk()],[4600,()=>ACT.clAnswer()],[2600,()=>ACT.clDone()],[6400,()=>ACT.clFocus()],

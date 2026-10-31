@@ -55,6 +55,9 @@ public sealed class IslandController : IDisposable
         };
         shelf.Changed += SyncShelfCheck;
         SyncShelfCheck();
+        // Files waiting on the Shelf hold the slot above every running activity (issue 37).
+        shelf.Changed += () => _coordinator.SetActivity(ActivityKind.Shelf, shelf.Items.Count > 0);
+        _coordinator.SetActivity(ActivityKind.Shelf, shelf.Items.Count > 0);
         _dispatcher = dispatcher;
         _updateCheck.Tick += (_, _) => RefreshUpdates();
         _updateCheck.Start();
@@ -264,6 +267,13 @@ public sealed class IslandController : IDisposable
         DragEntered(overIsland: true, ShelfMode.Copy);
         _demoCut.Start();
         _demoDrop.Start();
+    }
+
+    /// <summary>The demo's item leaves the Shelf, as if it was dragged out.</summary>
+    public void HideDemoShelf()
+    {
+        _demoShelf = null;
+        Shelf.ShowDemo(null);
     }
 
     private void DropDemo()

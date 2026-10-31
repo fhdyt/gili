@@ -499,4 +499,27 @@ public class IslandCoordinatorTests
         _island.SetActivity(ActivityKind.ClaudeAttention, true);
         Assert.Equal((ActivityKind.ClaudeAttention, ActivityKind.ClaudeLimit), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
     }
+
+    [Fact]
+    public void Files_on_the_shelf_outrank_running_activities_but_not_a_copy_claude_or_a_file_operation()
+    {
+        _island.SetActivity(ActivityKind.Media, true);
+        _island.SetActivity(ActivityKind.Timer, true);
+        _island.SetActivity(ActivityKind.Shelf, true);
+        Assert.Equal((ActivityKind.Shelf, ActivityKind.Timer), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+
+        _island.SetActivity(ActivityKind.FileOperation, true);
+        Assert.Equal((ActivityKind.FileOperation, ActivityKind.Shelf), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+        _island.SetActivity(ActivityKind.FileOperation, false);
+        _island.ShowClipboard();
+        Assert.Equal((ActivityKind.ClipboardSnippet, ActivityKind.Shelf), (_island.View.Slot!.Value, _island.View.Bubble!.Value));
+    }
+
+    [Fact]
+    public void The_shelf_slot_opens_the_shelf_page()
+    {
+        _island.SetActivity(ActivityKind.Shelf, true);
+        _island.OpenFor(_island.View.Slot);
+        Assert.Equal((IslandMode.Expanded, IslandPage.Shelf), (_island.View.Mode, _island.View.Page));
+    }
 }

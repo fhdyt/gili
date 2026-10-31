@@ -170,6 +170,17 @@ public class DemoTests
     }
 
     [Fact]
+    public void Demo_shows_the_shelf_in_the_closed_island_before_its_file_leaves()
+    {
+        var shelf = Steps.Single(s => s.Action is DemoShelf);
+        var gone = Steps.Single(s => s.Action is DemoShelfGone);
+        var close = Steps.SkipWhile(s => s != shelf).First(s => s.Action is DemoClose);
+        // The file holds the closed island's slot for a while (issue 37), then leaves so the rest of the demo shows its own activities.
+        Assert.True(gone.At - close.At >= TimeSpan.FromSeconds(1.5));
+        Assert.True(gone.At < Steps.First(s => s.Action is DemoReminder).At);
+    }
+
+    [Fact]
     public void Demo_brings_a_note_home_once_the_island_has_closed()
     {
         var home = Steps.Single(s => s.Action is DemoNoteHome);

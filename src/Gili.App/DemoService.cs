@@ -132,6 +132,9 @@ public sealed class DemoService
                 case DemoShelf shelf:
                     _island.ShowDemoShelf(shelf.Name, shelf.Size);
                     break;
+                case DemoShelfGone:
+                    _island.HideDemoShelf();
+                    break;
                 case DemoClaudeSession session:
                     Claude?.ApplyDemo(new ClaudeSessionFile(-1, session.Id, session.Cwd, session.Title, false,
                         session.Desktop ? "claude-desktop" : "cli", "idle", null));

@@ -189,6 +189,23 @@
                             <TextBlock Grid.Column="4" Text="{Binding ClipDetail}" Foreground="#8E8E93"
                                        Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                         </Grid>
+
+                        <!-- Files waiting on the Shelf (issue 37, mockup slotHTML 'shelf'): the tray in the Shelf's blue at the
+                             left end, the item's name or the file count, then the total size in grey at the right end. -->
+                        <Grid MinWidth="172" Background="Transparent" ToolTip="{Binding ShelfSlotTooltip}"
+                              Visibility="{Binding ShowShelfSlot, Converter={StaticResource VisibleWhen}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MinWidth="6" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MinWidth="6" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <c:IconView Glyph="{StaticResource Icon.Tray}" Foreground="#64D2FF" Width="14" Height="14" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="{Binding ShelfSlotTextColumn}" Text="{Binding ShelfSlotText}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="4" Text="{Binding ShelfSlotDetail}" Foreground="#8E8E93"
+                                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                        </Grid>
                     </Grid>
                 </Grid>
 

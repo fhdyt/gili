@@ -55,6 +55,9 @@ public sealed record DemoEnd : DemoAction;
 /// <summary>Files dragged over the island and dropped: a demo item shows on the Shelf page, never saved (plan 3d).</summary>
 public sealed record DemoShelf(string Name, long Size) : DemoAction;
 
+/// <summary>The demo's Shelf item leaves, as if it was dragged out, so the slot it held goes back to the other activities.</summary>
+public sealed record DemoShelfGone : DemoAction;
+
 /// <summary>A floating note comes home into the closed island: it bulges once and Gili is happy (plan 2h).</summary>
 public sealed record DemoNoteHome : DemoAction;
 
@@ -119,6 +122,8 @@ public static class DemoScript
             Step(39, new DemoMedia(paused)),
             Step(40.5, new DemoDismiss(DemoAlarm.CardId)),
             Step(41.5, new DemoMedia(null)),
+            // The dropped file held the closed island's slot since 34 s (issue 37); it leaves before the reminder.
+            Step(41.8, new DemoShelfGone()),
             Step(42, new DemoReminder("Prepare meeting slides", new TimeOnly(15, 0))),
             // After the reminder: the battery runs low, then a charge limit holds the charge (plan 3a).
             Step(52.2, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 20))),

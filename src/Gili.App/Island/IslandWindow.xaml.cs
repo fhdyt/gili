@@ -1346,6 +1346,9 @@ public partial class IslandWindow : Window
                 // A longer name or time widens the island; the same width leaves its springs at rest.
                 if (_vm.ShowClaudeSlot) Relayout();
                 break;
+            case nameof(IslandViewModel.ShelfSlotText) or nameof(IslandViewModel.ShelfSlotDetail):
+                if (_vm.ShowShelfSlot) Relayout();
+                break;
             case nameof(IslandViewModel.ClaudePulse):
                 PulseClaude(_vm.ClaudePulse);
                 break;

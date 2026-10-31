@@ -21,6 +21,7 @@ public static class ShelfText
 
     private const string Grey = "#8E8E93";
     private const string BundleColor = "#D1D1D6";
+    private const int SlotLength = 28;
 
     /// <summary>Decimal units, one decimal from MB up, never under 1 KB.</summary>
     public static string Size(long bytes) => bytes switch
@@ -34,6 +35,17 @@ public static class ShelfText
 
     /// <summary>Under the big count: "3 files · 12.4 MB", or "files on the shelf" when empty.</summary>
     public static string Summary(int files, long bytes) => files == 0 ? "files on the shelf" : $"{Files(files)} · {Size(bytes)}";
+
+    /// <summary>
+    /// The island's slot while files wait on the Shelf (PRD 6.3, issue 37): one item by its name (at most 28 characters),
+    /// several by their file count, and the total size at the right end, which folders alone leave out.
+    /// </summary>
+    public static (string Text, string? Detail) Slot(IReadOnlyList<ShelfItem> items)
+    {
+        var bytes = items.Sum(i => i.SizeBytes);
+        var text = items.Count == 1 ? Media.MediaRules.Truncate(items[0].DisplayName, SlotLength) : Files(items.Sum(i => i.FileCount));
+        return (text, bytes > 0 ? Size(bytes) : null);
+    }
 
     /// <summary>The left icon's tooltip (PRD 6.2).</summary>
     public static string BarTooltip(int files) => files == 0 ? "Shelf" : $"Shelf · {Files(files)}";
