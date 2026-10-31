@@ -33,8 +33,25 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnSelectedSectionChanged(SettingsSection value) => BuildRows();
 
-    private void BuildRows() =>
-        Rows = [.. SelectedSection.Rows.Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key)))];
+    private void BuildRows()
+    {
+        _order = _hub.Current.ModuleOrder;
+        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key)))];
+    }
+
+    private string? _order;
+
+    /// <summary>Moves a system module one row up (−1) or down (+1), and the bar with it (PRD 6.4).</summary>
+    public void Move(SettingRowViewModel row, int delta)
+    {
+        if (row.ModuleId is { } id) _hub.Update(s => s with { ModuleOrder = string.Join(",", RightModuleRules.Move(s.Order, id, delta)) });
+    }
+
+    /// <summary>Puts a dragged system module at <paramref name="index"/> among the system modules.</summary>
+    public void MoveTo(SettingRowViewModel row, int index)
+    {
+        if (row.ModuleId is { } id) _hub.Update(s => s with { ModuleOrder = string.Join(",", RightModuleRules.MoveTo(s.Order, id, index)) });
+    }
 
     /// <summary>The Store copy cannot turn its startup task back on once Task Manager switched it off (PRD 9.4).</summary>
     private bool CanChange(string key) =>
@@ -51,6 +68,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private void Reload(AppSettings settings)
     {
+        // A new order lists the rows again; the window puts the focus back on the row that moved.
+        if (settings.ModuleOrder != _order && SelectedSection.Name == "Right side")
+        {
+            BuildRows();
+            return;
+        }
         foreach (var row in Rows) row.Reload(settings);
     }
 }

@@ -68,6 +68,7 @@
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                             <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IsOn}" AutomationProperties.Name="{Binding Label}"
+                                          AutomationProperties.HelpText="{Binding ReorderHelp}"
                                           Visibility="{Binding IsSwitch, Converter={StaticResource VisibleWhen}}" />
                             <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding Options}" SelectedItem="{Binding Choice}"
                                      AutomationProperties.Name="{Binding Label}" Visibility="{Binding IsSegment, Converter={StaticResource VisibleWhen}}" />
@@ -78,6 +79,12 @@
                                            Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             </StackPanel>
                         </StackPanel>
+                        <!-- System modules reorder by this grip (mockup .sgrip) or Alt + Up/Down on their switch. -->
+                        <Border DockPanel.Dock="Left" Background="Transparent" Cursor="SizeNS" Margin="-4,0,8,0" Padding="0,6"
+                                ToolTip="Drag to reorder" Visibility="{Binding CanReorder, Converter={StaticResource VisibleWhen}}"
+                                MouseLeftButtonDown="OnGripDown" MouseMove="OnGripMove" MouseLeftButtonUp="OnGripUp" LostMouseCapture="OnGripLost">
+                            <c:IconView Glyph="{StaticResource Icon.Grip}" Filled="True" Width="14" Height="14" Foreground="#8E8E93" />
+                        </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
                             <TextBlock Text="{Binding Note}" FontSize="11.5" Foreground="#8E8E93" Margin="0,2,0,0" TextWrapping="Wrap"
@@ -127,7 +134,7 @@
             <ScrollViewer x:Name="Page" VerticalScrollBarVisibility="Auto" Focusable="False" Padding="20,16">
                 <StackPanel>
                     <TextBlock Text="{Binding SelectedSection.Name}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-                    <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False">
+                    <ItemsControl x:Name="RowList" ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False">
                         <ItemsControl.ItemContainerStyle>
                             <!-- Each row reads by its name, not by its view model's type. -->
                             <Style TargetType="ContentPresenter">

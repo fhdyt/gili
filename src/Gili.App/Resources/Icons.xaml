@@ -63,5 +63,7 @@
     <PathGeometry x:Key="Icon.Weather.Storm" Figures="M 19 16.9 A 5 5 0 0 0 18 7 h -1.26 a 8 8 0 1 0 -11.62 9 M 13 11 l -4 6 h 6 l -4 6" />
     <PathGeometry x:Key="Icon.Weather.Fog" Figures="M 3 15 h 18 M 5 19 h 14 M 18 11 h -1.26 A 8 8 0 1 0 5 11" />
     <!-- Filled -->
+    <!-- Two columns of three dots (mockup i-grip): the handle that reorders a row. -->
+    <PathGeometry x:Key="Icon.Grip" Figures="M 7.5 6 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 6 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 7.5 12 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 12 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 7.5 18 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z M 13.5 18 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0 z" />
     <PathGeometry x:Key="Icon.Dots" Figures="M 3.4 12 a 1.6 1.6 0 1 0 3.2 0 a 1.6 1.6 0 1 0 -3.2 0 z M 10.4 12 a 1.6 1.6 0 1 0 3.2 0 a 1.6 1.6 0 1 0 -3.2 0 z M 17.4 12 a 1.6 1.6 0 1 0 3.2 0 a 1.6 1.6 0 1 0 -3.2 0 z" />
 </ResourceDictionary>

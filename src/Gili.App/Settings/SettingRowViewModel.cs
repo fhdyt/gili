@@ -40,6 +40,13 @@ public sealed partial class SettingRowViewModel : ObservableObject
     }
 
     public string Label => _row.Label;
+
+    /// <summary>The bar id of a system module, whose row can be dragged or moved with Alt + arrows; null otherwise.</summary>
+    public string? ModuleId => SettingsCatalog.ModuleId(_row.Key);
+
+    public bool CanReorder => ModuleId is not null;
+
+    public string? ReorderHelp => CanReorder ? "Alt+Up or Alt+Down to reorder" : null;
     public bool HasNote => Note is not null;
     public bool IsSwitch => _row.Kind == SettingKind.Switch;
     public bool IsSegment => _row.Kind == SettingKind.Segment;
