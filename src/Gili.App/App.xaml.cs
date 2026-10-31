@@ -113,6 +113,8 @@ public partial class App : Application
 
         _apps = new AppsService(() => _bar is null ? 1 : System.Windows.Media.VisualTreeHelper.GetDpi(_bar).DpiScaleX);
         _right = new RightService(Dispatcher, _settings, _log, bluetooth);
+        _right.SetHidden(_settings.Current.HiddenModules);
+        _settings.Changed += s => _right.SetHidden(s.HiddenModules);
         _sound = new SoundService(Dispatcher, _settings, _log);
         _islandController.CardShown += id => _sound.PlayForCard(id, _islandController.AlarmSound(id));
         _islandController.Volume = () => _right.Volume;

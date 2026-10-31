@@ -7,6 +7,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using Gili.App.Controls;
+using ModuleSet = Gili.Core.Settings.RightModules;
 using Gili.Core.Apps;
 using Gili.Core.Island;
 using Gili.Core.Modules;
@@ -53,6 +55,7 @@ public partial class BarWindow : Window
         _left.PageRequested += page => PageRequested?.Invoke(page);
         LeftSlot.Content = _left;
         _left.ApplyHidden(_settings.Current.HiddenLeft, animate: false);
+        Loaded += (_, _) => ApplyModules(_settings.Current);
         SizeChanged += (_, _) => UpdateLeftLimit();
         right.Changed += () =>
         {
@@ -114,10 +117,14 @@ public partial class BarWindow : Window
     }
 
     /// <summary>
-    /// Weather, network, RAM and CPU move into "…" (in that order) when the right side would come within 24 px of the
-    /// island (PRD 6.4, mockup <c>fitBar()</c>).
+    /// The right side as Settings → Right side sets it (F-RIGHT-04, F-BAR-12): the system modules in their order, the
+    /// switched-off ones gone, the ones without a reading hidden; and what still doesn't fit 24 px from the island moves
+    /// into "…" in PRD 6.4's order (mockup <c>fitBar()</c>). A switch flipped in Settings animates its module; overflow
+    /// and readings coming or going don't.
     /// </summary>
-    private void FitRight()
+    private void FitRight() => FitRight(ModuleSet.None);
+
+    private void FitRight(ModuleSet switched)
     {
         if (ActualWidth <= 0) return;
         var modules = new List<(string Id, double Width)>();
@@ -126,9 +133,9 @@ public partial class BarWindow : Window
             if (element == MoreModule || element is Popup) continue;
             if (element.Tag is string id)
             {
-                if (id == "weather" && !_vm.HasWeather) continue;
-                element.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                modules.Add((id, _moduleWidths.Width(id, element.DesiredSize.Width, _hiddenModules.Contains(id))));
+                if (!Wanted(id)) continue;
+                var width = _slots.SettledWidth(element);
+                modules.Add((id, _moduleWidths.Width(id, width, _hiddenModules.Contains(id))));
             }
             else if (element.Visibility == Visibility.Visible)
             {
@@ -140,13 +147,55 @@ public partial class BarWindow : Window
         foreach (var element in RightModules.Children.OfType<FrameworkElement>())
         {
             if (element.Tag is not string id) continue;
-            var show = !hidden.Contains(id) && (id != "weather" || _vm.HasWeather);
-            element.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            var show = Wanted(id) && !hidden.Contains(id);
+            _slots.Show(element, show, animate: switched.HasFlag(Core.Settings.RightModuleRules.Of(id)));
         }
         MoreModule.Visibility = hidden.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         _hiddenModules = hidden;
     }
 
+    /// <summary>Switched on in Settings, and with something to show.</summary>
+    private bool Wanted(string id) =>
+        !_settings.Current.HiddenModules.HasFlag(Core.Settings.RightModuleRules.Of(id)) && id switch
+        {
+            "weather" => _vm.HasWeather,
+            "wifi" => _vm.HasWifi,
+            "bt" => _vm.HasBluetooth,
+            "vol" => _vm.HasVolume,
+            "bri" => _vm.HasBrightness,
+            _ => true,
+        };
+
+    /// <summary>
+    /// Puts the system modules in the order set in Settings, before "…"; the ones that moved glide from where they were.
+    /// </summary>
+    private void ArrangeModules(IReadOnlyList<string> order)
+    {
+        var system = order.Select(id => RightModules.Children.OfType<FrameworkElement>().First(e => e.Tag as string == id)).ToList();
+        var current = RightModules.Children.OfType<FrameworkElement>().Where(e => system.Contains(e)).ToList();
+        if (current.SequenceEqual(system)) return;
+        var before = system.ToDictionary(e => e, e => e.IsVisible ? e.TranslatePoint(new Point(0, 0), RightModules).X : double.NaN);
+        foreach (var element in system) RightModules.Children.Remove(element);
+        var at = RightModules.Children.IndexOf(MoreModule);
+        for (var i = 0; i < system.Count; i++) RightModules.Children.Insert(at + i, system[i]);
+        RightModules.UpdateLayout();
+        foreach (var element in system)
+        {
+            if (double.IsNaN(before[element]) || !element.IsVisible) continue;
+            SlotAnimation.Slide(element, element.TranslatePoint(new Point(0, 0), RightModules).X - before[element]);
+        }
+    }
+
+    private void ApplyModules(AppSettings settings)
+    {
+        var switched = _shownModules is { } last ? last ^ settings.HiddenModules : ModuleSet.None;
+        _shownModules = settings.HiddenModules;
+        ArrangeModules(settings.Order);
+        FitRight(switched);
+    }
+
+    private ModuleSet? _shownModules;
+    private readonly SlotAnimation _slots = new();
     private IReadOnlyList<string> _hiddenModules = [];
     private readonly ModuleWidths _moduleWidths = new();
 
@@ -162,6 +211,8 @@ public partial class BarWindow : Window
                 "net" => $"Network · {_vm.UpText}  {_vm.DownText}",
                 "cpu" => $"CPU · {_vm.CpuText}",
                 "ram" => $"RAM · {_vm.RamText}",
+                "gpu" => $"GPU · {_vm.GpuText}",
+                "disk" => $"Disk · {_vm.DiskFreeText}",
                 _ => id,
             };
             MoreModulesItems.Children.Add(new TextBlock { Text = text, Margin = new Thickness(0, 4, 0, 4) });
@@ -283,6 +334,7 @@ public partial class BarWindow : Window
     private void OnSettingsChanged(AppSettings settings)
     {
         _left.ApplyHidden(settings.HiddenLeft, animate: true);
+        ApplyModules(settings);
         _clock.Seconds = settings.ShowSeconds && _polling.ShouldPoll;
         _vm.ApplyClock(DateTime.Now, settings);
         _appBar?.SetHeight(settings.BarHeight);

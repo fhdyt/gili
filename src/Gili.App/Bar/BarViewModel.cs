@@ -17,6 +17,12 @@ public sealed partial class BarViewModel : ObservableObject
     [ObservableProperty] private string? _cpuTooltip;
     [ObservableProperty] private string _ramText = "—";
     [ObservableProperty] private string? _ramTooltip;
+    [ObservableProperty] private string _gpuText = "—";
+    [ObservableProperty] private string? _gpuTooltip;
+    [ObservableProperty] private string _diskLabel = "C: FREE";
+    [ObservableProperty] private string _diskText = "—";
+    [ObservableProperty] private string _diskFreeText = "—";
+    [ObservableProperty] private string? _diskTooltip = "Free space on C:";
     [ObservableProperty] private string _upText = "↑ —";
     [ObservableProperty] private string _downText = "↓ —";
     [ObservableProperty] private string? _netTooltip;
@@ -127,6 +133,23 @@ public sealed partial class BarViewModel : ObservableObject
         var memory = stats.Memory.Value;
         RamText = memory is null ? "—" : StatText.Percent(memory.Percent);
         RamTooltip = memory is null ? stats.Memory.Error : StatText.MemoryUsage(memory.UsedBytes, memory.TotalBytes);
+
+        GpuText = stats.Gpu.Value is { } gpu ? StatText.Percent(gpu.Percent) : "—";
+        GpuTooltip = stats.Gpu.Error;
+
+        // The label follows Windows' drive: "C: FREE" over "106 GB", "Free space on C:" on hover (PRD 6.4).
+        if (stats.Disk.Value is { } disk)
+        {
+            DiskLabel = disk.Drive.ToUpperInvariant() + " FREE";
+            DiskText = StatText.Disk(disk.FreeBytes);
+            DiskFreeText = StatText.DiskFree(disk.FreeBytes);
+            DiskTooltip = $"Free space on {disk.Drive}";
+        }
+        else
+        {
+            DiskText = DiskFreeText = "—";
+            DiskTooltip = stats.Disk.Error ?? DiskTooltip;
+        }
 
         var network = stats.Network.Value;
         UpText = "↑ " + (network is null ? "—" : StatText.Rate(network.UpBytesPerSecond));

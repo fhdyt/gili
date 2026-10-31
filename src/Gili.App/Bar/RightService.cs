@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Windows.Threading;
 using Gili.Core.Diagnostics;
 using Gili.Core.Modules;
+using Gili.Core.Settings;
 using Gili.Platform.Modules;
 using Gili.Platform.Shell;
 
@@ -26,6 +27,10 @@ public sealed class RightService : IDisposable
     private readonly DispatcherTimer _wifiTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly CancellationTokenSource _stop = new();
     private int _weatherFailures;
+    private DateTimeOffset? _weatherAt;
+    private RightModules _hidden;
+    private bool _started;
+    private bool _paused;
 
     public RightService(Dispatcher dispatcher, SettingsHub settings, FileLog log, BluetoothMonitor bluetooth)
     {
@@ -145,24 +150,54 @@ public sealed class RightService : IDisposable
 
     public void Start()
     {
+        _started = true;
         ReadWifi();
-        _wifiTimer.Start();
+        if (!WifiOff) _wifiTimer.Start();
         _ = StartRadiosAsync();
         _ = StartBluetoothAsync();
-        _ = RefreshWeatherAsync();
+        if (!WeatherOff) _ = RefreshWeatherAsync();
     }
 
     /// <summary>The Wi‑Fi signal stops being read while the screen is off or the bar is hidden (PRD 8.1).</summary>
     public void SetPaused(bool paused)
     {
+        _paused = paused;
         if (paused)
         {
             _wifiTimer.Stop();
             return;
         }
         ReadWifi();
-        _wifiTimer.Start();
+        if (!WifiOff) _wifiTimer.Start();
     }
+
+    /// <summary>
+    /// A module switched off in Settings stops reading (PRD 8.1): no weather requests, and no Wi‑Fi signal every 10 s
+    /// (connection events still arrive, for the Wi‑Fi island). Weather switched back on is fetched at once when the last
+    /// reading is over 30 minutes old.
+    /// </summary>
+    public void SetHidden(RightModules hidden)
+    {
+        var was = _hidden;
+        _hidden = hidden;
+        if (!_started) return;
+        if (WeatherOff) _weatherTimer.Stop();
+        else if (was.HasFlag(RightModules.Weather))
+        {
+            if (_weatherAt is not { } at || DateTimeOffset.UtcNow - at > TimeSpan.FromMinutes(30)) _ = RefreshWeatherAsync();
+            else _weatherTimer.Start();
+        }
+        if (WifiOff) _wifiTimer.Stop();
+        else if (was.HasFlag(RightModules.Wifi) && !_paused)
+        {
+            ReadWifi();
+            _wifiTimer.Start();
+        }
+    }
+
+    private bool WeatherOff => _hidden.HasFlag(RightModules.Weather);
+
+    private bool WifiOff => _hidden.HasFlag(RightModules.Wifi);
 
     /// <summary>Brightness is read when its tooltip opens, not polled.</summary>
     public int? ReadBrightness() => Brightness = BrightnessReader.Read();
@@ -218,6 +253,7 @@ public sealed class RightService : IDisposable
         {
             Weather = await WeatherClient.GetAsync(s.WeatherLatitude, s.WeatherLongitude, _stop.Token);
             WeatherStale = false;
+            _weatherAt = DateTimeOffset.UtcNow;
             _weatherFailures = 0;
             _weatherTimer.Interval = TimeSpan.FromMinutes(30);
         }
@@ -228,7 +264,7 @@ public sealed class RightService : IDisposable
             _weatherFailures++;
             _weatherTimer.Interval = ProviderRetry.Delay(_weatherFailures);
         }
-        _weatherTimer.Start();
+        if (!WeatherOff) _weatherTimer.Start();
         Changed?.Invoke();
     }
 }

@@ -142,6 +142,7 @@
                         <TextBlock Text="{Binding DownText}" Style="{StaticResource NetLine}" />
                     </StackPanel>
                 </Border>
+                <!-- Network through Disk follow the order set in Settings → Right side; FitRight shows what is switched on. -->
                 <Border Tag="cpu" Style="{StaticResource ClickableModule}" ToolTip="{Binding CpuTooltip}" MouseLeftButtonUp="OnSystem">
                     <StackPanel Style="{StaticResource TwoLine}">
                         <TextBlock Text="CPU" Style="{StaticResource ModuleLabel}" />
@@ -152,6 +153,19 @@
                     <StackPanel Style="{StaticResource TwoLine}">
                         <TextBlock Text="RAM" Style="{StaticResource ModuleLabel}" />
                         <TextBlock Text="{Binding RamText}" Style="{StaticResource ModuleValue}" />
+                    </StackPanel>
+                </Border>
+                <!-- GPU and free disk space start switched off (F-RIGHT-03). -->
+                <Border Tag="gpu" Style="{StaticResource ClickableModule}" ToolTip="{Binding GpuTooltip}" MouseLeftButtonUp="OnSystem" Visibility="Collapsed">
+                    <StackPanel Style="{StaticResource TwoLine}">
+                        <TextBlock Text="GPU" Style="{StaticResource ModuleLabel}" />
+                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource ModuleValue}" />
+                    </StackPanel>
+                </Border>
+                <Border Tag="disk" Style="{StaticResource ClickableModule}" ToolTip="{Binding DiskTooltip}" MouseLeftButtonUp="OnSystem" Visibility="Collapsed">
+                    <StackPanel Style="{StaticResource TwoLine}">
+                        <TextBlock Text="{Binding DiskLabel}" Style="{StaticResource ModuleLabel}" />
+                        <TextBlock Text="{Binding DiskText}" Style="{StaticResource ModuleValue}" />
                     </StackPanel>
                 </Border>
                 <!-- Modules that don't fit beside the island move here (PRD 6.4). -->
@@ -169,8 +183,8 @@
                         <StackPanel x:Name="MoreModulesItems" />
                     </Border>
                 </Popup>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding WifiTooltip}" MouseLeftButtonUp="OnWifi"
-                        Visibility="{Binding HasWifi, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Wi‑Fi">
+                <Border Tag="wifi" Style="{StaticResource ClickableModule}" ToolTip="{Binding WifiTooltip}" MouseLeftButtonUp="OnWifi"
+                        AutomationProperties.Name="Wi‑Fi">
                     <StackPanel Orientation="Horizontal">
                         <c:IconView Glyph="{StaticResource Icon.Wifi}" Width="16" Height="16" VerticalAlignment="Center" />
                         <StackPanel Style="{StaticResource TwoLine}" Margin="6,0,0,0" Visibility="{Binding WifiHasText, Converter={StaticResource VisibleWhen}}">
@@ -180,29 +194,28 @@
                     </StackPanel>
                 </Border>
                 <!-- Bluetooth: a small blue dot in the corner while a device is connected. -->
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BluetoothTooltip}" MouseLeftButtonUp="OnBluetooth"
-                        Visibility="{Binding HasBluetooth, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Bluetooth">
+                <Border Tag="bt" Style="{StaticResource ClickableModule}" ToolTip="{Binding BluetoothTooltip}" MouseLeftButtonUp="OnBluetooth"
+                        AutomationProperties.Name="Bluetooth">
                     <Grid>
                         <c:IconView Glyph="{StaticResource Icon.Bluetooth}" Width="16" Height="16" />
                         <Ellipse Width="9" Height="9" Fill="#0A84FF" Stroke="#161618" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Top"
                                  Margin="0,1.5,-3.5,0" Visibility="{Binding BluetoothConnected, Converter={StaticResource VisibleWhen}}" />
                     </Grid>
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding VolumeTooltip}" MouseLeftButtonUp="OnVolume"
-                        Visibility="{Binding HasVolume, Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Volume">
+                <Border Tag="vol" Style="{StaticResource ClickableModule}" ToolTip="{Binding VolumeTooltip}" MouseLeftButtonUp="OnVolume"
+                        AutomationProperties.Name="Volume">
                     <c:IconView Glyph="{Binding VolumeGlyph}" Width="16" Height="16" />
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding BrightnessTooltip}" MouseLeftButtonUp="OnBrightness"
-                        ToolTipOpening="OnBrightnessTooltip" Visibility="{Binding HasBrightness, Converter={StaticResource VisibleWhen}}"
-                        AutomationProperties.Name="Brightness">
+                <Border Tag="bri" Style="{StaticResource ClickableModule}" ToolTip="{Binding BrightnessTooltip}" MouseLeftButtonUp="OnBrightness"
+                        ToolTipOpening="OnBrightnessTooltip" AutomationProperties.Name="Brightness">
                     <c:IconView Glyph="{StaticResource Icon.Sun}" Width="16" Height="16" />
                 </Border>
-                <Border Style="{StaticResource ClickableModule}" ToolTip="Show hidden icons" MouseLeftButtonUp="OnHiddenIcons"
+                <Border Tag="tray" Style="{StaticResource ClickableModule}" ToolTip="Show hidden icons" MouseLeftButtonUp="OnHiddenIcons"
                         AutomationProperties.Name="Show hidden icons">
                     <c:IconView Glyph="{StaticResource Icon.ChevronDown}" Width="14" Height="14" />
                 </Border>
                 <!-- Clock: the date is the small label, the time the value (PRD 6.4). Click opens Calendar. -->
-                <Border Style="{StaticResource ClickableModule}" ToolTip="{Binding ClockTooltip}" MouseLeftButtonUp="OnClock">
+                <Border Tag="clock" Style="{StaticResource ClickableModule}" ToolTip="{Binding ClockTooltip}" MouseLeftButtonUp="OnClock">
                     <StackPanel Style="{StaticResource TwoLine}" MinWidth="46">
                         <TextBlock Text="{Binding ClockDate}" Style="{StaticResource ModuleLabel}" />
                         <Grid HorizontalAlignment="Left">
