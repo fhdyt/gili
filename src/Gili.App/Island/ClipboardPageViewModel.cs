@@ -77,6 +77,9 @@ public sealed partial class ClipboardPageViewModel : ObservableObject
         for (var i = 0; i < Rows.Count; i++) Rows[i].IsSelected = i == value;
     }
 
+    /// <summary>Ctrl+Alt+V highlights the first row, so Enter pastes it at once (mockup openClipboard(fromKeys)).</summary>
+    public void SelectFirst() => Selected = Rows.Count > 0 ? 0 : -1;
+
     /// <summary>↑ and ↓ from the list or the search field.</summary>
     public void Move(int step)
     {

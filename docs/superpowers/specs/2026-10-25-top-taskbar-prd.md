@@ -780,7 +780,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Notifications | Fase 6. Show Windows notifications (default mati; meminta izin Windows), Show message text (default nyala), saklar per aplikasi yang pernah mengirim notifikasi, baris status izin, dan tips mematikan banner aplikasi di Windows (revisi 8) |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
 | Sounds | Timer sound, Alert volume, Gradually increase, contoh suara |
-| Shortcuts | Hotkey (Fase 4) |
+| Shortcuts | `Keyboard shortcuts` (default nyala), lalu `Open or close the island`, `Clipboard`, `New note`, `Add task for today` dengan kombinasinya; klik lalu tekan kombinasi baru (Esc membatalkan); bentrok dengan aplikasi lain tampil `Used by another app` (Fase 4b) |
 | About | Versi dan jenis instalasi (`Microsoft Store` / `GitHub`), baris update (`Up to date` atau `Update available · <versi>` dengan Install update; 9.4), tautan Privacy policy dan Release notes, tombol Open logs folder, dan Prepare to uninstall (versi Store, 9.4) |
 
 - Bagian yang belum ada fasenya tetap tampil tapi nonaktif dengan keterangan `Coming in a later version` sampai fasenya selesai.

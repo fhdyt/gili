@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Gili.Core.Settings;
 
-public enum SettingKind { Switch, Segment, Range }
+public enum SettingKind { Switch, Segment, Range, Shortcut }
 
 /// <summary>
 /// One row of the Settings window (PRD 6.5). <paramref name="Default"/> is what a row that is not available yet shows:
@@ -111,7 +111,11 @@ public static class SettingsCatalog
             new("alertVol", "Alert volume", SettingKind.Range, Available: true, Unit: "%"),
             new("ramp", "Gradually increase", SettingKind.Switch, Available: true),
         ]),
-        new("Shortcuts", [new("keys", "Keyboard shortcuts", SettingKind.Switch, Default: true)]),
+        new("Shortcuts",
+        [
+            new("keys", "Keyboard shortcuts", SettingKind.Switch, "Click a shortcut, then press the new keys. Esc keeps the old one", Available: true),
+            .. Hotkeys.All.Select(h => new SettingRow(h.Key, h.Label, SettingKind.Shortcut, Available: true)),
+        ]),
         new("About",
         [
             new("updates", "Updates", SettingKind.Switch, Default: true),
@@ -125,6 +129,8 @@ public static class SettingsCatalog
         "hideTb" => s.HideTaskbar,
         "clOn" => s.ClaudeSessions,
         "limOn" => s.ClaudeUsageTimer,
+        "keys" => s.KeyboardShortcuts,
+        _ when Hotkeys.ActionOf(key) is { } action => s.HotkeyFor(action),
         "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
         "secs" => s.ShowSeconds,
@@ -153,6 +159,10 @@ public static class SettingsCatalog
         "hideTb" => s with { HideTaskbar = (bool)value, MovedToTop = s.MovedToTop && !(bool)value },
         "clOn" => s with { ClaudeSessions = (bool)value },
         "limOn" => s with { ClaudeUsageTimer = (bool)value },
+        "keys" => s with { KeyboardShortcuts = (bool)value },
+        _ when Hotkeys.ActionOf(key) is { } action => Hotkeys.Parse((string)value) is { } hotkey && Hotkeys.Problem(s, action, hotkey) is null
+            ? s.WithHotkey(action, Hotkeys.Format(hotkey))
+            : s,
         "pos" => s with { BarPosition = Enum.Parse<BarPosition>((string)value), MovedToTop = false },
         "h12" => s with { Use24HourClock = !(bool)value },
         "secs" => s with { ShowSeconds = (bool)value },
@@ -205,6 +215,7 @@ public static class SettingsCatalog
         if (key == "pos" && !s.HideTaskbar)
             return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
         if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude" or "limOn") return new(false, ClaudeOff);
+        if (!s.KeyboardShortcuts && Hotkeys.ActionOf(key) is not null) return new(false, null);
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {
             var page = Page(key);

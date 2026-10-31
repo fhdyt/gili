@@ -61,6 +61,33 @@
                 </Setter>
             </Style>
 
+            <!-- A key cap: #2C2C2E, radius 8, tabular 13 px; outlined in the accent while it records. -->
+            <Style x:Key="ShortcutButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True" />
+                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+                <Setter Property="Foreground" Value="#F5F5F7" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" MinWidth="120" Height="30" CornerRadius="8" Padding="12,0" Background="#2C2C2E"
+                                    BorderBrush="Transparent" BorderThickness="1">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#3A3A3C" />
+                                </Trigger>
+                                <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#30D158" />
+                                    <Setter Property="Foreground" Value="#8E8E93" />
+                                </DataTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <DataTemplate x:Key="RowTemplate">
                 <!-- One row (mockup .srow): label and note on the left, its control on the right. -->
                 <Border x:Name="Row" MinHeight="46" Padding="12,6" Margin="0,0,0,4" CornerRadius="8" Background="#0AFFFFFF"
@@ -72,6 +99,11 @@
                                           Visibility="{Binding IsSwitch, Converter={StaticResource VisibleWhen}}" />
                             <ListBox Style="{StaticResource Segments}" ItemsSource="{Binding Options}" SelectedItem="{Binding Choice}"
                                      AutomationProperties.Name="{Binding Label}" Visibility="{Binding IsSegment, Converter={StaticResource VisibleWhen}}" />
+                            <!-- A Shortcuts row: the combination as a key cap; click, then press the new keys (Esc keeps the old). -->
+                            <Button Style="{StaticResource ShortcutButton}" Content="{Binding ShortcutText}" Click="OnShortcutClick"
+                                    LostKeyboardFocus="OnShortcutLostFocus" AutomationProperties.Name="{Binding Label}"
+                                    AutomationProperties.HelpText="Press to record a new shortcut"
+                                    Visibility="{Binding IsShortcut, Converter={StaticResource VisibleWhen}}" />
                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
                                 <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
                                         AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />

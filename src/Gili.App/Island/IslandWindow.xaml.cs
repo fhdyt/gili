@@ -944,6 +944,42 @@ public partial class IslandWindow : Window
         e.Handled = true;
     }
 
+    /// <summary>A global hotkey (F-TOOL-10): each opens its page ready to type, once the page is laid out.</summary>
+    public void RunHotkey(Gili.Core.Settings.HotkeyAction action)
+    {
+        switch (action)
+        {
+            case Gili.Core.Settings.HotkeyAction.Island:
+                _island.ToggleIsland();
+                return;
+            case Gili.Core.Settings.HotkeyAction.Clipboard:
+                _island.Open(IslandPage.Clipboard);
+                AfterOpen(() =>
+                {
+                    _clipboardPage.SelectFirst();
+                    _clipboardView?.FocusSearch();
+                });
+                return;
+            case Gili.Core.Settings.HotkeyAction.NewNote:
+                _island.Open(IslandPage.Notes);
+                AfterOpen(() => _notesView?.StartNewNote());
+                return;
+            case Gili.Core.Settings.HotkeyAction.AddTask:
+                _island.Open(IslandPage.Calendar);
+                AfterOpen(() =>
+                {
+                    _calendarPage.ShowToday();
+                    _calendarPage.OpenAddCommand.Execute(null);
+                });
+                return;
+        }
+    }
+
+    private void AfterOpen(Action action) => Dispatcher.InvokeAsync(() =>
+    {
+        if (_mode == IslandMode.Expanded) action();
+    }, DispatcherPriority.Loaded);
+
     /// <summary>
     /// A Clipboard row was picked (PRD 6.3): the island closes, which gives focus back to the window that was in front
     /// before it opened, and once that window really is in front (checked every 15 ms, up to 300 ms) Ctrl+V pastes there.

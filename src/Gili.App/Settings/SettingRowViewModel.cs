@@ -14,7 +14,17 @@ public sealed partial class SettingRowViewModel : ObservableObject
     private readonly SettingRow _row;
     private readonly bool _changeable;
     private readonly string? _ownNote;
+    private readonly HotkeyHooks? _hotkeys;
     private bool _loading;
+
+    /// <summary>A Shortcuts row: the combination it holds, or "Press keys" while it records a new one.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShortcutText))]
+    private string _shortcut = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShortcutText))]
+    private bool _isRecording;
 
     [ObservableProperty] private bool _isOn;
     [ObservableProperty] private string? _choice;
@@ -30,8 +40,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
 
     [ObservableProperty] private bool _isEnabled;
 
-    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true)
+    public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null)
     {
+        _hotkeys = hotkeys;
         _hub = hub;
         _row = row;
         _changeable = changeable;
@@ -51,6 +62,33 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public bool IsSwitch => _row.Kind == SettingKind.Switch;
     public bool IsSegment => _row.Kind == SettingKind.Segment;
     public bool IsRange => _row.Kind == SettingKind.Range;
+    public bool IsShortcut => _row.Kind == SettingKind.Shortcut;
+
+    public string ShortcutText => IsRecording ? "Press keys" : Shortcut;
+
+    /// <summary>Starts recording: the hotkeys pause, so pressing the current combination reaches this row.</summary>
+    public void StartRecording()
+    {
+        if (!IsEnabled || IsRecording) return;
+        IsRecording = true;
+        _hotkeys?.Suspend(true);
+    }
+
+    /// <summary>Ends recording; a combination is kept when it can be this action's, otherwise its row says why.</summary>
+    public void StopRecording(Hotkey? recorded)
+    {
+        if (!IsRecording) return;
+        IsRecording = false;
+        _hotkeys?.Suspend(false);
+        if (recorded is not { } hotkey || Hotkeys.ActionOf(_row.Key) is not { } action) return;
+        if (Hotkeys.Problem(_hub.Current, action, hotkey) is { } problem)
+        {
+            Note = problem;
+            return;
+        }
+        _hub.Update(s => SettingsCatalog.Write(s, _row.Key, Hotkeys.Format(hotkey)));
+    }
+
     public IReadOnlyList<string> Options => _row.Options ?? [];
 
     /// <summary>Shows the stored value again, e.g. the island height clamped after the bar got lower.</summary>
@@ -69,6 +107,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
                 break;
             case SettingKind.Segment:
                 Choice = value as string;
+                break;
+            case SettingKind.Shortcut:
+                Shortcut = value as string ?? "";
                 break;
             case SettingKind.Range:
                 (Min, Max) = SettingsCatalog.Range(settings, _row.Key);

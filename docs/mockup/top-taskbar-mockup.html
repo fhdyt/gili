@@ -664,6 +664,10 @@ li.done .chk .ic{opacity:1;transform:none}
 .lwI .ncount{flex-shrink:0;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--ctl-h);font-size:10px;font-weight:700;line-height:15px;text-align:center}
 .lwI .nmsg{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.85)}
 
+/* settings: a hotkey as a key cap; click it, then press the new keys (F-TOOL-11) */
+.kcap{min-width:120px;height:30px;padding:0 12px;border-radius:8px;background:var(--ctl);font-size:13px;font-variant-numeric:tabular-nums}
+.kcap:hover{background:var(--ctl-h)}
+
 /* clipboard: text you copied, newest first; picking an item pastes it where you were typing */
 .page.pg-clip{align-items:stretch;padding:2px 24px 4px}
 .cbw{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
@@ -2993,7 +2997,7 @@ const SET={
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
-  Shortcuts:[['keys','Keyboard shortcuts','sw']],
+  Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.clipboard','Clipboard','key',['Ctrl+Alt+V']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
   About:[['updates','Updates','sw'],['logs','Open logs folder','sw']],
 };
 let setSec='General';
@@ -3035,6 +3039,7 @@ function renderSettings(){
     const last=k.startsWith('T.')&&lastTab(+k.split('.')[1])||k.startsWith('L.')&&LEFT_TAB[k.split('.')[1]]!=null&&lastTab(LEFT_TAB[k.split('.')[1]]);
     const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last;
     const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
+      :type==='key'?`<button class="kcap" data-k="${k}" aria-label="${label}" title="Press to record a new shortcut">${opts[0]}</button>`
       :type==='range'?`<input type="range" min="${opts[0]}" max="${opts[1]==='bar'?S.barH-4:opts[1]}" value="${v}" data-k="${k}" aria-label="${label}"><span class="num">${v}${opts[2]}</span>`
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
     const why=tabOff?'Turned off in Left side':ntfOff?'Turn on Show Windows notifications first':'Hide the Windows taskbar first';

@@ -29,6 +29,29 @@ public sealed record AppSettings
     /// <summary>Show Claude Code sessions (F-CLD-01): off until the user turns it on, since it edits ~/.claude/settings.json.</summary>
     public bool ClaudeSessions { get; init; }
 
+    /// <summary>Keyboard shortcuts (F-TOOL-10): the global hotkeys, each changeable in Settings (F-TOOL-11).</summary>
+    public bool KeyboardShortcuts { get; init; } = true;
+    public string HotkeyIsland { get; init; } = Hotkeys.Default(HotkeyAction.Island);
+    public string HotkeyClipboard { get; init; } = Hotkeys.Default(HotkeyAction.Clipboard);
+    public string HotkeyNewNote { get; init; } = Hotkeys.Default(HotkeyAction.NewNote);
+    public string HotkeyAddTask { get; init; } = Hotkeys.Default(HotkeyAction.AddTask);
+
+    public string HotkeyFor(HotkeyAction action) => action switch
+    {
+        HotkeyAction.Island => HotkeyIsland,
+        HotkeyAction.Clipboard => HotkeyClipboard,
+        HotkeyAction.NewNote => HotkeyNewNote,
+        _ => HotkeyAddTask,
+    };
+
+    public AppSettings WithHotkey(HotkeyAction action, string hotkey) => action switch
+    {
+        HotkeyAction.Island => this with { HotkeyIsland = hotkey },
+        HotkeyAction.Clipboard => this with { HotkeyClipboard = hotkey },
+        HotkeyAction.NewNote => this with { HotkeyNewNote = hotkey },
+        _ => this with { HotkeyAddTask = hotkey },
+    };
+
     /// <summary>Show 5-hour usage timer (F-CLD-08): on by default, but only while Claude sessions are on.</summary>
     public bool ClaudeUsageTimer { get; init; } = true;
 

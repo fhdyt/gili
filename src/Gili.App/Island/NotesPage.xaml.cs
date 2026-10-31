@@ -535,7 +535,10 @@ public partial class NotesPage : UserControl
         CompositionTarget.Rendering += tick;
     }
 
-    private void OnNewNote(object sender, RoutedEventArgs e)
+    private void OnNewNote(object sender, RoutedEventArgs e) => StartNewNote();
+
+    /// <summary>New note, from its button or Ctrl+Alt+N (F-TOOL-10): an empty note on top, its editor focused.</summary>
+    public void StartNewNote()
     {
         var id = _vm.NewNote();
         Scroller.ScrollToTop();

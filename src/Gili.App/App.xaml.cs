@@ -216,6 +216,7 @@ public partial class App : Application
         _demo.Claude = _claude;
         ShowClaude();
         _islandWindow.Show();
+        StartHotkeys();
         // Notes that floated when Gili closed come back where they were (F-TOOL-12).
         _floating = new FloatingNotes(_notes, _islandWindow);
         _islandWindow.Floating = _floating;
@@ -257,6 +258,7 @@ public partial class App : Application
         _right?.Dispose();
         _gili?.Dispose();
         // Stopping clears the sessions, and the island's windows are already closed: nothing may show them again.
+        _hotkeys?.Dispose();
         _claude?.Changed -= ShowClaude;
         _claude?.Dispose();
         _islandController?.Dispose();
@@ -326,6 +328,31 @@ public partial class App : Application
         }
     }
 
+    private Platform.Input.HotkeyService? _hotkeys;
+    private string? _hotkeysApplied;
+
+    /// <summary>The global hotkeys (F-TOOL-10): registered while Keyboard shortcuts is on, again whenever one changes.</summary>
+    private void StartHotkeys()
+    {
+        _hotkeys = new Platform.Input.HotkeyService();
+        _hotkeys.Pressed += action => _islandWindow!.RunHotkey(action);
+        ApplyHotkeys(_settings!.Current);
+        _settings.Changed += ApplyHotkeys;
+    }
+
+    private void ApplyHotkeys(Core.Settings.AppSettings s)
+    {
+        var wanted = s.KeyboardShortcuts
+            ? Core.Settings.Hotkeys.All.Select(h => (h.Action, Key: Core.Settings.Hotkeys.Parse(s.HotkeyFor(h.Action))))
+                .Where(h => h.Key is not null).ToDictionary(h => h.Action, h => h.Key!.Value)
+            : [];
+        var applied = string.Join(",", wanted.Select(w => $"{w.Key}={w.Value}"));
+        if (applied == _hotkeysApplied) return;
+        _hotkeysApplied = applied;
+        _hotkeys!.Apply(wanted);
+        foreach (var failed in _hotkeys.Failed) _log?.Write($"The {failed} hotkey is used by another app");
+    }
+
     /// <summary>
     /// Claude's sessions in the slot, the green bubble, the page and on the left icon (F-CLD-02, F-CLD-04, F-LEFT-05), and
     /// the Needs input card for a new wait (F-CLD-03).
@@ -377,12 +404,17 @@ public partial class App : Application
             return;
         }
         _releaseTimer.Stop();
-        var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now));
+        var model = new SettingsViewModel(_settings!, _transparency!.Enabled, Kind, _startup, () => _claude?.Status(DateTimeOffset.Now),
+            _hotkeys is null ? null : new HotkeyHooks(_hotkeys.Suspend, action => _hotkeys.Failed.Contains(action)));
+        if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
         _settingsWindow = new SettingsWindow(model);
         _settingsWindow.Closed += (_, _) =>
         {
             _claude?.StatusChanged -= model.RefreshNotes;
+            _hotkeys?.FailuresChanged -= model.RefreshShortcutNotes;
+            // A recording cut short by closing the window must not leave the hotkeys off.
+            _hotkeys?.Suspend(false);
             _settingsWindow = null;
             ReleaseLater();
         };

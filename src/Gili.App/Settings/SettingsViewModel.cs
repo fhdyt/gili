@@ -4,6 +4,9 @@ using Gili.Core.Settings;
 
 namespace Gili.App.Settings;
 
+/// <summary>What the Shortcuts rows need from the hotkeys: pause them while recording, and which ones another app holds.</summary>
+public sealed record HotkeyHooks(Action<bool> Suspend, Func<HotkeyAction, bool> Failed);
+
 /// <summary>The Settings window (PRD 6.5): sections on the left, the chosen section's rows on the right. Every change applies at once.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -12,12 +15,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly InstallKind _kind;
     private readonly StartupState? _startup;
     private readonly Func<string?>? _claudeStatus;
+    private readonly HotkeyHooks? _hotkeys;
 
     [ObservableProperty] private SettingsSection _selectedSection;
     [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
-    public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null)
+    public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null,
+        HotkeyHooks? hotkeys = null)
     {
+        _hotkeys = hotkeys;
         _claudeStatus = claudeStatus;
         _hub = hub;
         _transparencyEnabled = transparencyEnabled;
@@ -38,7 +44,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void BuildRows()
     {
         _order = _hub.Current.ModuleOrder;
-        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key)))];
+        Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current).Select(r => new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys))];
     }
 
     private string? _order;
@@ -67,8 +73,16 @@ public sealed partial class SettingsViewModel : ObservableObject
         // The integration's status line (PRD 9.4): waiting, connected, or what went wrong.
         "clOn" => _claudeStatus?.Invoke(),
         "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
+        // PRD 11: a combination another app holds stays off.
+        _ when Hotkeys.ActionOf(key) is { } action && _hotkeys?.Failed(action) == true => "Used by another app",
         _ => null,
     };
+
+    /// <summary>A hotkey registered or failed after a change: its row says so.</summary>
+    public void RefreshShortcutNotes()
+    {
+        if (SelectedSection.Name == "Shortcuts") BuildRows();
+    }
 
     /// <summary>A status line changed outside the settings, e.g. the first Claude hook arrived.</summary>
     public void RefreshNotes()

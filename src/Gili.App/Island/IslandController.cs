@@ -619,6 +619,13 @@ public sealed class IslandController : IDisposable
 
     public void Open(IslandPage page) => _coordinator.Open(page);
 
+    /// <summary>Ctrl+Alt+Space (F-TOOL-10): the open island closes; a closed one opens on its activity's or last page.</summary>
+    public void ToggleIsland()
+    {
+        if (View.Mode == IslandMode.Expanded) Close();
+        else _coordinator.OpenFor(null);
+    }
+
     public void Toggle(IslandPage page) => _coordinator.Toggle(page);
 
     public void Toggle(ControlKind control) => _coordinator.Toggle(control);

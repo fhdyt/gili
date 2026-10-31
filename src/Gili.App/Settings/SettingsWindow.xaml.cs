@@ -39,8 +39,48 @@ public partial class SettingsWindow : Window
 
     private void OnClose(object sender, RoutedEventArgs e) => Close();
 
+    private void OnShortcutClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SettingRowViewModel row } button)
+        {
+            button.Focus();
+            row.StartRecording();
+        }
+    }
+
+    private void OnShortcutLostFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.StopRecording(null);
+    }
+
+    /// <summary>
+    /// While a Shortcuts row records, the next key with Ctrl, Alt or Win becomes its hotkey; Esc alone keeps the old one;
+    /// a modifier on its own waits for the key that completes it.
+    /// </summary>
+    private bool Record(KeyEventArgs e)
+    {
+        if ((e.OriginalSource as FrameworkElement)?.DataContext is not SettingRowViewModel { IsRecording: true } row) return false;
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var modifiers = Gili.Core.Settings.HotkeyModifiers.None;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) modifiers |= Gili.Core.Settings.HotkeyModifiers.Ctrl;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) modifiers |= Gili.Core.Settings.HotkeyModifiers.Alt;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) modifiers |= Gili.Core.Settings.HotkeyModifiers.Shift;
+        if (Keyboard.IsKeyDown(Key.LWin) || Keyboard.IsKeyDown(Key.RWin)) modifiers |= Gili.Core.Settings.HotkeyModifiers.Win;
+        var code = KeyInterop.VirtualKeyFromKey(key);
+        e.Handled = true;
+        if (key == Key.Escape && modifiers == Gili.Core.Settings.HotkeyModifiers.None)
+        {
+            row.StopRecording(null);
+            return true;
+        }
+        if (Gili.Core.Settings.Hotkeys.IsModifierKey(code)) return true;
+        row.StopRecording(new Gili.Core.Settings.Hotkey(modifiers, code));
+        return true;
+    }
+
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (Record(e)) return;
         if (e.Key == Key.Escape)
         {
             Close();
