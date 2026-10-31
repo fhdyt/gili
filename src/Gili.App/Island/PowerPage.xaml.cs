@@ -15,17 +15,27 @@ public partial class PowerPage : UserControl, IControlIsland
         _island = island;
         InitializeComponent();
         island.PowerChanged += Refresh;
+        island.UpdatesChanged += ShowUpdates;
         Refresh();
+        ShowUpdates();
     }
 
-    /// <summary>The buttons never change height.</summary>
-    public event Action? Resized
+    /// <summary>The update buttons come and go with Windows' waiting updates, and the island fits them.</summary>
+    public event Action? Resized;
+
+    public void Shown()
     {
-        add { }
-        remove { }
+        Refresh();
+        _island.RefreshUpdates();
     }
 
-    public void Shown() => Refresh();
+    private void ShowUpdates()
+    {
+        var shown = _island.UpdatesPending ? Visibility.Visible : Visibility.Collapsed;
+        if (UpdateShutDown.Visibility == shown) return;
+        UpdateShutDown.Visibility = UpdateRestart.Visibility = shown;
+        Resized?.Invoke();
+    }
 
     public void Hidden()
     {
@@ -51,6 +61,16 @@ public partial class PowerPage : UserControl, IControlIsland
     private void OnShutDown(object sender, RoutedEventArgs e) => Run(SystemActions.ShutDown);
 
     private void OnRestart(object sender, RoutedEventArgs e) => Run(SystemActions.Restart);
+
+    private void OnUpdateShutDown(object sender, RoutedEventArgs e) => Run(() => Update(PendingUpdates.UpdateAndShutDown));
+
+    private void OnUpdateRestart(object sender, RoutedEventArgs e) => Run(() => Update(PendingUpdates.UpdateAndRestart));
+
+    /// <summary>When Windows refuses the update variant, its Windows Update page opens instead (PRD 12).</summary>
+    private static void Update(Func<bool> shutdown)
+    {
+        if (!shutdown()) SystemActions.OpenSettings("ms-settings:windowsupdate");
+    }
 
     private void OnQuickSettings(object sender, RoutedEventArgs e) => Run(SystemActions.QuickSettings);
 

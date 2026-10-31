@@ -13,7 +13,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bg" Height="40" CornerRadius="12" Background="#0FFFFFFF" Padding="12,0" RenderTransformOrigin="0.5,0.5">
-                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -73,11 +73,30 @@
                     <TextBlock Text="Sleep" Margin="12,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
+            <!-- Only while Windows has updates waiting (F-RIGHT-08), each before its plain twin as in Start, with the orange dot. -->
+            <Button x:Name="UpdateShutDown" Style="{StaticResource PowerButton}" Margin="0,4,0,0" Click="OnUpdateShutDown" Visibility="Collapsed">
+                <DockPanel>
+                    <Ellipse DockPanel.Dock="Right" Width="6" Height="6" Fill="#FF9F0A" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal">
+                        <c:IconView Glyph="{StaticResource Icon.Power}" Width="16" Height="16" Foreground="#8E8E93" />
+                        <TextBlock Text="Update and shut down" Margin="12,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DockPanel>
+            </Button>
             <Button Style="{StaticResource PowerButton}" Margin="0,4,0,0" Click="OnShutDown">
                 <StackPanel Orientation="Horizontal">
                     <c:IconView Glyph="{StaticResource Icon.Power}" Width="16" Height="16" Foreground="#8E8E93" />
                     <TextBlock Text="Shut down" Margin="12,0,0,0" VerticalAlignment="Center" />
                 </StackPanel>
+            </Button>
+            <Button x:Name="UpdateRestart" Style="{StaticResource PowerButton}" Margin="0,4,0,0" Click="OnUpdateRestart" Visibility="Collapsed">
+                <DockPanel>
+                    <Ellipse DockPanel.Dock="Right" Width="6" Height="6" Fill="#FF9F0A" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal">
+                        <c:IconView Glyph="{StaticResource Icon.Restart}" Width="16" Height="16" Foreground="#8E8E93" />
+                        <TextBlock Text="Update and restart" Margin="12,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DockPanel>
             </Button>
             <Button Style="{StaticResource PowerButton}" Margin="0,4,0,0" Click="OnRestart">
                 <StackPanel Orientation="Horizontal">

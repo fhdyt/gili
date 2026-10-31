@@ -45,6 +45,8 @@ public sealed partial class BarViewModel : ObservableObject
     [ObservableProperty] private string? _volumeTooltip;
     [ObservableProperty] private bool _hasBrightness;
     [ObservableProperty] private string? _brightnessTooltip;
+    [ObservableProperty] private bool _updatesPending;
+    [ObservableProperty] private string _powerTooltip = "Power";
     [ObservableProperty] private string _clockTime = "";
     [ObservableProperty] private string _clockDate = "";
     [ObservableProperty] private string _clockTooltip = "";

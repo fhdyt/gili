@@ -716,7 +716,7 @@ Urutan default dari kiri ke kanan:
 - **Sampai Fase 3** (rencana 1e, keputusan pengguna 2026-10-27: tampilan bar lengkap dengan data asli dan fungsi dasar):
   - Cuaca memakai kota default Jakarta (−6,2088, 106,8456) sampai Settings punya pilihan kota; nama kota tampil di tooltip.
   - Klik Wi‑Fi, Bluetooth, Volume, dan Brightness membuka Quick Settings Windows (`Win+A`) sampai Fase 3b, yang menggantinya dengan pulau kontrol; klik Tray membuka ikon tersembunyi Windows (`Win+B` lalu `Enter`). Pulau kontrolnya dan panel tray menyusul di Fase 3.
-  - Power membuka pulau Power tanpa item `Update and …`, karena deteksi update yang menunggu baru diverifikasi di Fase 3.
+  - Power membuka pulau Power tanpa item `Update and …`, karena deteksi update yang menunggu baru diverifikasi di Fase 3 (selesai di Fase 3e: kunci `RebootRequired` atau Windows Update Agent, keduanya cocok di laptop pengguna; tooltip ikon `Power · updates are ready to install`).
   - Tanpa izin Location, Wi‑Fi hanya menampilkan ikon dengan tooltip `Allow location access for Gili to show the Wi‑Fi name (Settings > Privacy & security > Location)`.
   - Klik CPU dan RAM membuka tab System yang berisi `Coming in Phase 3`, seperti mockup (selesai di Fase 3c: halaman System berisi grafik).
 

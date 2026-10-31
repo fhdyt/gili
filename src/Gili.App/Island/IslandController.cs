@@ -46,6 +46,10 @@ public sealed class IslandController : IDisposable
         _demoDrop.Tick += (_, _) => DropDemo();
         shelf.Changed += SyncShelfCheck;
         SyncShelfCheck();
+        _dispatcher = dispatcher;
+        _updateCheck.Tick += (_, _) => RefreshUpdates();
+        _updateCheck.Start();
+        RefreshUpdates();
         Media = media;
         Timers = timers;
         Alarms = alarms;
@@ -110,6 +114,30 @@ public sealed class IslandController : IDisposable
     public NoteService Notes { get; }
 
     public ShelfService Shelf { get; }
+
+    private readonly Dispatcher _dispatcher;
+    private readonly DispatcherTimer _updateCheck = new() { Interval = TimeSpan.FromMinutes(30) };
+    private bool _checkingUpdates;
+
+    /// <summary>Windows has updates waiting: Power shows "Update and …" and the bar's icon an orange dot (F-RIGHT-08).</summary>
+    public bool UpdatesPending { get; private set; }
+
+    public event Action? UpdatesChanged;
+
+    /// <summary>Read at start, when the Power island opens, and every 30 minutes (PRD 9.2), off the UI thread.</summary>
+    public void RefreshUpdates()
+    {
+        if (_checkingUpdates) return;
+        _checkingUpdates = true;
+        Task.Run(PendingUpdates.Read).ContinueWith(read => _dispatcher.InvokeAsync(() =>
+        {
+            _checkingUpdates = false;
+            var pending = read.IsCompletedSuccessfully && read.Result;
+            if (pending == UpdatesPending) return;
+            UpdatesPending = pending;
+            UpdatesChanged?.Invoke();
+        }), TaskScheduler.Default);
+    }
 
     private readonly DispatcherTimer _dragLeave = new() { Interval = TimeSpan.FromMilliseconds(150) };
     private readonly DispatcherTimer _shelfCheck = new() { Interval = TimeSpan.FromMinutes(1) };
@@ -395,6 +423,8 @@ public sealed class IslandController : IDisposable
         _lockKeys.SetPaused(paused);
         _privacy.SetPaused(paused);
         PauseShelfCheck(paused);
+        if (paused) _updateCheck.Stop();
+        else _updateCheck.Start();
     }
 
     public void OpenFromIsland() => OpenActivity(View.Slot);

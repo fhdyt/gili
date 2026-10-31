@@ -220,8 +220,29 @@ public partial class BarWindow : Window
         MoreModulesList.IsOpen = true;
     }
 
-    /// <summary>The island that a file dragged over the bar turns into the drop zone (PRD 6.3 "Shelf").</summary>
-    public Island.IslandController? Island { get; set; }
+    /// <summary>
+    /// The island that a file dragged over the bar turns into the drop zone (PRD 6.3 "Shelf"), and whose update check
+    /// puts the orange dot on Power (F-RIGHT-08).
+    /// </summary>
+    public Island.IslandController? Island
+    {
+        get => _island;
+        set
+        {
+            _island = value;
+            if (value is null) return;
+            value.UpdatesChanged += ShowUpdates;
+            ShowUpdates();
+        }
+    }
+
+    private Island.IslandController? _island;
+
+    private void ShowUpdates()
+    {
+        _vm.UpdatesPending = _island?.UpdatesPending == true;
+        _vm.PowerTooltip = _vm.UpdatesPending ? "Power · updates are ready to install" : "Power";
+    }
 
     public void ShowShelf(int files, bool bounce) => _left.ShowShelf(files, bounce);
 
