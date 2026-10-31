@@ -11,6 +11,7 @@ using Gili.App.Settings;
 using Gili.App.Tools;
 using Gili.Core;
 using Gili.Core.Diagnostics;
+using Gili.Core.Modules;
 using Gili.Core.Settings;
 using Gili.Data;
 using Gili.Platform.Power;
@@ -30,6 +31,7 @@ public partial class App : Application
     private SettingsHub? _settings;
     private TransparencyWatcher? _transparency;
     private StatsService? _stats;
+    private bool _systemPageShown;
     private ClockService? _clock;
     private MediaService? _media;
     private IslandController? _islandController;
@@ -91,10 +93,10 @@ public partial class App : Application
         else SyncAutostart(_settings.Current);
         _transparency = new TransparencyWatcher();
 
-        var cpu = new CpuSampler();
-        var memory = new MemorySampler();
-        var network = new NetworkSampler();
-        _stats = new StatsService(Dispatcher, cpu.Sample, memory.Sample, network.Sample);
+        _stats = new StatsService(Dispatcher, () => new CpuSampler().Sample, () => new MemorySampler().Sample, () => new NetworkSampler().Sample,
+            () => new GpuSampler().Sample, () => new DiskSampler().Sample);
+        UpdateStatsDemand();
+        _settings.Changed += _ => UpdateStatsDemand();
 
         _clock = new ClockService();
         _media = new MediaService(Dispatcher, _log);
@@ -288,6 +290,12 @@ public partial class App : Application
     /// Only the installed copy owns the Run entry, so a dev build started with `dotnet run` never registers itself
     /// (F-BAR-04; the first run of the installed copy creates the entry, PRD 9.4). The Store copy uses its StartupTask.
     /// </summary>
+    /// <summary>Only the modules switched on, and everything while the System page shows, are read (PRD 8.1).</summary>
+    private void UpdateStatsDemand()
+    {
+        if (_stats is not null) _stats.Demand = StatsDemands.For(_settings!.Current.HiddenModules, _systemPageShown);
+    }
+
     private void SyncAutostart(AppSettings settings)
     {
         if (Kind == InstallKind.Store)
