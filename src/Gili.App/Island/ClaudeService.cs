@@ -195,8 +195,8 @@ public sealed class ClaudeService : IDisposable
                 var first = _lastEvent is null;
                 _lastEvent = DateTimeOffset.Now;
                 _real.Apply(message);
-                // The first prompt starts the 5-hour window; a turn ended on a rate limit marks it reached (design 3j).
-                if (message.Event == "UserPromptSubmit") _usage.Prompted();
+                // The first use starts the 5-hour window; a turn ended on a rate limit marks it reached (design 3j).
+                if (ClaudeUsage.IsUse(message.Event)) _usage.Used();
                 else if (message is { Event: "StopFailure", Error: "rate_limit" }) _usage.LimitReached(message.Message);
                 if (first) StatusChanged?.Invoke();
             }));

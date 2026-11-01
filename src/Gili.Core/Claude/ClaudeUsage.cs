@@ -29,7 +29,7 @@ public interface IClaudeWindowStore
 }
 
 /// <summary>
-/// The Claude 5-hour window (PRD 6.3 "Batas pemakaian Claude", F-CLD-08, design 3j): it starts at the first prompt while
+/// The Claude 5-hour window (PRD 6.3 "Batas pemakaian Claude", F-CLD-08, design 3j): it starts at the first use while
 /// none runs, floored to the hour, and ends 5 hours later; the StopFailure hook with a rate_limit error marks the limit
 /// reached and may carry the real reset time. When the window ends, <see cref="Tick"/> says so once, for the card.
 /// </summary>
@@ -55,10 +55,17 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
         Changed?.Invoke();
     }
 
-    /// <summary>A prompt was sent in any session (UserPromptSubmit).</summary>
-    public void Prompted()
+    /// <summary>
+    /// The hooks that come right after a request to Claude, which is what starts a window: a prompt, a tool call, a turn's
+    /// end. A turn that runs on past the reset starts the next window without a new prompt. A session starting or ending,
+    /// or Claude waiting idle for input, sends nothing (issue 39).
+    /// </summary>
+    public static bool IsUse(string hook) => hook is "UserPromptSubmit" or "PreToolUse" or "PostToolUse" or "Stop";
+
+    /// <summary>Claude was used in any session (<see cref="IsUse"/>).</summary>
+    public void Used()
     {
-        if (Current is not null) return;
+        if (Running(now()) is not null) return;
         var start = FloorToHour(now());
         Keep(new ClaudeUsageWindow(0, start, start + Length, ClaudeWindowSource.Estimated, null, false));
     }
@@ -68,7 +75,7 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
     {
         var at = now();
         var reset = ResetIn(text, at);
-        var window = Current;
+        var window = Running(at);
         if (window is null)
         {
             var start = reset is { } r ? r - Length : FloorToHour(at);
@@ -130,6 +137,12 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
     }
 
     public static DateTimeOffset FloorToHour(DateTimeOffset time) => new(time.Year, time.Month, time.Day, time.Hour, 0, 0, time.Offset);
+
+    /// <summary>
+    /// The window still running at <paramref name="at"/>. One past its reset is over even before <see cref="Tick"/> sees it:
+    /// the reset timer runs late after sleep, and use in that gap starts the next window (issue 39).
+    /// </summary>
+    private ClaudeUsageWindow? Running(DateTimeOffset at) => Current is { } window && at < window.ResetsAt ? window : null;
 
     private void Finish()
     {

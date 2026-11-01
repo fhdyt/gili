@@ -30,12 +30,12 @@ public sealed class ClaudeUsageTests : IDisposable
     public void The_first_prompt_starts_a_window_on_the_hour()
     {
         var usage = new ClaudeUsage(null, () => _now);
-        usage.Prompted();
+        usage.Used();
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 14, 0, 0, Jakarta), usage.Current!.StartedAt);
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 0, 0, Jakarta), usage.Current.ResetsAt);
         Assert.Equal(ClaudeWindowSource.Estimated, usage.Current.Source);
         _now = _now.AddHours(1);
-        usage.Prompted();
+        usage.Used();
         Assert.Equal(19, usage.Current.ResetsAt.Hour);
     }
 
@@ -43,7 +43,7 @@ public sealed class ClaudeUsageTests : IDisposable
     public void The_window_ends_once_with_its_card_and_the_next_prompt_starts_another()
     {
         var usage = new ClaudeUsage(null, () => _now);
-        usage.Prompted();
+        usage.Used();
         _now = new DateTimeOffset(2026, 10, 31, 18, 59, 59, Jakarta);
         Assert.False(usage.Tick());
         _now = _now.AddSeconds(1);
@@ -51,7 +51,7 @@ public sealed class ClaudeUsageTests : IDisposable
         Assert.Null(usage.Current);
         Assert.False(usage.Tick());
         _now = _now.AddMinutes(10);
-        usage.Prompted();
+        usage.Used();
         Assert.Equal(19, usage.Current!.StartedAt.Hour);
     }
 
@@ -59,17 +59,55 @@ public sealed class ClaudeUsageTests : IDisposable
     public void A_window_that_ended_during_sleep_ends_quietly()
     {
         var usage = new ClaudeUsage(null, () => _now);
-        usage.Prompted();
+        usage.Used();
         _now = new DateTimeOffset(2026, 10, 31, 21, 0, 0, Jakarta);
         Assert.False(usage.Tick());
         Assert.Null(usage.Current);
     }
 
     [Fact]
+    public void Use_after_the_window_ended_starts_another_before_its_tick()
+    {
+        // Issue 39: the laptop slept past 19:00, so the old window was still Current when the first prompt came.
+        var store = new MemoryStore();
+        var usage = new ClaudeUsage(store, () => _now);
+        usage.Used();
+        _now = new DateTimeOffset(2026, 11, 1, 7, 35, 52, Jakarta);
+        usage.Used();
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 7, 0, 0, Jakarta), usage.Current!.StartedAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 12, 0, 0, Jakarta), usage.Current.ResetsAt);
+        Assert.False(usage.Tick());
+        Assert.Same(usage.Current, store.Row);
+    }
+
+    [Fact]
+    public void A_limit_after_the_window_ended_starts_another_before_its_tick()
+    {
+        var usage = new ClaudeUsage(null, () => _now);
+        usage.Used();
+        _now = new DateTimeOffset(2026, 11, 1, 7, 35, 52, Jakarta);
+        usage.LimitReached("You've hit your limit · resets 12pm");
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 7, 0, 0, Jakarta), usage.Current!.StartedAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 12, 0, 0, Jakarta), usage.Current.ResetsAt);
+        Assert.True(usage.Current.LimitHit);
+    }
+
+    [Theory]
+    [InlineData("UserPromptSubmit", true)]
+    [InlineData("PreToolUse", true)]
+    [InlineData("PostToolUse", true)]
+    [InlineData("Stop", true)]
+    [InlineData("SessionStart", false)]
+    [InlineData("Notification", false)]
+    [InlineData("SessionEnd", false)]
+    public void Only_hooks_that_follow_a_request_to_claude_count_as_use(string hook, bool used) =>
+        Assert.Equal(used, ClaudeUsage.IsUse(hook));
+
+    [Fact]
     public void The_limit_marks_the_window_and_takes_claudes_reset_time()
     {
         var usage = new ClaudeUsage(null, () => _now);
-        usage.Prompted();
+        usage.Used();
         usage.LimitReached("5-hour limit reached ∙ resets 7:30pm");
         Assert.True(usage.Current!.LimitHit);
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 30, 0, Jakarta), usage.Current.ResetsAt);
@@ -106,7 +144,7 @@ public sealed class ClaudeUsageTests : IDisposable
     {
         var store = new MemoryStore();
         var usage = new ClaudeUsage(store, () => _now);
-        usage.Prompted();
+        usage.Used();
         _now = _now.AddHours(2);
         var again = new ClaudeUsage(store, () => _now);
         again.Load();
@@ -117,7 +155,7 @@ public sealed class ClaudeUsageTests : IDisposable
     public void A_window_that_ended_while_gili_was_closed_ends_quietly_at_start()
     {
         var store = new MemoryStore();
-        new ClaudeUsage(store, () => _now).Prompted();
+        new ClaudeUsage(store, () => _now).Used();
         _now = _now.AddHours(6);
         var again = new ClaudeUsage(store, () => _now);
         again.Load();
