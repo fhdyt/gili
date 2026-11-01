@@ -6,8 +6,10 @@ namespace Gili.Core.Claude;
 /// started before Gili, permissions Claude Desktop handles itself (status waiting) and Esc (status idle without Stop).
 /// A Done whose window was not in front stays Done, unseen, until that window comes forward, its bubble or row is clicked,
 /// or a new prompt starts (F-CLD-04); <paramref name="isFront"/> says whether a session's window is the foreground one.
+/// With <paramref name="desktopOnly"/> the CLI's sessions are followed but never shown, and a session shows once its file
+/// says it is Claude Desktop's (revision 17).
 /// </summary>
-public sealed class ClaudeBoard(Func<DateTimeOffset> now, Func<ClaudeSession, bool>? isFront = null)
+public sealed class ClaudeBoard(Func<DateTimeOffset> now, Func<ClaudeSession, bool>? isFront = null, bool desktopOnly = false)
 {
     public static readonly TimeSpan DoneShows = TimeSpan.FromSeconds(4);
 
@@ -17,7 +19,7 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now, Func<ClaudeSession, bo
     private readonly List<ClaudeSession> _sessions = [];
     private long _lastWait;
 
-    public IReadOnlyList<ClaudeSession> Sessions => _sessions;
+    public IReadOnlyList<ClaudeSession> Sessions => desktopOnly ? [.. _sessions.Where(s => s.App == ClaudeApp.Desktop)] : _sessions;
 
     public event Action? Changed;
 
@@ -219,6 +221,6 @@ public sealed class ClaudeBoard(Func<DateTimeOffset> now, Func<ClaudeSession, bo
         if (Signature() != before) Changed?.Invoke();
     }
 
-    private string Signature() => string.Join("|", _sessions.Select(s =>
+    private string Signature() => string.Join("|", Sessions.Select(s =>
         $"{s.Id},{s.Ended},{s.Status},{s.Need},{s.Snippet},{s.Name},{s.App},{s.Pid},{s.PromptAt?.Ticks},{s.DoneUntil?.Ticks},{s.IdleWait?.Ticks},{s.Unseen},{s.WaitId},{s.Host}"));
 }

@@ -2,6 +2,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Gili.Core.Apps;
+using Gili.Core.Claude;
 using Gili.Platform.Apps;
 
 namespace Gili.App.Bar;
@@ -29,11 +30,12 @@ public sealed class AppsService : IDisposable
         _coalesce.Tick += (_, _) =>
         {
             _coalesce.Stop();
-            Read();
+            if (_showStrip) Read();
+            else WatchClaude(_windows.Read());
         };
         _windows.Changed += () =>
         {
-            if (_showStrip && !_coalesce.IsEnabled) _coalesce.Start();
+            if (!_coalesce.IsEnabled) _coalesce.Start();
         };
         _windows.ForegroundChanged += OnForeground;
         _windows.WindowShown += (hwnd, className) => WindowShown?.Invoke(hwnd, className);
@@ -42,17 +44,27 @@ public sealed class AppsService : IDisposable
     /// <summary>Any top-level window appeared, with its class name (Explorer's progress dialog for F-ISL-15).</summary>
     public event Action<nint, string>? WindowShown;
 
+    /// <summary>A window of Claude Desktop has a taskbar button: Claude's sessions and 5-hour timer show (revision 17).</summary>
+    public bool ClaudeDesktopOpen { get; private set; }
+
+    public event Action<bool>? ClaudeDesktopChanged;
+
     /// <summary>First read, once the bar shows, so icons come at the bar's DPI.</summary>
     public void Start()
     {
-        if (!_showStrip) return;
+        if (!_showStrip)
+        {
+            WatchClaude(_windows.Read());
+            return;
+        }
         Read();
         OnForeground(Platform.Shell.ForegroundWindow.Get());
     }
 
     /// <summary>
-    /// Settings → Left side → Running apps (F-LEFT-07). While off the window list isn't read at all; the foreground
-    /// window is still followed, since the Clipboard page's paste and Claude's sessions need it.
+    /// Settings → Left side → Running apps (F-LEFT-07). While off the window list is read only to see whether Claude
+    /// Desktop is open, with no icons; the foreground window is still followed, since the Clipboard page's paste and
+    /// Claude's sessions need it.
     /// </summary>
     public void ShowStrip(bool show)
     {
@@ -143,6 +155,15 @@ public sealed class AppsService : IDisposable
             if (!_items.ContainsKey(window.AppKey)) _items[window.AppKey] = Resolve(window);
         }
         if (_strip.Update(_last)) Changed?.Invoke();
+        WatchClaude(_last);
+    }
+
+    private void WatchClaude(IReadOnlyList<TaskbarWindow> windows)
+    {
+        var open = ClaudeDesktopApp.IsOpen(windows);
+        if (open == ClaudeDesktopOpen) return;
+        ClaudeDesktopOpen = open;
+        ClaudeDesktopChanged?.Invoke(open);
     }
 
     private void OnForeground(nint hwnd)

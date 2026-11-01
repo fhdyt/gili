@@ -169,6 +169,15 @@ public class DemoTests
     }
 
     [Fact]
+    public void Every_demo_claude_session_is_a_claude_desktop_one()
+    {
+        // Gili shows only Claude Desktop's sessions for now; the CLI's never appear (revision 17).
+        var sessions = Steps.Select(s => s.Action).OfType<DemoClaudeSession>().ToList();
+        Assert.Equal(2, sessions.Count);
+        Assert.All(sessions, s => Assert.True(s.Desktop));
+    }
+
+    [Fact]
     public void Due_returns_each_step_once()
     {
         var player = new DemoPlayer(Steps);

@@ -237,4 +237,34 @@ public sealed class ClaudeBoardTests
         Hook("Stop");
         Assert.Equal(_now + TimeSpan.FromSeconds(4), _board.NextDeadline);
     }
+
+    [Fact]
+    public void A_desktop_only_board_shows_claude_desktop_sessions_and_never_the_cli()
+    {
+        var board = new ClaudeBoard(() => _now, _ => true, desktopOnly: true);
+        var changes = 0;
+        board.Changed += () => changes++;
+        void Use(string id, string entrypoint)
+        {
+            board.Apply(new ClaudeHookMessage("UserPromptSubmit", id, @"C:\p", null, null, null, null));
+            board.Apply(new ClaudeSessionFile(100, id, @"C:\p", "Title", false, entrypoint, "busy", null));
+        }
+        Use("cli", "cli");
+        Assert.Empty(board.Sessions);
+        Assert.Equal(0, changes);
+        Use("desk", "claude-desktop");
+        Assert.Equal("desk", Assert.Single(board.Sessions).Id);
+        Assert.Equal(ClaudeStatus.Working, board.Sessions[0].Status);
+    }
+
+    [Fact]
+    public void A_desktop_only_board_waits_for_the_session_file_before_it_shows_a_session()
+    {
+        var board = new ClaudeBoard(() => _now, _ => true, desktopOnly: true);
+        board.Apply(new ClaudeHookMessage("UserPromptSubmit", "desk", @"C:\p", null, null, null, null));
+        Assert.Empty(board.Sessions);
+        board.Apply(new ClaudeSessionFile(100, "desk", @"C:\p", null, false, "claude-desktop", "busy", null));
+        // The prompt that came before the file still counts: the session shows as working.
+        Assert.Equal(ClaudeStatus.Working, Assert.Single(board.Sessions).Status);
+    }
 }

@@ -223,13 +223,15 @@ public partial class App : Application
         _islandController.ClaudeSessionRequested += _claude.Focus;
         _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
         _apps.ForegroundChanged += _claude.OnForeground;
+        _apps.ClaudeDesktopChanged += _claude.SetDesktopOpen;
         // Explorer's copy, move and delete progress (F-ISL-15): read only while Explorer's dialog is open.
         _fileOps = new ExplorerOpsService();
         _islandController.AttachFileOps(_fileOps);
         _apps.WindowShown += _fileOps.OnWindowShown;
         _claude.UsageEnded += () =>
         {
-            if (_claude.InDemo || _settings.Current.ClaudeUsageTimer) _islandController.ShowClaudeReset();
+            // The reset card rings only while Claude Desktop is open (revision 17).
+            if (_claude.InDemo || (_settings.Current.ClaudeUsageTimer && _claude.DesktopOpen)) _islandController.ShowClaudeReset();
         };
         _islandController.OpenClaude = _claude.OpenClaude;
         _bar.TimeChanged += _claude.RescheduleUsage;
@@ -383,7 +385,7 @@ public partial class App : Application
     /// </summary>
     private void ShowClaude()
     {
-        var sessions = _claude!.Board.Sessions;
+        var sessions = _claude!.Sessions;
         _islandController!.SetClaude(Core.Claude.ClaudeSlot.For(sessions, DateTimeOffset.Now), [.. sessions]);
         var cards = _claude.Cards;
         switch (cards.Update(sessions, _islandController.IsFullscreen))
@@ -398,8 +400,9 @@ public partial class App : Application
                 _islandController.DismissClaudeCard();
                 break;
         }
-        // The 5-hour window shows while the integration and its own switch are on, and always in the demo (F-CLD-08).
-        var showWindow = _claude.InDemo || (_claude.IsOn && _settings!.Current.ClaudeUsageTimer);
+        // The 5-hour window shows while the integration and its own switch are on and Claude Desktop is open, and always
+        // in the demo (F-CLD-08, revision 17). Closed, the window is still kept, so it is right when Desktop opens again.
+        var showWindow = _claude.InDemo || (_claude.IsOn && _settings!.Current.ClaudeUsageTimer && _claude.DesktopOpen);
         _islandController.SetClaudeWindow(showWindow ? _claude.Usage.Current : null);
         _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
             sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.Unseen(sessions).Count > 0,

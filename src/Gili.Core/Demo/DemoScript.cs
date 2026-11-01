@@ -142,16 +142,17 @@ public static class DemoScript
             Step(52.2, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 20))),
             Step(57.4, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: false, Percent: 79))),
             Step(59.5, new DemoMedia(null)),
-            // Claude (plan 3i): Desktop works, asks (card and Ping, 8 s), is answered; a terminal session joins; both finish
-            // behind other windows, so a green dot, then the green bubble with 2, then the Claude page.
+            // Claude (plan 3i): Desktop works, asks (card and Ping, 8 s), is answered; a second Desktop session joins; both
+            // finish behind other windows, so a green dot, then the green bubble with 2, then the Claude page. Only Claude
+            // Desktop's sessions show (revision 17).
             Step(60, new DemoClaudeSession(Desk, "Integrate taskbar with Claude", @"C:\Projects\gili", Desktop: true)),
-            Step(60, new DemoClaudeSession(Term, null, @"C:\Projects\top-taskbar", Desktop: false)),
+            Step(60, new DemoClaudeSession(Desk2, "Island timeline polish", @"C:\Projects\top-taskbar", Desktop: true)),
             Step(60.2, new DemoClaudeHook("UserPromptSubmit", Desk)),
             Step(63, new DemoClaudeHook("PreToolUse", Desk, "AskUserQuestion", "Which island layout do you prefer for the session list?")),
             Step(72.5, new DemoClaudeHook("PostToolUse", Desk)),
-            Step(73.5, new DemoClaudeHook("UserPromptSubmit", Term)),
+            Step(73.5, new DemoClaudeHook("UserPromptSubmit", Desk2)),
             Step(76.5, new DemoClaudeHook("Stop", Desk)),
-            Step(81.5, new DemoClaudeHook("Stop", Term)),
+            Step(81.5, new DemoClaudeHook("Stop", Desk2)),
             Step(87, new DemoOpen(IslandPage.Claude)),
             Step(91, new DemoClose()),
             // The 5-hour window (plan 3j): the limit reached, then a window that ends 6 s later with its card.
@@ -203,7 +204,7 @@ public static class DemoScript
     public const string ResetCard = "claude-reset";
 
     private const string Desk = "demo-desktop";
-    private const string Term = "demo-terminal";
+    private const string Desk2 = "demo-desktop-2";
 
     private static readonly BluetoothChange Buds = new("demo", "Galaxy Buds2 Pro", BluetoothKind.Audio, Connected: false, Battery: 80);
 

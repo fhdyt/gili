@@ -49,7 +49,7 @@ public sealed class ClaudeService : IDisposable
             if (Usage.Tick()) UsageEnded?.Invoke();
             ScheduleReset();
         };
-        _real = new ClaudeBoard(() => DateTimeOffset.Now, IsFront);
+        _real = new ClaudeBoard(() => DateTimeOffset.Now, IsFront, desktopOnly: true);
         _real.Changed += OnBoardChanged;
         _deadline.Tick += (_, _) =>
         {
@@ -92,6 +92,24 @@ public sealed class ClaudeService : IDisposable
 
     /// <summary>The sessions on show: the demo's while it plays (F-BAR-09), else the real ones.</summary>
     public ClaudeBoard Board => _demo ?? _real;
+
+    /// <summary>A window of Claude Desktop has a taskbar button (revision 17).</summary>
+    public bool DesktopOpen { get; private set; }
+
+    /// <summary>
+    /// The sessions the island, the cards and the launcher show: the demo's, else Claude Desktop's while it is open. Closed,
+    /// or closed to the tray, it shows none, though its sessions are still followed (revision 17).
+    /// </summary>
+    public IReadOnlyList<ClaudeSession> Sessions => _demo is not null || DesktopOpen ? Board.Sessions : [];
+
+    /// <summary>Claude Desktop opened or closed: its sessions and the 5-hour timer show or go.</summary>
+    public void SetDesktopOpen(bool open)
+    {
+        if (DesktopOpen == open) return;
+        DesktopOpen = open;
+        _log.Write(open ? "Claude Desktop is open" : "Claude Desktop is closed");
+        Raise();
+    }
 
     /// <summary>Which wait the Needs input card stands for (F-CLD-03); the demo has its own.</summary>
     public ClaudeCards Cards => _demoCards ?? _cards;
@@ -292,7 +310,7 @@ public sealed class ClaudeService : IDisposable
     public void BeginDemo()
     {
         if (_demo is not null) return;
-        _demo = new ClaudeBoard(() => DateTimeOffset.Now, _ => false);
+        _demo = new ClaudeBoard(() => DateTimeOffset.Now, _ => false, desktopOnly: true);
         _demoCards = new ClaudeCards();
         _demoUsage = new ClaudeUsage(null, () => DateTimeOffset.Now);
         _demoUsage.Changed += OnUsageChanged;

@@ -1562,11 +1562,12 @@ const S={
     {id:7,b:'Car service\nOil change at 45,000 km',t:'2 Oct'},
   ],
   noteSel:1,editing:false,nextId:10,shelf:[],
-  // Claude Code sessions as the hooks report them: idle, work, ask (needs input), done.
+  // Claude Code sessions as the hooks report them: idle, work, ask (needs input), done. Only Claude Desktop's sessions
+  // show, and only while Claude Desktop is open; the CLI's never do (revision 17).
   cl:[
     {id:1,name:'Add Claude status to the island',dir:'top-taskbar',app:'claude',st:'idle',at:Date.now()-18*60e3},
     {id:2,name:'Wedding site stats widget',dir:'mci-v3',app:'claude',st:'idle',at:Date.now()-52*60e3},
-    {id:3,name:'',dir:'api-server',app:'wmux',st:'idle',at:Date.now()-6*60e3},
+    {id:3,name:'API server health check',dir:'api-server',app:'claude',st:'idle',at:Date.now()-6*60e3},
   ],
   clEnd:null,fgName:'Chrome',
   apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
