@@ -1161,7 +1161,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                     <div class="wcol" data-n="60" data-u="sec" tabindex="0" role="spinbutton" aria-label="Seconds" aria-valuemin="0" aria-valuemax="59"></div>
                   </div>
                 </div>
-                <div class="chips" id="chips"><button class="chip" data-s="10">10 s</button><button class="chip" data-s="300">5 min</button><button class="chip" data-s="600">10 min</button><button class="chip" data-s="1500">25 min</button></div>
+                <button class="chip" id="dndChip" hidden title="Opens Windows notifications, where the bell turns Do not disturb on" style="position:absolute"><svg class="ic" aria-hidden="true" style="width:13px;height:13px;margin-right:6px"><use href="#i-moon"/></svg>Do not disturb</button><div class="chips" id="chips"><button class="chip" data-s="10">10 s</button><button class="chip" data-s="300">5 min</button><button class="chip" data-s="600">10 min</button><button class="chip" data-s="1500">25 min</button></div>
               </div>
               <div class="tright">
                 <svg class="bring" viewBox="0 0 104 104" aria-hidden="true"><circle class="bg" cx="52" cy="52" r="44"/><circle class="fg" id="bigFg" cx="52" cy="52" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg>
@@ -2275,6 +2275,9 @@ function renderTimerPage(){
   $('#tBig').textContent=big;$('#tSub').textContent=sub;$('#tStart').textContent=btn;
   const fg=$('#bigFg');fg.style.strokeDashoffset=BC*(1-frac);fg.style.stroke=m==='pomo'?'var(--danger)':'var(--orange)';
   $('#chips').style.visibility=m==='timer'?'visible':'hidden';
+  // F-TOOL-04 (revision 15): Windows keeps starting focus sessions to itself, so a running focus phase offers a chip that
+  // opens the notification center, whose bell turns Do not disturb on.
+  $('#dndChip').hidden=!(m==='pomo'&&S.pomo.running&&S.pomo.phase==='focus');
   if(WCOLS){$('#tStage').classList.toggle('pick',wShown());if(!wRaf&&wShown()&&wSecs()!==S.timer.total)wSet(S.timer.total,S.page===PAGE.timer);wPicked()}
   $$('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   if(S.page===PAGE.timer)renderGlow();
@@ -2284,6 +2287,7 @@ function toggleSw(){
   setPressed('sw',S.sw.running);renderSlot();renderTimerPage();if(!$('#toolw').hidden)renderTools();
 }
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(b){S.timer.mode=b.dataset.m;renderTimerPage()}};
+$('#dndChip').onclick=()=>hint('Windows notifications open; the bell at the top turns Do not disturb on');
 $('#chips').onclick=e=>{const b=e.target.closest('button');if(b){Object.assign(S.timer,{total:+b.dataset.s,left:+b.dataset.s,running:false});wSet(+b.dataset.s,true);renderTimerPage();renderSlot()}};
 // The Timer picker (F-ISL-29): three looping columns like iOS, each on its own spring (damping 1, response 0.35 s) that
 // a new scroll, drag or click interrupts from where it is. The wheel, a drag with a fling, a click on a row, or ↑/↓.

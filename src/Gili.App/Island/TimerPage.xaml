@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="clr-namespace:Gili.App.Controls">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleWhen" />
+    </UserControl.Resources>
     <!-- The Timer page (mockup section "Timer"): segment, digits, line and presets on the left; ring and buttons on the right. -->
     <DockPanel Margin="32,0" VerticalAlignment="Center">
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -36,8 +39,18 @@
                     </StackPanel>
                 </Grid>
             </Grid>
-            <!-- Presets only on the Timer segment; their space stays so the page doesn't jump (mockup visibility:hidden). -->
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <!-- Presets only on the Timer segment; their space stays so the page doesn't jump (mockup visibility:hidden). A running
+                 focus phase puts a Do not disturb chip in the same row (F-TOOL-04). -->
+            <Grid Margin="0,10,0,0">
+            <Button Style="{StaticResource Chip}" Command="{Binding OpenDoNotDisturbCommand}" HorizontalAlignment="Left"
+                    ToolTip="Opens Windows notifications, where the bell turns Do not disturb on"
+                    AutomationProperties.Name="Do not disturb" Visibility="{Binding ShowDoNotDisturb, Converter={StaticResource VisibleWhen}}">
+                <StackPanel Orientation="Horizontal">
+                    <c:IconView Glyph="{StaticResource Icon.Moon}" Width="13" Height="13" VerticalAlignment="Center" />
+                    <TextBlock Text="Do not disturb" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <StackPanel Orientation="Horizontal">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Style.Triggers>
@@ -52,6 +65,7 @@
                 <Button Style="{StaticResource Chip}" Content="10 min" Margin="6,0,0,0" Command="{Binding PresetCommand}" CommandParameter="600" />
                 <Button Style="{StaticResource Chip}" Content="25 min" Margin="6,0,0,0" Command="{Binding PresetCommand}" CommandParameter="1500" />
             </StackPanel>
+            </Grid>
         </StackPanel>
     </DockPanel>
 </UserControl>

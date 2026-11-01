@@ -26,6 +26,15 @@ public sealed partial class TimerViewModel : ObservableObject
     [ObservableProperty] private double _fraction = 1;
     [ObservableProperty] private Brush _ringBrush = Orange;
     [ObservableProperty] private bool _showPresets = true;
+
+    /// <summary>
+    /// During a running focus phase, a Do not disturb chip opens Windows' notification center, whose bell turns Do not
+    /// disturb on: Windows keeps starting focus sessions to itself (F-TOOL-04, revision 15).
+    /// </summary>
+    [ObservableProperty] private bool _showDoNotDisturb;
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private static void OpenDoNotDisturb() => Gili.Platform.Shell.SystemActions.OpenSettings("ms-actioncenter:");
     [ObservableProperty] private TimerMode _mode;
 
     /// <summary>The picker replaces the digits while the timer is ready: not running and not paused (F-ISL-29).</summary>
@@ -125,6 +134,8 @@ public sealed partial class TimerViewModel : ObservableObject
                 break;
         }
         ShowPresets = _timers.Mode == TimerMode.Timer;
+        ShowDoNotDisturb = _timers.Mode == TimerMode.Pomodoro && _timers.Pomodoro.Clock.IsRunning
+            && _timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus;
         if (_timers.Mode != TimerMode.Timer) ShowWheel = false;
         StartOrPauseCommand.NotifyCanExecuteChanged();
         UpdateFastTick();
