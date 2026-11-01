@@ -12,6 +12,14 @@ if ($running.Count -gt 0) {
     }
 }
 
+# Empty the program folder first, like the installer does: after Gili-Setup was installed here, its self-contained
+# runtime (hostfxr.dll and the rest) would stay beside this framework-dependent build, and Gili.exe would then look for
+# .NET in this folder and fail with "You must install or update .NET". The installer's own uninstaller (unins*) stays.
+# Notes and settings live in %LOCALAPPDATA%\Gili, not here.
+if (Test-Path $target) {
+    Get-ChildItem $target -Force | Where-Object { $_.Name -notlike 'unins*' } | Remove-Item -Recurse -Force
+}
+
 # Windows can hold the old files for a moment after the process exits, so a failed copy is tried once more.
 foreach ($attempt in 1..2) {
     dotnet publish (Join-Path $root 'src/Gili.App/Gili.App.csproj') -c Release -o $target --no-self-contained
