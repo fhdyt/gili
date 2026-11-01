@@ -1,6 +1,7 @@
-# Draws the MSIX logos in packaging/Assets and packaging/Gili.ico (Gili.exe and the installer, design 5b) from Gili the
-# mascot: a black rounded square with two white eyes. Placeholder art until Phase 5 (plan 1h decision 2). Run once and
-# commit the results.
+# Draws the MSIX logos in packaging/Assets and packaging/Gili.ico (Gili.exe, the installer and the tray icon) from Gili
+# the mascot in its circle form (revision 14, issue #32): a black circle with two white rounded-square eyes, each a
+# quarter of the circle across with a gap of a twelfth, like the 24 px circle beside the island. Run once and commit the
+# results.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $assets = Join-Path (Split-Path $PSScriptRoot -Parent) 'packaging/Assets'
@@ -18,16 +19,19 @@ function New-Logo([int] $size) {
     $bitmap = [System.Drawing.Bitmap]::new($size, $size)
     $g = [System.Drawing.Graphics]::FromImage($bitmap)
     $g.SmoothingMode = 'AntiAlias'
+    $g.PixelOffsetMode = 'HighQuality'
     $g.Clear([System.Drawing.Color]::Transparent)
-    $square = [System.Drawing.Drawing2D.GraphicsPath]::new()
-    Add-RoundRect $square 0 0 $s $s ($s * 0.22)
-    $g.FillPath([System.Drawing.Brushes]::Black, $square)
-    $eyeW = $s * 0.16; $eyeH = $s * 0.30
-    $left = $s / 2 - $s * 0.13; $right = $s / 2 + $s * 0.13
-    foreach ($cx in @($left, $right)) {
-        $eye = [System.Drawing.Drawing2D.GraphicsPath]::new()
-        Add-RoundRect $eye ($cx - $eyeW / 2) (($s - $eyeH) / 2) $eyeW $eyeH ($eyeW / 2)
-        $g.FillPath([System.Drawing.Brushes]::White, $eye)
+    $g.FillEllipse([System.Drawing.Brushes]::Black, 0, 0, $s, $s)
+    # At 16 px a quarter is 4 px, too small to read, so the smallest icon gets slightly bigger eyes.
+    $eye = $s * $(if ($size -le 16) { 0.28 } else { 0.25 })
+    $gap = $s / 12
+    $top = ($s - $eye) / 2
+    $leftEye = ($s - $gap) / 2 - $eye
+    $rightEye = ($s + $gap) / 2
+    foreach ($x in @($leftEye, $rightEye)) {
+        $path = [System.Drawing.Drawing2D.GraphicsPath]::new()
+        Add-RoundRect $path $x $top $eye $eye ($eye / 3)
+        $g.FillPath([System.Drawing.Brushes]::White, $path)
     }
     $g.Dispose()
     $bitmap
