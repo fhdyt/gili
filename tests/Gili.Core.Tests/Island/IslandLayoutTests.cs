@@ -42,6 +42,10 @@ public class IslandLayoutTests
         Assert.Equal(58 + 300 + 20, Layout(IslandMode.Expanded, pageHeight: 300).Height);
 
     [Fact]
+    public void Projects_timeline_reaches_the_bottom_edge() =>
+        Assert.Equal(58 + 300, Layout(IslandMode.Expanded, pageHeight: 300, page: IslandPage.Projects).Height);
+
+    [Fact]
     public void Expanded_stops_at_the_screen_height_less_the_top_gap_twice() =>
         Assert.Equal(1080 - 8, Layout(IslandMode.Expanded, pageHeight: 2000).Height);
 

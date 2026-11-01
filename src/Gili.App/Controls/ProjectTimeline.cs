@@ -10,9 +10,9 @@ using Gili.Core.Projects;
 namespace Gili.App.Controls;
 
 /// <summary>
-/// The Projects timeline (F-ISL-34, mockup .pjtl): a 30 px column per day, a month row and a day row, then one 30 px lane
-/// per task and an empty lane to add one. Only the days in view are drawn; scrolling moves an offset and redraws, and the
-/// bars are the only child elements. A bar dragged by its middle moves both days, by an end only that day; it lands on
+/// The Projects timeline (F-ISL-34, mockup .pjtl), flush with the island's left, right and bottom edges: a 30 px column
+/// per day, a month row and a day row, then one 30 px lane per task and an empty lane to add one. Only the days in view
+/// are drawn; scrolling moves an offset and redraws, and the bars are the only child elements. A bar dragged by its middle moves both days, by an end only that day; it lands on
 /// whole days with the compact ↔ wide spring. Nothing runs while nothing moves.
 /// </summary>
 public sealed class ProjectTimeline : FrameworkElement
@@ -183,7 +183,7 @@ public sealed class ProjectTimeline : FrameworkElement
     {
         var width = ActualWidth;
         var height = ActualHeight;
-        dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height), 12, 12));
+        // Square: the timeline runs to the island's left, right and bottom edges, whose own corners round it (revision 16).
         dc.DrawRectangle(Surface, null, new Rect(0, 0, width, height));
         var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var (first, last) = VisibleDays();
@@ -210,7 +210,6 @@ public sealed class ProjectTimeline : FrameworkElement
         dc.DrawRectangle(StickyFade, null, new Rect(shift, 0, stickyWidth, 20));
         dc.DrawText(sticky, new Point(shift + 9, 4));
         dc.DrawRectangle(RuleLine, null, new Rect(0, 42, width, 1));
-        dc.Pop();
     }
 
     internal (DateOnly First, DateOnly Last) VisibleDays()
@@ -836,7 +835,7 @@ public sealed class TimelineBar : FrameworkElement
         }
         else dc.DrawEllipse(null, new Pen(CheckRing, 1.5), centre, 7.25, 7.25);
         var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var name = ProjectTimeline.Label(task.Title, 12.5, ProjectTimeline.Medium, task.IsDone ? DoneText : Brushes.White, dpi);
+        var name = ProjectTimeline.Label(task.Title, 11, ProjectTimeline.Medium, task.IsDone ? DoneText : Brushes.White, dpi);
         var outside = width < name.Width + 40;
         if (outside) name.SetForegroundBrush(task.IsDone ? ProjectTimeline.Text2 : ProjectTimeline.Text);
         else

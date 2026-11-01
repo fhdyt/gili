@@ -30,6 +30,8 @@ Sebelum desain ini dipilih, dua desain lain dicoba di mockup, yaitu daftar + tim
 11. **Tanpa pengingat, aktivitas slot, atau kaitan ke Calendar/Todo.** Pengguna tidak memintanya, dan menambahkannya berarti menambah timer dan prioritas baru di `IslandCoordinator`. Mode demo hanya membuka halaman ini, dengan data pengguna sendiri, seperti halaman Todo.
 12. **Batas**: nama project 60 karakter dan nama task 80 karakter, mengikuti mockup. Jumlah project dan task tidak dibatasi. Setelah pulau setinggi layar, baris task digulir tegak di dalam timeline.
 
+13. **Penyesuaian setelah dicoba (permintaan pengguna 2026-11-01)**: nama task di bar 11 px (sebelumnya 12,5 px); timeline menempel ke tepi kiri, kanan, dan bawah pulau tanpa sudut sendiri; form task pindah ke atas timeline; `IslandLayout.PageBottomOf(IslandPage.Projects)` = 0, jadi pulau tidak menyisakan 20 px di bawah halaman ini.
+
 ## Arsitektur
 
 ```

@@ -1167,7 +1167,7 @@ public partial class IslandWindow : Window
     private void SizePages(double islandHeight)
     {
         ExpandedLayer.Height = islandHeight;
-        var area = Math.Max(0, islandHeight - IslandLayout.PageTop - IslandLayout.PageBottom);
+        var area = Math.Max(0, islandHeight - IslandLayout.PageTop - IslandLayout.PageBottomOf(_island.View.Page));
         PageArea.Width = ExpandedLayer.Width;
         PageArea.Height = area;
         foreach (Border page in PageTrack.Children) page.Height = area;

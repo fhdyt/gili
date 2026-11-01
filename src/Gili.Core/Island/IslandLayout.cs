@@ -24,6 +24,9 @@ public static class IslandLayout
     public const double PageTop = 58;
     public const double PageBottom = 20;
 
+    /// <summary>The gap under a page: none on Projects, whose timeline runs to the island's bottom edge (revision 16).</summary>
+    public static double PageBottomOf(IslandPage page) => page == IslandPage.Projects ? 0 : PageBottom;
+
     /// <summary>A control island (PRD 6.4) is 360 wide, 400 for the Wi‑Fi and Bluetooth lists, its content 16 from every edge.</summary>
     public const double ControlWidth = 360;
     public const double ListControlWidth = 400;
@@ -54,7 +57,7 @@ public static class IslandLayout
             IslandMode.Wide => new(Math.Max(MinCompactWidth, contentWidth + WidePadding), screen.IslandHeight, top, radius),
             IslandMode.Expanded => new(
                 expandedWidth,
-                Math.Clamp(PageTop + pageHeight + PageBottom, ExpandedMinHeight, maxHeight),
+                Math.Clamp(PageTop + pageHeight + PageBottomOf(page), ExpandedMinHeight, maxHeight),
                 top,
                 32),
             IslandMode.Card => new(Math.Min(560, screen.Width - ScreenMargin), 104, top, 28),

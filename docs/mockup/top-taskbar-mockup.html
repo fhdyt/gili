@@ -984,7 +984,9 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
 .pjnav .ic{width:14px;height:14px}
 .pjtop .pill{height:32px;border-radius:10px;flex-shrink:0}
 /* The timeline: a 30 px column per day, a month row, a day row, then one 30 px lane per task and an empty lane to add one. */
-.pjtl{position:relative;flex-shrink:0;border-radius:12px;background:rgba(255,255,255,.035);overflow:hidden;touch-action:none}
+/* Flush with the island's left, right and bottom edges (the island's own corners round it); it fills the page down to
+   the bottom when the island is taller than it needs. The page's 24 px sides and 4 px bottom are cancelled here. */
+.pjtl{position:relative;flex:1 0 auto;margin:0 -24px -4px;background:rgba(255,255,255,.035);overflow:hidden;touch-action:none}
 .pjin{position:absolute;top:0;left:0;bottom:0;will-change:transform}
 .pjin.anim{transition:transform 380ms var(--out)}
 .pjwe{position:absolute;top:0;bottom:0;width:30px;background:rgba(255,255,255,.035)}
@@ -1002,7 +1004,7 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   background:linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px) -1px 0/30px 100%,linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px) 0 33px/100% 30px}
 /* A bar is a pill (24 px, radius 12) inset 2 px inside its days; the tick circle sits 4 px in, concentric with the pill.
    Its fill is the task's colour (the note palette); overdue is a red ring, done is dimmed, struck-through text. */
-.pjbar{position:absolute;height:24px;border-radius:12px;background:var(--bc,#1c1c1e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);display:flex;align-items:center;gap:6px;padding:0 10px 0 4px;color:#fff;font-size:12.5px;font-weight:500;
+.pjbar{position:absolute;height:24px;border-radius:12px;background:var(--bc,#1c1c1e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);display:flex;align-items:center;gap:6px;padding:0 10px 0 4px;color:#fff;font-size:11px;font-weight:500;
   cursor:grab;user-select:none;outline:none;z-index:1;
   transition:left 260ms var(--spr),width 260ms var(--spr),top 260ms var(--spr),background 200ms,color 200ms,box-shadow 160ms,transform 160ms var(--out)}
 .pjbar:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.32)}
@@ -1765,7 +1767,8 @@ function pageNeed(i){
   // Clipboard: the search row stays put and only the list scrolls, once the island is as tall as the screen.
   if(i===PAGE.clipboard){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+$('#cbList').scrollHeight+parseFloat(cs.paddingBottom)}
   // Projects: the timeline and the task form, or the open project list when it reaches further down.
-  if(i===PAGE.projects){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+pjNeed()+parseFloat(cs.paddingBottom)}
+  // The timeline cancels the page's bottom padding, so only the top one counts.
+  if(i===PAGE.projects)return parseFloat(getComputedStyle(p).paddingTop)+pjNeed();
   return Math.max(...[...p.children].map(c=>c.scrollHeight));
 }
 function layout(){
@@ -1790,8 +1793,10 @@ function layout(){
     $$('#xtabs .xtab').forEach(t=>t.title=menuNeed()>W?t.textContent.trim():'');
     // Lay the cards out at the new width before measuring, so the Notes height fits the columns that will show.
     $('#lx').style.width=W+'px';if(S.page===PAGE.notes)layoutNotes(true);
-    H=Math.min(max,Math.max(min,58+pageNeed(S.page)+20));R='32px';
-    $('#xp').style.height=(H-78)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
+    // The Projects timeline runs to the island's bottom edge, so that page has no 20 px under it.
+    const below=S.page===PAGE.projects?0:20;
+    H=Math.min(max,Math.max(min,58+pageNeed(S.page)+below));R='32px';
+    $('#xp').style.height=(H-58-below)+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
     placeInd();
     if(S.page===PAGE.controls){
       // Control islands: one control, no page menu, sized to it (PRD 6.4 "Pulau kontrol").
@@ -4255,7 +4260,7 @@ const PJS=[
 const PJ={sel:0,x:0,R0:0,R1:0,menu:false,newProj:false,ren:-1,delP:-1,form:null,fresh:-1,moved:false,lastC:0};
 const pjCur=()=>PJS[PJ.sel];
 let pjCtx=null;
-function pjTextW(t){if(!pjCtx){pjCtx=document.createElement('canvas').getContext('2d');pjCtx.font='500 12.5px '+getComputedStyle(document.body).fontFamily}return pjCtx.measureText(t).width}
+function pjTextW(t){if(!pjCtx){pjCtx=document.createElement('canvas').getContext('2d');pjCtx.font='500 11px '+getComputedStyle(document.body).fontFamily}return pjCtx.measureText(t).width}
 const pjL=k=>(k-PJ.R0)*PJ_DW;
 const pjLate=t=>!t.d&&t.e<T0;
 function pjBar(t,i){
@@ -4307,8 +4312,9 @@ function renderPj(keepX){
     +`<span class="pjmeta num">${n?`${done}/${n} done · ${pjShort(a)} – ${pjShort(b)}`:'No tasks yet'}</span>`
     +`<span class="pjnav"><button data-pn="-7" aria-label="Previous week" title="Previous week">${icon('chevl')}</button><button class="pjtd" data-pn="0">Today</button><button data-pn="7" aria-label="Next week" title="Next week">${icon('chevr')}</button></span>`
     +`<button class="pill sm" id="pjAddBtn">${icon('plus')}Add task</button></div>`
+    +(PJ.form?pjFormHTML():'')
     +`<div class="pjtl" id="pjTl" role="group" aria-label="Timeline of ${esc(p.name)}. Drag a task to move it, or an end to change its dates." style="height:${PJ_TOP+(n+1)*PJ_ROW+6}px"><div class="pjin" id="pjIn" style="width:${(PJ.R1-PJ.R0+1)*PJ_DW}px">${inner}</div><span class="pjmon" id="pjMon"></span></div>`
-    +(PJ.form?pjFormHTML():'')+(PJ.menu?pjMenuHTML():'');
+    +(PJ.menu?pjMenuHTML():'');
   PJ.fresh=-1;
   // Keep the same days in view when the range around the project grows or shrinks.
   if(keepX)pjScroll(abs-PJ.R0*PJ_DW);else pjHome();

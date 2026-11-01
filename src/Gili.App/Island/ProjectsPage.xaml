@@ -218,7 +218,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="24,2,24,4" VerticalAlignment="Top">
+    <Grid>
         <!-- Step one (mockup .pjempty): no project yet, so name one. -->
         <StackPanel Height="230" VerticalAlignment="Center" HorizontalAlignment="Center"
                     Visibility="{Binding HasProject, Converter={StaticResource VisibleWhenFalse}}">
@@ -245,10 +245,15 @@
             </Grid>
         </StackPanel>
 
-        <!-- A project: the top row, the timeline, the task form; the project list floats over them. -->
+        <!-- A project: the top row, the task form, then the timeline down to the bottom edge; the project list floats over them. -->
         <Grid Visibility="{Binding HasProject, Converter={StaticResource VisibleWhen}}">
-            <StackPanel>
-                <Grid Height="32">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Height="32" Margin="24,2,24,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -281,11 +286,9 @@
                     </Button>
                 </Grid>
 
-                <c:ProjectTimeline x:Name="Timeline" Margin="0,10,0,0" Tasks="{Binding Tasks}" Today="{Binding Today}"
-                                   SelectedId="{Binding SelectedId}" ProjectKey="{Binding ProjectKey}" />
-
-                <!-- The task form (.pjform): name, start → end, Delete when editing, the check; then the note colours. -->
-                <StackPanel Margin="0,10,0,0" Visibility="{Binding IsFormOpen, Converter={StaticResource VisibleWhen}}">
+                <!-- The task form (.pjform), above the timeline so the timeline always ends at the bottom: name, start → end, Delete
+                     when editing, the check; then the note colours. -->
+                <StackPanel Grid.Row="1" Margin="24,10,24,0" Visibility="{Binding IsFormOpen, Converter={StaticResource VisibleWhen}}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -314,10 +317,14 @@
                     </Grid>
                     <StackPanel x:Name="Swatches" Orientation="Horizontal" Margin="2,10,0,0" AutomationProperties.Name="Task color" />
                 </StackPanel>
-            </StackPanel>
+
+                <!-- Flush with the island's left, right and bottom edges, filling the rest of the page (.pjtl). -->
+                <c:ProjectTimeline x:Name="Timeline" Grid.Row="2" Margin="0,10,0,0" Tasks="{Binding Tasks}" Today="{Binding Today}"
+                                   SelectedId="{Binding SelectedId}" ProjectKey="{Binding ProjectKey}" />
+            </Grid>
 
             <!-- The project list (.pjmenu): under the name, over the timeline; 260 px, radius 16, #2C2C2E. -->
-            <Border x:Name="Menu" Width="260" Margin="0,38,0,0" Padding="6" CornerRadius="16" Background="#2C2C2E" BorderBrush="#14FFFFFF"
+            <Border x:Name="Menu" Width="260" Margin="24,40,0,0" Padding="6" CornerRadius="16" Background="#2C2C2E" BorderBrush="#14FFFFFF"
                     BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top"
                     Visibility="{Binding IsMenuOpen, Converter={StaticResource VisibleWhen}}">
                 <StackPanel>
