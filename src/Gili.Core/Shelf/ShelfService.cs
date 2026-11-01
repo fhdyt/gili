@@ -9,10 +9,14 @@ public sealed class ShelfService
 {
     public const int MaxItems = 8;
 
+    /// <summary>How long a folder of an item taken out waits before it goes: Explorer may still be copying out of it.</summary>
+    public static readonly TimeSpan LeftoverDelay = TimeSpan.FromMinutes(30);
+
     private readonly IShelfStore? _store;
     private readonly Func<string, FileFacts?> _probe;
     private readonly Action<string>? _discard;
     private readonly List<ShelfItem> _items;
+    private readonly List<(string Folder, DateTimeOffset Since)> _leftovers = [];
     private ShelfItem? _demo;
     private long _nextLocalId = 1;
 
@@ -37,7 +41,7 @@ public sealed class ShelfService
     public long TotalBytes => Items.Sum(i => i.SizeBytes);
 
     /// <summary>The folders the saved items keep their files in; any other folder in Gili's Shelf folder is left over.</summary>
-    public IReadOnlyList<string> KeptFolders => [.. _items.Where(i => i.IsKept).Select(i => i.Folder!)];
+    public IReadOnlyList<string> KeptFolders => [.. _items.Where(i => i.IsKept).Select(i => i.Folder!), .. _leftovers.Select(l => l.Folder)];
 
     /// <summary>
     /// Adds what was dropped as one item, in the column it was dropped on, with the folder Gili copied it into, if any;
@@ -62,6 +66,31 @@ public sealed class ShelfService
         _store?.Delete(id);
         Discard(item);
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// The item was dragged out and the target took it (revision 14, issue #38): it leaves the Shelf whatever its column.
+    /// A folder Gili kept its files in stays for <see cref="LeftoverDelay"/>, since the copy may still be running.
+    /// </summary>
+    public bool TakeOut(long id, DateTimeOffset now)
+    {
+        if (_items.Find(i => i.Id == id) is not { } item) return false;
+        _items.Remove(item);
+        _store?.Delete(id);
+        if (item.Folder is { } folder) _leftovers.Add((folder, now));
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Deletes the folders of items taken out at least <see cref="LeftoverDelay"/> ago.</summary>
+    public void SweepLeftovers(DateTimeOffset now)
+    {
+        for (var i = _leftovers.Count - 1; i >= 0; i--)
+        {
+            if (now - _leftovers[i].Since < LeftoverDelay) continue;
+            _discard?.Invoke(_leftovers[i].Folder);
+            _leftovers.RemoveAt(i);
+        }
     }
 
     public void Clear()

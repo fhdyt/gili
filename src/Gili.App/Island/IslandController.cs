@@ -46,7 +46,11 @@ public sealed class IslandController : IDisposable
         _settings = settings;
         Shelf = shelf;
         _dragLeave.Tick += (_, _) => EndDrag();
-        _shelfCheck.Tick += (_, _) => Shelf.Prune();
+        _shelfCheck.Tick += (_, _) =>
+        {
+            Shelf.Prune();
+            Shelf.SweepLeftovers(DateTimeOffset.UtcNow);
+        };
         _demoDrop.Tick += (_, _) => DropDemo();
         _demoCut.Tick += (_, _) =>
         {

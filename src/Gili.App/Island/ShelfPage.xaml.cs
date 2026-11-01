@@ -7,8 +7,8 @@ namespace Gili.App.Island;
 
 /// <summary>
 /// The Shelf page as in the mockup (<c>.shsum</c>, <c>.shgrid</c>). A tile dragged 4 px leaves as the files it holds:
-/// a Copy item offers only Copy and stays, a Cut item offers only Move, and files that moved away leave the Shelf
-/// (PRD 6.3, F-ISL-30).
+/// a Copy item offers only Copy, a Cut item offers only Move, and once a target takes them the item leaves the Shelf
+/// (PRD 6.3, F-ISL-30; revision 14, issue #38).
 /// </summary>
 public partial class ShelfPage : UserControl
 {
@@ -43,17 +43,20 @@ public partial class ShelfPage : UserControl
         if (!tile.CheckBeforeDrag()) return;
         var paths = tile.Item.Paths.Where(p => _island.Shelf.Facts(p) is not null).ToArray();
         _island.DraggingOut = true;
+        var effect = DragDropEffects.None;
         try
         {
-            DragDrop.DoDragDrop(element, new DataObject(DataFormats.FileDrop, paths),
+            effect = DragDrop.DoDragDrop(element, new DataObject(DataFormats.FileDrop, paths),
                 tile.Item.Mode == ShelfMode.Cut ? DragDropEffects.Move : DragDropEffects.Copy);
         }
         finally
         {
             _island.DraggingOut = false;
         }
-        // Explorer's moves can report another effect, so what is still on disk decides (plan 3d).
-        _island.Shelf.PruneItem(tile.Item.Id);
+        // A target that took the files takes the item off the Shelf (issue #38). Explorer's optimised moves can report
+        // None, so then what is still on disk decides (plan 3d).
+        if (effect != DragDropEffects.None) _island.Shelf.TakeOut(tile.Item.Id, DateTimeOffset.UtcNow);
+        else _island.Shelf.PruneItem(tile.Item.Id);
     }
 
     private static bool FindButton(DependencyObject element)

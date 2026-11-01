@@ -2959,10 +2959,16 @@ $('#shGrid').addEventListener('click',e=>{
 });
 $('#shGrid').addEventListener('dragstart',e=>{
   const t=e.target.closest('.ftile');if(!t)return;
-  // A Copy item only copies and stays; a Cut item only moves and leaves the Shelf.
+  // A Copy item only copies, a Cut item only moves; once a target takes it, it leaves the Shelf (revision 14, issue #38).
   const cut=S.shelf.find(f=>f.id===+t.dataset.id)?.mode==='cut';
   e.dataTransfer.effectAllowed=cut?'move':'copy';e.dataTransfer.setData('text/plain',t.title);
   hint(cut?'Drop it in a folder to move the file there':'Drop it in a folder to copy the file there');
+});
+// A drop the target took (any effect but none) takes the item off the Shelf; Esc or a refused drop leaves it.
+$('#shGrid').addEventListener('dragend',e=>{
+  const t=e.target.closest('.ftile');if(!t||e.dataTransfer.dropEffect==='none')return;
+  S.shelf=S.shelf.filter(f=>f.id!==+t.dataset.id);renderShelf();renderSlot();
+  hint('Taken off the Shelf');
 });
 $('#shClear').onclick=()=>{S.shelf=[];renderShelf();renderSlot();hint('Shelf cleared')};
 const hasFiles=e=>[...(e.dataTransfer?.types||[])].includes('Files');

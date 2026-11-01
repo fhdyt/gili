@@ -62,6 +62,37 @@ public class ShelfModeTests
     }
 
     [Fact]
+    public void A_copy_taken_out_leaves_the_shelf_and_keeps_its_file()
+    {
+        var shelf = Create();
+        var item = shelf.Add([@"C:\a.pdf"], Now)!;
+        Assert.True(shelf.TakeOut(item.Id, Now));
+        Assert.Empty(shelf.Items);
+        Assert.Empty(_discarded);
+    }
+
+    [Fact]
+    public void Taking_out_a_missing_item_changes_nothing() => Assert.False(Create().TakeOut(42, Now));
+
+    [Fact]
+    public void A_kept_folder_taken_out_is_deleted_only_after_half_an_hour()
+    {
+        var shelf = Create();
+        var kept = shelf.Add([Kept + @"\report.docx"], Now, ShelfMode.Copy, Kept)!;
+        shelf.TakeOut(kept.Id, Now);
+        Assert.Empty(shelf.Items);
+        // Explorer may still be copying out of it, and the next start must not sweep it away either.
+        Assert.Equal([Kept], shelf.KeptFolders);
+        shelf.SweepLeftovers(Now.AddMinutes(29));
+        Assert.Empty(_discarded);
+        shelf.SweepLeftovers(Now.AddMinutes(30));
+        Assert.Equal([Kept], _discarded);
+        Assert.Empty(shelf.KeptFolders);
+        shelf.SweepLeftovers(Now.AddMinutes(31));
+        Assert.Equal([Kept], _discarded);
+    }
+
+    [Fact]
     public void Kept_folders_lists_what_the_items_still_use()
     {
         var shelf = Create();
