@@ -820,6 +820,11 @@ span.cbt .ic{width:16px;height:16px}
 .ct{font-size:18px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cs{font-size:13px;color:var(--text2);margin-top:2px}
 .cs.wrn{color:var(--warn);display:flex;align-items:center;gap:5px;margin-top:4px}
+/* A Windows notification opened from the island (revision 14, issue #28): app icon, app · now, sender, the whole text (4 lines). */
+.cic.napp{background:none}
+.cic.napp .aic{width:30px;height:30px}
+.cs.nfrom{display:flex;gap:6px;font-size:12px;margin:0 0 2px}
+.cs.nfull{color:rgba(255,255,255,.85);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;line-height:18px}
 .cs.wrn .ic{width:13px;height:13px}
 .cs.cq{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbt{display:flex;gap:8px}
@@ -1665,7 +1670,7 @@ function layout(){
       $('#xp').style.height=H+'px';$('#xp').classList.toggle('scroll',H>=max);$('#lx').style.height=H+'px';$('#lx').style.width=W+'px';
     }
   }
-  else if(s==='card'){W=Math.min(560,innerWidth-24);H=104;R='28px'}
+  else if(s==='card'){W=Math.min(560,innerWidth-24);H=S.card==='ntf'?S.ntfH:104;R='28px'}
   else{W=Math.min(420,innerWidth-24);H=140;R='30px'}
   // Floating states keep the compact island's edge and grow away from the bar: the top stays put at the top, the bottom at the bottom.
   if(FLOAT.includes(s))T=bottom?ct+ih-H:ct;
@@ -1891,7 +1896,20 @@ function nextMsg(){
 // Hovering the island holds the notification; it goes 2 s after the pointer leaves. A click brings the app forward.
 iw.addEventListener('pointerenter',()=>{if(ntfOn())S.msgHover=true});
 iw.addEventListener('pointerleave',()=>{if(S.msgHover){S.msgHover=false;armMsg(2000)}});
-$('.L-wide').addEventListener('click',()=>{if(!ntfOn())return;hint(`${S.msg.app} brought to front`);S.msgHover=false;nextMsg()});
+// Phase 6 (revision 14, issue #28): a click opens the notification as a card the size of an alarm card, with the whole
+// text, Open <App> and Dismiss. It closes 2 s after the pointer leaves, on Esc, or with either button.
+$('.L-wide').addEventListener('click',()=>{if(!ntfOn())return;S.msgHover=false;clearTimeout(S.msgT);showNtfCard(S.msg)});
+function showNtfCard(m){
+  S.cardReturn='compact';S.card='ntf';S.ntfCard=m;clearTimeout(S.cardT);
+  const text=msgText(m),lines=Math.min(4,Math.max(1,Math.ceil(text.length/62)));S.ntfH=Math.min(168,104+(lines-1)*18);
+  lcard.innerHTML=`<div class="cic napp"><svg class="aic" aria-hidden="true"><use href="#${m.icon}"/></svg></div>
+    <div class="ctx"><div class="cs nfrom"><span>${esc(m.app)}</span><span>·</span><span>now</span></div><div class="ct">${esc(m.who)}</div><div class="cs nfull">${esc(text)}</div></div>
+    <div class="cbt"><button class="pill" data-card="ntfdismiss">Dismiss</button><button class="pill pri" data-card="ntfopen">Open ${esc(m.app)}</button></div>`;
+  setState('card');
+}
+iw.addEventListener('pointerleave',()=>{if(S.state==='card'&&S.card==='ntf'){clearTimeout(S.cardT);S.cardT=setTimeout(()=>{closeCard();nextMsg()},2000)}});
+iw.addEventListener('pointerenter',()=>{if(S.state==='card'&&S.card==='ntf')clearTimeout(S.cardT)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.state==='card'&&S.card==='ntf'){e.stopPropagation();closeCard();nextMsg()}},true);
 
 /* ---------- alert cards ---------- */
 const CARDS={
@@ -1929,6 +1947,8 @@ lcard.addEventListener('click',e=>{
   if(a==='xskip'||a==='xreplace')resolveConflict(a);
   if(a==='clopen')clFocus(clById(S.clCard));
   if(a==='limopen')hint('Opening Claude');
+  if(a==='ntfopen')hint(`${S.ntfCard.app} brought to front`);
+  if(a==='ntfopen'||a==='ntfdismiss'){closeCard();nextMsg();return}
   if(a==='snooze')hint(S.card==='todo'?'Reminder snoozed for 10 minutes':'Alarm snoozed for 5 minutes');
   if(a==='repeat')Object.assign(S.timer,{left:S.timer.total,running:true});
   if(a==='ltrepeat'){const t=LT.find(x=>x.id===LC.id)||LT.find(x=>x.l===LC.l);if(t)Object.assign(t,{left:t.total,run:true})}
@@ -3962,7 +3982,7 @@ const ACT={
   snd:()=>{Sound.on=!Sound.on;setPressed('snd',Sound.on);if(!Sound.on)stopSound()},
   ramp:()=>{Sound.ramp=!Sound.ramp;setPressed('ramp',Sound.ramp)},
   winmute:()=>{S.winMuted=!S.winMuted;setPressed('winmute',S.winMuted);if(S.winMuted)stopSound();
-    if(S.state==='card'&&CARDS[S.card].ring==='loop')showCard(S.card)},
+    if(S.state==='card'&&CARDS[S.card]?.ring==='loop')showCard(S.card)},
   glow:()=>{S.glow=S.glow?0:1;applySettings()},
   // Twelve more apps: the ones that don't fit drop into "+N", whose list brings any of them to the front.
   manyApps:()=>{
