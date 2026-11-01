@@ -19,6 +19,9 @@ public sealed record MediaState(
     bool CanSkip,
     byte[]? Cover)
 {
+    /// <summary>The album, sent to LRCLIB with the title when Show lyrics is on (F-ISL-26).</summary>
+    public string Album { get; init; } = "";
+
     public bool HasTimeline => Duration > TimeSpan.Zero;
 
     public TimeSpan PositionAt(DateTimeOffset now)

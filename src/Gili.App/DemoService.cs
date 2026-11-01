@@ -67,6 +67,7 @@ public sealed class DemoService
         _island.DismissCard(IslandController.ClaudeResetCard);
         Claude?.EndDemo();
         _island.EndDemo();
+        _island.Lyrics.SetDemo(null);
         Changed?.Invoke();
     }
 
@@ -89,12 +90,15 @@ public sealed class DemoService
             switch (action)
             {
                 case DemoMedia { State: { } state }:
+                    // The demo song has its own made-up lines, shown even with Show lyrics off; LRCLIB is never asked.
+                    if (state.Kind == Gili.Core.Media.MediaKind.Music) _island.Lyrics.SetDemo(DemoScript.SongLyrics);
                     _media.SetDemo(state with
                     {
                         Cover = state.Kind == Gili.Core.Media.MediaKind.Video ? _thumb ??= Cover(320, 180) : _cover ??= Cover(300, 300),
                     });
                     break;
                 case DemoMedia:
+                    _island.Lyrics.SetDemo(null);
                     _media.SetDemo(null);
                     break;
                 case DemoCopy copy:

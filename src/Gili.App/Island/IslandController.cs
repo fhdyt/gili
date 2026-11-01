@@ -45,6 +45,7 @@ public sealed class IslandController : IDisposable
         _clipboard = new ClipboardService(clipboardHistory, clipboardImages);
         _settings = settings;
         Shelf = shelf;
+        Lyrics = new LyricsService(media, settings);
         _dragLeave.Tick += (_, _) => EndDrag();
         _shelfCheck.Tick += (_, _) =>
         {
@@ -132,6 +133,9 @@ public sealed class IslandController : IDisposable
     public NoteService Notes { get; }
 
     public ShelfService Shelf { get; }
+
+    /// <summary>Lyrics of the playing song (F-ISL-26).</summary>
+    public LyricsService Lyrics { get; }
 
     private readonly Dispatcher _dispatcher;
     private readonly DispatcherTimer _updateCheck = new() { Interval = TimeSpan.FromMinutes(30) };

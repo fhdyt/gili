@@ -171,6 +171,12 @@ public partial class IslandWindow : Window
         island.Alarms.Changed += () => PageContentChanged(IslandPage.Alarms);
         _calendarPage.ContentChanged += () => PageContentChanged(IslandPage.Calendar);
         _todoPage.ContentChanged += () => PageContentChanged(IslandPage.Todo);
+        // The lyrics block grows the Media page once when lyrics turn on; its height is fixed after that (PRD 6.3).
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IslandViewModel.ShowLyricsBlock)) PageContentChanged(IslandPage.Media);
+            if (e.PropertyName == nameof(IslandViewModel.MediaSlotTitle) && vm.IsLyricLine) RiseLyric();
+        };
         _notesPage.ContentChanged += () => PageContentChanged(IslandPage.Notes);
         // The Timer page's glow follows the segment and the pomodoro phase.
         gili.SlotMinute = SlotMinute;
@@ -939,6 +945,15 @@ public partial class IslandWindow : Window
         bar.ShowMenu();
     }
 
+    /// <summary>A new lyric line in the slot rises 5 px while it fades in over 260 ms (mockup .slot .tt.lyin).</summary>
+    private void RiseLyric()
+    {
+        if (!SystemParameters.ClientAreaAnimation) return;
+        var rise = (TranslateTransform)SlotLyric.RenderTransform;
+        rise.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(5, 0, TimeSpan.FromMilliseconds(260)) { EasingFunction = BezierEase.Out });
+        SlotLyric.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(260)) { EasingFunction = BezierEase.Out });
+    }
+
     private void OnBodyEnter(object sender, MouseEventArgs e)
     {
         _awayTimer.Stop();
@@ -1149,7 +1164,7 @@ public partial class IslandWindow : Window
     /// <summary>Real pages replace their placeholders here as they are built (Media in Task 11, the rest in Phases 2–3).</summary>
     private FrameworkElement CreatePage(IslandTab tab) => tab.Page switch
     {
-        IslandPage.Media => new MediaPage(_island.Media),
+        IslandPage.Media => new MediaPage(_island.Media, () => _settings.Update(s => s with { ShowLyrics = !s.ShowLyrics })),
         IslandPage.Timer => new TimerPage(_timerPage),
         IslandPage.Alarms => new AlarmsPage(_alarmsPage),
         IslandPage.Calendar => new CalendarPage(_calendarPage),

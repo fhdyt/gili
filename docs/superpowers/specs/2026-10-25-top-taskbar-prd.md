@@ -260,7 +260,7 @@ Mata Gili berubah bentuk mengikuti apa yang terjadi di pulau. Hanya satu ekspres
 
 #### Lirik lagu (revisi 8)
 
-Fase 6: update setelah rilis publik pertama (revisi 10).
+Fase 6: update setelah rilis publik pertama (revisi 10). Dikerjakan di revisi 15 (2026-11-01), sebelum rilis GitHub pertama, dan privacy policy sudah menyebut LRCLIB. Mode demo memutar baris buatan untuk lagu demonya (bukan lirik asli dan tanpa menghubungi LRCLIB), juga saat Show lyrics mati. Kalau LRCLIB tidak menjawab (offline atau server error), halaman Media menampilkan `Lyrics unavailable offline` dan lagu itu dicari lagi saat diputar berikutnya.
 
 Lirik lagu yang sedang diputar tampil di pulau, baris demi baris tepat pada waktunya.
 

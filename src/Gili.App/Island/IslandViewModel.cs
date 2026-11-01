@@ -81,6 +81,23 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private bool _isPlaying;
     [ObservableProperty] private bool _musicPlaying;
     [ObservableProperty] private string _mediaSlotTitle = "";
+
+    /// <summary>The slot shows the line being sung instead of the title (F-ISL-26); its tooltip holds the whole line.</summary>
+    [ObservableProperty] private bool _isLyricLine;
+    [ObservableProperty] private string? _mediaSlotTooltip;
+
+    /// <summary>The Media page's lyrics block: Show lyrics is on and music plays (PRD 6.3 "Lirik lagu").</summary>
+    [ObservableProperty] private bool _lyricsOn;
+    [ObservableProperty] private bool _showLyricsBlock;
+    [ObservableProperty] private string _lyricPrevious = "";
+    [ObservableProperty] private string _lyricCurrent = "";
+    [ObservableProperty] private string _lyricNext = "";
+
+    /// <summary>The middle line is a message (searching, none, offline) rather than a sung line.</summary>
+    [ObservableProperty] private bool _lyricIsMessage;
+
+    /// <summary>Raised when a new line starts, so the views can roll it in.</summary>
+    public event Action? LyricRolled;
     [ObservableProperty] private string _mediaTitle = "";
     [ObservableProperty] private string _mediaArtist = "";
     [ObservableProperty] private string _mediaApp = "";
@@ -174,10 +191,20 @@ public sealed partial class IslandViewModel : ObservableObject
             new(IslandPage.Claude, "Claude", Glyph("Icon.Claude"), null),
             new(IslandPage.System, "System", Glyph("Icon.Cpu"), null),
         ];
-        settings.Changed += _ => UpdateSettings();
+        settings.Changed += _ =>
+        {
+            UpdateSettings();
+            _island.Lyrics.Sync();
+        };
         island.ViewChanged += UpdateView;
         island.PowerChanged += UpdatePower;
         island.Media.Updated += UpdateMedia;
+        island.Lyrics.Changed += UpdateLyrics;
+        island.Lyrics.LineChanged += () =>
+        {
+            UpdateLyrics();
+            LyricRolled?.Invoke();
+        };
         island.ClipboardChanged += UpdateClipboard;
         island.Shelf.Changed += UpdateShelfSlot;
         island.Timers.Changed += UpdateTimerSlot;
@@ -425,7 +452,7 @@ public sealed partial class IslandViewModel : ObservableObject
         IsMusic = !IsVideo;
         IsPlaying = media.IsPlaying;
         MusicPlaying = media.IsPlaying && IsMusic;
-        MediaSlotTitle = MediaRules.SlotTitle(media);
+        UpdateSlotTitle(media);
         MediaTitle = media.Title;
         MediaArtist = media.Artist;
         MediaApp = MediaRules.AppName(media.AppId);
@@ -456,6 +483,32 @@ public sealed partial class IslandViewModel : ObservableObject
         CanSeek = media.CanSeek && media.HasTimeline;
         CanSkip = media.CanSkip;
         UpdateBubble();
+    }
+
+    private void UpdateSlotTitle(MediaState media)
+    {
+        var line = _island.Lyrics.SlotLine;
+        IsLyricLine = line is not null;
+        MediaSlotTitle = line ?? MediaRules.SlotTitle(media);
+        MediaSlotTooltip = line is null ? null : _island.Lyrics.Lines?[_island.Lyrics.Index].Text;
+    }
+
+    private void UpdateLyrics()
+    {
+        var lyrics = _island.Lyrics;
+        LyricsOn = _settings.Current.ShowLyrics;
+        ShowLyricsBlock = lyrics.Shown && IsMusic;
+        if (lyrics.Status == Gili.Core.Lyrics.LyricsStatus.Synced && lyrics.Lines is { } lines)
+        {
+            LyricIsMessage = false;
+            (LyricPrevious, LyricCurrent, LyricNext) = Gili.Core.Lyrics.LyricsView.Window(lines, lyrics.Index);
+        }
+        else
+        {
+            LyricIsMessage = true;
+            (LyricPrevious, LyricCurrent, LyricNext) = ("", Gili.Core.Lyrics.LyricsView.Message(lyrics.Status), "");
+        }
+        if (_island.Media.Current is { } media) UpdateSlotTitle(media);
     }
 
     private (Rgb Primary, Rgb Secondary)? _palette;

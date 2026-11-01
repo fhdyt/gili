@@ -134,7 +134,10 @@ public sealed class MediaSessionMonitor : IDisposable
             updatedAt,
             playback.Controls?.IsPlaybackPositionEnabled ?? false,
             playback.Controls?.IsNextEnabled ?? false,
-            await ReadCoverAsync(properties, appId));
+            await ReadCoverAsync(properties, appId))
+        {
+            Album = properties.AlbumTitle ?? "",
+        };
     }
 
     /// <summary>

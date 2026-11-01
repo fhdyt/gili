@@ -154,6 +154,17 @@ public static class DemoScript
         ];
     }
 
+    /// <summary>
+    /// Made-up lines for the demo song, timed from where it starts playing (42 s), so the slot and the Media page show
+    /// lyrics without asking LRCLIB (F-ISL-26). Not the song's real lyrics.
+    /// </summary>
+    public static IReadOnlyList<Gili.Core.Lyrics.LyricLine> SongLyrics { get; } =
+    [
+        .. new[] { "Lights come on across the bay", "", "We drive until the morning", "The city hums along with us", "Every window keeps a secret",
+            "", "Turn it up and let it play", "Hold on to the neon sky", "We are only passing through", "Until the sun is high" }
+            .Select((text, i) => new Gili.Core.Lyrics.LyricLine(StartPosition + TimeSpan.FromSeconds(1 + i * 2.6), text)),
+    ];
+
     /// <summary>The Claude usage reset card's id, as the island raises it.</summary>
     public const string ResetCard = "claude-reset";
 

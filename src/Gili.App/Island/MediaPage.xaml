@@ -64,8 +64,10 @@
         <TextBlock Text="Nothing playing" FontSize="13" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center"
                    Visibility="{Binding HasMedia, Converter={StaticResource VisibleWhenFalse}}" />
 
-        <!-- Music: cover, source app, title, artist, progress, previous / play-pause / next (PRD 6.3). -->
-        <DockPanel Margin="32,0" VerticalAlignment="Center" Visibility="{Binding IsMusic, Converter={StaticResource VisibleWhen}}">
+        <!-- Music: cover, source app, title, artist, progress, lyrics / previous / play-pause / next (PRD 6.3), and under it the
+             lyrics block while Show lyrics is on (F-ISL-26, mockup .lyr). -->
+        <StackPanel Margin="32,0" VerticalAlignment="Center" Visibility="{Binding IsMusic, Converter={StaticResource VisibleWhen}}">
+        <DockPanel>
             <Border DockPanel.Dock="Left" Width="112" Height="112" CornerRadius="16" Background="#2C2C2E">
                 <Grid>
                     <c:IconView Glyph="{StaticResource Icon.Music}" Width="38" Height="38" Foreground="#D9FFFFFF" />
@@ -77,6 +79,11 @@
                 </Grid>
             </Border>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
+                <!-- Lyrics: 34 px, grey, accent green while on; the same switch as Settings → Island → Show lyrics. -->
+                <Button x:Name="LyricsButton" Style="{StaticResource ControlButton}" Click="OnLyrics" Width="34" Height="34" Margin="0,0,4,0"
+                        AutomationProperties.Name="Lyrics" ToolTip="Lyrics" Foreground="#8E8E93">
+                    <c:IconView Glyph="{StaticResource Icon.Lyrics}" Width="17" Height="17" />
+                </Button>
                 <Button Style="{StaticResource ControlButton}" Click="OnPrevious" IsEnabled="{Binding CanSkip}"
                         AutomationProperties.Name="Previous track">
                     <c:IconView Glyph="{StaticResource Icon.Prev}" Filled="True" Width="20" Height="20" />
@@ -117,6 +124,36 @@
                 </DockPanel>
             </StackPanel>
         </DockPanel>
+        <!-- The lines around the one being sung: previous 13 px dark grey, current 17 px semibold, next 13 px grey, then the source. -->
+        <Border x:Name="LyricsBlock" Margin="0,16,0,0" Padding="4,10,4,0" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0"
+                Visibility="{Binding ShowLyricsBlock, Converter={StaticResource VisibleWhen}}">
+            <StackPanel x:Name="LyricsLines" RenderTransformOrigin="0.5,0.5">
+                <StackPanel.RenderTransform>
+                    <TranslateTransform />
+                </StackPanel.RenderTransform>
+                <TextBlock Text="{Binding LyricPrevious}" FontSize="13" Height="18" Foreground="#636366" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="LyricNow" Text="{Binding LyricCurrent}" Height="24" Margin="0,2" TextTrimming="CharacterEllipsis"
+                           AutomationProperties.LiveSetting="Polite">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontSize" Value="17" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Foreground" Value="#F5F5F7" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LyricIsMessage}" Value="True">
+                                    <Setter Property="FontSize" Value="14" />
+                                    <Setter Property="FontWeight" Value="Normal" />
+                                    <Setter Property="Foreground" Value="#8E8E93" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding LyricNext}" FontSize="13" Height="18" Foreground="#8E8E93" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Lyrics from LRCLIB" FontSize="10.5" Foreground="#636366" Margin="0,6,0,0" />
+            </StackPanel>
+        </Border>
+        </StackPanel>
 
         <!-- Video: its 16:9 thumbnail when the player sends one (issue #31), then the title, source app and progress with
              elapsed and remaining time; no buttons (PRD 6.3). -->

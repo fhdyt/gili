@@ -75,6 +75,9 @@ public sealed record AppSettings
     public bool TrayIcon { get; init; } = true;
     public bool ShowSeconds { get; init; } = true;
     public bool ShowGili { get; init; } = true;
+
+    /// <summary>Show lyrics (F-ISL-26): off until the user turns it on, since song titles go to lrclib.net.</summary>
+    public bool ShowLyrics { get; init; }
     public bool AmbientGlow { get; init; } = true;
     public bool AmbientMotion { get; init; } = true;
 

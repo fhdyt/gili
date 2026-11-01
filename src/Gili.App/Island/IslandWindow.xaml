@@ -92,7 +92,13 @@
                                         <Border CornerRadius="5" BorderBrush="#24FFFFFF" BorderThickness="0.5" />
                                     </Grid>
                                 </Border>
-                                <TextBlock Grid.Column="2" Text="{Binding MediaSlotTitle}" VerticalAlignment="Center" />
+                                <!-- The title, or the line being sung while lyrics are on (F-ISL-26); a new line rises 5 px as it fades in. -->
+                                <TextBlock x:Name="SlotLyric" Grid.Column="2" Text="{Binding MediaSlotTitle}" ToolTip="{Binding MediaSlotTooltip}"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.RenderTransform>
+                                        <TranslateTransform />
+                                    </TextBlock.RenderTransform>
+                                </TextBlock>
                                 <c:LevelMeter Grid.Column="4" IsPlaying="{Binding IsPlaying}" BarBrush="{Binding LevelBrush}" VerticalAlignment="Center" />
                                 <Button Grid.Column="6" Style="{StaticResource SlotButton}" Click="OnPlayPause"
                                         AutomationProperties.Name="Play or pause">
