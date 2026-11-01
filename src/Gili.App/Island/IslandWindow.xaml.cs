@@ -931,6 +931,14 @@ public partial class IslandWindow : Window
         if (_mode is IslandMode.Compact or IslandMode.Wide) _island.OpenFromIsland();
     }
 
+    /// <summary>The compact island is its own window, so a right-click on it opens the bar's menu too (F-BAR-17).</summary>
+    private void OnBodyRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_mode is not (IslandMode.Compact or IslandMode.Wide) || Owner is not Gili.App.Bar.BarWindow bar) return;
+        e.Handled = true;
+        bar.ShowMenu();
+    }
+
     private void OnBodyEnter(object sender, MouseEventArgs e)
     {
         _awayTimer.Stop();

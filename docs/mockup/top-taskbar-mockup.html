@@ -120,6 +120,11 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 @keyframes dropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .pmenu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;font-size:13px;text-align:left;white-space:nowrap}
 .pmenu button:hover,.pmenu button:focus-visible{background:var(--ctl-h);outline:none}
+/* The bar's menu (revision 14, issue #25): right-click on the bar, the compact island or Gili's tray icon, at the pointer. */
+.bmenu{position:fixed;top:0;left:0;right:auto;z-index:60;animation:none}
+/* Gili's own icon in the Windows notification area: the mascot's circle (revision 14, issues #25 and #32). */
+.wtb .tray .gti{width:16px;height:16px;border-radius:50%;background:#000;display:inline-flex;align-items:center;justify-content:center;gap:1.4px;box-shadow:0 0 0 1px rgba(255,255,255,.12);cursor:default}
+.wtb .tray .gti i{width:4.4px;height:4.4px;border-radius:1.5px;background:#fff}
 .pmenu .ic{width:15px;height:15px;color:#aeaeb2}
 .pmenu .udot{position:static;margin-left:auto;box-shadow:none}
 .psep{display:block;height:1px;background:rgba(255,255,255,.08);margin:4px 6px}
@@ -1269,9 +1274,10 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <span class="ap open" data-name="Spotify" data-icon="a-spotify"><svg class="aic" aria-hidden="true"><use href="#a-spotify"/></svg></span>
     <span class="ap open" data-name="Claude" data-icon="a-claude"><svg class="aic" aria-hidden="true"><use href="#a-claude"/></svg></span>
     <span class="ap open" data-name="wmux" data-icon="a-term"><svg class="aic" aria-hidden="true"><use href="#a-term"/></svg></span>
-    <span class="tray"><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg><svg class="ic" aria-hidden="true" style="width:18px"><use href="#i-bat"/></svg><span class="tm num" id="tray"></span></span>
+    <span class="tray"><span class="gti" id="gTray" title="Gili" role="button" aria-label="Gili"><i></i><i></i></span><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg><svg class="ic" aria-hidden="true" style="width:18px"><use href="#i-bat"/></svg><span class="tm num" id="tray"></span></span>
   </div>
 </div>
+<div class="pmenu bmenu" id="bMenu" role="menu" aria-label="Gili" hidden><button role="menuitem" data-bm="tools">Open Tools</button><button role="menuitem" data-bm="settings">Settings</button><button role="menuitem" data-bm="demo">Demo mode</button><span class="psep"></span><button role="menuitem" data-bm="quit">Quit Gili</button></div>
 
 <aside class="ctl" id="ctl" aria-label="Mockup controls">
   <div class="ch"><h2>Mockup controls</h2><button id="ctlMin" aria-expanded="true">Hide</button></div>
@@ -3127,7 +3133,7 @@ function limCheck(){
 
 /* Settings window */
 const SET={
-  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw']],
+  General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw'],['tray','Icon in the notification area','sw',null,'Right-click it to quit Gili']],
   Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.apps','Running apps']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
@@ -3161,6 +3167,7 @@ function sput(k,v){
   else S[k]=v;
   if(k==='lyrics')lyricsTrack();
   if(k==='hideTb'&&!v&&S.pos==='bottom'){S.pos='top';hint('Moved to the top because the Windows taskbar is back')}
+  if(k==='tray')$('#gTray').hidden=!v;
   applySettings();renderSettings();
 }
 function applySettings(){
@@ -4037,6 +4044,19 @@ renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();set
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);
 new ResizeObserver(()=>layout()).observe(document.documentElement);
+/* The bar's menu (F-BAR-17): right-click on the bar or the compact island, or Gili's tray icon; a click on the icon opens Settings. */
+S.tray=1;
+function showBarMenu(x,y){const m=$('#bMenu');m.hidden=false;const r=m.getBoundingClientRect();m.style.left=Math.min(x,innerWidth-r.width-8)+'px';m.style.top=(y+r.height>innerHeight?y-r.height:y)+'px';m.querySelector('button').focus()}
+function hideBarMenu(){$('#bMenu').hidden=true}
+addEventListener('contextmenu',e=>{
+  const onBar=bar.contains(e.target)&&!e.target.closest('input,textarea'),onIsland=iw.contains(e.target)&&S.state==='compact',onTray=e.target.closest('#gTray');
+  if(!onBar&&!onIsland&&!onTray)return;e.preventDefault();showBarMenu(e.clientX,e.clientY);
+});
+$('#gTray').onclick=()=>openSettings();
+addEventListener('pointerdown',e=>{if(!e.target.closest('#bMenu'))hideBarMenu()});
+$('#bMenu').addEventListener('keydown',e=>{if(e.key==='Escape')hideBarMenu()});
+$('#bMenu').onclick=e=>{const b=e.target.closest('[data-bm]');if(!b)return;hideBarMenu();
+  ({tools:()=>openTools(),settings:()=>openSettings(),demo:()=>toggleDemo(),quit:()=>hint('Gili quits: the bar, its space and its tray icon go away')})[b.dataset.bm]()};
 setInterval(tick100,100);setInterval(tick1s,1000);
 </script>
 </body>

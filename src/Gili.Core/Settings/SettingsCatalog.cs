@@ -70,6 +70,7 @@ public static class SettingsCatalog
             new("h12", "12-hour clock", SettingKind.Switch, Available: true),
             new("secs", "Show seconds", SettingKind.Switch, "The clock on the bar ticks every second", Available: true),
             new("auto", "Start with Windows", SettingKind.Switch, Available: true),
+            new("tray", "Icon in the notification area", SettingKind.Switch, "Right-click it to quit Gili", Available: true),
         ]),
         new("Appearance",
         [
@@ -155,6 +156,7 @@ public static class SettingsCatalog
         "h12" => !s.Use24HourClock,
         "secs" => s.ShowSeconds,
         "auto" => s.Autostart,
+        "tray" => s.TrayIcon,
         "opacity" => s.BarOpacity,
         "glass" => s.Glass.ToString(),
         "barH" => s.BarHeight,
@@ -187,6 +189,7 @@ public static class SettingsCatalog
         "h12" => s with { Use24HourClock = !(bool)value },
         "secs" => s with { ShowSeconds = (bool)value },
         "auto" => s with { Autostart = (bool)value },
+        "tray" => s with { TrayIcon = (bool)value },
         "opacity" => s with { BarOpacity = Number(value) },
         "glass" => s with { Glass = Enum.Parse<GlassLevel>((string)value) },
         "barH" => s with { BarHeight = Number(value) },

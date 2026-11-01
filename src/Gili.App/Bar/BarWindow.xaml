@@ -111,7 +111,7 @@
                 <MenuItem Header="Settings" Style="{StaticResource BarMenuItem}" Click="OnSettings" />
                 <MenuItem x:Name="DemoItem" Header="Demo mode" Style="{StaticResource BarMenuItem}" Click="OnDemo" />
                 <Separator Style="{StaticResource BarMenuSeparator}" />
-                <MenuItem Header="Quit" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
+                <MenuItem Header="Quit Gili" Style="{StaticResource BarMenuItem}" Click="OnQuit" />
             </ContextMenu>
         </Grid.ContextMenu>
         <!-- The backdrop fades on its own while the island floats; the content above it stays (PRD 6.3). -->

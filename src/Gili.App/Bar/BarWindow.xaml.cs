@@ -35,6 +35,7 @@ public partial class BarWindow : Window
     private bool _giliCircle;
     private int _privacyDots;
     private AppBarService? _appBar;
+    private TrayIcon? _tray;
     private IntPtr _hwnd;
     private bool _quitting;
     private readonly PollingGate _polling = new();
@@ -317,7 +318,12 @@ public partial class BarWindow : Window
     /// <summary>What holds polling right now, for the log.</summary>
     public string PollingReason => _polling.Reason;
 
-    public void ReleaseAppBar() => _appBar?.Unregister();
+    /// <summary>Every way out releases the AppBar space and takes Gili's tray icon away with it.</summary>
+    public void ReleaseAppBar()
+    {
+        _appBar?.Unregister();
+        _tray?.Dispose();
+    }
 
     public void Reassert() => _appBar?.Reposition();
 
@@ -357,7 +363,16 @@ public partial class BarWindow : Window
         HwndSource.FromHwnd(_hwnd)!.AddHook(WndProc);
         _appBar = new AppBarService(_hwnd);
         _appBar.FullscreenChanged += OnFullscreenChanged;
-        _appBar.ShellRestarted += () => ShellRestarted?.Invoke();
+        _appBar.ShellRestarted += () =>
+        {
+            // Explorer forgot every tray icon when it restarted.
+            if (_tray?.Shown == true) _tray.Show();
+            ShellRestarted?.Invoke();
+        };
+        _tray = new TrayIcon(_hwnd);
+        _tray.Clicked += () => SettingsRequested?.Invoke();
+        _tray.MenuRequested += () => ShowMenu(fromTray: true);
+        if (_settings.Current.TrayIcon) _tray.Show();
         ApplyEdge(_settings.Current);
         _appBar.Register(_settings.Current.BarHeight);
         _display = new DisplayMonitor(_hwnd);
@@ -406,6 +421,11 @@ public partial class BarWindow : Window
         _vm.ApplyClock(DateTime.Now, settings);
         ApplyEdge(settings);
         _appBar?.SetHeight(settings.BarHeight);
+        if (settings.TrayIcon != _tray?.Shown)
+        {
+            if (settings.TrayIcon) _tray?.Show();
+            else _tray?.Remove();
+        }
         ApplyAppearance();
     }
 
@@ -452,7 +472,7 @@ public partial class BarWindow : Window
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (_appBar?.HandleMessage(msg, wParam, lParam) == true)
+        if (_appBar?.HandleMessage(msg, wParam, lParam) == true || _tray?.HandleMessage(msg, lParam) == true)
         {
             handled = true;
             return IntPtr.Zero;
@@ -483,6 +503,18 @@ public partial class BarWindow : Window
     private void OnTools(object sender, RoutedEventArgs e) => ToolsRequested?.Invoke();
 
     private void OnDemo(object sender, RoutedEventArgs e) => DemoRequested?.Invoke();
+
+    /// <summary>
+    /// The bar's menu at the pointer: from Gili's tray icon, and from a right-click on the compact island, which is its
+    /// own window (F-BAR-17). From the tray Gili comes to the front first, or the menu would not close on a click outside.
+    /// </summary>
+    public void ShowMenu(bool fromTray = false)
+    {
+        if (fromTray) ForegroundWindow.Restore(_hwnd);
+        BarMenu.Placement = PlacementMode.MousePoint;
+        BarMenu.PlacementTarget = this;
+        BarMenu.IsOpen = true;
+    }
 
     /// <summary>The menu's Demo mode item shows a check while the demo plays.</summary>
     public void SetDemoRunning(bool running) => DemoItem.IsChecked = running;

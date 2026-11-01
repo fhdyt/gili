@@ -52,7 +52,7 @@
         <c:SoftShadowView x:Name="Shadow" Opacity="0" IsHitTestVisible="False" />
 
         <Border x:Name="Body" Background="#000000"
-                MouseLeftButtonUp="OnBodyClick" MouseEnter="OnBodyEnter" MouseLeave="OnBodyLeave">
+                MouseLeftButtonUp="OnBodyClick" MouseRightButtonUp="OnBodyRightClick" MouseEnter="OnBodyEnter" MouseLeave="OnBodyLeave">
             <Grid>
                 <!-- Behind everything, clipped by the island's shape: the open page's colour, drifting (PRD 6.3). -->
                 <i:AmbientGlow x:Name="Glow" />

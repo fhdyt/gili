@@ -61,6 +61,9 @@ public sealed record AppSettings
     public int BarHeight { get; init; } = 32;
     public int IslandHeight { get; init; } = 24;
     public bool Autostart { get; init; } = true;
+
+    /// <summary>Gili's icon in the Windows notification area, whose menu quits Gili (F-BAR-17).</summary>
+    public bool TrayIcon { get; init; } = true;
     public bool ShowSeconds { get; init; } = true;
     public bool ShowGili { get; init; } = true;
     public bool AmbientGlow { get; init; } = true;

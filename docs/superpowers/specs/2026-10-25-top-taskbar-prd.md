@@ -109,7 +109,13 @@ Gili dirilis gratis untuk umum lewat Microsoft Store dan installer di GitHub Rel
   - Kalau "Transparency effects" Windows mati, bar digambar polos apa pun pengaturannya.
 - Pulau selalu `#000000` pekat, jadi terlihat sebagai benda paling padat di bar.
 - Disembunyikan saat aplikasi fullscreen aktif di monitor utama (`ABN_FULLSCREENAPP`), muncul lagi setelah keluar.
-- Klik kanan di area kosong bar membuka menu: Open Tools, Settings, Demo mode, Quit.
+- Klik kanan di area kosong bar membuka menu: Open Tools, Settings, Demo mode, **Quit Gili** (revisi 14, issue #25; sebelumnya `Quit`). Menu yang sama terbuka dari klik kanan pulau compact (yang jendelanya terpisah dari bar) dan dari ikon Gili di notification area Windows (di bawah).
+
+**Ikon tray Gili** (revisi 14, issue #25, F-BAR-17)
+- Gili memasang ikonnya sendiri (lingkaran maskot, 9.4) di notification area Windows dengan tooltip `Gili`. Klik kiri (atau Enter) membuka Settings; klik kanan (atau tombol menu) membuka menu bar di posisi pointer, jadi Gili bisa ditutup dari tempat yang biasa dipakai untuk menutup aplikasi latar belakang.
+- Saat taskbar Windows disembunyikan, ikon ini ada di flyout ikon tersembunyi yang dibuka tombol Tray Gili (6.4).
+- Ikon didaftar ulang saat Explorer restart (`TaskbarCreated`) dan dilepas di semua jalur keluar bersama ruang AppBar.
+- Settings → General → **Icon in the notification area** (default nyala), keterangan `Right-click it to quit Gili`.
 - **Aturan jarak**: isi kiri dan kanan tidak boleh lebih dekat dari 24 px ke pulau, termasuk lingkaran Gili, titik kamera/mic, dan gelembung aktivitas di sampingnya.
 
 **Posisi bar** (Settings → General → **Bar position**: `Top` / `Bottom`, default Top)
@@ -795,7 +801,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 
 | Bagian | Isi |
 |---|---|
-| General | Bar position (Top / Bottom), Hide Windows taskbar, 12-hour clock (default mati), Show seconds, Start with Windows |
+| General | Bar position (Top / Bottom), Hide Windows taskbar, 12-hour clock (default mati), Show seconds, Start with Windows, Icon in the notification area (default nyala, `Right-click it to quit Gili`; revisi 14) |
 | Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Clipboard, Shelf, Claude, Running apps (revisi 12). Tiap saklar selain Start dan Running apps juga menyalakan/mematikan tab halaman yang sama di pulau, dengan keterangan `Turning it off also hides the <name> page in the island`. Selama `Show Claude Code sessions` mati, ikon dan tab Claude tidak ada dan saklar Claude (Left side dan Island) nonaktif dengan keterangan `Turn on Claude Code sessions first` |
 | Island | Show Gili; Show lyrics (default mati, Fase 6); saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System); saklar halaman yang ikon kirinya mati nonaktif dengan keterangan `Turned off in Left side` |
@@ -871,6 +877,7 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-BAR-11 | Sembunyikan taskbar Windows | Saklar menyembunyikan taskbar Windows dan ruangnya kembali ke jendela lain; status asli dipulihkan saat saklar mati, Quit, crash, dan start berikutnya setelah mati paksa; tetap tersembunyi setelah Explorer restart; tombol Windows tetap membuka Start | 3 |
 | F-BAR-12 | Tampil/sembunyi | Setiap saklar di 6.5 (Left side, Island, Right side) langsung menampilkan/menyembunyikan elemennya dengan animasi; saklar Left side selain Start juga mematikan/menyalakan tab pulau yang sama dan menonaktifkan saklar tab itu selama mati, tanpa pernah menyisakan nol tab; elemen yang mati tidak menyisakan celah dan berhenti mengambil data; pilihan tersimpan setelah restart | 3 |
 | F-BAR-13 | Tombol Settings | Roda gigi selalu tampil tepat di kiri Power dan membuka jendela Settings; kalau Settings sudah terbuka, jendelanya dibawa ke depan | 1 |
+| F-BAR-17 | Ikon tray dan Quit Gili | Sesuai 6.1 "Ikon tray Gili": ikon lingkaran Gili di notification area dengan tooltip `Gili`; klik membuka Settings, klik kanan membuka menu bar (Open Tools, Settings, Demo mode, Quit Gili) dan Quit Gili menutup Gili lewat jalur Quit biasa; klik kanan pulau compact membuka menu yang sama; ikon kembali setelah Explorer restart dan hilang setelah Quit; saklar `Icon in the notification area` (revisi 14, issue #25) | 5 |
 
 ### 7.2 Bagian kiri
 
@@ -1066,6 +1073,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Gambar dan file di riwayat Clipboard (revisi 12) | PNG di-encode sekali per gambar baru di thread latar belakang; thumbnail baris 80 px di-decode hanya saat halaman Clipboard terbuka; daftar file hanya path | RAM ≤ +1 MB saat halaman terbuka, 0 saat tertutup; disk ≤ 20 PNG | Batas gambar turun ke 10 |
 | Shelf di slot pulau (revisi 13) | Satu ikon dan dua teks yang dihitung ulang hanya saat isi Shelf berubah (event `Changed`, tanpa polling atau timer baru) | Tidak terukur | — |
 | Build self-contained (revisi 6) | Runtime .NET ikut di paket, jadi pengguna tidak perlu memasangnya. Tidak menambah RAM atau CPU; ukuran di disk naik | Paket unduhan ≤ 80 MB, terpasang ≤ 200 MB | Trimming dimatikan untuk WPF; kurangi aset yang ikut |
+| Ikon tray Gili (revisi 14) | Satu ikon di notification area; pesan hanya saat diklik | Tidak terukur | — |
 | Cek update (installer GitHub saja, F-PUB-04) | Satu permintaan HTTPS kecil saat start lalu tiap 24 jam; tidak ada proses latar terpisah | Tidak terukur | — |
 
 ### 8.2 Keandalan dan privasi
