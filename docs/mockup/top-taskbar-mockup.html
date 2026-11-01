@@ -965,6 +965,128 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
 .hint{position:fixed;left:50%;bottom:64px;transform:translate(-50%,10px);background:rgba(28,28,30,.96);border:1px solid rgba(255,255,255,.09);
   padding:8px 14px;border-radius:10px;font-size:12px;opacity:0;transition:opacity 200ms,transform 260ms var(--out);z-index:60;pointer-events:none}
 .hint.on{opacity:1;transform:translate(-50%,0)}
+
+/* projects (F-ISL-34, revision 16): one project at a time on a day timeline, like Notion's. A task is a pill bar from its
+   start day to its end day; drag the bar to move both dates, drag an end to change one, tick the circle when it's done. */
+.page.pg-proj{align-items:stretch;padding:2px 24px 4px}
+.pjw{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pjtop{display:flex;align-items:center;gap:8px;height:32px;flex-shrink:0}
+.pjsel{display:inline-flex;align-items:center;gap:6px;height:32px;max-width:210px;padding:0 10px 0 12px;border-radius:10px;background:var(--surface);font-size:13.5px;font-weight:600;transition:background 120ms}
+.pjsel:hover,.pjsel[aria-expanded="true"]{background:var(--ctl)}
+.pjsel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjsel .ic{width:13px;height:13px;color:var(--text2);flex-shrink:0;transform:rotate(90deg);transition:transform 200ms var(--out)}
+.pjsel[aria-expanded="true"] .ic{transform:rotate(-90deg)}
+.pjmeta{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pjnav{margin-left:auto;display:flex;align-items:center;gap:2px;flex-shrink:0}
+.pjnav button{height:32px;min-width:28px;border-radius:10px;display:grid;place-items:center;color:var(--text2);font-size:12.5px;transition:background 120ms,color 120ms}
+.pjnav button:hover{background:var(--ctl);color:var(--text)}
+.pjnav .pjtd{padding:0 10px}
+.pjnav .ic{width:14px;height:14px}
+.pjtop .pill{height:32px;border-radius:10px;flex-shrink:0}
+/* The timeline: a 30 px column per day, a month row, a day row, then one 30 px lane per task and an empty lane to add one. */
+.pjtl{position:relative;flex-shrink:0;border-radius:12px;background:rgba(255,255,255,.035);overflow:hidden;touch-action:none}
+.pjin{position:absolute;top:0;left:0;bottom:0;will-change:transform}
+.pjin.anim{transition:transform 380ms var(--out)}
+.pjwe{position:absolute;top:0;bottom:0;width:30px;background:rgba(255,255,255,.035)}
+.pjm{position:absolute;top:5px;font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;padding-left:7px;border-left:1px solid var(--line);line-height:12px}
+.pjmon{position:absolute;top:0;left:0;height:20px;padding:5px 12px 0 9px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;line-height:12px;
+  background:linear-gradient(90deg,#151517 75%,rgba(21,21,23,0));pointer-events:none;z-index:3}
+.pjd{position:absolute;top:20px;width:30px;height:20px;display:grid;place-items:center;font-size:11.5px;color:var(--text2)}
+.pjd.we{color:var(--text3)}
+.pjd b{font-weight:500}
+.pjd.td b{width:20px;height:20px;border-radius:10px;display:grid;place-items:center;background:var(--accent);color:#000;font-weight:700}
+.pjnow{position:absolute;top:42px;bottom:0;width:2px;margin-left:14px;border-radius:1px;background:var(--accent);opacity:.55;pointer-events:none}
+.pjrule{position:absolute;left:0;right:0;top:42px;height:1px;background:rgba(255,255,255,.1)}
+/* The grid: a line at every day's edge and under every lane, as on a calendar. */
+.pjgrid{position:absolute;left:0;right:0;top:43px;bottom:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px) -1px 0/30px 100%,linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px) 0 33px/100% 30px}
+/* A bar is a pill (24 px, radius 12) inset 2 px inside its days; the tick circle sits 4 px in, concentric with the pill.
+   Its fill is the task's colour (the note palette); overdue is a red ring, done is dimmed, struck-through text. */
+.pjbar{position:absolute;height:24px;border-radius:12px;background:var(--bc,#1c1c1e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);display:flex;align-items:center;gap:6px;padding:0 10px 0 4px;color:#fff;font-size:12.5px;font-weight:500;
+  cursor:grab;user-select:none;outline:none;z-index:1;
+  transition:left 260ms var(--spr),width 260ms var(--spr),top 260ms var(--spr),background 200ms,color 200ms,box-shadow 160ms,transform 160ms var(--out)}
+.pjbar:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.32)}
+.pjbar:focus-visible{box-shadow:0 0 0 2px #0a84ff}
+.pjbar.late{box-shadow:inset 0 0 0 1.5px var(--danger)}
+.pjbar.done{color:rgba(255,255,255,.5)}
+.pjbar.done .pjt{text-decoration:line-through}
+.pjbar.sel.sel{box-shadow:0 0 0 2px #fff}
+.pjbar.lift{cursor:grabbing;z-index:4;transform:translateY(-1px) scale(1.02);box-shadow:0 8px 20px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.28);transition:background 200ms,box-shadow 160ms,transform 160ms var(--out)}
+.pjbar.size{cursor:ew-resize}
+.pjbar.size.lift{transform:none;transition:left 90ms var(--out),width 90ms var(--out),box-shadow 160ms}
+.pjbar.new{animation:pop 420ms var(--pop)}
+.pjt{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* Too short for its title: the title sits after the bar, as on Notion. */
+.pjbar.out .pjt{position:absolute;left:calc(100% + 8px);overflow:visible;color:var(--text);pointer-events:none}
+.pjbar.out.done .pjt{color:var(--text2)}
+.pjchk{width:16px;height:16px;border-radius:8px;flex-shrink:0;border:1.5px solid rgba(255,255,255,.7);display:grid;place-items:center;cursor:pointer;transition:background 200ms,border-color 200ms,transform 200ms var(--pop)}
+.pjchk .ic{width:10px;height:10px;stroke-width:3.4;color:#000;opacity:0;transform:scale(.3);transition:opacity 150ms,transform 280ms var(--pop)}
+.pjbar.done .pjchk{background:var(--accent);border-color:var(--accent)}
+.pjbar.done .pjchk .ic{opacity:1;transform:none}
+.pjchk:active{transform:scale(.8)}
+/* The ends: grips that show on hover on a bar long enough to hold them; the 8 px at either end resize. */
+.pjh{position:absolute;top:7px;bottom:7px;width:3px;border-radius:2px;background:rgba(255,255,255,.6);opacity:0;transition:opacity 120ms;pointer-events:none}
+.pjh.r{right:5px}
+.pjbar:hover .pjh.r,.pjbar.size .pjh.r{opacity:1}
+.pjbar.short .pjh{display:none}
+/* While dragging: where the bar will land, and its dates above it. */
+.pjghost{position:absolute;height:24px;border-radius:12px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);background:rgba(255,255,255,.05);pointer-events:none;transition:left 140ms var(--out),width 140ms var(--out)}
+.pjtip{position:absolute;top:-2px;padding:3px 8px;border-radius:7px;background:#3a3a3c;color:var(--text);font-size:11.5px;white-space:nowrap;pointer-events:none;z-index:6;transform:translateX(-50%);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+/* The empty lane under the last task: hovering shows a one-day ghost and "New task" at the day under the pointer. */
+.pjadd{position:absolute;left:0;right:0;height:30px;cursor:pointer}
+.pjadd i{position:absolute;top:3px;height:24px;width:26px;border-radius:12px;border:1.5px dashed rgba(255,255,255,.3);opacity:0;transition:opacity 120ms;pointer-events:none}
+.pjadd span{position:absolute;top:8px;font-size:12px;color:var(--text2);white-space:nowrap;opacity:0;transition:opacity 120ms;pointer-events:none}
+.pjadd:hover i,.pjadd:hover span{opacity:1}
+.pjnone{position:absolute;top:52px;font-size:12.5px;color:var(--text2);white-space:nowrap;pointer-events:none}
+.pjadd.first span{opacity:1}
+/* The task form: name, start and end (typed like "5 Nov", or ↑/↓ a day at a time). */
+.pjform{display:flex;flex-wrap:wrap;gap:6px;row-gap:10px;flex-shrink:0;animation:fadeUp 200ms var(--out)}
+/* The task's colour: the same eight dark colours and round swatches as a note's. */
+.pjform .pjsw{flex-basis:100%}
+.pjform .field{height:32px;border-radius:10px;padding:0 12px;font-size:13px}
+.pjform .pjft{flex:1;min-width:0}
+.pjform .pjfd{width:100px;flex-shrink:0;padding:0 10px}
+.pjform .field.bad{box-shadow:inset 0 0 0 1.5px var(--danger)}
+.pjarr{align-self:center;color:var(--text3);font-size:12px}
+.pjform .iconbtn{width:32px;height:32px;border-radius:10px}
+.pjform .pjdl{height:32px;border-radius:10px;padding:0 10px;color:var(--text2)}
+.pjform .pjdl .ic{width:14px;height:14px}
+.pjform .pjdl:hover{color:var(--danger)}
+.pjform .pjdl.confirm{background:var(--danger);color:#fff;font-size:12px;font-weight:600}
+/* The project list: opens under the project's name, over the timeline. */
+.pjmenu{position:absolute;top:38px;left:0;width:260px;padding:6px;border-radius:16px;background:#2c2c2e;box-shadow:0 12px 32px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.08);z-index:8;
+  display:flex;flex-direction:column;gap:2px;animation:fadeUp 180ms var(--out)}
+.pjmi{display:flex;align-items:center;border-radius:10px;transition:background 120ms}
+.pjmi:hover{background:rgba(255,255,255,.08)}
+.pjmn{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 8px;text-align:left;font-size:13px}
+.pjmn .ic{width:13px;height:13px;color:var(--accent);flex-shrink:0;visibility:hidden}
+.pjmi.on .pjmn .ic{visibility:visible}
+.pjmn b{flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjmn small{font-size:11.5px;color:var(--text2)}
+.pjma{display:flex;width:0;overflow:hidden;opacity:0;transition:width 200ms var(--out),opacity 140ms}
+.pjmi:hover .pjma,.pjmi:focus-within .pjma{width:58px;opacity:1}
+.pjmi:has(.confirm) .pjma{width:auto}
+.pjma button{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:var(--text2);flex-shrink:0}
+.pjma button:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.pjma .ic{width:13px;height:13px}
+.pjma .pjmd:hover{color:var(--danger)}
+.pjma .pjmd.confirm{width:auto;padding:0 9px;background:var(--danger);color:#fff;font-size:12px;font-weight:600}
+.pjmenu .psep{height:1px;margin:4px 6px;background:rgba(255,255,255,.1);flex-shrink:0}
+.pjmnew{display:flex;align-items:center;gap:8px;height:34px;padding:0 8px;border-radius:10px;font-size:13px;text-align:left}
+.pjmnew:hover{background:rgba(255,255,255,.08)}
+.pjmnew .ic{width:13px;height:13px}
+.pjmenu form{display:flex;gap:4px;padding:1px 2px}
+.pjmenu .field{flex:1;min-width:0;height:32px;border-radius:9px;padding:0 10px;background:#1c1c1e}
+.pjmenu .iconbtn{width:32px;height:32px;border-radius:9px}
+/* No project yet: step one is naming it. */
+.pjempty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 0}
+.pjei{width:44px;height:44px;border-radius:22px;background:rgba(94,92,230,.22);color:#a5a4ff;display:grid;place-items:center;margin-bottom:4px}
+.pjei .ic{width:20px;height:20px}
+.pjempty b{font-size:16px;font-weight:600}
+.pjempty>span{font-size:12.5px;color:var(--text2);max-width:340px}
+.pjempty form{display:flex;gap:6px;margin-top:10px;width:320px}
+.pjempty .field{flex:1;min-width:0;height:34px;border-radius:10px}
+.pjempty .pill{height:34px;border-radius:10px}
 </style>
 </head>
 <body>
@@ -972,6 +1094,7 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
   <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
   <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M7 2v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V2M7 22v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3"/></symbol>
+  <symbol id="i-gantt" viewBox="0 0 24 24"><path d="M4 6h9M8 12h10M6 18h7"/></symbol>
   <symbol id="i-todo" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
@@ -1074,6 +1197,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <button data-tool="Timer" data-l="timer" aria-label="Open Timer" title="Timer"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg></button>
         <button data-tool="Alarms" data-l="alarms" aria-label="Open Alarms" title="Alarms"><svg class="ic" aria-hidden="true"><use href="#i-alarm"/></svg></button>
         <button data-tool="Todo" data-l="todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
+        <button data-tool="Projects" data-l="projects" aria-label="Open Projects" title="Projects"><svg class="ic" aria-hidden="true"><use href="#i-gantt"/></svg></button>
         <button data-tool="Notes" data-l="notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
         <button data-tool="Clipboard" data-l="clipboard" aria-label="Open Clipboard" title="Clipboard"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg></button>
         <button class="lsh" id="mShelf" data-l="shelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
@@ -1186,6 +1310,9 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 <div class="tdsub">Tasks done today</div>
               </div>
               <ul class="tlist" id="tlist"></ul>
+            </section>
+            <section class="page pg-proj" aria-label="Projects">
+              <div class="pjw" id="pjw"></div>
             </section>
             <section class="page pg-note" aria-label="Notes">
               <div class="nwrap" id="nWrap">
@@ -1318,7 +1445,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <p class="note">Click the island, the clock, the Notes icon, or CPU in the bar. Drag a real file from your desktop onto the island. Swipe the island with a touchpad or use the arrow keys; Esc closes it.</p>
     <div class="g"><button data-act="demo" aria-pressed="false">Play the demo</button></div>
     <h3>Island</h3>
-    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Clipboard</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
+    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Projects</button><button data-page="6">Notes</button><button data-page="7">Clipboard</button><button data-page="8">Shelf</button><button data-page="9">Claude</button><button data-page="10">System</button><button data-act="pjEmpty">Projects: first run</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
     <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false" title="Phase 6, built in revision 15">Lyrics</button><button data-act="video">Play a video (VLC)</button><button data-act="videoThumb">Video with a thumbnail</button><button data-act="timer10">Timer 10 s</button><button data-act="teacard">Labeled timer card (Tea)</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
@@ -1417,7 +1544,7 @@ const S={
   // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
   order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
-  left:{start:1,timer:1,alarms:1,todo:1,notes:1,clipboard:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1],
+  left:{start:1,timer:1,alarms:1,todo:1,projects:1,notes:1,clipboard:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -1443,8 +1570,8 @@ const S={
   apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
 };
 // Controls (10) has no tab: the Wi-Fi, Bluetooth, Volume, Brightness and Power buttons open it, one control at a time.
-const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,notes:5,clipboard:6,shelf:7,claude:8,system:9,controls:10};
-const LAST=10,GAP=24;
+const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,projects:5,notes:6,clipboard:7,shelf:8,claude:9,system:10,controls:11};
+const LAST=11,GAP=24;
 const HIDE_ORDER=['weather','net','disk','gpu','ram','cpu'];
 
 const iw=$('#iw'),isl=$('#isl'),bar=$('#bar'),bubble=$('#bubble'),cbub=$('#cbub'),lcI=$('#lcI'),lwI=$('#lwI'),lcard=$('#lcard');
@@ -1637,6 +1764,8 @@ function pageNeed(i){
   if(i===PAGE.notes){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+Math.max($('#nGridIn').offsetHeight,S.editing?EDH:0)+parseFloat(cs.paddingBottom)}
   // Clipboard: the search row stays put and only the list scrolls, once the island is as tall as the screen.
   if(i===PAGE.clipboard){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+$('#cbList').scrollHeight+parseFloat(cs.paddingBottom)}
+  // Projects: the timeline and the task form, or the open project list when it reaches further down.
+  if(i===PAGE.projects){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+pjNeed()+parseFloat(cs.paddingBottom)}
   return Math.max(...[...p.children].map(c=>c.scrollHeight));
 }
 function layout(){
@@ -2060,7 +2189,7 @@ cbub.addEventListener('click',()=>{const u=clUnseen();u.length===1?clFocus(u[0])
 
 /* ---------- expanded: pages ---------- */
 // Page menu: every page by icon and name, so any page is one click away.
-const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calendar','cal'],['Todo','todo'],['Notes','note'],['Clipboard','clipboard'],['Shelf','tray'],['Claude','claude'],['System','cpu']];
+const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calendar','cal'],['Todo','todo'],['Projects','gantt'],['Notes','note'],['Clipboard','clipboard'],['Shelf','tray'],['Claude','claude'],['System','cpu']];
 const xtabs=$('#xtabs'),xind=$('#xind');
 xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" role="tab" data-i="${i}" aria-selected="false" aria-controls="xp">${icon(ic)}${i===PAGE.media?'<span class="viz" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':''}<span class="tl">${n}</span></button>`).join(''));
 xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
@@ -2131,12 +2260,13 @@ function goPage(i,instant){
   $$('#xtabs .xtab').forEach((t,k)=>t.setAttribute('aria-selected',k===i));
   $$('.page').forEach((p,k)=>p.inert=k!==i);
   if(i===PAGE.calendar)renderCev();
+  if(i===PAGE.projects)pjOpened();
   if(wasTall&&i!==PAGE.notes)flushNote();
   if(S.state==='expanded'){if(!S.reduce)setMotion(SP_OPEN);layout()}
   renderTimerPage();renderSys();renderClPage();renderGlow();
 }
 // Ambient glow colours per page. Media takes the cover's two colours (dimmer while paused); Timer follows the mode and pomodoro phase.
-const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.notes]:'#ffd60a',[PAGE.clipboard]:'#66d4cf',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2',[PAGE.controls]:'#0a84ff'};
+const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.projects]:'#5e5ce6',[PAGE.notes]:'#ffd60a',[PAGE.clipboard]:'#66d4cf',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2',[PAGE.controls]:'#0a84ff'};
 const tint=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
 function renderGlow(){
   const g=$('#glow');let c1,c2,k=1;
@@ -3192,7 +3322,7 @@ function limCheck(){
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw'],['tray','Icon in the notification area','sw',null,'Right-click it to quit Gili']],
   Appearance:[['barColor','Bar color','color'],['opacity','Bar opacity','range',[40,100,'%']],['openOp','Opacity while open','range',[0,100,'%'],'How much of the bar stays while the island is open'],['desktop','Same on the desktop','sw',null,'The bar looks like this while the desktop is in front'],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
-  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.projects','Projects'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
@@ -3204,7 +3334,7 @@ const SET={
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
-const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,notes:PAGE.notes,clipboard:PAGE.clipboard,shelf:PAGE.shelf,claude:PAGE.claude};
+const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,projects:PAGE.projects,notes:PAGE.notes,clipboard:PAGE.clipboard,shelf:PAGE.shelf,claude:PAGE.claude};
 const leftOff=i=>Object.keys(LEFT_TAB).some(k=>LEFT_TAB[k]===i&&!S.left[k]);
 // The only page still on: its switch, and its icon's in Left side, are disabled so the island never has no tab.
 const lastTab=i=>S.tabs[i]&&S.tabs.filter(Boolean).length===1;
@@ -3872,7 +4002,7 @@ function clClick(){
   const ask=clBy('ask'),end=S.clEnd&&clById(S.clEnd),inv=ask.length?ask:end?[end]:clBy('work');
   inv.length===1?clFocus(inv[0]):openExpanded(PAGE.claude);
 }
-const TOOL_PAGE={Timer:PAGE.timer,Alarms:PAGE.alarms,Todo:PAGE.todo,Notes:PAGE.notes,Clipboard:PAGE.clipboard};
+const TOOL_PAGE={Timer:PAGE.timer,Alarms:PAGE.alarms,Todo:PAGE.todo,Projects:PAGE.projects,Notes:PAGE.notes,Clipboard:PAGE.clipboard};
 $$('#launch button[data-tool]').forEach(b=>b.onclick=()=>openFromBar(TOOL_PAGE[b.dataset.tool]));
 $$('.win').forEach(w=>w.addEventListener('pointerdown',()=>{
   $$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5;setApp(w.dataset.name,w.dataset.icon);
@@ -4104,11 +4234,275 @@ function tick1s(){
   if(S.state==='expanded'&&S.page===PAGE.claude)clTick();
 }
 
+/* projects (F-ISL-34, revision 16): a Notion-style timeline, one project at a time. A task is a bar from its start day to
+   its end day (both included). Days are whole local dates, kept as day numbers so dragging is plain arithmetic. */
+const PJ_DW=30,PJ_ROW=30,PJ_TOP=46;
+const dnOf=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const dateOf=n=>{const u=new Date(n*864e5);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate())};
+const pjDay=n=>{const d=dateOf(n);return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`};
+const pjShort=n=>{const d=dateOf(n);return `${d.getDate()} ${MONTHS[d.getMonth()]}`};
+// Typed like the Tools dates: "5 Nov", "Wed 5 Nov", "2026-11-05", "today", "tomorrow".
+function pjParse(v){const k=dateParse(v.replace(/,/g,''));if(!k)return null;const[y,m,d]=k.split('-').map(Number);return dnOf(new Date(y,m,d))}
+const T0=dnOf(new Date());
+const PJS=[
+  {name:'Gili 0.3 release',tasks:[
+    {t:'Write the spec',s:T0-9,e:T0-7,d:1,c:6},{t:'Mockup the timeline',s:T0-7,e:T0-4,d:1,c:7},{t:'Data model and migration',s:T0-4,e:T0-1,d:0,c:5},
+    {t:'Timeline page',s:T0-1,e:T0+4,d:0,c:6},{t:'Drag to move dates',s:T0+2,e:T0+6,d:0,c:4},{t:'Demo scenario',s:T0+6,e:T0+7,d:0,c:2},
+    {t:'Release notes',s:T0+8,e:T0+9,d:0,c:3},{t:'Publish',s:T0+10,e:T0+10,d:0,c:1}]},
+  {name:'Kitchen renovation',tasks:[
+    {t:'Pick the tiles',s:T0-3,e:T0+1,d:0,c:3},{t:'Order cabinets',s:T0+2,e:T0+3,d:0,c:2},{t:'Plumber',s:T0+9,e:T0+11,d:0,c:5},{t:'Install the cabinets',s:T0+14,e:T0+18,d:0,c:2}]},
+];
+const PJ={sel:0,x:0,R0:0,R1:0,menu:false,newProj:false,ren:-1,delP:-1,form:null,fresh:-1,moved:false,lastC:0};
+const pjCur=()=>PJS[PJ.sel];
+let pjCtx=null;
+function pjTextW(t){if(!pjCtx){pjCtx=document.createElement('canvas').getContext('2d');pjCtx.font='500 12.5px '+getComputedStyle(document.body).fontFamily}return pjCtx.measureText(t).width}
+const pjL=k=>(k-PJ.R0)*PJ_DW;
+const pjLate=t=>!t.d&&t.e<T0;
+function pjBar(t,i){
+  const w=(t.e-t.s+1)*PJ_DW-4,late=pjLate(t),st=t.d?', done':late?', overdue':'';
+  const cls=(t.d?' done':'')+(late?' late':'')+(w<pjTextW(t.t)+40?' out':'')+(w<60?' short':'')+(i===PJ.fresh?' new':'')+(PJ.form&&PJ.form.i===i?' sel':'');
+  return `<div class="pjbar${cls}" data-i="${i}" tabindex="0" role="button" aria-label="${esc(t.t)}, ${pjDay(t.s)} to ${pjDay(t.e)}${st}"${late?' title="Overdue"':''} style="--bc:${NOTE_COLORS[t.c||0][1]};left:${pjL(t.s)+2}px;width:${w}px;top:${PJ_TOP+i*PJ_ROW+3}px">`
+    +`<span class="pjchk" role="checkbox" aria-checked="${!!t.d}" aria-label="Done" title="${t.d?'Mark as not done':'Mark as done'}">${icon('check')}</span><span class="pjt">${esc(t.t)}</span><i class="pjh r"></i></div>`;
+}
+function pjMenuHTML(){
+  return `<div class="pjmenu" id="pjMenu" role="menu" aria-label="Projects">`+PJS.map((p,i)=>{
+    const n=p.tasks.length,d=p.tasks.filter(t=>t.d).length;
+    if(PJ.ren===i)return `<form class="pjren" data-p="${i}"><input class="field" id="pjRenIn" value="${esc(p.name)}" maxlength="60" aria-label="Project name" autocomplete="off"><button class="pill pri iconbtn" aria-label="Rename">${icon('check')}</button></form>`;
+    return `<div class="pjmi${i===PJ.sel?' on':''}"><button class="pjmn" role="menuitemradio" aria-checked="${i===PJ.sel}" data-p="${i}">${icon('check')}<b>${esc(p.name)}</b><small class="num">${d}/${n}</small></button>`
+      +`<span class="pjma"><button class="pjme" data-p="${i}" aria-label="Rename ${esc(p.name)}" title="Rename">${icon('pencil')}</button>`
+      +(PJ.delP===i?`<button class="pjmd confirm" data-p="${i}">Delete?</button>`:`<button class="pjmd" data-p="${i}" aria-label="Delete ${esc(p.name)}" title="Delete">${icon('trash')}</button>`)+`</span></div>`;
+  }).join('')+`<i class="psep"></i>`
+  +(PJ.newProj?`<form id="pjNewIn"><input class="field" id="pjNewName" placeholder="Project name" maxlength="60" aria-label="Project name" autocomplete="off"><button class="pill pri iconbtn" aria-label="Create project">${icon('check')}</button></form>`
+    :`<button class="pjmnew" id="pjNewBtn" role="menuitem">${icon('plus')}New project</button>`)+`</div>`;
+}
+function pjFormHTML(){
+  const f=PJ.form,ed=f.i>=0;
+  return `<form class="pjform" id="pjForm"><input class="field pjft" id="pjFt" value="${esc(f.tv)}" placeholder="${ed?'Task name':'New task name'}" maxlength="80" aria-label="Task name" autocomplete="off">`
+    +`<input class="field pjfd" id="pjFs" value="${esc(f.sv)}" aria-label="Start date" title="A date like 5 Nov, or ↑ and ↓ a day at a time" autocomplete="off"><span class="pjarr" aria-hidden="true">→</span>`
+    +`<input class="field pjfd" id="pjFe" value="${esc(f.ev)}" aria-label="End date" title="A date like 5 Nov, or ↑ and ↓ a day at a time" autocomplete="off">`
+    +(ed?(f.del?`<button type="button" class="pill pjdl confirm" id="pjDl">Delete?</button>`:`<button type="button" class="pill pjdl" id="pjDl" aria-label="Delete task" title="Delete">${icon('trash')}</button>`):'')
+    +`<button class="pill pri iconbtn" aria-label="${ed?'Save':'Add task'}">${icon('check')}</button>`
+    +`<div class="nsw pjsw" role="group" aria-label="Task color">${NOTE_COLORS.map(([name,v],k)=>`<button type="button" data-c="${k}" style="--sw:${v}" aria-label="Color: ${name}" title="${name}" aria-pressed="${k===f.c}"></button>`).join('')}</div></form>`;
+}
+function renderPj(keepX){
+  const w=$('#pjw'),p=pjCur(),abs=PJ.R0*PJ_DW+PJ.x;
+  if(!p){
+    w.innerHTML=`<div class="pjempty"><span class="pjei">${icon('gantt')}</span><b>Plan a project</b><span>Name it, then add its tasks with dates. Drag them along the timeline as plans change.</span>`
+      +`<form id="pjFirst"><input class="field" id="pjFirstIn" placeholder="Project name" maxlength="60" aria-label="Project name" autocomplete="off"><button class="pill pri">Create</button></form></div>`;
+    if(S.state==='expanded'&&S.page===PAGE.projects)layout();return;
+  }
+  const n=p.tasks.length,done=p.tasks.filter(t=>t.d).length;
+  const a=n?Math.min(...p.tasks.map(t=>t.s)):T0,b=n?Math.max(...p.tasks.map(t=>t.e)):T0;
+  PJ.R0=Math.min(a,T0)-35;PJ.R1=Math.max(b,T0)+60;
+  const yr=dateOf(T0).getFullYear();let inner='';
+  for(let k=PJ.R0;k<=PJ.R1;k++){
+    const d=dateOf(k),x=pjL(k),we=d.getDay()%6===0;
+    if(we)inner+=`<i class="pjwe" style="left:${x}px"></i>`;
+    if(d.getDate()===1)inner+=`<span class="pjm" style="left:${x}px">${MONTHS_FULL[d.getMonth()]}${d.getFullYear()!==yr?' '+d.getFullYear():''}</span>`;
+    inner+=`<span class="pjd${we?' we':''}${k===T0?' td':''}" style="left:${x}px"><b>${d.getDate()}</b></span>`;
+  }
+  inner+=`<i class="pjgrid"></i><i class="pjrule"></i><i class="pjnow" style="left:${pjL(T0)}px"></i>`+p.tasks.map(pjBar).join('')
+    +`<div class="pjadd${n?'':' first'}" id="pjLane" style="top:${PJ_TOP+n*PJ_ROW}px" aria-hidden="true"><i></i><span>${n?'New task':'Click a day to add a task'}</span></div>`;
+  w.innerHTML=`<div class="pjtop"><button class="pjsel" id="pjSel" aria-haspopup="menu" aria-expanded="${PJ.menu}" title="Projects"><span>${esc(p.name)}</span>${icon('chevr')}</button>`
+    +`<span class="pjmeta num">${n?`${done}/${n} done · ${pjShort(a)} – ${pjShort(b)}`:'No tasks yet'}</span>`
+    +`<span class="pjnav"><button data-pn="-7" aria-label="Previous week" title="Previous week">${icon('chevl')}</button><button class="pjtd" data-pn="0">Today</button><button data-pn="7" aria-label="Next week" title="Next week">${icon('chevr')}</button></span>`
+    +`<button class="pill sm" id="pjAddBtn">${icon('plus')}Add task</button></div>`
+    +`<div class="pjtl" id="pjTl" role="group" aria-label="Timeline of ${esc(p.name)}. Drag a task to move it, or an end to change its dates." style="height:${PJ_TOP+(n+1)*PJ_ROW+6}px"><div class="pjin" id="pjIn" style="width:${(PJ.R1-PJ.R0+1)*PJ_DW}px">${inner}</div><span class="pjmon" id="pjMon"></span></div>`
+    +(PJ.form?pjFormHTML():'')+(PJ.menu?pjMenuHTML():'');
+  PJ.fresh=-1;
+  // Keep the same days in view when the range around the project grows or shrinks.
+  if(keepX)pjScroll(abs-PJ.R0*PJ_DW);else pjHome();
+  if(S.state==='expanded'&&S.page===PAGE.projects)layout();
+}
+const pjVW=()=>$('#pjTl')?.clientWidth||520;
+function pjScroll(x,anim){
+  PJ.x=Math.max(0,Math.min((PJ.R1-PJ.R0+1)*PJ_DW-pjVW(),x));
+  const inn=$('#pjIn');if(!inn)return;
+  inn.classList.toggle('anim',!!anim&&!S.reduce);inn.style.transform=`translateX(${-PJ.x}px)`;pjMonth();
+}
+// Opening a project shows all of it when it fits, otherwise today a third of the way in.
+function pjHome(anim){
+  const p=pjCur(),vw=pjVW();if(!p)return;
+  if(p.tasks.length){const a=Math.min(...p.tasks.map(t=>t.s)),b=Math.max(...p.tasks.map(t=>t.e));
+    if((b-a+1)*PJ_DW<=vw-60){pjScroll(pjL((a+b+1)/2)-vw/2,anim);return}}
+  pjScroll(pjL(T0)-vw/3,anim);
+}
+// The month of the first day in view stays at the left, pushed out by the next month's label as it arrives.
+function pjMonth(){
+  const m=$('#pjMon');if(!m)return;
+  const d=dateOf(PJ.R0+Math.floor(PJ.x/PJ_DW)),nx=pjL(dnOf(new Date(d.getFullYear(),d.getMonth()+1,1)))-PJ.x;
+  m.textContent=MONTHS_FULL[d.getMonth()]+' '+d.getFullYear();m.style.transform=`translateX(${Math.min(0,nx-m.offsetWidth)}px)`;
+}
+function pjOpened(){requestAnimationFrame(()=>{if(PJ.moved)pjScroll(PJ.x);else pjHome()})}
+function pjNeed(){
+  if(!pjCur())return 236;
+  let h=32+10+$('#pjTl').offsetHeight+(PJ.form?72:0);
+  const m=$('#pjMenu');if(m)h=Math.max(h,m.offsetTop+m.offsetHeight+6);
+  return h;
+}
+function pjFocusBar(i){const b=$(`#pjIn .pjbar[data-i="${i}"]`);if(b)b.focus({preventScroll:true})}
+// Moves a bar to new days with the spring, then redraws once it has landed (its state and the range may change).
+function pjSettle(i,s,e,refocus){
+  const t=pjCur().tasks[i],b=$(`#pjIn .pjbar[data-i="${i}"]`);t.s=s;t.e=e;
+  if(PJ.form&&PJ.form.i===i){PJ.form.sv=pjDay(s);PJ.form.ev=pjDay(e)}
+  if(b){b.style.left=pjL(s)+2+'px';b.style.width=(e-s+1)*PJ_DW-4+'px'}
+  clearTimeout(pjSettle.t);pjSettle.t=setTimeout(()=>{const f=document.activeElement?.closest?.('.pjbar');renderPj(true);if(refocus||f)pjFocusBar(i)},S.reduce?0:280);
+}
+function pjOpenForm(i,day){
+  const t=i>=0?pjCur().tasks[i]:null,s=t?t.s:day??T0,e=t?t.e:day??T0;
+  PJ.form={i,tv:t?t.t:'',sv:pjDay(s),ev:pjDay(e),c:t?t.c||0:PJ.lastC,del:false};PJ.menu=false;renderPj(true);
+  const f=$('#pjFt');f.focus();if(t)f.select();
+  // A new task on a day out of view brings that day in.
+  if(i<0&&(pjL(s)<PJ.x||pjL(s)>PJ.x+pjVW()-PJ_DW))pjScroll(pjL(s)-pjVW()/3,true);
+}
+function pjSubmit(){
+  const f=PJ.form,ft=$('#pjFt'),fs=$('#pjFs'),fe=$('#pjFe'),t=ft.value.trim(),s=pjParse(fs.value),e=pjParse(fe.value);
+  ft.classList.toggle('bad',!t);fs.classList.toggle('bad',s==null);fe.classList.toggle('bad',e==null||s!=null&&e<s);
+  fe.title=s!=null&&e!=null&&e<s?'The end is before the start':'A date like 5 Nov, or ↑ and ↓ a day at a time';
+  if(!t){ft.focus();return}if(s==null){fs.focus();return}if(e==null||e<s){fe.focus();return}
+  const p=pjCur();
+  if(f.i>=0){const k=p.tasks[f.i];k.t=t;k.c=f.c;PJ.form=null;$(`#pjIn .pjbar[data-i="${f.i}"] .pjt`).textContent=t;pjSettle(f.i,s,e,true);return}
+  // Adding keeps the form open for the next task, starting the day after this one ends.
+  p.tasks.push({t,s,e,d:0,c:f.c});PJ.fresh=p.tasks.length-1;PJ.lastC=f.c;
+  PJ.form={i:-1,tv:'',sv:pjDay(e+1),ev:pjDay(e+1),c:f.c,del:false};renderPj(true);$('#pjFt').focus();
+  if(pjL(e)+PJ_DW>PJ.x+pjVW()||pjL(s)<PJ.x){pjScroll(pjL(s)-pjVW()/3,true);PJ.moved=true}
+}
+function pjDelete(i){
+  const p=pjCur(),b=$(`#pjIn .pjbar[data-i="${i}"]`);PJ.form=null;
+  if(b){b.style.transition='opacity 200ms,transform 200ms';b.style.opacity=0;b.style.transform='scale(.9)'}
+  // The lanes below close up, then the island gets shorter.
+  $$('#pjIn .pjbar').forEach(x=>{if(+x.dataset.i>i)x.style.top=parseFloat(x.style.top)-PJ_ROW+'px'});
+  setTimeout(()=>{p.tasks.splice(i,1);renderPj(true)},S.reduce?0:260);
+}
+function pjToggle(i){
+  const t=pjCur().tasks[i];t.d=t.d?0:1;
+  const b=$(`#pjIn .pjbar[data-i="${i}"]`);b.classList.toggle('done',!!t.d);b.classList.toggle('late',pjLate(t));
+  const c=b.querySelector('.pjchk');c.setAttribute('aria-checked',!!t.d);c.title=t.d?'Mark as not done':'Mark as done';
+  const p=pjCur(),n=p.tasks.length,a=Math.min(...p.tasks.map(t=>t.s)),z=Math.max(...p.tasks.map(t=>t.e));
+  $('#pjw .pjmeta').textContent=`${p.tasks.filter(t=>t.d).length}/${n} done · ${pjShort(a)} – ${pjShort(z)}`;
+}
+function pjCreate(name){PJS.push({name,tasks:[]});PJ.sel=PJS.length-1;PJ.menu=false;PJ.newProj=false;PJ.moved=false;pjOpenForm(-1,T0)}
+const pjw=$('#pjw');
+pjw.addEventListener('wheel',e=>{
+  if(e.target.closest('.pjmenu')){e.stopPropagation();return}
+  if(!e.target.closest('#pjTl'))return;
+  // Over the timeline the wheel (either way) scrolls the days and never turns the page.
+  e.preventDefault();e.stopPropagation();PJ.moved=true;
+  pjScroll(PJ.x+(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY));
+},{passive:false});
+// Dragging a bar: the middle moves both dates (the bar follows the pointer, a ghost shows where it lands), an end changes
+// one date (snapping a day at a time). Near either edge of the timeline it scrolls along.
+let pjDrag=null;
+function pjEdge(bar,cx){const r=bar.getBoundingClientRect();return cx-r.left<7?'s':r.right-cx<9?'e':'m'}
+pjw.addEventListener('pointerdown',e=>{
+  if(PJ.menu&&!e.target.closest('#pjMenu,#pjSel')){PJ.menu=false;PJ.newProj=false;PJ.ren=-1;renderPj(true)}
+  const bar=e.target.closest('.pjbar');if(!bar||e.button!==0)return;
+  const i=+bar.dataset.i,t=pjCur().tasks[i],edge=pjEdge(bar,e.clientX);
+  if(edge==='m'&&e.target.closest('.pjchk'))return;
+  pjDrag={bar,i,t,edge,x0:e.clientX,cx:e.clientX,sx:PJ.x,ns:t.s,ne:t.e,moved:false};PJ.noClick=true;
+  try{bar.setPointerCapture(e.pointerId)}catch{}
+});
+function pjDragMove(){
+  const g=pjDrag,dx=g.cx-g.x0+(PJ.x-g.sx);
+  if(!g.moved){
+    if(Math.abs(dx)<4)return;g.moved=true;PJ.moved=true;g.bar.classList.add('lift');if(g.edge!=='m')g.bar.classList.add('size');
+    g.ghost=document.createElement('i');g.ghost.className='pjghost';g.ghost.style.top=g.bar.style.top;g.ghost.hidden=g.edge!=='m';
+    g.tip=document.createElement('span');g.tip.className='pjtip';g.tip.style.top=parseFloat(g.bar.style.top)-25+'px';$('#pjIn').append(g.ghost,g.tip);
+  }
+  const days=Math.round(dx/PJ_DW);let s=g.t.s,e=g.t.e;
+  if(g.edge==='m'){s+=days;e+=days}else if(g.edge==='s')s=Math.min(g.t.e,g.t.s+days);else e=Math.max(g.t.s,g.t.e+days);
+  g.ns=s;g.ne=e;const w=(e-s+1)*PJ_DW-4;
+  if(g.edge==='m')g.bar.style.left=pjL(g.t.s)+2+dx+'px';
+  else{g.bar.style.left=pjL(s)+2+'px';g.bar.style.width=w+'px';g.bar.classList.toggle('out',w<pjTextW(g.t.t)+40);g.bar.classList.toggle('short',w<60)}
+  g.ghost.style.left=pjL(s)+2+'px';g.ghost.style.width=w+'px';
+  g.tip.textContent=s===e?pjDay(s):`${pjDay(s)} → ${pjDay(e)} · ${e-s+1} days`;
+  g.tip.style.left=parseFloat(g.bar.style.left)+parseFloat(g.bar.style.width)/2+'px';
+}
+function pjAuto(){
+  const g=pjDrag;if(!g)return;const r=$('#pjTl').getBoundingClientRect(),v=g.cx<r.left+32?-8:g.cx>r.right-32?8:0;
+  if(v&&g.moved){pjScroll(PJ.x+v);pjDragMove()}
+  g.raf=requestAnimationFrame(pjAuto);
+}
+pjw.addEventListener('pointermove',e=>{
+  if(pjDrag){pjDrag.cx=e.clientX;pjDragMove();if(!pjDrag.raf)pjDrag.raf=requestAnimationFrame(pjAuto);return}
+  const bar=e.target.closest('.pjbar');
+  if(bar)bar.classList.toggle('size',!e.target.closest('.pjchk')&&pjEdge(bar,e.clientX)!=='m');
+  const lane=e.target.closest('#pjLane');
+  if(lane){const d=PJ.R0+Math.floor((e.clientX-$('#pjIn').getBoundingClientRect().left)/PJ_DW);lane.dataset.d=d;
+    lane.querySelector('i').style.left=pjL(d)+2+'px';lane.querySelector('span').style.left=pjL(d)+36+'px'}
+});
+function pjDrop(){
+  const g=pjDrag;pjDrag=null;cancelAnimationFrame(g.raf);
+  if(!g.moved){g.bar.classList.remove('size');pjOpenForm(g.i);return}
+  g.ghost.remove();g.tip.remove();g.bar.classList.remove('lift','size');pjSettle(g.i,g.ns,g.ne);
+}
+pjw.addEventListener('pointerup',()=>{if(pjDrag)pjDrop()});
+pjw.addEventListener('pointercancel',()=>{if(pjDrag)pjDrop()});
+pjw.addEventListener('pointerleave',e=>{const b=e.target.closest?.('.pjbar');if(b&&!pjDrag)b.classList.remove('size')},true);
+pjw.addEventListener('click',e=>{
+  const noClick=PJ.noClick;PJ.noClick=false;
+  const chk=e.target.closest('.pjchk');if(chk&&!noClick){pjToggle(+chk.closest('.pjbar').dataset.i);return}
+  if(e.target.closest('#pjSel')){PJ.menu=!PJ.menu;PJ.newProj=false;PJ.ren=-1;PJ.delP=-1;renderPj(true);return}
+  const nav=e.target.closest('[data-pn]');if(nav){const d=+nav.dataset.pn;PJ.moved=true;if(d)pjScroll(PJ.x+d*PJ_DW,true);else pjScroll(pjL(T0)-pjVW()/3,true);return}
+  const sw=e.target.closest('.pjsw button');if(sw){const f=PJ.form;f.c=+sw.dataset.c;$$('#pjw .pjsw button').forEach(b=>b.setAttribute('aria-pressed',b===sw));
+    if(f.i>=0){$(`#pjIn .pjbar[data-i="${f.i}"]`).style.setProperty('--bc',NOTE_COLORS[f.c][1]);pjCur().tasks[f.i].c=f.c}return}
+  if(e.target.closest('#pjAddBtn')){pjOpenForm(-1,T0);return}
+  const lane=e.target.closest('#pjLane');if(lane&&lane.dataset.d){pjOpenForm(-1,+lane.dataset.d);return}
+  if(e.target.closest('#pjDl')){
+    // Delete asks once: the first click turns the button into "Delete?" for 3 seconds.
+    if(!PJ.form.del){PJ.form.del=true;renderPj(true);clearTimeout(pjSubmit.t);pjSubmit.t=setTimeout(()=>{if(PJ.form){PJ.form.del=false;renderPj(true)}},3000);return}
+    clearTimeout(pjSubmit.t);pjDelete(PJ.form.i);return;
+  }
+  const pick=e.target.closest('.pjmn');if(pick){const i=+pick.dataset.p;if(i!==PJ.sel){PJ.sel=i;PJ.form=null;PJ.moved=false}PJ.menu=false;renderPj();return}
+  const ren=e.target.closest('.pjme');if(ren){PJ.ren=+ren.dataset.p;PJ.delP=-1;renderPj(true);const r=$('#pjRenIn');r.focus();r.select();return}
+  const del=e.target.closest('.pjmd');if(del){const i=+del.dataset.p;
+    if(PJ.delP!==i){PJ.delP=i;renderPj(true);clearTimeout(pjCreate.t);pjCreate.t=setTimeout(()=>{PJ.delP=-1;if(PJ.menu)renderPj(true)},3000);return}
+    clearTimeout(pjCreate.t);PJS.splice(i,1);PJ.delP=-1;if(PJ.sel>=i&&PJ.sel>0)PJ.sel--;PJ.form=null;PJ.moved=false;PJ.menu=PJS.length>0;renderPj();return}
+  if(e.target.closest('#pjNewBtn')){PJ.newProj=true;PJ.ren=-1;renderPj(true);$('#pjNewName').focus()}
+});
+pjw.addEventListener('input',e=>{const f=PJ.form;if(!f)return;e.target.classList.remove('bad');
+  if(e.target.id==='pjFt')f.tv=e.target.value;else if(e.target.id==='pjFs')f.sv=e.target.value;else if(e.target.id==='pjFe')f.ev=e.target.value});
+pjw.addEventListener('submit',e=>{
+  e.preventDefault();const id=e.target.id;
+  if(id==='pjForm'){pjSubmit();return}
+  if(id==='pjFirst'||id==='pjNewIn'){const inp=e.target.querySelector('input'),v=inp.value.trim();if(!v){inp.focus();return}pjCreate(v);return}
+  if(e.target.classList.contains('pjren')){const v=$('#pjRenIn').value.trim();if(!v){$('#pjRenIn').focus();return}PJS[+e.target.dataset.p].name=v;PJ.ren=-1;renderPj(true)}
+});
+pjw.addEventListener('keydown',e=>{
+  const id=e.target.id;
+  if(e.key==='Escape'){
+    // Esc closes what's open on the page first; the next Esc closes the island.
+    if(PJ.ren>=0||PJ.newProj){e.stopPropagation();PJ.ren=-1;PJ.newProj=false;renderPj(true);$('#pjSel').focus();return}
+    if(PJ.menu){e.stopPropagation();PJ.menu=false;renderPj(true);$('#pjSel').focus();return}
+    if(PJ.form&&e.target.closest('#pjForm')){e.stopPropagation();const i=PJ.form.i;PJ.form=null;renderPj(true);if(i>=0)pjFocusBar(i);return}
+    return;
+  }
+  // Date fields: ↑ and ↓ move a day; the end never goes before the start.
+  if((id==='pjFs'||id==='pjFe')&&(e.key==='ArrowUp'||e.key==='ArrowDown')){
+    e.preventDefault();const f=PJ.form,d=e.key==='ArrowUp'?1:-1,s=pjParse(f.sv)??T0,en=pjParse(f.ev)??s;
+    if(id==='pjFs'){const ns=s+d;f.sv=pjDay(ns);if(en<ns)f.ev=pjDay(ns)}else f.ev=pjDay(Math.max(s,en+d));
+    $('#pjFs').value=f.sv;$('#pjFe').value=f.ev;$('#pjFs').classList.remove('bad');$('#pjFe').classList.remove('bad');return;
+  }
+  const bar=e.target.closest('.pjbar');if(!bar)return;const i=+bar.dataset.i,t=pjCur().tasks[i];
+  if(e.key===' '){e.preventDefault();pjToggle(i)}
+  else if(e.key==='Enter'){e.preventDefault();pjOpenForm(i)}
+  // Alt + ←/→ moves the task a day; Alt + Shift + ←/→ changes its end.
+  else if(e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();const d=e.key==='ArrowRight'?1:-1;
+    if(e.shiftKey)pjSettle(i,t.s,Math.max(t.s,t.e+d),true);else pjSettle(i,t.s+d,t.e+d,true)}
+  else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();pjFocusBar(i+(e.key==='ArrowDown'?1:-1))}
+});
+// Mockup only: switch to the first-run state (no project yet) and back.
+ACT.pjEmpty=()=>{
+  if(PJS.length)PJ.saved=PJS.splice(0);else if(PJ.saved)PJS.push(...PJ.saved);
+  PJ.sel=0;PJ.form=null;PJ.menu=false;PJ.moved=false;renderPj();
+  if(S.state==='expanded')goPage(PAGE.projects);else openExpanded(PAGE.projects);
+};
+
 /* start */
 document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce);
 for(let i=0;i<60;i++)sample();
 renderApps();setApp('Chrome','a-chrome');renderClLauncher();
-renderClock();renderMedia();renderTodos();buildCal();renderNotes();renderClipPage();renderShelf();renderRight();renderTimerPage();
+renderClock();renderMedia();renderTodos();buildCal();renderPj();renderNotes();renderClipPage();renderShelf();renderRight();renderTimerPage();
 renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();setTimeout(gBlink,2500);
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);
