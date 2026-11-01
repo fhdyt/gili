@@ -98,6 +98,9 @@ public sealed class DemoService
                         Cover = state.Kind == Gili.Core.Media.MediaKind.Video ? _thumb ??= Cover(320, 180) : _cover ??= Cover(300, 300),
                     });
                     break;
+                case DemoUpdated updated:
+                    _island.ShowNotice(Gili.Core.About.UpdateRules.UpdatedWide(Version.Parse(updated.Version)));
+                    break;
                 case DemoFileOps ops:
                     _island.FileOps?.SetDemo(ops.Tiles);
                     break;

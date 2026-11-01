@@ -28,6 +28,8 @@ public class BarColorsTests
     [InlineData("#1234567")]
     [InlineData("#GG0000")]
     [InlineData("red")]
+    [InlineData("# 12345")]
+    [InlineData("#12 345")]
     public void Anything_else_is_refused(string text) => Assert.Null(BarColors.Parse(text));
 
     [Fact]

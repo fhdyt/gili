@@ -200,9 +200,9 @@ public partial class LeftSide : UserControl
     private void OnAppRightClick(string key, FrameworkElement target)
     {
         if (!Favorites.CanAdd(key)) return;
-        if (Favorites.Contains(_favorites, key))
+        if (_apps.FavoriteOf(key, _favorites) is { } favorite)
         {
-            ShowMenu(target, ("Remove from Favorites", true, list => Favorites.Remove(list, key)));
+            ShowMenu(target, ("Remove from Favorites", true, list => Favorites.Remove(list, favorite.Key)));
             return;
         }
         var full = Favorites.IsFull(_favorites);

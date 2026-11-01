@@ -72,6 +72,19 @@ public class ShelfModeTests
     }
 
     [Fact]
+    public void Leftovers_keep_the_check_running_while_the_shelf_is_empty()
+    {
+        var shelf = Create();
+        Assert.False(shelf.HasLeftovers);
+        var kept = shelf.Add([Kept + @"\report.docx"], Now, ShelfMode.Copy, Kept)!;
+        shelf.TakeOut(kept.Id, Now);
+        Assert.Empty(shelf.Items);
+        Assert.True(shelf.HasLeftovers);
+        shelf.SweepLeftovers(Now.AddMinutes(30));
+        Assert.False(shelf.HasLeftovers);
+    }
+
+    [Fact]
     public void Taking_out_a_missing_item_changes_nothing() => Assert.False(Create().TakeOut(42, Now));
 
     [Fact]

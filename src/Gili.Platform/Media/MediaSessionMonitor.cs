@@ -17,8 +17,11 @@ public sealed class MediaSessionMonitor : IDisposable
     private readonly Dictionary<string, DateTimeOffset> _lastChange = [];
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
     private Session? _current;
-    private (string Key, byte[] Cover)? _cover;
-    private volatile bool _coverChanged;
+    private (string Key, int Version, byte[] Cover)? _cover;
+
+    // Each session's count of MediaPropertiesChanged events. A read remembers the count it started at, so a refresh that
+    // still holds old properties can't make a newer thumbnail look already read (code review of revision 14).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _propertiesVersion = new();
     private volatile bool _disposed;
 
     /// <summary>The session to show, or null when there is none. Raised on a background thread.</summary>
@@ -96,7 +99,7 @@ public sealed class MediaSessionMonitor : IDisposable
     // thumbnail is read again on every properties change (revision 14, issue #31), never on position or playback changes.
     private void OnMediaPropertiesChanged(Session sender, MediaPropertiesChangedEventArgs args)
     {
-        _coverChanged = true;
+        _propertiesVersion.AddOrUpdate(sender.SourceAppUserModelId, 1, (_, v) => v + 1);
         _ = RefreshAsync(sender);
     }
 
@@ -107,6 +110,7 @@ public sealed class MediaSessionMonitor : IDisposable
 
     private async Task<MediaState?> ReadAsync(Session session)
     {
+        var version = _propertiesVersion.GetValueOrDefault(session.SourceAppUserModelId);
         var properties = await session.TryGetMediaPropertiesAsync();
         if (properties is null || string.IsNullOrWhiteSpace(properties.Title)) return null;
         var playback = session.GetPlaybackInfo();
@@ -134,7 +138,7 @@ public sealed class MediaSessionMonitor : IDisposable
             updatedAt,
             playback.Controls?.IsPlaybackPositionEnabled ?? false,
             playback.Controls?.IsNextEnabled ?? false,
-            await ReadCoverAsync(properties, appId))
+            await ReadCoverAsync(properties, appId, version))
         {
             Album = properties.AlbumTitle ?? "",
         };
@@ -144,12 +148,10 @@ public sealed class MediaSessionMonitor : IDisposable
     /// Cover art or video thumbnail bytes: read once per track, and again after the session changes its properties. A miss
     /// is not cached, and the same picture keeps its array, so the island decodes it only when it really changed.
     /// </summary>
-    private async Task<byte[]?> ReadCoverAsync(GlobalSystemMediaTransportControlsSessionMediaProperties properties, string appId)
+    private async Task<byte[]?> ReadCoverAsync(GlobalSystemMediaTransportControlsSessionMediaProperties properties, string appId, int version)
     {
         var key = $"{appId}\n{properties.Title}\n{properties.Artist}";
-        var changed = _coverChanged;
-        _coverChanged = false;
-        if (_cover is { } cached && cached.Key == key && !changed) return cached.Cover;
+        if (_cover is { } cached && cached.Key == key && cached.Version >= version) return cached.Cover;
         if (properties.Thumbnail is null) return null;
         using var stream = await properties.Thumbnail.OpenReadAsync();
         using var reader = new DataReader(stream);
@@ -158,7 +160,7 @@ public sealed class MediaSessionMonitor : IDisposable
         var bytes = new byte[size];
         reader.ReadBytes(bytes);
         if (_cover is { } same && same.Cover.AsSpan().SequenceEqual(bytes)) bytes = same.Cover;
-        _cover = (key, bytes);
+        _cover = (key, version, bytes);
         return bytes;
     }
 

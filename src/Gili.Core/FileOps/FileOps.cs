@@ -118,6 +118,12 @@ public sealed class FileOpTracker
 {
     public static readonly TimeSpan ResultFor = TimeSpan.FromSeconds(2);
 
+    /// <summary>
+    /// A dialog that goes before this percent without saying it is cancelling was cancelled or closed: Explorer reads at
+    /// most every 500 ms, and an operation long enough for its dialog is past this by its last reading when it finishes.
+    /// </summary>
+    public const int FinishedFrom = 50;
+
     private FileOp? _last;
     private bool _cancelling;
     private DateTimeOffset _resultUntil;
@@ -139,14 +145,27 @@ public sealed class FileOpTracker
             _cancelling = ops.Any(o => o.Cancelling);
             Slot = new FileOpSlot(kind, label, percent, Conflict is null ? FileOpPhase.Running : FileOpPhase.Attention, tooltip);
         }
-        else if (Slot is { Phase: FileOpPhase.Running or FileOpPhase.Attention } running && _last is not null)
+        else if (Slot is { Phase: FileOpPhase.Attention })
         {
-            var phase = _cancelling ? FileOpPhase.Cancelled : FileOpPhase.Done;
+            // Gone while it waited (Skip on the last file, Cancel, the dialog closed): nothing finished, so no result.
+            Clear();
+        }
+        else if (Slot is { Phase: FileOpPhase.Running } running && _last is not null)
+        {
+            var phase = _cancelling || running.Percent < FinishedFrom ? FileOpPhase.Cancelled : FileOpPhase.Done;
             Slot = running with { Percent = phase == FileOpPhase.Done ? 100 : running.Percent, Phase = phase };
             _resultUntil = now + ResultFor;
         }
         else Tick(now);
         return before != (Slot, Conflict);
+    }
+
+    /// <summary>Forgets everything without a result line (the demo stopping); true when something showed.</summary>
+    public bool Clear()
+    {
+        var had = Slot is not null || Conflict is not null;
+        (Slot, Conflict, _last, _cancelling) = (null, null, null, false);
+        return had;
     }
 
     /// <summary>The result line leaves after 2 seconds; true when it just did.</summary>

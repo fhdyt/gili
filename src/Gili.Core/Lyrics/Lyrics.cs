@@ -65,7 +65,8 @@ public static partial class Lrc
             var tag = OffsetTag().Match(line);
             if (tag.Success)
             {
-                offset = TimeSpan.FromMilliseconds(int.Parse(tag.Groups[1].Value, CultureInfo.InvariantCulture));
+                // An offset that doesn't fit an int is nonsense; the lines keep their own stamps.
+                if (int.TryParse(tag.Groups[1].Value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var ms)) offset = TimeSpan.FromMilliseconds(ms);
                 continue;
             }
             var stamps = new List<TimeSpan>();
@@ -73,9 +74,10 @@ public static partial class Lrc
             Match m;
             while ((m = Stamp().Match(rest)).Success)
             {
-                var minutes = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-                var seconds = double.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
-                stamps.Add(TimeSpan.FromSeconds(minutes * 60 + seconds));
+                // Some LRC files put a colon before the hundredths ([00:12:34]); it means the same as a dot.
+                if (int.TryParse(m.Groups[1].Value, CultureInfo.InvariantCulture, out var minutes)
+                    && double.TryParse(m.Groups[2].Value.Replace(':', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var seconds))
+                    stamps.Add(TimeSpan.FromSeconds(minutes * 60 + seconds));
                 rest = rest[m.Length..];
             }
             var words = rest.Trim();

@@ -82,6 +82,9 @@ public sealed class ShelfService
         return true;
     }
 
+    /// <summary>Folders of items taken out still wait to be deleted, so the Shelf's check keeps running while it is empty.</summary>
+    public bool HasLeftovers => _leftovers.Count > 0;
+
     /// <summary>Deletes the folders of items taken out at least <see cref="LeftoverDelay"/> ago.</summary>
     public void SweepLeftovers(DateTimeOffset now)
     {

@@ -52,6 +52,7 @@ public sealed class IslandController : IDisposable
         {
             Shelf.Prune();
             Shelf.SweepLeftovers(DateTimeOffset.UtcNow);
+            SyncShelfCheck();
         };
         _demoDrop.Tick += (_, _) => DropDemo();
         _demoCut.Tick += (_, _) =>
@@ -146,9 +147,11 @@ public sealed class IslandController : IDisposable
 
     public const string FileConflictCard = "fileop-conflict";
 
-    // The user answered the conflict card (or the answer couldn't reach Explorer): the card stays away until that conflict
-    // is over, and the slot says Needs attention meanwhile.
-    private bool _conflictAnswered;
+    // The conflict the user answered from the card (or whose answer couldn't reach Explorer): that one doesn't bring the
+    // card back, and the slot says Needs attention meanwhile. Explorer's next question, even right away, gets its own card.
+    private string? _answeredConflict;
+
+    private static string ConflictKey(FileOp conflict) => conflict.Conflict + "\n" + conflict.Question + "\n" + conflict.Label;
 
     public void AttachFileOps(ExplorerOpsService ops)
     {
@@ -158,11 +161,11 @@ public sealed class IslandController : IDisposable
             _coordinator.SetActivity(ActivityKind.FileOperation, ops.Slot is not null);
             if (ops.Conflict is null)
             {
-                _conflictAnswered = false;
+                _answeredConflict = null;
                 if (_coordinator.HasCard(FileConflictCard)) _coordinator.DismissCard(FileConflictCard);
             }
             // A conflict opens the island as a silent card, priority 1 (PRD 6.3 "Konflik file").
-            else if (!_conflictAnswered && !_coordinator.HasCard(FileConflictCard))
+            else if (ConflictKey(ops.Conflict) != _answeredConflict && !_coordinator.HasCard(FileConflictCard))
                 _coordinator.ShowCard(new IslandCard(FileConflictCard, CardPriority.Urgent, TimeSpan.Zero));
             FileOpsChanged?.Invoke();
         };
@@ -174,12 +177,12 @@ public sealed class IslandController : IDisposable
         var yellow = Color.FromRgb(0xFF, 0xD6, 0x0A);
         Action Answer(FileOpAnswer answer) => Card(id, async () =>
         {
-            _conflictAnswered = true;
+            _answeredConflict = ConflictKey(conflict);
             if (!await FileOps.AnswerAsync(answer)) FileOps.ShowDialog();
         });
         Action open = Card(id, () =>
         {
-            _conflictAnswered = true;
+            _answeredConflict = ConflictKey(conflict);
             FileOps.ShowDialog();
         });
         IReadOnlyList<CardButton> buttons = conflict.Conflict switch
@@ -368,7 +371,8 @@ public sealed class IslandController : IDisposable
 
     private void SyncShelfCheck()
     {
-        if (Shelf.Items.Count > 0 && !_shelfPaused) _shelfCheck.Start();
+        // Leftover folders of items taken out keep the minute check running until they are deleted (issue #38).
+        if ((Shelf.Items.Count > 0 || Shelf.HasLeftovers) && !_shelfPaused) _shelfCheck.Start();
         else _shelfCheck.Stop();
     }
 
@@ -707,10 +711,10 @@ public sealed class IslandController : IDisposable
         PasteRequested?.Invoke();
     }
 
-    /// <summary>No window could take the paste (desktop, admin window): the text waits on the clipboard (PRD 6.3).</summary>
     /// <summary>A short notice from outside the island, like "Updated to Gili 0.2.0" (issue #27).</summary>
     public void ShowNotice(WideEvent wide) => _coordinator.ShowWide(wide);
 
+    /// <summary>No window could take the paste (desktop, admin window): the text waits on the clipboard (PRD 6.3).</summary>
     public void ShowPasteHint() => _coordinator.ShowWide(new WideEvent("clipboard-paste", WideIcon.Clipboard, WideTone.Text,
         [new WideRun("Copied"), new WideRun("· press Ctrl+V to paste", WideRunStyle.Muted, SpaceBefore: true)], TimeSpan.FromSeconds(2)));
 
@@ -775,7 +779,7 @@ public sealed class IslandController : IDisposable
         {
             if (ops.Conflict is not null)
             {
-                _conflictAnswered = false;
+                _answeredConflict = null;
                 _coordinator.ShowCard(new IslandCard(FileConflictCard, CardPriority.Urgent, TimeSpan.Zero));
             }
             else ops.ShowDialog();

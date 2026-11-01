@@ -85,7 +85,21 @@ public sealed class LyricsService : IDisposable
     private async Task SearchAsync(string key, MediaState media)
     {
         var cancel = _search = new CancellationTokenSource();
-        var (status, lines) = await LrclibClient.FindAsync(media.Title, media.Artist, media.Album, media.Duration, cancel.Token);
+        LyricsStatus status;
+        IReadOnlyList<LyricLine>? lines;
+        try
+        {
+            (status, lines) = await LrclibClient.FindAsync(media.Title, media.Artist, media.Album, media.Duration, cancel.Token);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Anything LRCLIB sends that can't be read counts as no lyrics, so the page never stays on Searching.
+            (status, lines) = (LyricsStatus.NotFound, null);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
         if (cancel.IsCancellationRequested || key != _key) return;
         _cache.Add(key, status, lines);
         Set(status, lines);

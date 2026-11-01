@@ -391,8 +391,8 @@ public partial class BarWindow : Window
         _appBar.FullscreenChanged += OnFullscreenChanged;
         _appBar.ShellRestarted += () =>
         {
-            // Explorer forgot every tray icon when it restarted.
-            if (_tray?.Shown == true) _tray.Show();
+            // Explorer forgot every tray icon when it restarted; an icon refused at login (Explorer not ready yet) comes now.
+            if (_settings.Current.TrayIcon) _tray?.Show();
             ShellRestarted?.Invoke();
         };
         _tray = new TrayIcon(_hwnd);

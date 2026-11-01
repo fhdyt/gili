@@ -73,6 +73,9 @@ public sealed record DemoClaudeWindow(double SecondsLeft, bool LimitHit) : DemoA
 /// <summary>Explorer's progress dialog as the demo fakes it (F-ISL-15); an empty list ends the operation.</summary>
 public sealed record DemoFileOps(IReadOnlyList<Gili.Core.FileOps.FileOpTile> Tiles) : DemoAction;
 
+/// <summary>The first start after an update says "Updated to Gili <paramref name="Version"/>" (F-PUB-04, issue #27).</summary>
+public sealed record DemoUpdated(string Version) : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
@@ -152,20 +155,34 @@ public static class DemoScript
             // The 5-hour window (plan 3j): the limit reached, then a window that ends 6 s later with its card.
             Step(92, new DemoClaudeWindow(3852, LimitHit: true)),
             Step(97, new DemoClaudeWindow(6, LimitHit: false)),
+            // Before that window's card: the first start of a new version says so (issue #27).
+            Step(98.5, new DemoUpdated("0.2.0")),
             Step(108, new DemoDismiss(ResetCard)),
             // A copy in Explorer (F-ISL-15): progress in the slot, a name clash as a silent card, then Copied for 2 s.
-            Step(109, new DemoFileOps([Copying(12)])),
-            Step(110.5, new DemoFileOps([Copying(46)])),
-            Step(112, new DemoFileOps([Copying(46) with
+            Step(108.3, new DemoFileOps([Copying(12)])),
+            Step(109.3, new DemoFileOps([Copying(46)])),
+            Step(110.3, new DemoFileOps([Copying(46) with
             {
                 Name = "Copying 1 item from Downloads to Backup - Interrupted - 46% complete",
                 Question = "The destination already has a file named \"Project-Final.zip\"",
                 CanReplace = true,
                 CanSkip = true,
             }])),
-            Step(115, new DemoFileOps([Copying(83)])),
-            Step(116.5, new DemoFileOps([])),
-            Step(119, new DemoEnd()),
+            // Explorer's next question about a file in use gets its own card (Skip / Try again).
+            Step(112, new DemoFileOps([Copying(46) with
+            {
+                Name = "Copying 1 item from Downloads to Backup - Interrupted - 46% complete",
+                Question = "Project-Final.zip is open in another program",
+                CanSkip = true,
+                CanRetry = true,
+            }])),
+            Step(113.4, new DemoFileOps([Copying(83)])),
+            Step(114.2, new DemoFileOps([])),
+            // A delete cancelled half way: a grey Cancelled for 2 s.
+            Step(116.4, new DemoFileOps([new("Deleting 1,204 items from Old photos - 18% complete")])),
+            Step(117.2, new DemoFileOps([new("Deleting 1,204 items from Old photos - Cancelling - 19% complete")])),
+            Step(117.7, new DemoFileOps([])),
+            Step(119.8, new DemoEnd()),
         ];
     }
 

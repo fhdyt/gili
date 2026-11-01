@@ -87,7 +87,14 @@ public sealed class ExplorerOpsService : IDisposable
     public void SetDemo(IReadOnlyList<FileOpTile>? tiles)
     {
         _demo = tiles is not null;
-        Apply([.. (tiles ?? []).Select(FileOpRules.Parse)]);
+        if (tiles is null)
+        {
+            // The demo stopped: whatever it showed goes without a result line.
+            if (_tracker.Clear()) Changed?.Invoke();
+            _poll.Stop();
+            return;
+        }
+        Apply([.. tiles.Select(FileOpRules.Parse)]);
         if (_tracker.Slot is not null) _poll.Start();
     }
 

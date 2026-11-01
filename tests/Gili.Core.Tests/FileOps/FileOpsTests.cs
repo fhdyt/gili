@@ -75,6 +75,8 @@ public class FileOpsTests
     {
         var tracker = new FileOpTracker();
         Assert.True(tracker.Update([FileOpRules.Parse(Copy)], Now));
+        // Its last reading was near the end, so the dialog going means it finished.
+        tracker.Update([FileOpRules.Parse(Copy with { Name = "Copying 1 item from src to dst - 97% complete" })], Now.AddSeconds(4));
         Assert.Equal(FileOpPhase.Running, tracker.Slot!.Phase);
         Assert.True(tracker.Update([], Now.AddSeconds(5)));
         Assert.Equal((FileOpPhase.Done, 100), (tracker.Slot!.Phase, tracker.Slot.Percent));
@@ -105,6 +107,30 @@ public class FileOpsTests
         tracker.Update([FileOpRules.Parse(Copy)], Now.AddSeconds(1));
         Assert.Null(tracker.Conflict);
         Assert.Equal(FileOpPhase.Running, tracker.Slot!.Phase);
+    }
+
+    [Fact]
+    public void A_dialog_gone_early_is_a_cancel_and_one_gone_while_waiting_shows_nothing()
+    {
+        var tracker = new FileOpTracker();
+        tracker.Update([FileOpRules.Parse(Copy with { Name = "Copying 1 item from src to dst - 31% complete" })], Now);
+        tracker.Update([], Now.AddSeconds(1));
+        Assert.Equal(FileOpPhase.Cancelled, tracker.Slot!.Phase);
+
+        var waiting = new FileOpTracker();
+        waiting.Update([FileOpRules.Parse(Copy with { CanSkip = true, Question = "q" })], Now);
+        waiting.Update([], Now.AddSeconds(1));
+        Assert.Null(waiting.Slot);
+    }
+
+    [Fact]
+    public void Clearing_drops_everything_without_a_result()
+    {
+        var tracker = new FileOpTracker();
+        tracker.Update([FileOpRules.Parse(Copy)], Now);
+        Assert.True(tracker.Clear());
+        Assert.Null(tracker.Slot);
+        Assert.Null(tracker.Conflict);
     }
 
     [Fact]

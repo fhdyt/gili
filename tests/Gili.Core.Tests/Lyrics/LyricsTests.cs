@@ -26,6 +26,13 @@ public class LyricsTests
     }
 
     [Fact]
+    public void A_colon_before_the_hundredths_and_a_huge_offset_never_throw()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(12.34), Lrc.Parse("[00:12:34] colon form")![0].At);
+        Assert.Equal(TimeSpan.FromSeconds(1), Lrc.Parse("[offset:99999999999999]" + (char)10 + "[00:01.00] a")![0].At);
+    }
+
+    [Fact]
     public void Text_without_stamps_is_not_synced()
     {
         Assert.Null(Lrc.Parse("Just words\nMore words"));

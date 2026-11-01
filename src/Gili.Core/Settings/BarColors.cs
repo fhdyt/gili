@@ -23,7 +23,8 @@ public static class BarColors
     {
         var code = (text ?? "").Trim().TrimStart('#');
         if (code.Length == 3) code = string.Concat(code.Select(c => new string(c, 2)));
-        if (code.Length != 6 || !int.TryParse(code, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _)) return null;
+        // Hex digits only: HexNumber alone would let "# 12345" through with its space.
+        if (code.Length != 6 || !code.All(Uri.IsHexDigit)) return null;
         return "#" + code.ToUpperInvariant();
     }
 

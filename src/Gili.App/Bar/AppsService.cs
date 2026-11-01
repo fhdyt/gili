@@ -97,6 +97,22 @@ public sealed class AppsService : IDisposable
         return item;
     }
 
+    /// <summary>
+    /// A window belongs to a favorite by its app key, or, for a favorite added from an exe in Settings, by its process's
+    /// exe: Chrome, Edge or VS Code windows are keyed by their AppUserModelID, their shortcut's target by its path.
+    /// </summary>
+    private static bool Same(TaskbarWindow window, string favoriteKey) =>
+        string.Equals(window.AppKey, favoriteKey, StringComparison.OrdinalIgnoreCase)
+        || (favoriteKey.StartsWith("exe:", StringComparison.Ordinal)
+            && string.Equals(TaskbarWindows.ProcessPath(window.Handle), favoriteKey[4..], StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The favorite a running app already is, matched like <see cref="Same"/>; null when it is none.</summary>
+    public FavoriteApp? FavoriteOf(string appKey, IReadOnlyList<FavoriteApp> favorites)
+    {
+        var window = _last.FirstOrDefault(w => w.AppKey == appKey);
+        return favorites.FirstOrDefault(f => string.Equals(f.Key, appKey, StringComparison.OrdinalIgnoreCase) || (window is not null && Same(window, f.Key)));
+    }
+
     /// <summary>The name the strip shows for a running app, for Add to Favorites.</summary>
     public string NameOf(string key) => _items.TryGetValue(key, out var item) ? item.Name : "App";
 
@@ -106,7 +122,7 @@ public sealed class AppsService : IDisposable
     /// </summary>
     public bool Open(FavoriteApp favorite)
     {
-        var window = _windows.Read().FirstOrDefault(w => string.Equals(w.AppKey, favorite.Key, StringComparison.OrdinalIgnoreCase));
+        var window = _windows.Read().FirstOrDefault(w => Same(w, favorite.Key));
         if (window is null) return AppLauncher.Launch(favorite.Key);
         TaskbarWindows.BringToFront(window.Handle);
         if (_showStrip && _strip.SetActive(window.AppKey)) Changed?.Invoke();

@@ -120,6 +120,9 @@ public class DemoTests
     {
         var ops = Steps.Where(s => s.Action is DemoFileOps).Select(s => ((DemoFileOps)s.Action).Tiles).ToList();
         Assert.Contains(ops, tiles => tiles.Any(t => t.CanReplace));
+        Assert.Contains(ops, tiles => tiles.Any(t => t.CanRetry));
+        Assert.Contains(ops, tiles => tiles.Any(t => t.Name.Contains("Cancelling", StringComparison.Ordinal)));
+        Assert.Contains(Steps, s => s.Action is DemoUpdated);
         Assert.Empty(ops[^1]);
         var lastOps = Steps.Last(s => s.Action is DemoFileOps).At;
         // The result line stays 2 s, inside the demo.

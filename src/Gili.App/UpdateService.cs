@@ -26,6 +26,7 @@ public sealed class UpdateService : IDisposable
     /// <summary>While a GitHub update waits, once a minute: is now a good moment to install it by itself (issue #27)?</summary>
     private readonly DispatcherTimer _autoTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private string? _installerUrl;
+    private Version? _autoTried;
     private bool _checking;
 
     public UpdateService(SettingsHub settings, FileLog log, InstallKind kind)
@@ -52,6 +53,10 @@ public sealed class UpdateService : IDisposable
     private void InstallIfAway()
     {
         if (Moment is null || !UpdateRules.ShouldInstallNow(_settings.Current.AutoUpdate, State, Moment())) return;
+        // One try per version: a release without its installer, a failed download or an installer that wouldn't start
+        // waits for the next day's check (or Install update) instead of downloading again every minute all night.
+        if (State.Latest == _autoTried) return;
+        _autoTried = State.Latest;
         _autoTimer.Stop();
         _log.Write("Installing the update by itself while the computer is not in use");
         _ = InstallAsync(0, _ => { });
@@ -102,6 +107,8 @@ public sealed class UpdateService : IDisposable
 
     private void Answered(UpdateState state)
     {
+        // A day later, a version whose automatic install failed may be tried once more.
+        _autoTried = null;
         state = state with { NotifyOnly = State.NotifyOnly };
         _settings.Update(s => s with { LastUpdateCheck = DateTimeOffset.Now });
         if (state.Status == UpdateStatus.Available && State.Status != UpdateStatus.Available)
