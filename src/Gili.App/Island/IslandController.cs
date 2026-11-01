@@ -631,15 +631,26 @@ public sealed class IslandController : IDisposable
     /// <summary>A second passed while the window's countdown shows in the slot or on the Claude page (PRD 8.1).</summary>
     public event Action? ClaudeWindowTick;
 
+    /// <summary>
+    /// The 5-hour timer is on and Claude Desktop is open, so the Claude page shows the window's row, with No window running
+    /// when there is none, where its reset time can be set by hand (revision 18).
+    /// </summary>
+    public bool ClaudeTimerShown { get; private set; }
+
     /// <summary>The reset card's Open Claude: the App brings Claude forward, or says it could not.</summary>
     public Func<bool>? OpenClaude { get; set; }
+
+    /// <summary>The reset time shown in Claude Desktop, typed on the Claude page (revision 18).</summary>
+    public Action<DateTimeOffset>? SetClaudeReset { get; set; }
 
     private readonly DispatcherTimer _windowSecond = new() { Interval = TimeSpan.FromSeconds(1) };
 
     /// <summary>A running window is the last activity; a reached limit comes right after a waiting session (PRD 6.3).</summary>
-    public void SetClaudeWindow(ClaudeUsageWindow? window)
+    public void SetClaudeWindow(ClaudeUsageWindow? window, bool timerShown)
     {
-        ClaudeWindow = window;
+        ClaudeWindow = timerShown ? window : null;
+        ClaudeTimerShown = timerShown;
+        window = ClaudeWindow;
         _coordinator.SetActivity(ActivityKind.ClaudeLimit, window is { LimitHit: true });
         _coordinator.SetActivity(ActivityKind.ClaudeWindow, window is { LimitHit: false });
         SyncWindowSecond();

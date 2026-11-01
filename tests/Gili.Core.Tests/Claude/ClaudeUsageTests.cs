@@ -27,16 +27,17 @@ public sealed class ClaudeUsageTests : IDisposable
     }
 
     [Fact]
-    public void The_first_prompt_starts_a_window_on_the_hour()
+    public void The_first_use_starts_a_window_on_its_ten_minutes()
     {
+        // Claude's own resets fall on ten minutes (20:40, 20:10), not on the hour.
         var usage = new ClaudeUsage(null, () => _now);
         usage.Used();
-        Assert.Equal(new DateTimeOffset(2026, 10, 31, 14, 0, 0, Jakarta), usage.Current!.StartedAt);
-        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 0, 0, Jakarta), usage.Current.ResetsAt);
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 14, 20, 0, Jakarta), usage.Current!.StartedAt);
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 20, 0, Jakarta), usage.Current.ResetsAt);
         Assert.Equal(ClaudeWindowSource.Estimated, usage.Current.Source);
         _now = _now.AddHours(1);
         usage.Used();
-        Assert.Equal(19, usage.Current.ResetsAt.Hour);
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 20, 0, Jakarta), usage.Current.ResetsAt);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public sealed class ClaudeUsageTests : IDisposable
     {
         var usage = new ClaudeUsage(null, () => _now);
         usage.Used();
-        _now = new DateTimeOffset(2026, 10, 31, 18, 59, 59, Jakarta);
+        _now = new DateTimeOffset(2026, 10, 31, 19, 19, 59, Jakarta);
         Assert.False(usage.Tick());
         _now = _now.AddSeconds(1);
         Assert.True(usage.Tick());
@@ -52,7 +53,7 @@ public sealed class ClaudeUsageTests : IDisposable
         Assert.False(usage.Tick());
         _now = _now.AddMinutes(10);
         usage.Used();
-        Assert.Equal(19, usage.Current!.StartedAt.Hour);
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 30, 0, Jakarta), usage.Current!.StartedAt);
     }
 
     [Fact]
@@ -74,8 +75,8 @@ public sealed class ClaudeUsageTests : IDisposable
         usage.Used();
         _now = new DateTimeOffset(2026, 11, 1, 7, 35, 52, Jakarta);
         usage.Used();
-        Assert.Equal(new DateTimeOffset(2026, 11, 1, 7, 0, 0, Jakarta), usage.Current!.StartedAt);
-        Assert.Equal(new DateTimeOffset(2026, 11, 1, 12, 0, 0, Jakarta), usage.Current.ResetsAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 7, 30, 0, Jakarta), usage.Current!.StartedAt);
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 12, 30, 0, Jakarta), usage.Current.ResetsAt);
         Assert.False(usage.Tick());
         Assert.Same(usage.Current, store.Row);
     }
@@ -115,12 +116,61 @@ public sealed class ClaudeUsageTests : IDisposable
     }
 
     [Fact]
-    public void A_limit_without_a_window_or_a_time_guesses_from_this_hour()
+    public void A_limit_without_a_window_or_a_time_guesses_from_now()
     {
         var usage = new ClaudeUsage(null, () => _now);
         usage.LimitReached("API Error: Rate limit reached");
         Assert.Equal((14, 19, true), (usage.Current!.StartedAt.Hour, usage.Current.ResetsAt.Hour, usage.Current.LimitHit));
         Assert.Equal(ClaudeWindowSource.Estimated, usage.Current.Source);
+    }
+
+    [Theory]
+    [InlineData("19:20", 19, 20)]
+    [InlineData("7:20 PM", 19, 20)]
+    [InlineData("7:20pm", 19, 20)]
+    [InlineData(" 15:00 ", 15, 0)]
+    public void A_reset_time_typed_from_claude_desktop(string text, int h, int mi) =>
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, h, mi, 0, Jakarta), ClaudeUsage.ParseReset(text, _now));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("8")]
+    [InlineData("7pm")]
+    [InlineData("tonight")]
+    [InlineData("14:00")]
+    [InlineData("19:30")]
+    [InlineData("25:00")]
+    // Past, more than 5 hours away, without its minutes, or not a time: a window can't reset then.
+    public void A_reset_time_that_cant_be_is_refused(string text) => Assert.Null(ClaudeUsage.ParseReset(text, _now));
+
+    [Fact]
+    public void A_reset_time_set_by_hand_starts_the_window_claude_runs()
+    {
+        var store = new MemoryStore();
+        var usage = new ClaudeUsage(store, () => _now);
+        usage.SetReset(new DateTimeOffset(2026, 10, 31, 15, 40, 0, Jakarta));
+        Assert.Equal(new ClaudeUsageWindow(1, new(2026, 10, 31, 10, 40, 0, Jakarta), new(2026, 10, 31, 15, 40, 0, Jakarta),
+            ClaudeWindowSource.Official, null, false), usage.Current);
+        Assert.Same(usage.Current, store.Row);
+        // Use within it changes nothing; the card rings at the time that was set.
+        usage.Used();
+        Assert.Equal(15, usage.Current!.ResetsAt.Hour);
+        _now = new DateTimeOffset(2026, 10, 31, 15, 40, 0, Jakarta);
+        Assert.True(usage.Tick());
+    }
+
+    [Fact]
+    public void A_reset_time_set_by_hand_keeps_the_running_window_and_its_limit()
+    {
+        var usage = new ClaudeUsage(null, () => _now);
+        usage.Used();
+        usage.LimitReached("API Error: Rate limit reached");
+        var id = usage.Current!.Id;
+        usage.SetReset(new DateTimeOffset(2026, 10, 31, 18, 40, 0, Jakarta));
+        Assert.Equal((id, true, ClaudeWindowSource.Official), (usage.Current!.Id, usage.Current.LimitHit, usage.Current.Source));
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 13, 40, 0, Jakarta), usage.Current.StartedAt);
+        Assert.Equal("Claude 5-hour window · resets at 18:40 · limit reached",
+            ClaudeUsageText.For(usage.Current, _now, use24Hour: true).Tooltip);
     }
 
     [Theory]

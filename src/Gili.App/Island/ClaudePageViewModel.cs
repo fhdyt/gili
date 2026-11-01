@@ -21,7 +21,10 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     [ObservableProperty] private bool _isEmpty = true;
 
-    /// <summary>The 5-hour window's row above the sessions (mockup limRow): ring, Resets 19:00, the time left.</summary>
+    /// <summary>
+    /// The 5-hour window's row above the sessions (mockup limRow): ring, Resets 19:00, the time left; No window running while
+    /// the timer shows none. A click lets the reset time shown in Claude Desktop be typed (revision 18).
+    /// </summary>
     [ObservableProperty] private bool _hasWindow;
     [ObservableProperty] private bool _windowLimitHit;
     [ObservableProperty] private string _windowResets = "";
@@ -30,6 +33,22 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     /// <summary>The ring's arc for the time left, in stroke widths (the ring is 2.75 px thick on a 51.8 px circle).</summary>
     [ObservableProperty] private System.Windows.Media.DoubleCollection _windowArc = [0, 100];
+
+    /// <summary>The row is a form: Resets at, the time, and the check.</summary>
+    [ObservableProperty] private bool _isEditingReset;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResetState))]
+    private string _resetText = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResetState))]
+    private bool _isResetInvalid;
+
+    /// <summary>The time field's red edge (the Field style's Tag) for a time no running window could reset at.</summary>
+    public string? ResetState => IsResetInvalid ? "Invalid" : null;
+
+    public const string ResetHint = "Click to set the reset time shown in Claude";
 
     public ClaudePageViewModel(IslandController island, Func<bool> use24Hour)
     {
@@ -54,19 +73,57 @@ public sealed partial class ClaudePageViewModel : ObservableObject
     private void RefreshWindow()
     {
         var hadWindow = HasWindow;
-        HasWindow = _island.ClaudeWindow is not null;
+        HasWindow = _island.ClaudeTimerShown;
+        if (!HasWindow) IsEditingReset = false;
         if (_island.ClaudeWindow is { } window)
         {
             var view = ClaudeUsageText.For(window, DateTimeOffset.Now, _use24Hour());
             WindowLimitHit = view.LimitHit;
             WindowResets = view.Resets;
             WindowLeft = view.Left;
-            WindowTooltip = view.Tooltip;
+            WindowTooltip = view.Tooltip + Environment.NewLine + ResetHint;
             const double Circle = 18.85;
             WindowArc = [Math.Max(0.001, Circle * (1 - view.Elapsed)), 100];
         }
+        else
+        {
+            WindowLimitHit = false;
+            WindowResets = "No window running";
+            WindowLeft = "";
+            WindowTooltip = ResetHint;
+            WindowArc = [0.001, 100];
+        }
         if (hadWindow != HasWindow) ContentChanged?.Invoke();
     }
+
+    /// <summary>The row's click: the form opens with the reset time Gili has, ready to be typed over.</summary>
+    [RelayCommand]
+    private void EditReset()
+    {
+        ResetText = _island.ClaudeWindow is { } window
+            ? window.ResetsAt.ToLocalTime().ToString(_use24Hour() ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
+            : "";
+        IsResetInvalid = false;
+        IsEditingReset = true;
+    }
+
+    [RelayCommand]
+    private void CancelReset() => IsEditingReset = false;
+
+    /// <summary>Enter or the check: a time within the next 5 hours becomes the window's reset; any other stays, in red.</summary>
+    [RelayCommand]
+    public void SaveReset()
+    {
+        if (ClaudeUsage.ParseReset(ResetText, DateTimeOffset.Now) is not { } reset)
+        {
+            IsResetInvalid = true;
+            return;
+        }
+        IsEditingReset = false;
+        _island.SetClaudeReset?.Invoke(reset);
+    }
+
+    partial void OnResetTextChanged(string value) => IsResetInvalid = false;
 
     public void Refresh()
     {
@@ -81,10 +138,10 @@ public sealed partial class ClaudePageViewModel : ObservableObject
         {
             Rows.Clear();
             foreach (var row in rows) Rows.Add(new ClaudeRowViewModel(row, _island.OpenClaudeSession));
-            IsEmpty = rows.Count == 0 && _island.ClaudeWindow is null;
+            IsEmpty = rows.Count == 0 && !HasWindow;
             ContentChanged?.Invoke();
         }
-        IsEmpty = rows.Count == 0 && _island.ClaudeWindow is null;
+        IsEmpty = rows.Count == 0 && !HasWindow;
         _second.IsEnabled = _shown && rows.Any(r => r.Kind == ClaudeRowKind.Work);
     }
 }

@@ -36,45 +36,34 @@
                    Visibility="{Binding IsEmpty, Converter={StaticResource VisibleWhen}}" />
         <StackPanel>
         <!-- The 5-hour window (mockup .lrow): a 22 px ring of the time left, 5-hour window, when it resets, and the time
-             left; yellow once the limit is reached. Not a button: it has no hover. -->
-        <Border MinHeight="44" Padding="12,6" CornerRadius="12" Background="#1C1C1E" Margin="0,0,0,6" ToolTip="{Binding WindowTooltip}"
-                Visibility="{Binding HasWindow, Converter={StaticResource VisibleWhen}}">
-            <DockPanel>
-                <Grid DockPanel.Dock="Left" Width="22" Height="22" VerticalAlignment="Center">
-                    <Ellipse Width="19.25" Height="19.25" Stroke="#2C2C2E" StrokeThickness="2.75" />
-                    <Ellipse Width="19.25" Height="19.25" StrokeThickness="2.75" StrokeDashCap="Round" StrokeDashArray="{Binding WindowArc}"
-                             RenderTransformOrigin="0.5,0.5">
-                        <Ellipse.RenderTransform>
-                            <RotateTransform Angle="-90" />
-                        </Ellipse.RenderTransform>
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Stroke" Value="#D97757" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
-                                        <Setter Property="Stroke" Value="#FFD60A" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
-                </Grid>
-                <TextBlock DockPanel.Dock="Right" Text="{Binding WindowLeft}" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
-                           Typography.NumeralAlignment="Tabular">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="#8E8E93" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
-                                    <Setter Property="Foreground" Value="#FFD60A" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="5-hour window" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding WindowResets}" FontSize="12" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
+             left; yellow once the limit is reached; No window running while there is none. Its click turns it into the
+             form for the reset time shown in Claude Desktop (revision 18): Resets at, an 86 px time, and the check. -->
+        <Grid Margin="0,0,0,6" Visibility="{Binding HasWindow, Converter={StaticResource VisibleWhen}}">
+            <Button Style="{StaticResource SessionRow}" Command="{Binding EditResetCommand}" ToolTip="{Binding WindowTooltip}"
+                    AutomationProperties.Name="5-hour window" AutomationProperties.HelpText="{Binding WindowResets}"
+                    Visibility="{Binding IsEditingReset, Converter={StaticResource VisibleWhenFalse}}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Left" Width="22" Height="22" VerticalAlignment="Center">
+                        <Ellipse Width="19.25" Height="19.25" Stroke="#2C2C2E" StrokeThickness="2.75" />
+                        <Ellipse Width="19.25" Height="19.25" StrokeThickness="2.75" StrokeDashCap="Round" StrokeDashArray="{Binding WindowArc}"
+                                 RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <RotateTransform Angle="-90" />
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Stroke" Value="#D97757" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
+                                            <Setter Property="Stroke" Value="#FFD60A" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                    </Grid>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding WindowLeft}" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                               Typography.NumeralAlignment="Tabular">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#8E8E93" />
@@ -86,9 +75,43 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </StackPanel>
-            </DockPanel>
-        </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="5-hour window" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding WindowResets}" FontSize="12" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#8E8E93" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowLimitHit}" Value="True">
+                                            <Setter Property="Foreground" Value="#FFD60A" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+            <Border x:Name="ResetForm" MinHeight="44" Padding="12,6" CornerRadius="12" Background="#1C1C1E" PreviewKeyDown="OnResetKey"
+                    IsKeyboardFocusWithinChanged="OnResetFocus" Visibility="{Binding IsEditingReset, Converter={StaticResource VisibleWhen}}">
+                <Grid VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="86" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Resets at" FontSize="14" FontWeight="SemiBold" Foreground="#F5F5F7" VerticalAlignment="Center" />
+                    <TextBox x:Name="ResetTime" Grid.Column="1" Style="{StaticResource Field}" Text="{Binding ResetText, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="{Binding ResetState}" Typography.NumeralAlignment="Tabular" MaxLength="8"
+                             AutomationProperties.Name="Reset time" AutomationProperties.HelpText="20:40"
+                             ToolTip="The reset time Claude Desktop shows, within the next 5 hours" />
+                    <Button Grid.Column="2" Style="{StaticResource CheckPill}" Margin="6,0,0,0" Command="{Binding SaveResetCommand}"
+                            AutomationProperties.Name="Save">
+                        <c:IconView Glyph="{StaticResource Icon.Check}" Width="14" Height="14" StrokeThickness="2.6" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
         <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
             <ItemsControl.ItemContainerStyle>
                 <!-- Each row reads by its session's name, not by its view model's type. -->

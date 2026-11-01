@@ -803,7 +803,9 @@ span.cbt .ic{width:16px;height:16px}
 .crow.done .cr,.crow.done .clp{color:var(--accent)}
 .crow.idle{opacity:.55}
 .clempty{margin:auto;color:var(--text2);font-size:14px}
-.lrow{cursor:default}.lrow:hover{background:var(--surface)}
+/* The 5-hour row opens the form for the reset time shown in Claude Desktop (revision 18). */
+.lform{cursor:default;gap:6px}.lform:hover{background:var(--surface)}.lform b{flex:1;font-size:14px}.lform .field{height:32px}
+.lform .field.bad{box-shadow:inset 0 0 0 1.5px var(--danger)}
 .lring{width:22px;height:22px;transform:rotate(-90deg);flex-shrink:0}
 .lring circle{fill:none;stroke-width:3;stroke:var(--ctl)}
 .lring .fg{stroke:var(--claude);stroke-linecap:round}
@@ -3310,12 +3312,26 @@ $('#mPower').onclick=()=>openCtl('power');
 renderCtl();
 
 /* Claude 5-hour usage window */
-function limTip(){const r=new Date(S.lim.end);return `Claude 5-hour window · resets at ${pad(r.getHours())}:${pad(r.getMinutes())} · ${S.lim.hit?'limit reached':'Estimated'}`}
+function limTip(){const r=new Date(S.lim.end);return `Claude 5-hour window · resets at ${pad(r.getHours())}:${pad(r.getMinutes())}${S.lim.hit?' · limit reached':S.lim.official?'':' · Estimated'}`}
+const LIM_HINT='Click to set the reset time shown in Claude';
+// A reset time typed from Claude Desktop with its hour and minutes (20:40, 8:40 PM): the next such time, within 5 hours.
+function limParse(v){
+  const m=/^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?\s*m?\.?\s*$/i.exec(v);if(!m||!m[2])return null;
+  let h=+m[1];const mi=m[2]?+m[2]:0;
+  if(m[3]){if(h<1||h>12)return null;h=h%12+(m[3].toLowerCase()==='p'?12:0)}
+  if(h>23||mi>59)return null;
+  const d=new Date();d.setHours(h,mi,0,0);if(d<=Date.now())d.setDate(d.getDate()+1);
+  return d-Date.now()<=5*3600e3?+d:null;
+}
 function limRow(){
-  if(!S.limOn||!S.lim)return '';
+  if(!S.limOn)return '';
+  if(S.limEdit){const r=S.lim&&new Date(S.lim.end);
+    return `<form class="crow lrow lform" id="limForm"><b>Resets at</b><input class="field ftime num" id="limIn" maxlength="8" placeholder="20:40" value="${r?pad(r.getHours())+':'+pad(r.getMinutes()):''}" aria-label="Reset time" title="The reset time Claude Desktop shows, within the next 5 hours"><button class="pill pri iconbtn" aria-label="Save">${icon('check')}</button></form>`}
+  if(!S.lim)return `<button class="crow lrow" id="limRow" title="${LIM_HINT}"><svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="56.55"/></svg>
+    <span class="cn"><b>5-hour window</b><span>No window running</span></span><span class="cr num"></span></button>`;
   const left=Math.max(0,(S.lim.end-Date.now())/1000),f=1-left/(S.lim.len/1000),r=new Date(S.lim.end);
-  return `<div class="crow lrow ${S.lim.hit?'ask':''}"><svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>
-    <span class="cn"><b>5-hour window</b><span>${S.lim.hit?'Limit reached · ':''}Resets ${pad(r.getHours())}:${pad(r.getMinutes())}</span></span><span class="cr num" id="limLeft">${fmtDur(left)}</span></div>`;
+  return `<button class="crow lrow ${S.lim.hit?'ask':''}" id="limRow" title="${limTip()}&#10;${LIM_HINT}"><svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>
+    <span class="cn"><b>5-hour window</b><span>${S.lim.hit?'Limit reached · ':''}Resets ${pad(r.getHours())}:${pad(r.getMinutes())}</span></span><span class="cr num" id="limLeft">${fmtDur(left)}</span></button>`;
 }
 // When the window ends: the card rings like a timer.
 function limCheck(){
@@ -3958,7 +3974,21 @@ function renderClPage(){
   if(S.state==='expanded')layout();
 }
 function clTick(){$$('#clist .crow.work').forEach(r=>{r.querySelector('.cr').textContent=clRight(clById(+r.dataset.cl))})}
-$('#clist').addEventListener('click',e=>{const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl))});
+$('#clist').addEventListener('click',e=>{
+  if(e.target.closest('#limRow')){S.limEdit=true;renderClPage();const i=$('#limIn');i.focus();i.select();return}
+  const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl));
+});
+// The reset form: Enter or the check saves a time within 5 hours (the window becomes Claude's own, no longer Estimated),
+// any other stays in red; Esc or a click elsewhere cancels.
+$('#clist').addEventListener('submit',e=>{
+  e.preventDefault();const i=$('#limIn'),end=limParse(i.value);
+  if(!end){i.classList.add('bad');i.focus();return}
+  const running=S.lim&&Date.now()<S.lim.end;
+  S.lim={end,len:5*3600e3,hit:running?S.lim.hit:false,official:true};S.limEdit=false;renderSlot();renderClPage();
+});
+$('#clist').addEventListener('input',e=>{if(e.target.id==='limIn')e.target.classList.remove('bad')});
+$('#clist').addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target.id==='limIn'){e.stopPropagation();S.limEdit=false;renderClPage()}});
+$('#clist').addEventListener('focusout',e=>{const f=$('#limForm');if(S.limEdit&&f&&!f.contains(e.relatedTarget)){S.limEdit=false;renderClPage()}});
 function clWork(s){
   Object.assign(s,{st:'work',t0:Date.now(),unseen:false,q:''});
   if(S.clEnd===s.id){clearTimeout(S.clEndT);S.clEnd=null}

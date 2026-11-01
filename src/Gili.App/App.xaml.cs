@@ -234,6 +234,7 @@ public partial class App : Application
             if (_claude.InDemo || (_settings.Current.ClaudeUsageTimer && _claude.DesktopOpen)) _islandController.ShowClaudeReset();
         };
         _islandController.OpenClaude = _claude.OpenClaude;
+        _islandController.SetClaudeReset = at => _claude.Usage.SetReset(at);
         _bar.TimeChanged += _claude.RescheduleUsage;
         _settings.Changed += _ => ShowClaude();
         _demo.Claude = _claude;
@@ -403,7 +404,7 @@ public partial class App : Application
         // The 5-hour window shows while the integration and its own switch are on and Claude Desktop is open, and always
         // in the demo (F-CLD-08, revision 17). Closed, the window is still kept, so it is right when Desktop opens again.
         var showWindow = _claude.InDemo || (_claude.IsOn && _settings!.Current.ClaudeUsageTimer && _claude.DesktopOpen);
-        _islandController.SetClaudeWindow(showWindow ? _claude.Usage.Current : null);
+        _islandController.SetClaudeWindow(_claude.Usage.Current, showWindow);
         _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
             sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.Unseen(sessions).Count > 0,
             Core.Claude.ClaudeSlot.LauncherTooltip(sessions));

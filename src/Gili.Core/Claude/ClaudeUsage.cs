@@ -30,7 +30,7 @@ public interface IClaudeWindowStore
 
 /// <summary>
 /// The Claude 5-hour window (PRD 6.3 "Batas pemakaian Claude", F-CLD-08, design 3j): it starts at the first use while
-/// none runs, floored to the hour, and ends 5 hours later; the StopFailure hook with a rate_limit error marks the limit
+/// none runs, floored to ten minutes, and ends 5 hours later, unless its reset time is set by hand from Claude Desktop; the StopFailure hook with a rate_limit error marks the limit
 /// reached and may carry the real reset time. When the window ends, <see cref="Tick"/> says so once, for the card.
 /// </summary>
 public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> now)
@@ -66,7 +66,7 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
     public void Used()
     {
         if (Running(now()) is not null) return;
-        var start = FloorToHour(now());
+        var start = WindowStart(now());
         Keep(new ClaudeUsageWindow(0, start, start + Length, ClaudeWindowSource.Estimated, null, false));
     }
 
@@ -78,7 +78,7 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
         var window = Running(at);
         if (window is null)
         {
-            var start = reset is { } r ? r - Length : FloorToHour(at);
+            var start = reset is { } r ? r - Length : WindowStart(at);
             window = new ClaudeUsageWindow(0, start, reset ?? start + Length, reset is null ? ClaudeWindowSource.Estimated : ClaudeWindowSource.Official,
                 null, false);
         }
@@ -97,6 +97,25 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
         Finish();
         Changed?.Invoke();
         return fresh;
+    }
+
+    /// <summary>
+    /// A reset time typed from Claude Desktop with its hour and minutes ("20:40", "8:40 PM"), as the next such time after
+    /// <paramref name="at"/>; null without minutes, or when not within the next 5 hours, so no running window could reset then.
+    /// </summary>
+    public static DateTimeOffset? ParseReset(string text, DateTimeOffset at) =>
+        text.Contains(':') && ResetIn("resets " + text.Trim(), at) is { } reset && reset - at <= Length ? reset : null;
+
+    /// <summary>
+    /// The reset time shown in Claude Desktop, set by hand (revision 18): Gili can't read it, so this window is Claude's own,
+    /// 5 hours up to it, no longer Estimated. A running window keeps its id and its Limit reached.
+    /// </summary>
+    public void SetReset(DateTimeOffset reset)
+    {
+        var start = reset - Length;
+        Keep(Running(now()) is { } window
+            ? window with { StartedAt = start, ResetsAt = reset, Source = ClaudeWindowSource.Official }
+            : new ClaudeUsageWindow(0, start, reset, ClaudeWindowSource.Official, null, false));
     }
 
     /// <summary>The demo's own window, never stored (F-BAR-09).</summary>
@@ -136,7 +155,9 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
         return reset <= at ? reset.AddDays(1) : reset;
     }
 
-    public static DateTimeOffset FloorToHour(DateTimeOffset time) => new(time.Year, time.Month, time.Day, time.Hour, 0, 0, time.Offset);
+    /// <summary>A window's start from its first use: down to its ten minutes, where Claude's own resets fall (20:40, 20:10).</summary>
+    public static DateTimeOffset WindowStart(DateTimeOffset time) =>
+        new(time.Year, time.Month, time.Day, time.Hour, time.Minute / 10 * 10, 0, time.Offset);
 
     /// <summary>
     /// The window still running at <paramref name="at"/>. One past its reset is over even before <see cref="Tick"/> sees it:
