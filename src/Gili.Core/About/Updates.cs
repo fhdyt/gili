@@ -46,8 +46,11 @@ public enum UpdateStatus { Off, NotChecked, UpToDate, Available, Installing, Not
 /// </summary>
 public readonly record struct UpdateMoment(TimeSpan Idle, bool Fullscreen, bool IslandCompact, TimeSpan? NextAlert);
 
-/// <summary>Where the update check stands. <paramref name="OffReason"/> says why this copy never checks.</summary>
-public sealed record UpdateState(UpdateStatus Status, string? OffReason = null, Version? Latest = null, string? PageUrl = null);
+/// <summary>
+/// Where the update check stands. <paramref name="OffReason"/> says why this copy never checks. <paramref name="NotifyOnly"/>:
+/// an unsigned GitHub copy, which shows a new version and opens its release page but never runs an installer (revision 15).
+/// </summary>
+public sealed record UpdateState(UpdateStatus Status, string? OffReason = null, Version? Latest = null, string? PageUrl = null, bool NotifyOnly = false);
 
 /// <summary>When Gili checks for a newer version and what Settings → About says about it (F-PUB-04, PRD 11, design 5d).</summary>
 public static class UpdateRules
@@ -57,12 +60,14 @@ public static class UpdateRules
     /// <summary>Failing quietly turns into "Couldn't check for updates" after this long without an answer (PRD 11).</summary>
     public static readonly TimeSpan QuietFor = TimeSpan.FromDays(3);
 
-    /// <summary>The Store copy asks the Store; the GitHub copy only once it is signed, since the friends' build never checks (PRD 9.4).</summary>
+    /// <summary>
+    /// The Store copy asks the Store and the GitHub copy asks GitHub. Unsigned, the GitHub copy only tells: Gili can't prove an
+    /// installer comes from its publisher, so it opens the release page instead (PRD 9.4, revision 15).
+    /// </summary>
     public static UpdateState Initial(InstallKind kind, bool signed) => kind switch
     {
         InstallKind.Store => new(UpdateStatus.NotChecked),
-        InstallKind.Installed when signed => new(UpdateStatus.NotChecked),
-        InstallKind.Installed => new(UpdateStatus.Off, "This test build doesn't check. Install a newer Gili-Setup over it"),
+        InstallKind.Installed => new(UpdateStatus.NotChecked, NotifyOnly: !signed),
         _ => new(UpdateStatus.Off, "Only the installed copy checks for updates"),
     };
 
@@ -87,7 +92,8 @@ public static class UpdateRules
         UpdateStatus.Off => (null, s.OffReason),
         UpdateStatus.NotChecked => ("Not checked yet", null),
         UpdateStatus.UpToDate => ("Up to date", null),
-        UpdateStatus.Available or UpdateStatus.Installing => (null, "Update available · " + AboutInfo.Format(s.Latest ?? new Version(0, 0, 0))),
+        UpdateStatus.Available or UpdateStatus.Installing => (null, "Update available · " + AboutInfo.Format(s.Latest ?? new Version(0, 0, 0))
+            + (s.NotifyOnly ? " · run the new Gili-Setup over this one" : "")),
         UpdateStatus.NotVerified => (null, "Update couldn't be verified"),
         _ => ("Couldn't check for updates", null),
     };
@@ -95,7 +101,7 @@ public static class UpdateRules
     /// <summary>The row's button, only while an update waits or installs.</summary>
     public static string? Button(UpdateState s) => s.Status switch
     {
-        UpdateStatus.Available => "Install update",
+        UpdateStatus.Available => s.NotifyOnly ? "Download" : "Install update",
         UpdateStatus.Installing => "Installing…",
         _ => null,
     };
@@ -110,6 +116,9 @@ public static class UpdateRules
     /// A verified update installs by itself only while nobody is using the computer: away 10 minutes, no fullscreen app, the
     /// island compact, and no alarm or timer within 15 minutes, so a restart never cuts into something.
     /// </summary>
+    public static bool ShouldInstallNow(bool autoUpdate, UpdateState state, UpdateMoment now) =>
+        !state.NotifyOnly && ShouldInstallNow(autoUpdate, state.Status, now);
+
     public static bool ShouldInstallNow(bool autoUpdate, UpdateStatus status, UpdateMoment now) =>
         autoUpdate && status == UpdateStatus.Available && now.Idle >= AwayFor && !now.Fullscreen && now.IslandCompact
         && (now.NextAlert is not { } alert || alert > AlertMargin);

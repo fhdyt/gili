@@ -1356,7 +1356,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="segc" id="glass" role="group" aria-label="Glass"><button data-g="0">Off</button><button data-g="12">Light</button><button data-g="30" class="on">Strong</button></div>
     <div class="g" style="margin-top:8px"><button data-act="extra" aria-pressed="false">Show GPU, disk</button><button data-act="glow" aria-pressed="true">Ambient glow</button></div>
     <h3>Other</h3>
-    <div class="g"><button data-act="updates" aria-pressed="false">Windows updates pending</button><button data-act="fs" aria-pressed="false">Fullscreen app</button><button data-act="desk" aria-pressed="false">Show the desktop (Win+D)</button><button data-act="updated">Gili updated</button><button data-act="reduce" aria-pressed="false">Reduce motion</button></div>
+    <div class="g"><button data-act="updates" aria-pressed="false">Windows updates pending</button><button data-act="fs" aria-pressed="false">Fullscreen app</button><button data-act="desk" aria-pressed="false">Show the desktop (Win+D)</button><button data-act="updated">Gili updated</button><button data-act="newVersion" aria-pressed="false">New version on GitHub</button><button data-act="reduce" aria-pressed="false">Reduce motion</button></div>
   </div>
 </aside>
 <div class="hint" id="hint" role="status"></div>
@@ -3196,7 +3196,7 @@ const SET={
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
   Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.clipboard','Clipboard','key',['Ctrl+Alt+V']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
   // Privacy policy waits for its page online; Updates and Release notes follow the update check (design 5d); Prepare to uninstall is the Store copy's (design 5a).
-  About:[['version','Version','info',['0.1.1 · Microsoft Store']],['updates','Updates','info',['Up to date']],['autoUpd','Install updates automatically','sw',null,"Gili installs a new version while you're away. Your notes and settings stay"],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open']],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
+  About:[['version','Version','info',['0.1.1 · GitHub']],['updates','Updates','info',['Up to date']],['autoUpd','Install updates automatically','sw',null,"Gili installs a new version while you're away. Your notes and settings stay"],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open']],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
@@ -3297,6 +3297,7 @@ $('#setw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation
 $('#setn').onclick=e=>{const b=e.target.closest('[data-sec]');if(b){setSec=b.dataset.sec;renderSettings()}};
 $('#setp').addEventListener('click',e=>{
   const a=e.target.closest('button[data-act]');
+  if(a&&a.dataset.act==='updates'){hint('Opens the release page on GitHub; run the new Gili-Setup over this copy');return}
   if(a&&a.dataset.act==='addFav'){addFav({n:'Notepad',i:'a-term'});hint('Add app… opens a file picker for an app or its shortcut');return}
   if(a&&a.dataset.act==='rmFav'){FAVS.splice(+a.dataset.i,1);renderFavs();renderSettings();return}
   if(a){if(!a.closest('.dis'))hint(a.dataset.act==='logs'?'Opens the logs folder in File Explorer':'Gili quits and Windows Settings › Installed apps opens');return}
@@ -4150,6 +4151,13 @@ $('#setp').addEventListener('focusout',e=>{if(e.target.id!=='ccIn'||!S.ccOpen)re
 // The first start of a new version (revision 14, issue #27): installed by itself while the computer was left alone.
 S.autoUpd=1;
 ACT.updated=()=>showWide('updated',`<span style="color:var(--accent)">${icon('restart')}</span><span>Updated to Gili <b class="num">0.2.0</b></span>`,4000);
+// An unsigned GitHub copy only tells about a new version and opens its page (revision 15): blue dot, note, Download.
+ACT.newVersion=()=>{
+  S.newVer=!S.newVer;setPressed('newVersion',S.newVer);$('#gDot').hidden=!S.newVer;$('#mSet').title=S.newVer?'Settings · a new version of Gili is ready':'Settings';
+  const i=SET.About.findIndex(r=>r[0]==='updates');
+  SET.About[i]=S.newVer?['updates','Updates','btn',['Download'],'Update available · 0.2.0 · run the new Gili-Setup over this one']:['updates','Updates','info',['Up to date']];
+  if(!$('#setw').hidden)renderSettings();
+};
 ACT.desk=()=>{S.deskFront=!S.deskFront;$('#desk').classList.toggle('deskfront',S.deskFront);setPressed('desk',S.deskFront);barFocus(S.state);hint(S.deskFront?'The desktop is in front: the bar looks as it does with the island open':'A window is in front again')};
 /* The bar's menu (F-BAR-17): right-click on the bar or the compact island, or Gili's tray icon; a click on the icon opens Settings. */
 S.tray=1;

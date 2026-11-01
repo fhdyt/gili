@@ -47,12 +47,25 @@ public class UpdateRulesTests
     private static readonly DateTimeOffset Now = new(2026, 11, 1, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public void An_unsigned_copy_offers_the_download_page_instead_of_installing()
+    {
+        var available = new UpdateState(UpdateStatus.Available, Latest: new Version(0, 2, 0), PageUrl: "https://github.com/fhdyt/gili/releases/tag/v0.2.0", NotifyOnly: true);
+        Assert.Equal("Download", UpdateRules.Button(available));
+        Assert.Equal("Install update", UpdateRules.Button(available with { NotifyOnly = false }));
+        Assert.Equal((null, "Update available · 0.2.0 · run the new Gili-Setup over this one"), UpdateRules.Row(available));
+        var quiet = new UpdateMoment(TimeSpan.FromHours(1), false, true, null);
+        Assert.False(UpdateRules.ShouldInstallNow(true, available, quiet));
+        Assert.True(UpdateRules.ShouldInstallNow(true, available with { NotifyOnly = false }, quiet));
+    }
+
+    [Fact]
     public void Who_checks()
     {
         Assert.Equal(UpdateStatus.NotChecked, UpdateRules.Initial(InstallKind.Store, signed: false).Status);
         Assert.Equal(UpdateStatus.NotChecked, UpdateRules.Initial(InstallKind.Installed, signed: true).Status);
-        Assert.Equal(new UpdateState(UpdateStatus.Off, "This test build doesn't check. Install a newer Gili-Setup over it"),
-            UpdateRules.Initial(InstallKind.Installed, signed: false));
+        // An unsigned GitHub copy checks too, but only says so and opens the release page (revision 15).
+        Assert.Equal(new UpdateState(UpdateStatus.NotChecked, NotifyOnly: true), UpdateRules.Initial(InstallKind.Installed, signed: false));
+        Assert.False(UpdateRules.Initial(InstallKind.Installed, signed: true).NotifyOnly);
         Assert.Equal(new UpdateState(UpdateStatus.Off, "Only the installed copy checks for updates"),
             UpdateRules.Initial(InstallKind.Development, signed: true));
     }

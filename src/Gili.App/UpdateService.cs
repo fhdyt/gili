@@ -9,7 +9,8 @@ using Gili.Platform.Shell;
 namespace Gili.App;
 
 /// <summary>
-/// The update check (F-PUB-04, design 5d): the signed GitHub copy asks GitHub Releases, the Store copy asks the Store,
+/// The update check (F-PUB-04, design 5d): the GitHub copy asks GitHub Releases (unsigned, it only tells and opens the
+/// release page; revision 15), the Store copy asks the Store,
 /// 60 seconds after start and then once a day. Failing is quiet (PRD 11); Install update runs only an installer signed
 /// by the same publisher as this Gili.exe.
 /// </summary>
@@ -50,7 +51,7 @@ public sealed class UpdateService : IDisposable
     /// </summary>
     private void InstallIfAway()
     {
-        if (Moment is null || !UpdateRules.ShouldInstallNow(_settings.Current.AutoUpdate, State.Status, Moment())) return;
+        if (Moment is null || !UpdateRules.ShouldInstallNow(_settings.Current.AutoUpdate, State, Moment())) return;
         _autoTimer.Stop();
         _log.Write("Installing the update by itself while the computer is not in use");
         _ = InstallAsync(0, _ => { });
@@ -101,6 +102,7 @@ public sealed class UpdateService : IDisposable
 
     private void Answered(UpdateState state)
     {
+        state = state with { NotifyOnly = State.NotifyOnly };
         _settings.Update(s => s with { LastUpdateCheck = DateTimeOffset.Now });
         if (state.Status == UpdateStatus.Available && State.Status != UpdateStatus.Available)
             _log.Write("Update available: " + AboutInfo.Format(state.Latest!));
@@ -126,7 +128,8 @@ public sealed class UpdateService : IDisposable
                 if (!await StoreUpdates.InstallAsync(owner)) Set(available);
                 return;
             }
-            if (_installerUrl is null)
+            // Unsigned, Gili can't check whose installer it would run, so Download opens the release page (revision 15).
+            if (_installerUrl is null || available.NotifyOnly)
             {
                 if (available.PageUrl is { } page) openPage(page);
                 Set(available);
@@ -156,7 +159,7 @@ public sealed class UpdateService : IDisposable
     {
         if (state == State) return;
         State = state;
-        if (_kind == InstallKind.Installed && state.Status == UpdateStatus.Available) _autoTimer.Start();
+        if (_kind == InstallKind.Installed && state.Status == UpdateStatus.Available && !state.NotifyOnly) _autoTimer.Start();
         else _autoTimer.Stop();
         Changed?.Invoke();
     }

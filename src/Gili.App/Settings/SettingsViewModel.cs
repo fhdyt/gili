@@ -127,6 +127,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         "auto" => _kind != InstallKind.Store || _startup is not { } state || StartupRules.CanChange(state),
         "updates" => Update is { Status: not UpdateStatus.Off },
+        "autoUpd" => Update is { Status: not UpdateStatus.Off, NotifyOnly: false },
         "notes" => ReleaseNotes is not null,
         _ => true,
     };
@@ -141,6 +142,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         "version" => _anotherCopy,
         "updates" when Update is { } update => UpdateRules.Row(update).Note,
         "notes" when ReleaseNotes is null => SettingsCatalog.LaterVersion,
+        "autoUpd" when Update is { NotifyOnly: true } => "Needs a signed Gili. This copy shows new versions and opens their page",
+        "autoUpd" when Update is { Status: UpdateStatus.Off } => "Only the installed copy checks for updates",
         "glass" when !_transparencyEnabled => "Transparency effects are off in Windows, so the bar is drawn solid.",
         // PRD 11: a combination another app holds stays off.
         _ when Hotkeys.ActionOf(key) is { } action && _hotkeys?.Failed(action) == true => "Used by another app",
