@@ -116,6 +116,17 @@ public class DemoTests
     }
 
     [Fact]
+    public void Shows_an_explorer_copy_with_a_conflict_that_ends_before_the_demo_does()
+    {
+        var ops = Steps.Where(s => s.Action is DemoFileOps).Select(s => ((DemoFileOps)s.Action).Tiles).ToList();
+        Assert.Contains(ops, tiles => tiles.Any(t => t.CanReplace));
+        Assert.Empty(ops[^1]);
+        var lastOps = Steps.Last(s => s.Action is DemoFileOps).At;
+        // The result line stays 2 s, inside the demo.
+        Assert.True(Steps[^1].At - lastOps >= Gili.Core.FileOps.FileOpTracker.ResultFor);
+    }
+
+    [Fact]
     public void Ends_with_no_media_and_the_island_closed()
     {
         Assert.IsType<DemoEnd>(Steps[^1].Action);

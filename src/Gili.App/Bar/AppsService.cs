@@ -36,7 +36,11 @@ public sealed class AppsService : IDisposable
             if (_showStrip && !_coalesce.IsEnabled) _coalesce.Start();
         };
         _windows.ForegroundChanged += OnForeground;
+        _windows.WindowShown += (hwnd, className) => WindowShown?.Invoke(hwnd, className);
     }
+
+    /// <summary>Any top-level window appeared, with its class name (Explorer's progress dialog for F-ISL-15).</summary>
+    public event Action<nint, string>? WindowShown;
 
     /// <summary>First read, once the bar shows, so icons come at the bar's DPI.</summary>
     public void Start()

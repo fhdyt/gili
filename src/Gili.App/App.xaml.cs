@@ -49,6 +49,7 @@ public partial class App : Application
     private GiliService? _gili;
     private BarWindow? _bar;
     private AppsService? _apps;
+    private ExplorerOpsService? _fileOps;
     private RightService? _right;
     private DemoService? _demo;
     private Database? _database;
@@ -220,6 +221,10 @@ public partial class App : Application
         _islandController.ClaudeSessionRequested += _claude.Focus;
         _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
         _apps.ForegroundChanged += _claude.OnForeground;
+        // Explorer's copy, move and delete progress (F-ISL-15): read only while Explorer's dialog is open.
+        _fileOps = new ExplorerOpsService();
+        _islandController.AttachFileOps(_fileOps);
+        _apps.WindowShown += _fileOps.OnWindowShown;
         _claude.UsageEnded += () =>
         {
             if (_claude.InDemo || _settings.Current.ClaudeUsageTimer) _islandController.ShowClaudeReset();
@@ -252,6 +257,7 @@ public partial class App : Application
         _todos.Reschedule();
         _stats.Start();
         _apps.Start();
+        _fileOps?.Start();
         _right.Start();
         _ = _media.StartAsync();
     }

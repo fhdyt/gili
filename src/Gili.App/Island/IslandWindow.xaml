@@ -223,6 +223,25 @@
                             <TextBlock Grid.Column="4" Text="{Binding ShelfSlotDetail}" Foreground="#8E8E93"
                                        Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                         </Grid>
+
+                        <!-- Explorer's copy, move or delete (F-ISL-15, mockup slotHTML 'explorer'): coloured icon, the item's name,
+                             a 44 px progress line and the percent; then the result word for 2 s. -->
+                        <StackPanel Orientation="Horizontal" MinWidth="172" Background="Transparent" ToolTip="{Binding FileOpTooltip}"
+                                    Visibility="{Binding ShowFileOpSlot, Converter={StaticResource VisibleWhen}}">
+                            <c:IconView Glyph="{Binding FileOpGlyph}" Foreground="{Binding FileOpBrush}" Width="14" Height="14" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding FileOpLabel}" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            <Grid Width="44" Height="3" Margin="8,0,0,0" VerticalAlignment="Center"
+                                  Visibility="{Binding FileOpRunning, Converter={StaticResource VisibleWhen}}">
+                                <Border Background="#3A3A3C" CornerRadius="1.5" />
+                                <Border Background="{Binding FileOpBrush}" CornerRadius="1.5" RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="{Binding FileOpProgress}" />
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="{Binding FileOpEnd}" Foreground="{Binding FileOpEndBrush}" Margin="8,0,0,0"
+                                       Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Grid>
                 </Grid>
 

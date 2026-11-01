@@ -4,6 +4,7 @@ using Gili.Core.Alarms;
 using Gili.Core.Claude;
 using Gili.Core.Clipboard;
 using Gili.Core.Devices;
+using Gili.Core.FileOps;
 using Gili.Core.Island;
 using Gili.Core.Power;
 using Gili.Core.Settings;
@@ -136,6 +137,59 @@ public sealed class IslandController : IDisposable
 
     /// <summary>Lyrics of the playing song (F-ISL-26).</summary>
     public LyricsService Lyrics { get; }
+
+    /// <summary>Explorer's copy, move and delete progress (F-ISL-15); set once by the app.</summary>
+    public ExplorerOpsService? FileOps { get; private set; }
+
+    /// <summary>The slot or the conflict of Explorer's operations changed.</summary>
+    public event Action? FileOpsChanged;
+
+    public const string FileConflictCard = "fileop-conflict";
+
+    // The user answered the conflict card (or the answer couldn't reach Explorer): the card stays away until that conflict
+    // is over, and the slot says Needs attention meanwhile.
+    private bool _conflictAnswered;
+
+    public void AttachFileOps(ExplorerOpsService ops)
+    {
+        FileOps = ops;
+        ops.Changed += () =>
+        {
+            _coordinator.SetActivity(ActivityKind.FileOperation, ops.Slot is not null);
+            if (ops.Conflict is null)
+            {
+                _conflictAnswered = false;
+                if (_coordinator.HasCard(FileConflictCard)) _coordinator.DismissCard(FileConflictCard);
+            }
+            // A conflict opens the island as a silent card, priority 1 (PRD 6.3 "Konflik file").
+            else if (!_conflictAnswered && !_coordinator.HasCard(FileConflictCard))
+                _coordinator.ShowCard(new IslandCard(FileConflictCard, CardPriority.Urgent, TimeSpan.Zero));
+            FileOpsChanged?.Invoke();
+        };
+    }
+
+    private CardContent? FileConflictContent(string id)
+    {
+        if (FileOps?.Conflict is not { } conflict) return null;
+        var yellow = Color.FromRgb(0xFF, 0xD6, 0x0A);
+        Action Answer(FileOpAnswer answer) => Card(id, async () =>
+        {
+            _conflictAnswered = true;
+            if (!await FileOps.AnswerAsync(answer)) FileOps.ShowDialog();
+        });
+        Action open = Card(id, () =>
+        {
+            _conflictAnswered = true;
+            FileOps.ShowDialog();
+        });
+        IReadOnlyList<CardButton> buttons = conflict.Conflict switch
+        {
+            FileOpConflict.Admin => [new("Open dialog", true, open)],
+            FileOpConflict.InUse => [new("Skip", false, Answer(FileOpAnswer.Skip)), new("Try again", true, Answer(FileOpAnswer.Retry))],
+            _ => [new("Skip", false, Answer(FileOpAnswer.Skip)), new("Replace", true, Answer(FileOpAnswer.Replace))],
+        };
+        return new CardContent("Icon.Alert", yellow, FileOpRules.ConflictTitle(conflict.Conflict), conflict.Question ?? conflict.Label, buttons, Pulse: false);
+    }
 
     private readonly Dispatcher _dispatcher;
     private readonly DispatcherTimer _updateCheck = new() { Interval = TimeSpan.FromMinutes(30) };
@@ -405,6 +459,7 @@ public sealed class IslandController : IDisposable
                 [new("Stop", false, Card(id, Timers.StopPomodoro)), new("Start focus", true, Card(id, Timers.StartFocus))]),
             _ when _ringing.TryGetValue(id, out var ringing) => AlarmContent(id, ringing.Alarm, ringing.Missed, orange),
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
+            FileConflictCard => FileConflictContent(id),
             ClaudeCards.CardId when _claudeCard is { } claude => ClaudeContent(id, claude),
             ClaudeResetCard => new("Icon.Hourglass", Color.FromRgb(0xD9, 0x77, 0x57), "Claude usage reset", "Your 5-hour limit is available again",
                 [
@@ -714,6 +769,18 @@ public sealed class IslandController : IDisposable
     /// </summary>
     private void OpenActivity(ActivityKind? kind)
     {
+        // Explorer's operation: a waiting conflict opens its card again, otherwise Explorer's dialog comes forward;
+        // the island never opens for a file operation (PRD 6.3).
+        if (kind == ActivityKind.FileOperation && FileOps is { } ops)
+        {
+            if (ops.Conflict is not null)
+            {
+                _conflictAnswered = false;
+                _coordinator.ShowCard(new IslandCard(FileConflictCard, CardPriority.Urgent, TimeSpan.Zero));
+            }
+            else ops.ShowDialog();
+            return;
+        }
         if (kind == ActivityKind.Timer && Timers.SlotShowsLabeled)
         {
             ToolsRequested?.Invoke("Timer");

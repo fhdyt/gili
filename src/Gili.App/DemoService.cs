@@ -68,6 +68,7 @@ public sealed class DemoService
         Claude?.EndDemo();
         _island.EndDemo();
         _island.Lyrics.SetDemo(null);
+        _island.FileOps?.SetDemo(null);
         Changed?.Invoke();
     }
 
@@ -96,6 +97,9 @@ public sealed class DemoService
                     {
                         Cover = state.Kind == Gili.Core.Media.MediaKind.Video ? _thumb ??= Cover(320, 180) : _cover ??= Cover(300, 300),
                     });
+                    break;
+                case DemoFileOps ops:
+                    _island.FileOps?.SetDemo(ops.Tiles);
                     break;
                 case DemoMedia:
                     _island.Lyrics.SetDemo(null);

@@ -13,6 +13,7 @@ namespace Gili.Platform.Apps;
 public sealed class TaskbarWindows : IDisposable
 {
     private static readonly string[] Ignored = ["Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"];
+    private const uint EVENT_OBJECT_SHOW = 0x8002;
 
     private readonly WinEventProc _proc;
     private readonly List<nint> _hooks = [];
@@ -32,6 +33,9 @@ public sealed class TaskbarWindows : IDisposable
     public event Action? Changed;
 
     public event Action<nint>? ForegroundChanged;
+
+    /// <summary>A top-level window was shown, with its class name, e.g. Explorer's progress dialog (F-ISL-15).</summary>
+    public event Action<nint, string>? WindowShown;
 
     /// <summary>All top-level windows, top of the z-order first, with the app each belongs to.</summary>
     public IReadOnlyList<TaskbarWindow> Read()
@@ -86,7 +90,9 @@ public sealed class TaskbarWindows : IDisposable
             return;
         }
         // A destroyed window can no longer report its ancestor; any top-level change is worth one more read.
-        if (eventType == EVENT_OBJECT_DESTROY || GetAncestor(hwnd, GA_ROOT) == hwnd) Changed?.Invoke();
+        var topLevel = eventType != EVENT_OBJECT_DESTROY && GetAncestor(hwnd, GA_ROOT) == hwnd;
+        if (eventType == EVENT_OBJECT_DESTROY || topLevel) Changed?.Invoke();
+        if (topLevel && eventType == EVENT_OBJECT_SHOW && WindowShown is { } shown) shown(hwnd, ClassName(hwnd));
     }
 
     private TaskbarWindow? Describe(nint hwnd)

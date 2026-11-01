@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Gili.Core.Clipboard;
+using Gili.Core.FileOps;
 using Gili.Core.Island;
 using Gili.Core.Layout;
 using Gili.Core.Media;
@@ -45,8 +46,56 @@ public sealed partial class IslandViewModel : ObservableObject
     [ObservableProperty] private double _thumbWidth = 32;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(ShowShelfSlot), nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(ShowShelfSlot), nameof(ShowFileOpSlot), nameof(HasActivity))]
     private ActivityKind? _slot;
+
+    /// <summary>
+    /// Explorer's operation in the slot (F-ISL-15, mockup slotHTML 'explorer'): its coloured icon, the item's name, a 44 px
+    /// progress line and the percent; then a check and Copied / Moved / Deleted, a grey Cancelled, or Needs attention.
+    /// </summary>
+    [ObservableProperty] private Geometry? _fileOpGlyph;
+    [ObservableProperty] private Brush _fileOpBrush = Accent;
+    [ObservableProperty] private string _fileOpLabel = "";
+    [ObservableProperty] private string _fileOpEnd = "";
+    [ObservableProperty] private Brush _fileOpEndBrush = Text;
+    [ObservableProperty] private double _fileOpProgress;
+    [ObservableProperty] private bool _fileOpRunning;
+    [ObservableProperty] private string? _fileOpTooltip;
+
+    public bool ShowFileOpSlot => Slot == ActivityKind.FileOperation;
+
+    private static (string Glyph, Brush Brush) FileOpLook(FileOpKind kind) => kind switch
+    {
+        FileOpKind.Copy => ("Icon.Folder", Accent),
+        FileOpKind.Move => ("Icon.Scissors", Blue),
+        FileOpKind.Delete => ("Icon.Trash", Danger),
+        _ => ("Icon.Files", Muted),
+    };
+
+    private void UpdateFileOps()
+    {
+        if (_island.FileOps?.Slot is not { } op)
+        {
+            UpdateBubble();
+            return;
+        }
+        var (glyph, brush) = FileOpLook(op.Kind);
+        (FileOpGlyph, FileOpBrush, FileOpEndBrush) = op.Phase switch
+        {
+            FileOpPhase.Done => (Glyph("Icon.Check"), brush, Muted),
+            FileOpPhase.Cancelled => (Glyph("Icon.Close"), Muted, Muted),
+            FileOpPhase.Attention => (Glyph("Icon.Alert"), Warn, Warn),
+            _ => (Glyph(glyph), brush, Text),
+        };
+        FileOpLabel = op.Label;
+        FileOpRunning = op.Phase == FileOpPhase.Running;
+        FileOpProgress = op.Percent / 100.0;
+        FileOpEnd = op.Phase == FileOpPhase.Running
+            ? op.Percent.ToString(CultureInfo.InvariantCulture) + "%"
+            : FileOpRules.Result(op.Kind, op.Phase);
+        FileOpTooltip = op.Tooltip;
+        UpdateBubble();
+    }
 
     /// <summary>Claude's 5-hour window in the slot (mockup slotHTML 'lim'): the hourglass, Resets in or Limit reached, the time.</summary>
     [ObservableProperty] private Brush _usageBrush = ClaudeOrange;
@@ -199,6 +248,7 @@ public sealed partial class IslandViewModel : ObservableObject
         island.ViewChanged += UpdateView;
         island.PowerChanged += UpdatePower;
         island.Media.Updated += UpdateMedia;
+        island.FileOpsChanged += UpdateFileOps;
         island.Lyrics.Changed += UpdateLyrics;
         island.Lyrics.LineChanged += () =>
         {
@@ -252,7 +302,7 @@ public sealed partial class IslandViewModel : ObservableObject
     public bool HasCardQuote => !string.IsNullOrEmpty(CardQuote);
 
     /// <summary>Something holds the slot; otherwise the idle island shows Gili (PRD 6.3).</summary>
-    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot || ShowUsageSlot || ShowShelfSlot;
+    public bool HasActivity => ShowMediaSlot || ShowChargingSlot || ShowClipboardSlot || ShowTimerSlot || ShowClaudeSlot || ShowUsageSlot || ShowShelfSlot || ShowFileOpSlot;
 
     /// <summary>
     /// The Claude slot (mockup clSlotHTML): yellow Claude glyph and Needs input, green check and Done · 4m 12s, or the
@@ -421,6 +471,7 @@ public sealed partial class IslandViewModel : ObservableObject
             ActivityKind.Media => (Glyph(IsVideo ? "Icon.Film" : "Icon.Music"), IsVideo ? VideoOrange : Accent, false),
             ActivityKind.Charging => (Glyph("Icon.Bolt"), Accent, true),
             ActivityKind.Shelf => (Glyph("Icon.Tray"), ShelfBlue, false),
+            ActivityKind.FileOperation when _island.FileOps?.Slot is { } op => (Glyph(FileOpLook(op.Kind).Glyph), FileOpLook(op.Kind).Brush, false),
             ActivityKind.Timer => (Glyph("Icon.Hourglass"), _island.Timers.Pomodoro.Clock.IsRunning
                 ? (_island.Timers.Pomodoro.Phase == Gili.Core.Timers.PomodoroPhase.Focus ? TimerViewModel.Red : TimerViewModel.Green)
                 : TimerViewModel.Orange, false),

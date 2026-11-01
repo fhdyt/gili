@@ -70,6 +70,9 @@ public sealed record DemoClaudeHook(string Event, string Id, string? Tool = null
 /// <summary>The demo's 5-hour window, ending <paramref name="SecondsLeft"/> from now; never stored (plan 3j).</summary>
 public sealed record DemoClaudeWindow(double SecondsLeft, bool LimitHit) : DemoAction;
 
+/// <summary>Explorer's progress dialog as the demo fakes it (F-ISL-15); an empty list ends the operation.</summary>
+public sealed record DemoFileOps(IReadOnlyList<Gili.Core.FileOps.FileOpTile> Tiles) : DemoAction;
+
 public sealed record DemoStep(TimeSpan At, DemoAction Action);
 
 /// <summary>
@@ -150,7 +153,19 @@ public static class DemoScript
             Step(92, new DemoClaudeWindow(3852, LimitHit: true)),
             Step(97, new DemoClaudeWindow(6, LimitHit: false)),
             Step(108, new DemoDismiss(ResetCard)),
-            Step(109.5, new DemoEnd()),
+            // A copy in Explorer (F-ISL-15): progress in the slot, a name clash as a silent card, then Copied for 2 s.
+            Step(109, new DemoFileOps([Copying(12)])),
+            Step(110.5, new DemoFileOps([Copying(46)])),
+            Step(112, new DemoFileOps([Copying(46) with
+            {
+                Name = "Copying 1 item from Downloads to Backup - Interrupted - 46% complete",
+                Question = "The destination already has a file named \"Project-Final.zip\"",
+                CanReplace = true,
+                CanSkip = true,
+            }])),
+            Step(115, new DemoFileOps([Copying(83)])),
+            Step(116.5, new DemoFileOps([])),
+            Step(119, new DemoEnd()),
         ];
     }
 
@@ -172,6 +187,9 @@ public static class DemoScript
     private const string Term = "demo-terminal";
 
     private static readonly BluetoothChange Buds = new("demo", "Galaxy Buds2 Pro", BluetoothKind.Audio, Connected: false, Battery: 80);
+
+    private static Gili.Core.FileOps.FileOpTile Copying(int percent) =>
+        new($"Copying 1 item from Downloads to Backup - {percent}% complete", "Project-Final.zip", "1 (4.2 GB)");
 
     private static DemoStep Step(double seconds, DemoAction action) => new(TimeSpan.FromSeconds(seconds), action);
 }
