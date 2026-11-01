@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Gili.Core.Settings;
 
-public enum SettingKind { Switch, Segment, Range, Shortcut, City, Info, Action }
+public enum SettingKind { Switch, Segment, Range, Shortcut, City, Info, Action, Color, Favorites }
 
 /// <summary>
 /// One row of the Settings window (PRD 6.5). <paramref name="Default"/> is what a row that is not available yet shows:
@@ -74,7 +74,10 @@ public static class SettingsCatalog
         ]),
         new("Appearance",
         [
+            new("barColor", "Bar color", SettingKind.Color, Available: true),
             new("opacity", "Bar opacity", SettingKind.Range, Available: true, Unit: "%"),
+            new("openOp", "Opacity while open", SettingKind.Range, "How much of the bar stays while the island is open", Available: true, Unit: "%"),
+            new("desktop", "Same on the desktop", SettingKind.Switch, "The bar looks like this while the desktop is in front", Available: true),
             new("glass", "Glass", SettingKind.Segment, Available: true, Options: ["Off", "Light", "Strong"]),
             new("barH", "Bar height", SettingKind.Range, Available: true, Unit: " px"),
             new("islH", "Island height", SettingKind.Range, "From 20 px up to the bar height minus 4 px", Available: true, Unit: " px"),
@@ -158,6 +161,9 @@ public static class SettingsCatalog
         "auto" => s.Autostart,
         "tray" => s.TrayIcon,
         "opacity" => s.BarOpacity,
+        "barColor" => s.BarColor,
+        "openOp" => s.OpenOpacity,
+        "desktop" => s.SameOnDesktop,
         "glass" => s.Glass.ToString(),
         "barH" => s.BarHeight,
         "islH" => s.IslandHeight,
@@ -191,6 +197,9 @@ public static class SettingsCatalog
         "auto" => s with { Autostart = (bool)value },
         "tray" => s with { TrayIcon = (bool)value },
         "opacity" => s with { BarOpacity = Number(value) },
+        "barColor" => BarColors.Parse(value as string) is { } color ? s with { BarColor = color } : s,
+        "openOp" => s with { OpenOpacity = Number(value) },
+        "desktop" => s with { SameOnDesktop = (bool)value },
         "glass" => s with { Glass = Enum.Parse<GlassLevel>((string)value) },
         "barH" => s with { BarHeight = Number(value) },
         "islH" => s with { IslandHeight = Number(value) },
@@ -221,6 +230,7 @@ public static class SettingsCatalog
     public static (int Min, int Max) Range(AppSettings s, string key) => key switch
     {
         "opacity" => (AppSettings.MinBarOpacity, AppSettings.MaxBarOpacity),
+        "openOp" => (0, 100),
         "barH" => (AppSettings.MinBarHeight, AppSettings.MaxBarHeight),
         "islH" => (AppSettings.MinIslandHeight, AppSettings.MaxIslandHeight(s.BarHeight)),
         "W.bat" => (5, 50),
@@ -238,6 +248,7 @@ public static class SettingsCatalog
         if (key == "pos" && !s.HideTaskbar)
             return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
         if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude" or "limOn") return new(false, ClaudeOff);
+        if (key == "barColor") return new(true, BarColors.IsLight(s.BarColor) ? BarColors.LightNote : null);
         if (!s.KeyboardShortcuts && Hotkeys.ActionOf(key) is not null) return new(false, null);
         if (key.StartsWith("T.", StringComparison.Ordinal))
         {

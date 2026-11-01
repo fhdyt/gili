@@ -121,12 +121,69 @@
                             <Button Style="{StaticResource ShortcutButton}" Content="{Binding ButtonText}" Command="{Binding RunCommand}"
                                     AutomationProperties.Name="{Binding Label}"
                                     Visibility="{Binding ShowButton, Converter={StaticResource VisibleWhen}}" />
+                            <!-- Bar color (F-BAR-14): eight 20 px circles and Custom, the chosen one ringed in white (mockup .swc). -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding IsColor, Converter={StaticResource VisibleWhen}}">
+                                <ItemsControl ItemsSource="{Binding Swatches}" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding PickCommand}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                                    FocusVisualStyle="{StaticResource FocusRing}" Cursor="Hand" Margin="0,0,4,0">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="Ring" Width="26" Height="26" CornerRadius="13" BorderThickness="2" BorderBrush="Transparent" Padding="1">
+                                                            <Ellipse Fill="{Binding Brush}" Stroke="#33FFFFFF" StrokeThickness="1" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="Ring" Property="BorderBrush" Value="#F5F5F7" />
+                                                            </DataTrigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Ring" Property="Opacity" Value="0.85" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- Custom: a dashed circle with #, filled with the custom colour once one is in use. -->
+                                <Button Click="OnCustomColor" ToolTip="Custom" AutomationProperties.Name="Custom color" FocusVisualStyle="{StaticResource FocusRing}" Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Ring" Width="26" Height="26" CornerRadius="13" BorderThickness="2" BorderBrush="Transparent" Padding="1">
+                                                <Grid>
+                                                    <Ellipse Fill="{Binding CustomBrush}" Stroke="#8E8E93" StrokeThickness="1" StrokeDashArray="2 2" />
+                                                    <TextBlock Text="#" FontSize="11" Foreground="#C7C7CC" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsCustomColor}" Value="True">
+                                                    <Setter TargetName="Ring" Property="BorderBrush" Value="#F5F5F7" />
+                                                </DataTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
                                 <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
                                         AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding ValueText}" Width="38" Margin="12,0,0,0" TextAlignment="Right"
                                            Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             </StackPanel>
+                        </StackPanel>
+                        <!-- Custom bar colour: a #RRGGBB field under the row; Enter or leaving it keeps a valid code, Esc cancels. -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding IsEditingColor, Converter={StaticResource VisibleWhen}}">
+                            <TextBlock Text="Color code" Foreground="#8E8E93" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <TextBox Style="{StaticResource Field}" Width="110" MaxLength="7" Text="{Binding ColorCode, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="Color code" IsVisibleChanged="OnCityFieldShown" PreviewKeyDown="OnColorKey"
+                                     LostKeyboardFocus="OnColorFieldLostFocus" />
                         </StackPanel>
                         <!-- The places found for the city search, under the row; a message when there are none. -->
                         <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0" Visibility="{Binding IsSearchingCity, Converter={StaticResource VisibleWhen}}">

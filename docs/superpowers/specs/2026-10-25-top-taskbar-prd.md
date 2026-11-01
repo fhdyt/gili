@@ -78,7 +78,7 @@ Gili dirilis gratis untuk umum lewat Microsoft Store dan installer di GitHub Rel
 | Topik | Keputusan |
 |---|---|
 | Bentuk bar | Bar selebar monitor utama, didaftarkan sebagai AppBar (memesan 32 px; jendela maximize mulai di bawahnya). Posisi atas (default) atau bawah; posisi bawah hanya bisa dipilih setelah taskbar Windows disembunyikan |
-| Material bar | Default opacity 100% (tint pekat di atas kaca). Opacity dan kekuatan blur bisa diatur |
+| Material bar | Default opacity 100% (tint pekat di atas kaca). Warna (8 warna gelap siap pakai atau kode hex sendiri; revisi 14), opacity, kekuatan blur, dan opacity saat pulau terbuka bisa diatur |
 | Maskot | Gili: dua mata putih di pulau saat tidak ada aktivitas, lingkaran kecil di kiri pulau saat ada aktivitas. Mata mengikuti kursor dan berkedip |
 | Material pulau | Hitam pekat di semua keadaan |
 | Pulau saat terbuka | Panel mengambang dengan sudut membulat penuh; tepi atasnya tetap di tempat tepi atas pulau compact (tidak turun), lalu membesar ke bawah. Hanya latar bar (warna dan kaca) yang menjadi transparan; isi kiri dan kanan tetap tampil kecuali yang tertimpa panel |
@@ -104,6 +104,7 @@ Gili dirilis gratis untuk umum lewat Microsoft Store dan installer di GitHub Rel
   - Perubahan langsung berlaku dengan animasi pegas; ruang AppBar didaftarkan ulang dengan tinggi baru.
 - Terdaftar sebagai AppBar (`SHAppBarMessage`) di tepi atas atau bawah, jadi area kerja Windows berkurang setinggi bar.
 - **Material**: warna gelap di atas latar yang di-blur. Default: tint `#161618` dengan **opacity 100%**, kaca "Strong" (kaca baru terlihat setelah opacity diturunkan). Pengaturan:
+  - **Bar color** (revisi 14, issue #35, F-BAR-14): deretan lingkaran warna 20 px (cincin putih 2 px berjarak 2 px pada yang dipilih) berisi 8 warna siap pakai, semuanya gelap supaya teks dan ikon putih tetap terbaca (kontras ≥ 4,5:1): `Graphite #161618` (default), `Black #000000`, `Slate #1C2530`, `Navy #15203D`, `Forest #13281C`, `Plum #2A1733`, `Wine #331820`, `Cocoa #2B2018`; lalu lingkaran **Custom** (garis putus-putus berisi `#`, terisi warna custom saat dipakai) yang membuka kolom `Color code` di bawah baris. Kolom menerima `#RRGGBB` atau `#RGB`, dengan atau tanpa `#`; Enter atau keluar dari kolom menyimpan, Esc membatalkan, kode yang tidak valid ditolak dengan `Use a code like #1E2A44`. Warna yang kontrasnya dengan putih di bawah 4,5:1 tetap dipakai, tetapi keterangan barisnya menjadi `Light colors make the bar's text hard to read`. Warna dipakai untuk tint (dikali Bar opacity), gradient acrylic, dan cincin titik status kecil di bar (Bluetooth, update, Claude). Pulau tetap `#000000`.
   - **Bar opacity**: 40–100%, default 100%.
   - **Glass**: Off (tint polos), Light (blur-behind), Strong (acrylic). Windows tidak menyediakan pengaturan radius blur bebas, jadi tiga tingkat ini dipetakan ke efek blur-behind dan acrylic bawaan sistem.
   - Kalau "Transparency effects" Windows mati, bar digambar polos apa pun pengaturannya.
@@ -173,8 +174,9 @@ Cuplikan clipboard (copy/cut teks, gambar, file) dan progres copy, move, dan del
 - Di posisi bar bawah, yang tetap adalah tepi bawahnya, dan pulau memanjang ke atas.
 
 **Bar saat pulau mengambang**
-- Latar bar (warna, blur kaca, garis bawah) memudar sampai transparan penuh, jadi wallpaper terlihat di area bar.
-- Isi kiri dan kanan **tetap tampil dan tetap bisa diklik**. Teksnya diberi bayangan tipis (hitam 55%, blur 3 px) supaya tetap terbaca di atas wallpaper terang.
+- Latar bar (warna, blur kaca, garis bawah) memudar ke **Opacity while open** (revisi 14, issue #22, F-BAR-15; Settings → Appearance, 0–100%, default 0%) dalam 220 ms. Default 0% berarti transparan penuh seperti sebelumnya, jadi wallpaper terlihat di area bar; nilai di atas 0 menyisakan sebagian tint (dikali Bar opacity) dan kaca tetap menyala. Di 0% kaca dimatikan setelah tint selesai memudar.
+- **Same on the desktop** (revisi 14, issue #30, F-BAR-16; Settings → Appearance, default nyala): selama desktop berada di depan (jendela foreground adalah desktop shell `Progman`/`WorkerW`, misalnya setelah Win+D atau klik wallpaper), latar bar memakai Opacity while open dengan fade yang sama walaupun pulau compact, lalu kembali saat jendela lain ke depan. Dibaca dari event foreground yang sudah dipakai deretan aplikasi, tanpa polling.
+- Isi kiri dan kanan **tetap tampil dan tetap bisa diklik**. Selama latar bar kurang dari 50% (pulau mengambang atau desktop di depan), teksnya diberi bayangan tipis (hitam 55%, blur 3 px) supaya tetap terbaca di atas wallpaper terang.
 - Hanya elemen yang posisinya tertimpa panel pulau, ditambah jarak 8 px di kiri dan kanan panel, yang memudar (opacity 0, 160 ms) dan tidak bisa diklik. Elemen dinilai satu per satu (tiap ikon launcher, aplikasi aktif, tiap modul kanan), jadi di layar lebar biasanya tidak ada yang hilang.
 - Saat pulau kembali compact, latar bar dan semua elemen muncul lagi.
 
@@ -802,7 +804,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Bagian | Isi |
 |---|---|
 | General | Bar position (Top / Bottom), Hide Windows taskbar, 12-hour clock (default mati), Show seconds, Start with Windows, Icon in the notification area (default nyala, `Right-click it to quit Gili`; revisi 14) |
-| Appearance | Bar opacity (default 100%), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
+| Appearance | Bar color (8 warna + Custom, default Graphite; revisi 14), Bar opacity (default 100%), Opacity while open (default 0%, `How much of the bar stays while the island is open`; revisi 14), Same on the desktop (default nyala, `The bar looks like this while the desktop is in front`; revisi 14), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Notes, Clipboard, Shelf, Claude, Running apps (revisi 12). Tiap saklar selain Start dan Running apps juga menyalakan/mematikan tab halaman yang sama di pulau, dengan keterangan `Turning it off also hides the <name> page in the island`. Selama `Show Claude Code sessions` mati, ikon dan tab Claude tidak ada dan saklar Claude (Left side dan Island) nonaktif dengan keterangan `Turn on Claude Code sessions first` |
 | Island | Show Gili; Show lyrics (default mati, Fase 6); saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Notes, Clipboard, Shelf, Claude, System); saklar halaman yang ikon kirinya mati nonaktif dengan keterangan `Turned off in Left side` |
 | Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date, Power (keterangan `Sleep, restart and shut down stay in the Start menu`; revisi 12); **Weather city**; **Battery alert** (ambang peringatan rendah 5–50%, keterangan `Also at 10%`); **Unplug reminder** (50–100%, default 80%, keterangan `Only on laptops that keep charging past it. 100% turns it off`) |
@@ -877,6 +879,9 @@ ID dipakai untuk melacak di rencana implementasi. Kolom Fase merujuk ke bagian 1
 | F-BAR-11 | Sembunyikan taskbar Windows | Saklar menyembunyikan taskbar Windows dan ruangnya kembali ke jendela lain; status asli dipulihkan saat saklar mati, Quit, crash, dan start berikutnya setelah mati paksa; tetap tersembunyi setelah Explorer restart; tombol Windows tetap membuka Start | 3 |
 | F-BAR-12 | Tampil/sembunyi | Setiap saklar di 6.5 (Left side, Island, Right side) langsung menampilkan/menyembunyikan elemennya dengan animasi; saklar Left side selain Start juga mematikan/menyalakan tab pulau yang sama dan menonaktifkan saklar tab itu selama mati, tanpa pernah menyisakan nol tab; elemen yang mati tidak menyisakan celah dan berhenti mengambil data; pilihan tersimpan setelah restart | 3 |
 | F-BAR-13 | Tombol Settings | Roda gigi selalu tampil tepat di kiri Power dan membuka jendela Settings; kalau Settings sudah terbuka, jendelanya dibawa ke depan | 1 |
+| F-BAR-14 | Warna bar | Sesuai 6.1 "Material": 8 warna siap pakai dan Custom dengan kode hex; warna langsung berlaku pada tint, kaca acrylic, dan cincin titik status; kode tidak valid ditolak dengan pesannya; warna terang diberi keterangan; tersimpan setelah restart; pulau tetap hitam (revisi 14, issue #35) | 5 |
+| F-BAR-15 | Opacity saat pulau terbuka | Latar bar memudar ke Opacity while open (0–100%, default 0%) saat pulau mengambang dan kembali penuh saat compact; 0% sama dengan perilaku sebelumnya (revisi 14, issue #22) | 5 |
+| F-BAR-16 | Sama di desktop | Dengan Same on the desktop nyala, Win+D atau klik wallpaper membuat latar bar memakai Opacity while open, dan membuka jendela lain mengembalikannya; mati: bar tidak berubah di desktop (revisi 14, issue #30) | 5 |
 | F-BAR-17 | Ikon tray dan Quit Gili | Sesuai 6.1 "Ikon tray Gili": ikon lingkaran Gili di notification area dengan tooltip `Gili`; klik membuka Settings, klik kanan membuka menu bar (Open Tools, Settings, Demo mode, Quit Gili) dan Quit Gili menutup Gili lewat jalur Quit biasa; klik kanan pulau compact membuka menu yang sama; ikon kembali setelah Explorer restart dan hilang setelah Quit; saklar `Icon in the notification area` (revisi 14, issue #25) | 5 |
 
 ### 7.2 Bagian kiri
@@ -1073,6 +1078,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Gambar dan file di riwayat Clipboard (revisi 12) | PNG di-encode sekali per gambar baru di thread latar belakang; thumbnail baris 80 px di-decode hanya saat halaman Clipboard terbuka; daftar file hanya path | RAM ≤ +1 MB saat halaman terbuka, 0 saat tertutup; disk ≤ 20 PNG | Batas gambar turun ke 10 |
 | Shelf di slot pulau (revisi 13) | Satu ikon dan dua teks yang dihitung ulang hanya saat isi Shelf berubah (event `Changed`, tanpa polling atau timer baru) | Tidak terukur | — |
 | Build self-contained (revisi 6) | Runtime .NET ikut di paket, jadi pengguna tidak perlu memasangnya. Tidak menambah RAM atau CPU; ukuran di disk naik | Paket unduhan ≤ 80 MB, terpasang ≤ 200 MB | Trimming dimatikan untuk WPF; kurangi aset yang ikut |
+| Warna bar, opacity saat terbuka, sama di desktop (revisi 14) | Brush baru hanya saat pengaturan berubah; desktop dibaca dari event foreground yang sudah ada; satu fade 220 ms per perubahan | Tidak terukur | — |
 | Ikon tray Gili (revisi 14) | Satu ikon di notification area; pesan hanya saat diklik | Tidak terukur | — |
 | Cek update (installer GitHub saja, F-PUB-04) | Satu permintaan HTTPS kecil saat start lalu tiap 24 jam; tidak ada proses latar terpisah | Tidak terukur | — |
 
@@ -1298,7 +1304,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan. `gili.db` yang rusak diganti backup harian terbaru, lalu salinan untuk reinstall.
 - Migrasi skema lewat tabel `schema_version`. File dari versi Gili yang lebih lama disalin dulu ke `backups\gili-before-v<N>.db` (tidak ikut dirotasi) sebelum dimigrasi, jadi langkah migrasi yang salah tidak menghilangkan data.
-- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows (status asli taskbar di `taskbar-state.json`, Fase 3f), format jam, tampilkan detik (default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, lirik nyala/mati, ambang baterai, kota cuaca (nama, lat, lon), hotkey, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase, durasi pomodoro (fokus, istirahat pendek, istirahat panjang, jumlah sesi).
+- `settings.json` berisi: posisi bar, sembunyikan taskbar Windows (status asli taskbar di `taskbar-state.json`, Fase 3f), format jam, tampilkan detik (default nyala), warna bar (`BarColor`, default `#161618`; revisi 14), opacity saat pulau terbuka (`OpenOpacity`, default 0) dan Same on the desktop (`SameOnDesktop`, default nyala), ikon tray (`TrayIcon`, default nyala), opacity bar (default 100), tingkat kaca, tinggi bar, tinggi pulau, ambient glow dan motion, Gili nyala/mati, saklar tampil elemen kiri, saklar halaman pulau, modul kanan (id, nyala, urutan), Wi‑Fi/Bluetooth/Volume/Brightness/tray/jam nyala, timer Claude 5 jam nyala, lirik nyala/mati, ambang baterai, kota cuaca (nama, lat, lon), hotkey, integrasi Claude nyala/mati, autostart, suara timer, Alert volume, Gradually increase, durasi pomodoro (fokus, istirahat pendek, istirahat panjang, jumlah sesi).
 
 ## 11. Penanganan error
 
@@ -1417,7 +1423,7 @@ Rilis publik pertama dilakukan setelah Fase 4 dan berisi semua fitur Fase 1–4.
 - Versi berbayar, langganan, iklan, dan telemetri.
 - Windows 10, ARM64, dan distribusi lewat winget atau toko lain di rilis pertama.
 - Suhu CPU dan sensor hardware lain yang butuh hak admin atau driver (F-RIGHT-06 dihapus).
-- Tema terang dan kustomisasi warna aksen.
+- Tema terang dan kustomisasi warna aksen. Warna latar bar bisa diatur sejak revisi 14 (F-BAR-14), tetapi teks, ikon, dan warna aksen tetap.
 - Tab Chat Claude Desktop; hanya sesi Claude Code (tab Code dan CLI) yang dipantau.
 - Menjawab pertanyaan atau izin Claude langsung dari pulau, dan membuka percakapan tertentu di dalam Claude Desktop.
 - Membalas pesan, menjalankan tombol aksi notifikasi, menampilkan gambar notifikasi, dan riwayat notifikasi di pulau (Notification Center Windows tetap tempatnya).

@@ -42,6 +42,8 @@ public partial class BarWindow : Window
     private DisplayMonitor? _display;
     private bool _floating;
     private bool _glassOff;
+    private bool _desktop;
+    private double _backdrop = 1;
 
     public BarWindow(SettingsHub settings, TransparencyWatcher transparency, StatsService stats, ClockService clock, AppsService apps, RightService right)
     {
@@ -65,6 +67,15 @@ public partial class BarWindow : Window
         };
         _vm.ApplyRight(_right, Glyph);
         _settings.Changed += OnSettingsChanged;
+        // Same on the desktop (F-BAR-16): the foreground the strip already follows says when the desktop is in front.
+        apps.ForegroundChanged += hwnd =>
+        {
+            var desktop = AppBarService.IsShellDesktop(hwnd);
+            if (desktop == _desktop) return;
+            _desktop = desktop;
+            if (Dispatcher.CheckAccess()) ApplyBackdrop();
+            else Dispatcher.InvokeAsync(ApplyBackdrop);
+        };
         _transparency.Changed += _ => Dispatcher.InvokeAsync(ApplyAppearance);
         _stats.Updated += _vm.ApplyStats;
         _polling.Changed += OnPollingChanged;
@@ -328,26 +339,38 @@ public partial class BarWindow : Window
     public void Reassert() => _appBar?.Reposition();
 
     /// <summary>
-    /// While the island floats only the bar's backdrop goes away (PRD 6.3): the tint fades in 220 ms, then the glass is
-    /// switched off because the accent policy cannot fade. Content stays with a text shadow, except what the panel covers.
+    /// While the island floats only the bar's backdrop changes (PRD 6.3); content stays, except what the panel covers.
     /// </summary>
     public void SetIslandFloating(bool floating, double islandWidth)
     {
         UpdateCovered(floating ? islandWidth : 0);
         if (floating == _floating) return;
         _floating = floating;
-        BarContent.Effect = floating ? TextShadow : null;
-        var fade = new DoubleAnimation(floating ? 0 : 1, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 100));
-        if (floating)
+        ApplyBackdrop();
+    }
+
+    /// <summary>
+    /// The backdrop fades in 220 ms to Opacity while open while the island floats, or the desktop is in front with Same on
+    /// the desktop (F-BAR-15, F-BAR-16), and back to full after. At 0 the glass is switched off once the tint has faded,
+    /// because the accent policy cannot fade. A text shadow keeps the content readable while less than half shows.
+    /// </summary>
+    private void ApplyBackdrop()
+    {
+        var target = BarAppearance.Backdrop(_settings.Current, _floating, _desktop);
+        BarContent.Effect = target < 0.5 ? TextShadow : null;
+        if (Math.Abs(target - _backdrop) < 0.001) return;
+        _backdrop = target;
+        var fade = new DoubleAnimation(target, TimeSpan.FromMilliseconds(SystemParameters.ClientAreaAnimation ? 220 : 100));
+        if (target == 0)
         {
             fade.Completed += (_, _) =>
             {
-                if (!_floating) return;
+                if (_backdrop != 0) return;
                 _glassOff = true;
                 ApplyAppearance();
             };
         }
-        else
+        else if (_glassOff)
         {
             _glassOff = false;
             ApplyAppearance();
@@ -427,6 +450,7 @@ public partial class BarWindow : Window
             else _tray?.Remove();
         }
         ApplyAppearance();
+        ApplyBackdrop();
     }
 
     /// <summary>
@@ -444,7 +468,7 @@ public partial class BarWindow : Window
     private void ApplyAppearance()
     {
         var look = BarAppearance.Resolve(_settings.Current, _transparency.Enabled);
-        BarMaterial.Apply(_hwnd, _glassOff ? GlassLevel.Off : look.Glass);
+        BarMaterial.Apply(_hwnd, _glassOff ? GlassLevel.Off : look.Glass, look.Color);
         _vm.ApplySettings(_settings.Current, look);
     }
 

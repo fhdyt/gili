@@ -126,7 +126,7 @@
                 <Grid>
                     <c:IconView x:Name="ClaudeIcon" Glyph="{StaticResource Icon.Claude}" Filled="True" Width="16" Height="16" />
                     <Ellipse x:Name="ClaudeDot" Width="9" Height="9" Margin="0,-2.5,-3.5,0" HorizontalAlignment="Right" VerticalAlignment="Top"
-                             Fill="#FFD60A" Stroke="#161618" StrokeThickness="1.5" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                             Fill="#FFD60A" Stroke="{DynamicResource BarRing}" StrokeThickness="1.5" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <ScaleTransform x:Name="ClaudeDotScale" ScaleX="0" ScaleY="0" />
                         </Ellipse.RenderTransform>

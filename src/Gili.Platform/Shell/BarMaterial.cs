@@ -35,8 +35,10 @@ public static class BarMaterial
     [DllImport("user32.dll")]
     private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
-    public static void Apply(IntPtr hwnd, GlassLevel glass)
+    /// <param name="color">The bar's tint as #RRGGBB (F-BAR-14); acrylic gets it at alpha 1 as its gradient.</param>
+    public static void Apply(IntPtr hwnd, GlassLevel glass, string color = BarColors.Default)
     {
+        var (r, g, b) = BarColors.Rgb(color);
         var policy = new AccentPolicy
         {
             AccentState = glass switch
@@ -45,8 +47,8 @@ public static class BarMaterial
                 GlassLevel.Strong => ACCENT_ENABLE_ACRYLICBLURBEHIND,
                 _ => ACCENT_DISABLED,
             },
-            // AABBGGRR: the bar tint #161618 at alpha 1, so acrylic has a gradient to work with.
-            GradientColor = glass == GlassLevel.Strong ? 0x01181616u : 0u,
+            // AABBGGRR: the bar's tint at alpha 1, so acrylic has a gradient to work with.
+            GradientColor = glass == GlassLevel.Strong ? 0x01000000u | ((uint)b << 16) | ((uint)g << 8) | r : 0u,
         };
         var size = Marshal.SizeOf<AccentPolicy>();
         var buffer = Marshal.AllocHGlobal(size);

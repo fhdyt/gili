@@ -57,6 +57,15 @@ public sealed record AppSettings
 
     public bool Use24HourClock { get; init; } = true;
     public int BarOpacity { get; init; } = 100;
+
+    /// <summary>The bar's tint as #RRGGBB (F-BAR-14): a preset from <see cref="BarColors"/> or a custom code.</summary>
+    public string BarColor { get; init; } = BarColors.Default;
+
+    /// <summary>How much of the bar's backdrop stays while the island floats, 0–100 % (F-BAR-15); 0 keeps the bar clear.</summary>
+    public int OpenOpacity { get; init; }
+
+    /// <summary>The bar looks as it does with the island open while the desktop is in front (F-BAR-16).</summary>
+    public bool SameOnDesktop { get; init; } = true;
     public GlassLevel Glass { get; init; } = GlassLevel.Strong;
     public int BarHeight { get; init; } = 32;
     public int IslandHeight { get; init; } = 24;
@@ -136,6 +145,8 @@ public sealed record AppSettings
             BarHeight = barHeight,
             IslandHeight = Math.Clamp(IslandHeight, MinIslandHeight, MaxIslandHeight(barHeight)),
             BarOpacity = Math.Clamp(BarOpacity, MinBarOpacity, MaxBarOpacity),
+            BarColor = BarColors.Parse(BarColor) ?? BarColors.Default,
+            OpenOpacity = Math.Clamp(OpenOpacity, 0, 100),
             Glass = Enum.IsDefined(Glass) ? Glass : GlassLevel.Strong,
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),
             BatteryAlert = Math.Clamp(BatteryAlert, 5, 50),

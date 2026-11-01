@@ -155,7 +155,8 @@ public sealed class AppBarService(IntPtr hwnd)
         return info.rcMonitor;
     }
 
-    private static bool IsShellDesktop(IntPtr window)
+    /// <summary>The shell's desktop window (wallpaper), in front after Win+D or a click on the wallpaper.</summary>
+    public static bool IsShellDesktop(IntPtr window)
     {
         var name = new StringBuilder(32);
         Win32.GetClassName(window, name, name.Capacity);

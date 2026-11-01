@@ -124,9 +124,14 @@ public sealed partial class BarViewModel : ObservableObject
 
     public void ApplySettings(AppSettings settings, BarAppearance look)
     {
-        var brush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(look.TintOpacity * 255), 0x16, 0x16, 0x18));
+        var (r, g, b) = BarColors.Rgb(look.Color);
+        var brush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(look.TintOpacity * 255), r, g, b));
         brush.Freeze();
         Tint = brush;
+        // The ring around the bar's small status dots is the bar's own colour, so a dot looks cut out of it.
+        var ring = new SolidColorBrush(Color.FromRgb(r, g, b));
+        ring.Freeze();
+        System.Windows.Application.Current.Resources["BarRing"] = ring;
         ModuleHeight = BarMetrics.ModuleHitHeight(settings.BarHeight);
     }
 

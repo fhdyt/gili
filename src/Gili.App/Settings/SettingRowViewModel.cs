@@ -86,6 +86,61 @@ public sealed partial class SettingRowViewModel : ObservableObject
 
     public bool IsCity => _row.Kind == SettingKind.City;
 
+    /// <summary>Bar color (F-BAR-14): eight swatches and Custom, which opens a #RRGGBB field under the row.</summary>
+    public bool IsColor => _row.Kind == SettingKind.Color;
+
+    public ObservableCollection<SwatchChoice> Swatches { get; } = [];
+
+    /// <summary>The colour in use is not a preset, so the Custom swatch is the selected one and shows it.</summary>
+    [ObservableProperty] private bool _isCustomColor;
+    [ObservableProperty] private System.Windows.Media.Brush? _customBrush;
+    [ObservableProperty] private bool _isEditingColor;
+    [ObservableProperty] private string _colorCode = "";
+
+    public void EditCustomColor()
+    {
+        if (!IsEnabled) return;
+        ColorCode = _hub.Current.BarColor;
+        IsEditingColor = true;
+    }
+
+    /// <summary>Enter or leaving the field keeps a valid code; anything else says what a code looks like.</summary>
+    public void CommitColorCode()
+    {
+        if (!IsEditingColor) return;
+        if (BarColors.Parse(ColorCode) is not { } color)
+        {
+            Note = BarColors.BadCode;
+            return;
+        }
+        IsEditingColor = false;
+        _hub.Update(s => SettingsCatalog.Write(s, _row.Key, color));
+    }
+
+    public void CancelColorCode()
+    {
+        IsEditingColor = false;
+        Reload(_hub.Current);
+    }
+
+    private void PickColor(string hex)
+    {
+        if (!IsEnabled) return;
+        IsEditingColor = false;
+        _hub.Update(s => SettingsCatalog.Write(s, _row.Key, hex));
+    }
+
+    private void ShowColor(string current)
+    {
+        if (Swatches.Count == 0)
+        {
+            foreach (var (name, hex) in BarColors.Presets) Swatches.Add(new SwatchChoice(name, hex, PickColor));
+        }
+        foreach (var swatch in Swatches) swatch.IsSelected = swatch.Hex == current;
+        IsCustomColor = BarColors.NameOf(current) is null;
+        CustomBrush = IsCustomColor ? SwatchChoice.BrushOf(current) : null;
+    }
+
     /// <summary>An About row that shows text, like the version (design 5a).</summary>
     public bool IsInfo => _row.Kind == SettingKind.Info;
 
@@ -221,6 +276,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
             case SettingKind.City:
                 City = value as string ?? "";
                 break;
+            case SettingKind.Color:
+                ShowColor(value as string ?? BarColors.Default);
+                break;
             case SettingKind.Range:
                 (Min, Max) = SettingsCatalog.Range(settings, _row.Key);
                 Value = Convert.ToDouble(value, CultureInfo.InvariantCulture);
@@ -247,6 +305,28 @@ public sealed partial class SettingRowViewModel : ObservableObject
     {
         if (_loading || !IsEnabled) return;
         _hub.Update(s => SettingsCatalog.Write(s, _row.Key, value));
+    }
+}
+
+/// <summary>One colour of the Bar color row: a 20 px circle, ringed in white while it is the bar's.</summary>
+public sealed partial class SwatchChoice(string name, string hex, Action<string> pick) : ObservableObject
+{
+    [ObservableProperty] private bool _isSelected;
+
+    public string Name { get; } = name;
+
+    public string Hex { get; } = hex;
+
+    public System.Windows.Media.Brush Brush { get; } = BrushOf(hex);
+
+    public IRelayCommand PickCommand { get; } = new RelayCommand(() => pick(hex));
+
+    public static System.Windows.Media.Brush BrushOf(string hex)
+    {
+        var (r, g, b) = BarColors.Rgb(hex);
+        var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
     }
 }
 

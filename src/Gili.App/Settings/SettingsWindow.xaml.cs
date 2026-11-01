@@ -68,6 +68,25 @@ public partial class SettingsWindow : Window
         e.Handled = true;
     }
 
+    private void OnCustomColor(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.EditCustomColor();
+    }
+
+    private void OnColorKey(object sender, KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: SettingRowViewModel row }) return;
+        if (e.Key == Key.Enter) row.CommitColorCode();
+        else if (e.Key == Key.Escape) row.CancelColorCode();
+        else return;
+        e.Handled = true;
+    }
+
+    private void OnColorFieldLostFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.CommitColorCode();
+    }
+
     private void OnShortcutLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.StopRecording(null);

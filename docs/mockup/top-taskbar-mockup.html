@@ -57,9 +57,18 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
   background:rgba(var(--bar-rgb),var(--bar-a));backdrop-filter:blur(var(--bar-blur)) saturate(170%);-webkit-backdrop-filter:blur(var(--bar-blur)) saturate(170%);
   box-shadow:inset 0 -1px 0 rgba(255,255,255,.06);
   transition:background-color 220ms ease,backdrop-filter 220ms ease,-webkit-backdrop-filter 220ms ease,box-shadow 220ms ease,opacity 200ms ease,transform 260ms var(--out)}
-/* While the island floats, only the bar's material goes away; its content stays unless the panel covers it. */
-.bar.focus,body.solid .bar.focus{background:rgba(var(--bar-rgb),0);backdrop-filter:blur(0px) saturate(100%);-webkit-backdrop-filter:blur(0px) saturate(100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,0)}
-.bar.focus .left,.bar.focus .right{text-shadow:0 1px 3px rgba(0,0,0,.55)}
+/* While the island floats, and with Same on the desktop while the desktop is in front, the bar's material fades to
+   Opacity while open (--open-a, default 0: clear); its content stays unless the panel covers it (revision 14, issues #22, #30). */
+.bar.focus,body.solid .bar.focus{background:rgba(var(--bar-rgb),calc(var(--bar-a) * var(--open-a,0)));backdrop-filter:blur(var(--open-blur,0px)) saturate(100%);-webkit-backdrop-filter:blur(var(--open-blur,0px)) saturate(100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,calc(.06 * var(--open-a,0)))}
+.bar.focus.dim .left,.bar.focus.dim .right{text-shadow:0 1px 3px rgba(0,0,0,.55)}
+/* Bar color (revision 14, issue #35): 20 px circles, the chosen one ringed in white; Custom is dashed with a #. */
+.swc{display:flex;gap:4px;align-items:center}
+.swc button{width:26px;height:26px;border-radius:50%;padding:1px;border:2px solid transparent;display:grid;place-items:center}
+.swc button i{display:block;width:100%;height:100%;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.swc button.on{border-color:var(--text)}
+.swc button.cc i{background:var(--c,transparent);box-shadow:none;border:1px dashed var(--text2);display:grid;place-items:center;font-size:11px;color:#C7C7CC;font-style:normal}
+.srow .ccf{display:flex;align-items:center;gap:10px;flex-basis:100%;font-size:11.5px;color:var(--text2)}
+.srow.wrap{flex-wrap:wrap}
 .under{opacity:0!important;pointer-events:none}
 .left,.right{display:flex;align-items:center;gap:12px;min-width:0}
 /* With each module's 4 px padding this leaves 10 px between modules. */
@@ -899,6 +908,8 @@ span.cbt .ic{width:16px;height:16px}
 .desk.fs .iw:not(.st-card){opacity:0;pointer-events:none}
 .desk.fs .bubble,.desk.fs .pc{opacity:0}
 .desk.fs .wtb,.desk.notb .wtb{transform:translateY(100%)}
+/* Win+D in the mockup: the windows go, so the desktop is in front (revision 14, issue #30). */
+.desk.deskfront .win{opacity:0;transform:scale(.96);pointer-events:none;transition:opacity 200ms ease,transform 200ms ease}
 .desk.notb #winA{height:calc(100% - var(--bar-h,32px))}
 body.bottom #winA{top:0}
 .desk.fs .gcirc{opacity:0}
@@ -1323,7 +1334,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="segc" id="glass" role="group" aria-label="Glass"><button data-g="0">Off</button><button data-g="12">Light</button><button data-g="30" class="on">Strong</button></div>
     <div class="g" style="margin-top:8px"><button data-act="extra" aria-pressed="false">Show GPU, disk</button><button data-act="glow" aria-pressed="true">Ambient glow</button></div>
     <h3>Other</h3>
-    <div class="g"><button data-act="updates" aria-pressed="false">Windows updates pending</button><button data-act="fs" aria-pressed="false">Fullscreen app</button><button data-act="reduce" aria-pressed="false">Reduce motion</button></div>
+    <div class="g"><button data-act="updates" aria-pressed="false">Windows updates pending</button><button data-act="fs" aria-pressed="false">Fullscreen app</button><button data-act="desk" aria-pressed="false">Show the desktop (Win+D)</button><button data-act="reduce" aria-pressed="false">Reduce motion</button></div>
   </div>
 </aside>
 <div class="hint" id="hint" role="status"></div>
@@ -1726,7 +1737,7 @@ function setState(next,instant){
   else if(next==='wide'||prev==='wide')setMotion(SP_WIDE);
   else setMotion(SP_CLOSE);
   iw.className='iw st-'+next;
-  bar.classList.toggle('focus',FLOAT.includes(next));
+  barFocus(next);
   if(FLOAT.includes(next))closePops();
   if(next!=='wide'){clearTimeout(S.wideT);S.wideKey=null}
   if(next!=='expanded'){clearTimeout(S.leaveT);glowCentre()}
@@ -3134,7 +3145,7 @@ function limCheck(){
 /* Settings window */
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw'],['tray','Icon in the notification area','sw',null,'Right-click it to quit Gili']],
-  Appearance:[['opacity','Bar opacity','range',[40,100,'%']],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
+  Appearance:[['barColor','Bar color','color'],['opacity','Bar opacity','range',[40,100,'%']],['openOp','Opacity while open','range',[0,100,'%'],'How much of the bar stays while the island is open'],['desktop','Same on the desktop','sw',null,'The bar looks like this while the desktop is in front'],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.apps','Running apps']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
@@ -3168,6 +3179,7 @@ function sput(k,v){
   if(k==='lyrics')lyricsTrack();
   if(k==='hideTb'&&!v&&S.pos==='bottom'){S.pos='top';hint('Moved to the top because the Windows taskbar is back')}
   if(k==='tray')$('#gTray').hidden=!v;
+  if(k==='barColor'||k==='openOp'||k==='desktop')barLook();
   applySettings();renderSettings();
 }
 function applySettings(){
@@ -3186,7 +3198,8 @@ function renderSettings(){
     const last=k.startsWith('T.')&&lastTab(+k.split('.')[1])||k.startsWith('L.')&&LEFT_TAB[k.split('.')[1]]!=null&&lastTab(LEFT_TAB[k.split('.')[1]]);
     const later=help==='Coming in a later version';
     const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last||later;
-    const ctl=type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
+    const ctl=type==='color'?`<span class="swc">${BAR_COLORS.map(([n,h])=>`<button data-k="barColor" data-v="${h}" class="${S.barColor===h?'on':''}" title="${n}" aria-label="${n}"><i style="--c:${h}"></i></button>`).join('')}<button class="cc ${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'on'}" data-cc title="Custom" aria-label="Custom color"><i style="${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'--c:'+S.barColor}">#</i></button></span>`
+      :type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
       :type==='info'?`<span class="num" style="color:#C7C7CC">${opts[0]}</span>`
       :type==='btn'?`<button class="kcap" data-act="${k}" aria-label="${label}">${opts[0]}</button>`
       :type==='key'?`<button class="kcap" data-k="${k}" aria-label="${label}" title="Press to record a new shortcut">${opts[0]}</button>`
@@ -3194,7 +3207,9 @@ function renderSettings(){
       :`<button class="sw" role="switch" aria-checked="${!!v}" data-k="${k}" aria-label="${label}"></button>`;
     const why=tabOff?'Turned off in Left side':ntfOff?'Turn on Show Windows notifications first':'Hide the Windows taskbar first';
     const mk=k.startsWith('M.')&&S.order.includes(k.slice(2))?k.slice(2):null;
-    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last&&!later?`<small>${why}</small>`:help?`<small>${help}</small>`:''}</span>${ctl}</div>`;
+    const note=k==='barColor'&&barLight(S.barColor)?"Light colors make the bar's text hard to read":help;
+    const cc=type==='color'&&S.ccOpen?`<span class="ccf">Color code<input class="field" id="ccIn" maxlength="7" value="${S.barColor}" aria-label="Color code" style="width:110px"></span>`:'';
+    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}${cc?' wrap':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last&&!later?`<small>${why}</small>`:note?`<small>${note}</small>`:''}</span>${ctl}${cc}</div>`;
   }).join('');
 }
 // Right side lists the system modules in the bar's order.
@@ -3239,14 +3254,16 @@ $('#setn').onclick=e=>{const b=e.target.closest('[data-sec]');if(b){setSec=b.dat
 $('#setp').addEventListener('click',e=>{
   const a=e.target.closest('button[data-act]');
   if(a){if(!a.closest('.dis'))hint(a.dataset.act==='logs'?'Opens the logs folder in File Explorer':'Gili quits and Windows Settings › Installed apps opens');return}
+  if(e.target.closest('[data-cc]')){S.ccOpen=true;renderSettings();$('#ccIn').focus();$('#ccIn').select();return}
   const b=e.target.closest('button[data-k]');if(!b)return;
+  if(b.dataset.k==='barColor'){S.ccOpen=false;sput('barColor',b.dataset.v);return}
   b.classList.contains('sw')?sput(b.dataset.k,b.getAttribute('aria-checked')==='true'?0:1):sput(b.dataset.k,b.dataset.v);
 });
 // Opacity updates live without rebuilding the row, so dragging the slider keeps working.
 $('#setp').addEventListener('input',e=>{
   const k=e.target.dataset.k,v=+e.target.value;
   if(k==='opacity'){$('#opA').value=v;$('#opA').oninput({target:$('#opA')});e.target.nextElementSibling.textContent=v+'%';return}
-  if(k!=='barH'&&k!=='islH'){S[k]=v;e.target.nextElementSibling.textContent=v+'%';return}
+  if(k!=='barH'&&k!=='islH'){S[k]=v;e.target.nextElementSibling.textContent=v+'%';if(k==='openOp')barLook();return}
   S[k]=v;$('#'+k).value=v;setHeights();
   e.target.nextElementSibling.textContent=v+' px';
   const isl=$('#setp input[data-k="islH"]');
@@ -4044,6 +4061,27 @@ renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();set
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);
 new ResizeObserver(()=>layout()).observe(document.documentElement);
+/* Bar color, Opacity while open and Same on the desktop (F-BAR-14–16, revision 14). */
+const BAR_COLORS=[['Graphite','#161618'],['Black','#000000'],['Slate','#1C2530'],['Navy','#15203D'],['Forest','#13281C'],['Plum','#2A1733'],['Wine','#331820'],['Cocoa','#2B2018']];
+Object.assign(S,{barColor:'#161618',openOp:0,desktop:1,deskFront:false,ccOpen:false});
+function parseColor(t){let c=String(t).trim().replace(/^#/,'');if(c.length===3)c=[...c].map(x=>x+x).join('');return /^[0-9a-f]{6}$/i.test(c)?'#'+c.toUpperCase():null}
+function barLight(h){const n=parseInt(h.slice(1),16),l=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return 1.05/(.2126*l[0]+.7152*l[1]+.0722*l[2]+.05)<4.5}
+function barLook(){
+  const n=parseInt(S.barColor.slice(1),16),r=document.documentElement.style;
+  r.setProperty('--bar-rgb',`${n>>16},${n>>8&255},${n&255}`);r.setProperty('--open-a',(S.openOp/100).toFixed(2));
+  r.setProperty('--open-blur',S.openOp>0?'var(--bar-blur)':'0px');barFocus(S.state);
+}
+// The material fades while the island floats, or while the desktop is in front with Same on the desktop.
+function barFocus(st){const on=FLOAT.includes(st)||(S.deskFront&&!!S.desktop);bar.classList.toggle('focus',on);bar.classList.toggle('dim',on&&S.openOp<50)}
+$('#setp').addEventListener('keydown',e=>{
+  if(e.target.id!=='ccIn')return;
+  if(e.key==='Escape'){e.stopPropagation();S.ccOpen=false;renderSettings();return}
+  if(e.key!=='Enter')return;const c=parseColor(e.target.value);
+  if(!c){hint('Use a code like #1E2A44');return}
+  S.ccOpen=false;sput('barColor',c);
+});
+$('#setp').addEventListener('focusout',e=>{if(e.target.id!=='ccIn'||!S.ccOpen)return;const c=parseColor(e.target.value);if(c){S.ccOpen=false;sput('barColor',c)}});
+ACT.desk=()=>{S.deskFront=!S.deskFront;$('#desk').classList.toggle('deskfront',S.deskFront);setPressed('desk',S.deskFront);barFocus(S.state);hint(S.deskFront?'The desktop is in front: the bar looks as it does with the island open':'A window is in front again')};
 /* The bar's menu (F-BAR-17): right-click on the bar or the compact island, or Gili's tray icon; a click on the icon opens Settings. */
 S.tray=1;
 function showBarMenu(x,y){const m=$('#bMenu');m.hidden=false;const r=m.getBoundingClientRect();m.style.left=Math.min(x,innerWidth-r.width-8)+'px';m.style.top=(y+r.height>innerHeight?y-r.height:y)+'px';m.querySelector('button').focus()}
