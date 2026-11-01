@@ -171,6 +171,9 @@
                                     </Button.Template>
                                 </Button>
                             </StackPanel>
+                            <!-- Favorite apps (F-LEFT-08): Add app… picks an .exe or a shortcut; the list is under the row. -->
+                            <Button Style="{StaticResource ShortcutButton}" Content="Add app…" Click="OnAddFavorite" IsEnabled="{Binding CanAddFavorite}"
+                                    AutomationProperties.Name="Add a favorite app" Visibility="{Binding IsFavorites, Converter={StaticResource VisibleWhen}}" />
                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsRange, Converter={StaticResource VisibleWhen}}">
                                 <Slider Style="{StaticResource Range}" Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}"
                                         AutomationProperties.Name="{Binding Label}" VerticalAlignment="Center" />
@@ -178,6 +181,33 @@
                                            Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                             </StackPanel>
                         </StackPanel>
+                        <!-- The favorite apps, one line each: icon, name, Remove. -->
+                        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding FavoriteRows}" Focusable="False" Margin="0,6,0,0"
+                                      Visibility="{Binding IsFavorites, Converter={StaticResource VisibleWhen}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,2" Height="30">
+                                        <Button DockPanel.Dock="Right" Command="{Binding RemoveCommand}" Content="Remove" AutomationProperties.Name="{Binding RemoveName}"
+                                                Foreground="#C7C7CC" FontSize="12" Cursor="Hand" FocusVisualStyle="{StaticResource FocusRing}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bg" Padding="10,4" CornerRadius="6" Background="Transparent">
+                                                        <ContentPresenter VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bg" Property="Background" Value="#2C2C2E" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                        <Image Source="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <!-- Custom bar colour: a #RRGGBB field under the row; Enter or leaving it keeps a valid code, Esc cancels. -->
                         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding IsEditingColor, Converter={StaticResource VisibleWhen}}">
                             <TextBlock Text="Color code" Foreground="#8E8E93" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,10,0" />

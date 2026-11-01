@@ -11,6 +11,7 @@ using Gili.Core.Island;
 using Gili.Core.Motion;
 using Gili.Core.Settings;
 using Gili.Core.Shelf;
+using Gili.Platform.Apps;
 using Gili.Platform.Shell;
 
 namespace Gili.App.Bar;
@@ -144,7 +145,83 @@ public partial class LeftSide : UserControl
 
     /// <summary>Elements judged one by one when the floating island covers part of the bar (PRD 6.3).</summary>
     public IEnumerable<FrameworkElement> Coverable =>
-        [StartButton, .. Launcher.Children.OfType<FrameworkElement>(), .. _buttons.Values.Select(b => b.Root), More];
+        [StartButton, .. Launcher.Children.OfType<FrameworkElement>().Where(c => c != FavoritesRow), .. FavoritesRow.Children.OfType<FrameworkElement>(),
+         .. _buttons.Values.Select(b => b.Root), More];
+
+    /// <summary>A change to the favorites from a right-click menu (F-LEFT-08); the bar applies it to the settings.</summary>
+    public event Action<Func<IReadOnlyList<FavoriteApp>, IReadOnlyList<FavoriteApp>>>? FavoritesChanged;
+
+    private IReadOnlyList<FavoriteApp> _favorites = [];
+
+    /// <summary>
+    /// The favorite apps after Claude (F-LEFT-08): each its own icon in a launcher-sized button, grey at 40% while its exe is
+    /// gone. A click brings the app's window to the front, or starts it.
+    /// </summary>
+    public void ShowFavorites(IReadOnlyList<FavoriteApp> favorites)
+    {
+        _favorites = favorites;
+        FavoritesRow.Children.Clear();
+        foreach (var favorite in favorites)
+        {
+            var item = _apps.Item(favorite);
+            var found = AppLauncher.Exists(favorite.Key);
+            var icon = item.Icon is null
+                ? (FrameworkElement)new IconView { Glyph = (Geometry)Application.Current.FindResource("Icon.Note"), Width = 16, Height = 16 }
+                : new Image { Source = item.Icon, Width = 16, Height = 16 };
+            RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.HighQuality);
+            var button = new Button
+            {
+                Style = (Style)FindResource("BarIconButton"),
+                Content = icon,
+                Margin = new Thickness(2, 0, 0, 0),
+                ToolTip = found ? favorite.Name : favorite.Name + " · not found",
+                Opacity = found ? 1 : 0.4,
+                Tag = favorite.Key,
+            };
+            AutomationProperties.SetName(button, "Open " + favorite.Name);
+            button.Click += (_, _) =>
+            {
+                if (AppLauncher.Exists(favorite.Key)) _apps.Open(favorite);
+            };
+            button.MouseRightButtonUp += (_, e) =>
+            {
+                e.Handled = true;
+                ShowMenu(button,
+                    ("Move left", _favorites.FirstOrDefault()?.Key != favorite.Key, list => Favorites.Move(list, favorite.Key, -1)),
+                    ("Move right", _favorites.LastOrDefault()?.Key != favorite.Key, list => Favorites.Move(list, favorite.Key, +1)),
+                    ("Remove from Favorites", true, list => Favorites.Remove(list, favorite.Key)));
+            };
+            FavoritesRow.Children.Add(button);
+        }
+        Dispatcher.InvokeAsync(Fit, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Right-click on a running app: add it to the favorites, or take it off (F-LEFT-08).</summary>
+    private void OnAppRightClick(string key, FrameworkElement target)
+    {
+        if (!Favorites.CanAdd(key)) return;
+        if (Favorites.Contains(_favorites, key))
+        {
+            ShowMenu(target, ("Remove from Favorites", true, list => Favorites.Remove(list, key)));
+            return;
+        }
+        var full = Favorites.IsFull(_favorites);
+        var name = _apps.NameOf(key);
+        ShowMenu(target, (full ? "Favorites are full" : "Add to Favorites", !full, list => Favorites.Add(list, new FavoriteApp(key, name))));
+    }
+
+    /// <summary>A small menu in the bar's own style at the pointer; picking an item changes the favorites.</summary>
+    private void ShowMenu(FrameworkElement target, params (string Label, bool Enabled, Func<IReadOnlyList<FavoriteApp>, IReadOnlyList<FavoriteApp>> Change)[] items)
+    {
+        var menu = new ContextMenu { Style = TryFindResource("BarMenu") as Style, PlacementTarget = target, Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint };
+        foreach (var (label, enabled, change) in items)
+        {
+            var item = new MenuItem { Header = label, IsEnabled = enabled, Style = TryFindResource("BarMenuItem") as Style };
+            item.Click += (_, _) => FavoritesChanged?.Invoke(change);
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
 
     /// <summary>The widest the left side may get, from the bar's edge up to 24 px before the island (PRD 6.1).</summary>
     public void SetLimit(double width)
@@ -173,6 +250,11 @@ public partial class LeftSide : UserControl
         {
             if (_buttons.ContainsKey(app.Key)) continue;
             var button = new AppButton(app, () => _apps.Activate(app.Key));
+            button.Root.MouseRightButtonUp += (_, e) =>
+            {
+                e.Handled = true;
+                OnAppRightClick(app.Key, button.Root);
+            };
             _buttons[app.Key] = button;
             Strip.Children.Add(button.Root);
             if (IsLoaded) button.Arrive();

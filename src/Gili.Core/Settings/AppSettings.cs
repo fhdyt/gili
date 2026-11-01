@@ -95,6 +95,17 @@ public sealed record AppSettings
     public int BatteryAlert { get; init; } = 20;
     public int UnplugReminder { get; init; } = 80;
 
+    /// <summary>
+    /// The favorite apps on the left of the bar, in the user's order (F-LEFT-08), as text so two settings with the same
+    /// favorites are equal, like <see cref="ModuleOrder"/>; read and change them through <see cref="FavoriteList"/>.
+    /// </summary>
+    public string FavoriteApps { get; init; } = "";
+
+    [JsonIgnore]
+    public IReadOnlyList<Gili.Core.Apps.FavoriteApp> FavoriteList => Gili.Core.Apps.Favorites.Parse(FavoriteApps);
+
+    public AppSettings WithFavorites(IReadOnlyList<Gili.Core.Apps.FavoriteApp> list) => this with { FavoriteApps = Gili.Core.Apps.Favorites.Format(list) };
+
     /// <summary>Left icons and island pages switched off in Settings (F-BAR-12, F-ISL-23).</summary>
     public LeftIcons HiddenLeft { get; init; } = LeftIcons.None;
     public PageSet HiddenPages { get; init; } = PageSet.None;
@@ -146,6 +157,7 @@ public sealed record AppSettings
             IslandHeight = Math.Clamp(IslandHeight, MinIslandHeight, MaxIslandHeight(barHeight)),
             BarOpacity = Math.Clamp(BarOpacity, MinBarOpacity, MaxBarOpacity),
             BarColor = BarColors.Parse(BarColor) ?? BarColors.Default,
+            FavoriteApps = Gili.Core.Apps.Favorites.Format(Gili.Core.Apps.Favorites.Repair(FavoriteList)),
             OpenOpacity = Math.Clamp(OpenOpacity, 0, 100),
             Glass = Enum.IsDefined(Glass) ? Glass : GlassLevel.Strong,
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),

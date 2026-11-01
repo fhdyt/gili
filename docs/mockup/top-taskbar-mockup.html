@@ -74,6 +74,11 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 /* With each module's 4 px padding this leaves 10 px between modules. */
 .right{gap:2px}
 .launch{display:flex;gap:2px;flex-shrink:0}
+/* Favorite apps (revision 14, issue #36): their own coloured icons after Claude, in launcher-sized buttons. */
+.favs{display:flex;gap:2px}
+.favs:empty{display:none}
+.favs .aic{width:16px;height:16px}
+.favs button.gone{opacity:.4}
 .launch button{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;color:#aeaeb2;transition:background 120ms,color 120ms,opacity 160ms ease}
 .launch button:hover{background:rgba(255,255,255,.08);color:var(--text)}
 .launch button:active{background:rgba(255,255,255,.14)}
@@ -1068,6 +1073,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <button data-tool="Clipboard" data-l="clipboard" aria-label="Open Clipboard" title="Clipboard"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg></button>
         <button class="lsh" id="mShelf" data-l="shelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
         <button class="lcl" id="mClaude" data-l="claude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
+        <span class="favs" id="favs" data-l="favorites" role="toolbar" aria-label="Favorite apps"></span>
       </div>
       <span class="lsep" id="lsep" aria-hidden="true"></span>
       <div class="apps" id="apps" data-l="apps" role="toolbar" aria-label="Open apps"></div>
@@ -1298,6 +1304,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <span class="tray"><span class="gti" id="gTray" title="Gili" role="button" aria-label="Gili"><i></i><i></i></span><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><svg class="ic" aria-hidden="true"><use href="#i-vol"/></svg><svg class="ic" aria-hidden="true" style="width:18px"><use href="#i-bat"/></svg><span class="tm num" id="tray"></span></span>
   </div>
 </div>
+<div class="pmenu bmenu" id="fMenu" role="menu" aria-label="Favorites" hidden></div>
 <div class="pmenu bmenu" id="bMenu" role="menu" aria-label="Gili" hidden><button role="menuitem" data-bm="tools">Open Tools</button><button role="menuitem" data-bm="settings">Settings</button><button role="menuitem" data-bm="demo">Demo mode</button><span class="psep"></span><button role="menuitem" data-bm="quit">Quit Gili</button></div>
 
 <aside class="ctl" id="ctl" aria-label="Mockup controls">
@@ -3161,7 +3168,7 @@ function limCheck(){
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw'],['tray','Icon in the notification area','sw',null,'Right-click it to quit Gili']],
   Appearance:[['barColor','Bar color','color'],['opacity','Bar opacity','range',[40,100,'%']],['openOp','Opacity while open','range',[0,100,'%'],'How much of the bar stays while the island is open'],['desktop','Same on the desktop','sw',null,'The bar looks like this while the desktop is in front'],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
-  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.apps','Running apps']].map(([k,n])=>[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']),
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
@@ -3213,7 +3220,8 @@ function renderSettings(){
     const last=k.startsWith('T.')&&lastTab(+k.split('.')[1])||k.startsWith('L.')&&LEFT_TAB[k.split('.')[1]]!=null&&lastTab(LEFT_TAB[k.split('.')[1]]);
     const later=help==='Coming in a later version';
     const dis=k==='pos'&&!S.hideTb||tabOff||ntfOff||last||later;
-    const ctl=type==='color'?`<span class="swc">${BAR_COLORS.map(([n,h])=>`<button data-k="barColor" data-v="${h}" class="${S.barColor===h?'on':''}" title="${n}" aria-label="${n}"><i style="--c:${h}"></i></button>`).join('')}<button class="cc ${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'on'}" data-cc title="Custom" aria-label="Custom color"><i style="${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'--c:'+S.barColor}">#</i></button></span>`
+    const ctl=type==='favs'?`<button class="kcap" data-act="addFav" ${FAVS.length>=8?'disabled':''}>Add app…</button>`
+      :type==='color'?`<span class="swc">${BAR_COLORS.map(([n,h])=>`<button data-k="barColor" data-v="${h}" class="${S.barColor===h?'on':''}" title="${n}" aria-label="${n}"><i style="--c:${h}"></i></button>`).join('')}<button class="cc ${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'on'}" data-cc title="Custom" aria-label="Custom color"><i style="${BAR_COLORS.some(c=>c[1]===S.barColor)?'':'--c:'+S.barColor}">#</i></button></span>`
       :type==='seg'?`<span class="seg">${opts.map(o=>`<button data-k="${k}" data-v="${o.toLowerCase()}" class="${v===o.toLowerCase()?'on':''}">${o}</button>`).join('')}</span>`
       :type==='info'?`<span class="num" style="color:#C7C7CC">${opts[0]}</span>`
       :type==='btn'?`<button class="kcap" data-act="${k}" aria-label="${label}">${opts[0]}</button>`
@@ -3224,7 +3232,8 @@ function renderSettings(){
     const mk=k.startsWith('M.')&&S.order.includes(k.slice(2))?k.slice(2):null;
     const note=k==='barColor'&&barLight(S.barColor)?"Light colors make the bar's text hard to read":help;
     const cc=type==='color'&&S.ccOpen?`<span class="ccf">Color code<input class="field" id="ccIn" maxlength="7" value="${S.barColor}" aria-label="Color code" style="width:110px"></span>`:'';
-    return `<div class="srow ${dis?'dis':''}${mk?' mv':''}${cc?' wrap':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last&&!later?`<small>${why}</small>`:note?`<small>${note}</small>`:''}</span>${ctl}${cc}</div>`;
+    const fl=type==='favs'?`<span class="ccf" style="flex-direction:column;align-items:stretch;gap:2px">${FAVS.map((f,i)=>`<span style="display:flex;align-items:center;gap:10px;height:30px;color:var(--text)"><svg class="aic" aria-hidden="true" style="width:16px;height:16px"><use href="#${f.i}"/></svg><span style="flex:1">${esc(f.n)}</span><button class="kcap" style="min-width:0" data-act="rmFav" data-i="${i}" aria-label="Remove ${esc(f.n)}">Remove</button></span>`).join('')}</span>`:'';
+    return `<div class="srow ${dis||(k==='favs'&&!S.left.favorites)?'dis':''}${mk?' mv':''}${cc||fl?' wrap':''}"${mk?` data-mk="${mk}"`:''}>${mk?`<span class="sgrip" title="Drag to reorder">${icon('grip')}</span>`:''}<span>${label}${dis&&!last&&!later?`<small>${why}</small>`:note?`<small>${note}</small>`:''}</span>${ctl}${cc}${fl}</div>`;
   }).join('');
 }
 // Right side lists the system modules in the bar's order.
@@ -3268,6 +3277,8 @@ $('#setw').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation
 $('#setn').onclick=e=>{const b=e.target.closest('[data-sec]');if(b){setSec=b.dataset.sec;renderSettings()}};
 $('#setp').addEventListener('click',e=>{
   const a=e.target.closest('button[data-act]');
+  if(a&&a.dataset.act==='addFav'){addFav({n:'Notepad',i:'a-term'});hint('Add app… opens a file picker for an app or its shortcut');return}
+  if(a&&a.dataset.act==='rmFav'){FAVS.splice(+a.dataset.i,1);renderFavs();renderSettings();return}
   if(a){if(!a.closest('.dis'))hint(a.dataset.act==='logs'?'Opens the logs folder in File Explorer':'Gili quits and Windows Settings › Installed apps opens');return}
   if(e.target.closest('[data-cc]')){S.ccOpen=true;renderSettings();$('#ccIn').focus();$('#ccIn').select();return}
   const b=e.target.closest('button[data-k]');if(!b)return;
@@ -4077,6 +4088,25 @@ renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();set
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);
 new ResizeObserver(()=>layout()).observe(document.documentElement);
+/* Favorite apps (F-LEFT-08, revision 14): a click brings the app to the front or starts it; right-click to add, move or remove. */
+const FAVS=[{n:'Spotify',i:'a-spotify'},{n:'File Explorer',i:'a-explorer'}];
+S.left.favorites=1;
+function renderFavs(){$('#favs').innerHTML=FAVS.map((f,i)=>`<button data-fav="${i}" title="${esc(f.n)}" aria-label="Open ${esc(f.n)}"><svg class="aic" aria-hidden="true"><use href="#${f.i}"/></svg></button>`).join('');fitApps()}
+function addFav(a){if(FAVS.length>=8||FAVS.some(f=>f.n===a.n))return;FAVS.push(a);renderFavs();if(!$('#setw').hidden)renderSettings()}
+function favMenu(x,y,items){const m=$('#fMenu');m.innerHTML=items.map(([l,on],i)=>`<button role="menuitem" data-fi="${i}" ${on?'':'disabled'}>${l}</button>`).join('');m._items=items;m.hidden=false;const r=m.getBoundingClientRect();m.style.left=Math.min(x,innerWidth-r.width-8)+'px';m.style.top=y+'px'}
+$('#favs').addEventListener('click',e=>{const b=e.target.closest('[data-fav]');if(!b)return;const f=FAVS[+b.dataset.fav];
+  if(!S.apps.some(a=>a.n===f.n))hint(`Starts ${f.n}`);setApp(f.n,f.i)});
+$('#left').addEventListener('contextmenu',e=>{
+  const fav=e.target.closest('[data-fav]'),app=e.target.closest('.appi');if(!fav&&!app)return;
+  e.preventDefault();e.stopPropagation();
+  if(fav){const i=+fav.dataset.fav,mv=d=>()=>{const[f]=FAVS.splice(i,1);FAVS.splice(i+d,0,f);renderFavs()};
+    favMenu(e.clientX,e.clientY,[['Move left',i>0,mv(-1)],['Move right',i<FAVS.length-1,mv(1)],['Remove from Favorites',true,()=>{FAVS.splice(i,1);renderFavs()}]]);return}
+  const a=S.apps.find(x=>x.n===app.dataset.name),has=FAVS.findIndex(f=>f.n===a.n);
+  favMenu(e.clientX,e.clientY,has>=0?[['Remove from Favorites',true,()=>{FAVS.splice(has,1);renderFavs()}]]:[[FAVS.length>=8?'Favorites are full':'Add to Favorites',FAVS.length<8,()=>addFav({n:a.n,i:a.i})]]);
+});
+$('#fMenu').onclick=e=>{const b=e.target.closest('[data-fi]');if(!b)return;$('#fMenu').hidden=true;$('#fMenu')._items[+b.dataset.fi][2]()};
+addEventListener('pointerdown',e=>{if(!e.target.closest('#fMenu'))$('#fMenu').hidden=true});
+renderFavs();
 /* Bar color, Opacity while open and Same on the desktop (F-BAR-14–16, revision 14). */
 const BAR_COLORS=[['Graphite','#161618'],['Black','#000000'],['Slate','#1C2530'],['Navy','#15203D'],['Forest','#13281C'],['Plum','#2A1733'],['Wine','#331820'],['Cocoa','#2B2018']];
 Object.assign(S,{barColor:'#161618',openOp:0,desktop:1,deskFront:false,ccOpen:false});

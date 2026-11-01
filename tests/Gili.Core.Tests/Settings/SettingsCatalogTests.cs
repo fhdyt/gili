@@ -18,7 +18,7 @@ public class SettingsCatalogTests
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
             new HashSet<string> { "version", "updates", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "tray", "barColor", "opacity", "openOp", "desktop", "glass", "barH", "islH", "glow", "motion", "gili", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
-                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude", "L.Apps",
+                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude", "L.Favorites", "favs", "L.Apps",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());

@@ -68,6 +68,20 @@ public partial class SettingsWindow : Window
         e.Handled = true;
     }
 
+    /// <summary>Add app…: the Start menu's programs first, since every installed app has a shortcut there.</summary>
+    private void OnAddFavorite(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: SettingRowViewModel row }) return;
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Add a favorite app",
+            Filter = "Apps and shortcuts (*.exe;*.lnk)|*.exe;*.lnk",
+            DereferenceLinks = false,
+            InitialDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs"),
+        };
+        if (dialog.ShowDialog(this) == true) row.AddFavoriteFile(dialog.FileName);
+    }
+
     private void OnCustomColor(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: SettingRowViewModel row }) row.EditCustomColor();

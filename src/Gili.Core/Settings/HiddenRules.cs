@@ -2,10 +2,10 @@ namespace Gili.Core.Settings;
 
 /// <summary>
 /// The left side's icons that Settings → Left side can hide (PRD 6.2), stored as names in settings.json; Apps is the
-/// strip of running apps after the divider (F-LEFT-07).
+/// strip of running apps after the divider (F-LEFT-07), and Favorites the favorite apps before it (F-LEFT-08).
 /// </summary>
 [Flags]
-public enum LeftIcons { None = 0, Start = 1, Timer = 2, Alarms = 4, Todo = 8, Notes = 16, Clipboard = 32, Shelf = 64, Claude = 128, Apps = 256 }
+public enum LeftIcons { None = 0, Start = 1, Timer = 2, Alarms = 4, Todo = 8, Notes = 16, Clipboard = 32, Shelf = 64, Claude = 128, Apps = 256, Favorites = 512 }
 
 /// <summary>The island's pages, as a set: the ones Settings → Island hides (PRD 6.3 "Tab bisa disembunyikan").</summary>
 [Flags]

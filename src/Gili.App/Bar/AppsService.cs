@@ -82,6 +82,33 @@ public sealed class AppsService : IDisposable
         if (_strip.SetActive(key)) Changed?.Invoke();
     }
 
+    /// <summary>A favorite's name and icon (F-LEFT-08), resolved once per app and shared with the strip.</summary>
+    public AppItem Item(FavoriteApp favorite)
+    {
+        if (_items.TryGetValue(favorite.Key, out var known)) return known;
+        var size = (int)Math.Round(16 * _dpiScale());
+        var (name, pixels) = AppInfo.Resolve(favorite.Key, 0, size);
+        var item = new AppItem(favorite.Key, name == "App" ? favorite.Name : name, Image(pixels));
+        _items[favorite.Key] = item;
+        return item;
+    }
+
+    /// <summary>The name the strip shows for a running app, for Add to Favorites.</summary>
+    public string NameOf(string key) => _items.TryGetValue(key, out var item) ? item.Name : "App";
+
+    /// <summary>
+    /// A favorite's click: its window to the front when it runs (read fresh, since the strip may be switched off), else
+    /// the app starts. False when it could not start.
+    /// </summary>
+    public bool Open(FavoriteApp favorite)
+    {
+        var window = _windows.Read().FirstOrDefault(w => string.Equals(w.AppKey, favorite.Key, StringComparison.OrdinalIgnoreCase));
+        if (window is null) return AppLauncher.Launch(favorite.Key);
+        TaskbarWindows.BringToFront(window.Handle);
+        if (_showStrip && _strip.SetActive(window.AppKey)) Changed?.Invoke();
+        return true;
+    }
+
     public void Dispose()
     {
         _coalesce.Stop();
@@ -112,13 +139,14 @@ public sealed class AppsService : IDisposable
     {
         var size = (int)Math.Round(16 * _dpiScale());
         var (name, pixels) = AppInfo.Resolve(window.AppKey, window.Handle, size);
-        ImageSource? icon = null;
-        if (pixels is not null)
-        {
-            var bitmap = BitmapSource.Create(pixels.Width, pixels.Height, 96, 96, PixelFormats.Pbgra32, null, pixels.Bgra, pixels.Width * 4);
-            bitmap.Freeze();
-            icon = bitmap;
-        }
-        return new AppItem(window.AppKey, name, icon);
+        return new AppItem(window.AppKey, name, Image(pixels));
+    }
+
+    private static ImageSource? Image(IconPixels? pixels)
+    {
+        if (pixels is null) return null;
+        var bitmap = BitmapSource.Create(pixels.Width, pixels.Height, 96, 96, PixelFormats.Pbgra32, null, pixels.Bgra, pixels.Width * 4);
+        bitmap.Freeze();
+        return bitmap;
     }
 }

@@ -58,6 +58,9 @@ public partial class BarWindow : Window
         _left.PageRequested += page => PageRequested?.Invoke(page);
         LeftSlot.Content = _left;
         _left.ApplyHidden(_settings.Current.ShownHiddenLeft, animate: false);
+        // Favorites (F-LEFT-08): the right-click menus change the list; the bar shows whatever the settings hold.
+        _left.FavoritesChanged += change => _settings.Update(s => s.WithFavorites(change(s.FavoriteList)));
+        Loaded += (_, _) => ShowFavorites(_settings.Current);
         Loaded += (_, _) => ApplyModules(_settings.Current);
         SizeChanged += (_, _) => UpdateLeftLimit();
         right.Changed += () =>
@@ -436,9 +439,19 @@ public partial class BarWindow : Window
         }
     }
 
+    private string? _favorites;
+
+    private void ShowFavorites(AppSettings settings)
+    {
+        if (settings.FavoriteApps == _favorites) return;
+        _favorites = settings.FavoriteApps;
+        _left.ShowFavorites(settings.FavoriteList);
+    }
+
     private void OnSettingsChanged(AppSettings settings)
     {
         _left.ApplyHidden(settings.ShownHiddenLeft, animate: true);
+        ShowFavorites(settings);
         ApplyModules(settings);
         _clock.Seconds = settings.ShowSeconds && _polling.ShouldPoll;
         _vm.ApplyClock(DateTime.Now, settings);

@@ -8,6 +8,12 @@ namespace Gili.App.Settings;
 /// <summary>What the Shortcuts rows need from the hotkeys: pause them while recording, and which ones another app holds.</summary>
 public sealed record HotkeyHooks(Action<bool> Suspend, Func<HotkeyAction, bool> Failed);
 
+/// <summary>What the Favorite apps row needs from the bar (F-LEFT-08): each app's icon, and the app a picked file is.</summary>
+/// <param name="KeyForFile">The app key for an .exe or .lnk, or null when the file is no app.</param>
+/// <param name="NameOf">The app's name as the bar shows it.</param>
+public sealed record FavoriteHooks(Func<Gili.Core.Apps.FavoriteApp, System.Windows.Media.ImageSource?> Icon, Func<string, string?> KeyForFile,
+    Func<string, string> NameOf);
+
 /// <summary>The Weather city row's search (design 4c).</summary>
 public delegate Task<IReadOnlyList<Gili.Core.Modules.CityResult>> CitySearcher(string name, CancellationToken cancel);
 
@@ -29,13 +35,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly HotkeyHooks? _hotkeys;
     private readonly CitySearcher? _searchCities;
     private readonly AboutActions? _about;
+    private readonly FavoriteHooks? _favorites;
 
     [ObservableProperty] private SettingsSection _selectedSection;
     [ObservableProperty] private IReadOnlyList<SettingRowViewModel> _rows = [];
 
     public SettingsViewModel(SettingsHub hub, bool transparencyEnabled, InstallKind kind, StartupState? startup, Func<string?>? claudeStatus = null,
-        HotkeyHooks? hotkeys = null, CitySearcher? searchCities = null, AboutActions? about = null)
+        HotkeyHooks? hotkeys = null, CitySearcher? searchCities = null, AboutActions? about = null, FavoriteHooks? favorites = null)
     {
+        _favorites = favorites;
         _about = about;
         _hotkeys = hotkeys;
         _searchCities = searchCities;
@@ -63,7 +71,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _order = _hub.Current.ModuleOrder;
         Rows = [.. SettingsCatalog.RowsOf(SelectedSection, _hub.Current, _kind).Select(r =>
             new SettingRowViewModel(_hub, r, NoteFor(r.Key), CanChange(r.Key), _hotkeys, _searchCities, InfoFor(r.Key), RunFor(r.Key),
-                r.Key == "updates" && Update is { } update ? UpdateRules.Button(update) : null))];
+                r.Key == "updates" && Update is { } update ? UpdateRules.Button(update) : null, _favorites))];
     }
 
     private string? _order;

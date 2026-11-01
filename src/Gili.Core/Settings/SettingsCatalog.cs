@@ -39,7 +39,7 @@ public static class SettingsCatalog
     private static readonly (string Name, string Label)[] LeftRows =
     [
         ("Start", "Start"), ("Timer", "Timer"), ("Alarms", "Alarms"), ("Todo", "Todo"), ("Notes", "Notes"), ("Clipboard", "Clipboard"),
-        ("Shelf", "Shelf"), ("Claude", "Claude"), ("Apps", "Running apps"),
+        ("Shelf", "Shelf"), ("Claude", "Claude"), ("Favorites", "Favorites"), ("Apps", "Running apps"),
     ];
     /// <summary>The Right side switches by label, with the bar's id for each module (PRD 6.4).</summary>
     private static readonly Dictionary<string, string> ModuleIds = new()
@@ -86,12 +86,15 @@ public static class SettingsCatalog
         ]),
         new("Left side",
         [
-            .. LeftRows.Select(r => new SettingRow("L." + r.Name, r.Label, SettingKind.Switch, r.Name switch
-            {
-                "Start" => null,
-                "Apps" => "The apps that are open, after the divider",
-                _ => $"Turning it off also hides the {r.Label} page in the island",
-            }, Available: true)),
+            .. LeftRows.SelectMany(r => (IEnumerable<SettingRow>)(r.Name == "Favorites"
+                ? [new("L.Favorites", "Favorites", SettingKind.Switch, "Right-click an open app to add it", Available: true),
+                   new("favs", "Favorite apps", SettingKind.Favorites, Available: true)]
+                : [new("L." + r.Name, r.Label, SettingKind.Switch, r.Name switch
+                {
+                    "Start" => null,
+                    "Apps" => "The apps that are open, after the divider",
+                    _ => $"Turning it off also hides the {r.Label} page in the island",
+                }, Available: true)])),
         ]),
         new("Island",
         [
@@ -154,6 +157,7 @@ public static class SettingsCatalog
         "limOn" => s.ClaudeUsageTimer,
         "keys" => s.KeyboardShortcuts,
         "W.city" => s.WeatherCity,
+        "favs" => s.FavoriteList,
         _ when Hotkeys.ActionOf(key) is { } action => s.HotkeyFor(action),
         "pos" => s.BarPosition.ToString(),
         "h12" => !s.Use24HourClock,
@@ -188,6 +192,7 @@ public static class SettingsCatalog
         "clOn" => s with { ClaudeSessions = (bool)value },
         "limOn" => s with { ClaudeUsageTimer = (bool)value },
         "keys" => s with { KeyboardShortcuts = (bool)value },
+        "favs" => s.WithFavorites((IReadOnlyList<Gili.Core.Apps.FavoriteApp>)value),
         _ when Hotkeys.ActionOf(key) is { } action => Hotkeys.Parse((string)value) is { } hotkey && Hotkeys.Problem(s, action, hotkey) is null
             ? s.WithHotkey(action, Hotkeys.Format(hotkey))
             : s,
@@ -248,6 +253,7 @@ public static class SettingsCatalog
         if (key == "pos" && !s.HideTaskbar)
             return new(false, s.MovedToTop ? "Moved to the top because the Windows taskbar is back" : "Hide the Windows taskbar first");
         if (!s.ClaudeSessions && key is "L.Claude" or "T.Claude" or "limOn") return new(false, ClaudeOff);
+        if (key == "favs" && s.HiddenLeft.HasFlag(LeftIcons.Favorites)) return new(false, null);
         if (key == "barColor") return new(true, BarColors.IsLight(s.BarColor) ? BarColors.LightNote : null);
         if (!s.KeyboardShortcuts && Hotkeys.ActionOf(key) is not null) return new(false, null);
         if (key.StartsWith("T.", StringComparison.Ordinal))

@@ -133,6 +133,8 @@
                     </Ellipse>
                 </Grid>
             </Button>
+            <!-- Favorite apps (F-LEFT-08): their own icons after Claude, before the divider; filled by LeftSide.ShowFavorites. -->
+            <StackPanel x:Name="FavoritesRow" Tag="Favorites" Orientation="Horizontal" />
         </StackPanel>
 
         <Border x:Name="Rule" Width="1" Height="14" Background="#38FFFFFF" Margin="12,0,0,0" />

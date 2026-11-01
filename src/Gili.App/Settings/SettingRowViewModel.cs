@@ -19,6 +19,7 @@ public sealed partial class SettingRowViewModel : ObservableObject
     private readonly bool _changeable;
     private readonly string? _ownNote;
     private readonly HotkeyHooks? _hotkeys;
+    private readonly FavoriteHooks? _favoriteHooks;
     private readonly CitySearcher? _searchCities;
     private DispatcherTimer? _cityDelay;
     private CancellationTokenSource? _citySearch;
@@ -54,8 +55,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
     [ObservableProperty] private bool _isEnabled;
 
     public SettingRowViewModel(SettingsHub hub, SettingRow row, string? note, bool changeable = true, HotkeyHooks? hotkeys = null,
-        CitySearcher? searchCities = null, string? info = null, Action? run = null, string? button = null)
+        CitySearcher? searchCities = null, string? info = null, Action? run = null, string? button = null, FavoriteHooks? favorites = null)
     {
+        _favoriteHooks = favorites;
         InfoText = info ?? "";
         ButtonText = button ?? (row.Kind == SettingKind.Action && row.Options is [var text, ..] ? text : null);
         RunCommand = new RelayCommand(() => run?.Invoke(), () => run is not null);
@@ -85,6 +87,36 @@ public sealed partial class SettingRowViewModel : ObservableObject
     public string ShortcutText => IsRecording ? "Press keys" : Shortcut;
 
     public bool IsCity => _row.Kind == SettingKind.City;
+
+    /// <summary>Favorite apps (F-LEFT-08): one line per app with Remove, and Add app… while fewer than eight.</summary>
+    public bool IsFavorites => _row.Kind == SettingKind.Favorites;
+
+    public ObservableCollection<FavoriteChoice> FavoriteRows { get; } = [];
+
+    [ObservableProperty] private bool _canAddFavorite;
+
+    /// <summary>Settings → Left side → Add app…: an .exe or a shortcut to one; anything else says so.</summary>
+    public void AddFavoriteFile(string path)
+    {
+        if (_favoriteHooks?.KeyForFile(path) is not { } key)
+        {
+            Note = "Pick an app or a shortcut to one";
+            return;
+        }
+        var app = new Gili.Core.Apps.FavoriteApp(key, _favoriteHooks.NameOf(key));
+        _hub.Update(s => s.WithFavorites(Gili.Core.Apps.Favorites.Add(s.FavoriteList, app)));
+    }
+
+    private void ShowFavorites(AppSettings settings)
+    {
+        FavoriteRows.Clear();
+        foreach (var app in settings.FavoriteList)
+        {
+            FavoriteRows.Add(new FavoriteChoice(app.Name, _favoriteHooks?.Icon(app),
+                () => _hub.Update(s => s.WithFavorites(Gili.Core.Apps.Favorites.Remove(s.FavoriteList, app.Key)))));
+        }
+        CanAddFavorite = !Gili.Core.Apps.Favorites.IsFull(settings.FavoriteList);
+    }
 
     /// <summary>Bar color (F-BAR-14): eight swatches and Custom, which opens a #RRGGBB field under the row.</summary>
     public bool IsColor => _row.Kind == SettingKind.Color;
@@ -279,6 +311,9 @@ public sealed partial class SettingRowViewModel : ObservableObject
             case SettingKind.Color:
                 ShowColor(value as string ?? BarColors.Default);
                 break;
+            case SettingKind.Favorites:
+                ShowFavorites(settings);
+                break;
             case SettingKind.Range:
                 (Min, Max) = SettingsCatalog.Range(settings, _row.Key);
                 Value = Convert.ToDouble(value, CultureInfo.InvariantCulture);
@@ -306,6 +341,18 @@ public sealed partial class SettingRowViewModel : ObservableObject
         if (_loading || !IsEnabled) return;
         _hub.Update(s => SettingsCatalog.Write(s, _row.Key, value));
     }
+}
+
+/// <summary>One favorite app in Settings: its icon, its name and a Remove button.</summary>
+public sealed class FavoriteChoice(string name, System.Windows.Media.ImageSource? icon, Action remove)
+{
+    public string Name { get; } = name;
+
+    public System.Windows.Media.ImageSource? Icon { get; } = icon;
+
+    public string RemoveName => "Remove " + Name;
+
+    public IRelayCommand RemoveCommand { get; } = new RelayCommand(remove);
 }
 
 /// <summary>One colour of the Bar color row: a 20 px circle, ringed in white while it is the bar's.</summary>

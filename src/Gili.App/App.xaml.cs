@@ -426,7 +426,9 @@ public partial class App : Application
             new AboutActions(Core.About.AboutInfo.VersionLine(typeof(App).Assembly.GetName().Version!, Kind), OpenLogs, PrepareStoreUninstall,
                 Kind == InstallKind.Development ? null : Task.Run(() => Core.About.AboutInfo.AnotherCopyNote(Kind,
                     Kind == InstallKind.Installed && OtherCopies.StoreInstalled(), Kind == InstallKind.Store && OtherCopies.GithubInstalled())),
-                () => _updates!.State, InstallUpdate, ReleaseNotesPage, SystemActions.OpenSettings));
+                () => _updates!.State, InstallUpdate, ReleaseNotesPage, SystemActions.OpenSettings),
+            _apps is null ? null : new FavoriteHooks(app => _apps.Item(app).Icon, Platform.Apps.AppLauncher.KeyForFile,
+                key => Platform.Apps.AppInfo.Name(key, 0)));
         _updates?.Changed += model.RefreshUpdates;
         if (_hotkeys is not null) _hotkeys.FailuresChanged += model.RefreshShortcutNotes;
         _claude?.StatusChanged += model.RefreshNotes;
