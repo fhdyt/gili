@@ -115,6 +115,9 @@ public sealed record AppSettings
 
     public AppSettings WithFavorites(IReadOnlyList<Gili.Core.Apps.FavoriteApp> list) => this with { FavoriteApps = Gili.Core.Apps.Favorites.Format(list) };
 
+    /// <summary>The project the Projects page showed last (F-ISL-34); null or a deleted one shows the first.</summary>
+    public long? ProjectId { get; init; }
+
     /// <summary>Left icons and island pages switched off in Settings (F-BAR-12, F-ISL-23).</summary>
     public LeftIcons HiddenLeft { get; init; } = LeftIcons.None;
     public PageSet HiddenPages { get; init; } = PageSet.None;

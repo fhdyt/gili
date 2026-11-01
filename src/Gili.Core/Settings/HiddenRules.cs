@@ -5,9 +5,12 @@ namespace Gili.Core.Settings;
 /// strip of running apps after the divider (F-LEFT-07), and Favorites the favorite apps before it (F-LEFT-08).
 /// </summary>
 [Flags]
-public enum LeftIcons { None = 0, Start = 1, Timer = 2, Alarms = 4, Todo = 8, Notes = 16, Clipboard = 32, Shelf = 64, Claude = 128, Apps = 256, Favorites = 512 }
+public enum LeftIcons { None = 0, Start = 1, Timer = 2, Alarms = 4, Todo = 8, Notes = 16, Clipboard = 32, Shelf = 64, Claude = 128, Apps = 256, Favorites = 512, Projects = 1024 }
 
-/// <summary>The island's pages, as a set: the ones Settings → Island hides (PRD 6.3 "Tab bisa disembunyikan").</summary>
+/// <summary>
+/// The island's pages, as a set: the ones Settings → Island hides (PRD 6.3 "Tab bisa disembunyikan"). Stored as names, so
+/// Projects (revision 16) took the next free bit although its tab sits after Todo.
+/// </summary>
 [Flags]
 public enum PageSet
 {
@@ -22,7 +25,8 @@ public enum PageSet
     Shelf = 128,
     Claude = 256,
     System = 512,
-    All = 1023,
+    Projects = 1024,
+    All = 2047,
 }
 
 public static class HiddenRules
@@ -33,6 +37,7 @@ public static class HiddenRules
         LeftIcons.Timer => PageSet.Timer,
         LeftIcons.Alarms => PageSet.Alarms,
         LeftIcons.Todo => PageSet.Todo,
+        LeftIcons.Projects => PageSet.Projects,
         LeftIcons.Notes => PageSet.Notes,
         LeftIcons.Clipboard => PageSet.Clipboard,
         LeftIcons.Shelf => PageSet.Shelf,

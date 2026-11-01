@@ -56,6 +56,7 @@ public partial class App : Application
     private TimerService? _timers;
     private AlarmService? _alarms;
     private TodoService? _todos;
+    private ProjectService? _projects;
     private NoteService? _notes;
     private SoundService? _sound;
     private readonly System.Windows.Threading.DispatcherTimer _backupTimer = new() { Interval = TimeSpan.FromHours(1) };
@@ -134,6 +135,7 @@ public partial class App : Application
         _timers = new TimerService(_database is null ? null : new TimerStore(_database), () => _settings.Current.Pomodoro);
         _alarms = new AlarmService(_database is null ? null : new AlarmStore(_database), new WakeTimer());
         _todos = new TodoService(_database is null ? null : new TodoStore(_database));
+        _projects = new ProjectService(_database is null ? null : new ProjectStore(_database));
         _notes = new NoteService(OpenNotes());
         // One Bluetooth watcher serves the bar's icon and the island's connect notices (plan 3a decision 4).
         var bluetooth = new Gili.Platform.Modules.BluetoothMonitor();
@@ -144,7 +146,7 @@ public partial class App : Application
         var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow,
             clipboardImages.Delete);
         clipboardImages.Sweep(clipboardHistory.ImageFiles);
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, bluetooth, shelf, () => _settings.Current, clipboardHistory, clipboardImages)
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, _projects, bluetooth, shelf, () => _settings.Current, clipboardHistory, clipboardImages)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
             ShelfFolder = shelfFolder,

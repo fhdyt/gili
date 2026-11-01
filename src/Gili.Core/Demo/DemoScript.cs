@@ -117,6 +117,8 @@ public static class DemoScript
             Step(24.5, new DemoOpen(IslandPage.Timer)),
             Step(26, new DemoOpen(IslandPage.Calendar)),
             Step(27.5, new DemoOpen(IslandPage.Todo)),
+            // The Projects timeline with the user's own projects, or Plan a project before the first (F-ISL-34).
+            Step(28, new DemoOpen(IslandPage.Projects)),
             // The System page shows the laptop's own readings (plan 3c).
             Step(28.5, new DemoOpen(IslandPage.System)),
             // A file dropped on the Shelf: 1 s of drop zone, then the page with a demo item that is never saved (plan 3d).

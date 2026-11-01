@@ -70,6 +70,8 @@ public partial class IslandWindow : Window
     private readonly TodoViewModel _todoPage;
     private readonly NotesViewModel _notesPage;
     private NotesPage? _notesView;
+    private ProjectsPage? _projectsView;
+    private readonly ProjectsViewModel _projectsPage;
     private string? _glowTimer;
     private readonly ScaleTransform _giliInsideScale = new(1, 1);
     private readonly TranslateTransform _giliInsideShift = new();
@@ -101,6 +103,7 @@ public partial class IslandWindow : Window
         [IslandPage.Alarms] = Color.FromRgb(0xFF, 0xD6, 0x0A),
         [IslandPage.Calendar] = Color.FromRgb(0xFF, 0x45, 0x3A),
         [IslandPage.Todo] = Color.FromRgb(0x0A, 0x84, 0xFF),
+        [IslandPage.Projects] = Color.FromRgb(0x5E, 0x5C, 0xE6),
         [IslandPage.Notes] = Color.FromRgb(0xFF, 0xD6, 0x0A),
         [IslandPage.Clipboard] = Color.FromRgb(0x66, 0xD4, 0xCF),
         [IslandPage.Shelf] = Color.FromRgb(0x64, 0xD2, 0xFF),
@@ -146,6 +149,8 @@ public partial class IslandWindow : Window
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
+        _projectsPage = new ProjectsViewModel(island.Projects, () => settings.Current.ProjectId, id => settings.Update(s => s with { ProjectId = id }));
+        _projectsPage.ContentChanged += () => PageContentChanged(IslandPage.Projects);
         _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
         SystemStats = new SystemViewModel(island.Close);
         _shelfPage = new ShelfViewModel(island.Shelf);
@@ -911,6 +916,13 @@ public partial class IslandWindow : Window
             e.Handled = true;
             return;
         }
+        // The Projects page closes its rename field, project list or form first (F-ISL-34); the next Esc closes the island.
+        if (_island.View.Page == IslandPage.Projects && e.Key == Key.Escape && _projectsView is { } projects)
+        {
+            if (!projects.Escape()) _island.Close();
+            e.Handled = true;
+            return;
+        }
         // A text field keeps its arrows, and its page decides what Esc does (cancel the form, not close the island).
         if (e.OriginalSource is TextBox) return;
         // A control island has no pages: the arrows move its slider (PRD 6.4).
@@ -1169,6 +1181,7 @@ public partial class IslandWindow : Window
         IslandPage.Alarms => new AlarmsPage(_alarmsPage),
         IslandPage.Calendar => new CalendarPage(_calendarPage),
         IslandPage.Todo => new TodoPage(_todoPage),
+        IslandPage.Projects => _projectsView = new ProjectsPage(_projectsPage),
         IslandPage.Notes => _notesView = new NotesPage(_notesPage) { IsOverIsland = OverIsland },
         IslandPage.System => new SystemPage(SystemStats),
         IslandPage.Shelf => new ShelfPage(_shelfPage, _island),
@@ -1384,6 +1397,7 @@ public partial class IslandWindow : Window
                 if (_island.View.Page == IslandPage.Alarms) _alarmsPage.Refresh();
                 if (_island.View.Page == IslandPage.Calendar) _calendarPage.ShowToday();
                 if (_island.View.Page == IslandPage.Todo) _todoPage.Refresh();
+                if (_island.View.Page == IslandPage.Projects) _projectsPage.Refresh();
                 if (_island.View.Page == IslandPage.Notes) _notesPage.Refresh();
                 // Leaving Notes writes what waits (mockup goPage flushNote).
                 else _island.Notes.Flush();
@@ -1453,8 +1467,8 @@ public partial class IslandWindow : Window
         for (; element is not null && !ReferenceEquals(element, PageArea); element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
         {
             if (element is ScrollViewer list && WheelScroll.KeepsWheel(list.ScrollableHeight)) return true;
-            // The Timer page's picker turns with the wheel (F-ISL-29).
-            if (element is Controls.WheelColumnView) return true;
+            // The Timer page's picker turns with the wheel (F-ISL-29), and the Projects timeline scrolls its days (F-ISL-34).
+            if (element is Controls.WheelColumnView or Controls.ProjectTimeline) return true;
         }
         return false;
     }
@@ -1475,7 +1489,8 @@ public partial class IslandWindow : Window
         // Horizontal touchpad swipes and wheel tilts arrive only as WM_MOUSEHWHEEL; WPF has no event for them.
         if (msg == WindowMessages.WM_MOUSEHWHEEL && _mode == IslandMode.Expanded)
         {
-            Scroll((short)((wParam.ToInt64() >> 16) & 0xFFFF));
+            var delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+            if (!(_island.View.Page == IslandPage.Projects && _projectsView?.ScrollTimeline(delta) == true)) Scroll(delta);
             handled = true;
         }
         return IntPtr.Zero;

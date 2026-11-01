@@ -79,7 +79,7 @@ public sealed class TodoStoreTests : IDisposable
         }
         SqliteConnection.ClearAllPools();
         using var db = Database.Open(_folder);
-        Assert.Equal(4, db.Version);
+        Assert.Equal(5, db.Version);
         var old = Assert.Single(new TodoStore(db).All());
         Assert.Equal(("Old task", new DateOnly(2026, 10, 20), (TimeOnly?)null), (old.Title, old.DueDate!.Value, old.DueTime));
     }

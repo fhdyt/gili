@@ -74,6 +74,25 @@ internal static class Migrations
         // 4: images and files in the clipboard history (F-ISL-32).
         "ALTER TABLE clipboard_history ADD COLUMN kind TEXT NOT NULL DEFAULT 'Text'; ALTER TABLE clipboard_history ADD COLUMN name TEXT; " +
         "ALTER TABLE clipboard_history ADD COLUMN width INTEGER NOT NULL DEFAULT 0; ALTER TABLE clipboard_history ADD COLUMN height INTEGER NOT NULL DEFAULT 0;",
+        // 5: projects and their tasks on the Projects page (F-ISL-34); days are local "yyyy-MM-dd", a project's tasks go with it.
+        """
+        CREATE TABLE projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            sort_order INTEGER NOT NULL,
+            created_at TEXT NOT NULL);
+        CREATE TABLE project_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            color INTEGER NOT NULL DEFAULT 0,
+            done_at TEXT,
+            sort_order INTEGER NOT NULL,
+            created_at TEXT NOT NULL);
+        CREATE INDEX project_tasks_by_project ON project_tasks (project_id, sort_order);
+        """,
     ];
 
     /// <summary>The schema version the file holds; 0 for a new file.</summary>

@@ -18,8 +18,8 @@ public class SettingsCatalogTests
     public void Phase_1_rows_are_available() =>
         Assert.Equal(
             new HashSet<string> { "version", "updates", "autoUpd", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.clipboard", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "tray", "barColor", "opacity", "openOp", "desktop", "glass", "barH", "islH", "glow", "motion", "gili", "lyrics", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
-                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude", "L.Favorites", "favs", "L.Apps",
-                "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
+                "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Projects", "L.Notes", "L.Clipboard", "L.Shelf", "L.Claude", "L.Favorites", "favs", "L.Apps",
+                "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Projects", "T.Notes", "T.Clipboard", "T.Shelf", "T.Claude", "T.System",
                 "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
@@ -160,6 +160,16 @@ public class SettingsCatalogTests
         Assert.True(s.HiddenTabs.HasFlag(PageSet.Timer));
         Assert.Equal(new RowState(false, "Turned off in Left side"), SettingsCatalog.State(s, "T.Timer"));
         Assert.Equal(new RowState(true, null), SettingsCatalog.State(s, "T.Alarms"));
+    }
+
+    [Fact]
+    public void Projects_left_switch_hides_its_tab()
+    {
+        var s = SettingsCatalog.Write(new AppSettings(), "L.Projects", false);
+        Assert.Equal(LeftIcons.Projects, s.HiddenLeft);
+        Assert.Equal(false, SettingsCatalog.Read(s, "T.Projects"));
+        Assert.Equal(new RowState(false, "Turned off in Left side"), SettingsCatalog.State(s, "T.Projects"));
+        Assert.Equal(true, SettingsCatalog.Read(SettingsCatalog.Write(s, "L.Projects", true), "T.Projects"));
     }
 
     [Fact]

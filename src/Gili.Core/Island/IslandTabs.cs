@@ -10,7 +10,8 @@ public static class IslandTabs
 {
     public static IReadOnlyList<IslandPage> Menu { get; } = [.. Enum.GetValues<IslandPage>().Where(p => p != IslandPage.Controls)];
 
-    public static PageSet Of(IslandPage page) => page == IslandPage.Controls ? PageSet.None : (PageSet)(1 << (int)page);
+    /// <summary>The page's flag, by name: Projects sits mid-menu but took the next free bit (revision 16).</summary>
+    public static PageSet Of(IslandPage page) => page == IslandPage.Controls ? PageSet.None : Enum.Parse<PageSet>(page.ToString());
 
     public static IReadOnlyList<IslandPage> Visible(PageSet hidden, IslandPage? temporary) =>
         [.. Menu.Where(p => p == temporary || !hidden.HasFlag(Of(p)))];

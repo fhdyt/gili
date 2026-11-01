@@ -39,7 +39,7 @@ public sealed class IslandController : IDisposable
     private string? _soundCard;
 
     public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes,
-        BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings, ClipboardHistory clipboardHistory, ClipboardImages? clipboardImages = null)
+        ProjectService projects, BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings, ClipboardHistory clipboardHistory, ClipboardImages? clipboardImages = null)
     {
         ClipboardHistory = clipboardHistory;
         ClipboardImages = clipboardImages;
@@ -74,6 +74,7 @@ public sealed class IslandController : IDisposable
         Alarms = alarms;
         Todos = todos;
         Notes = notes;
+        Projects = projects;
         _deadline.Tick += (_, _) =>
         {
             _deadline.Stop();
@@ -133,6 +134,8 @@ public sealed class IslandController : IDisposable
     public TodoService Todos { get; }
 
     public NoteService Notes { get; }
+
+    public ProjectService Projects { get; }
 
     public ShelfService Shelf { get; }
 

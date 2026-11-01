@@ -59,7 +59,7 @@ public class DemoTests
     [Fact]
     public void Pages_open_in_order() =>
         Assert.Equal(
-            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo, IslandPage.System, IslandPage.Claude],
+            [IslandPage.Media, IslandPage.Timer, IslandPage.Calendar, IslandPage.Todo, IslandPage.Projects, IslandPage.System, IslandPage.Claude],
             Steps.Select(s => s.Action).OfType<DemoOpen>().Select(o => o.Page));
 
     [Fact]
