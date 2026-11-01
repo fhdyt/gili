@@ -806,6 +806,10 @@ span.cbt .ic{width:16px;height:16px}
 /* The 5-hour row opens the form for the reset time shown in Claude Desktop (revision 18). */
 .lform{cursor:default;gap:6px}.lform:hover{background:var(--surface)}.lform b{flex:1;font-size:14px}.lform .field{height:32px}
 .lform .field.bad{box-shadow:inset 0 0 0 1.5px var(--danger)}
+/* The weekly form's day stepper (revision 19): ‹ Sun 8 Nov ›, today up to a week ahead. */
+.wkday{display:flex;align-items:center;gap:2px;margin:0 4px}.wkday span{width:76px;text-align:center;font-size:13px}
+.wkday button{width:20px;height:20px;border:0;background:none;color:var(--text2);display:grid;place-items:center;cursor:pointer;padding:0}
+.wkday button:hover{color:var(--text)}.wkday button:disabled{opacity:.3;cursor:default}.wkday svg{width:12px;height:12px}
 .lring{width:22px;height:22px;transform:rotate(-90deg);flex-shrink:0}
 .lring circle{fill:none;stroke-width:3;stroke:var(--ctl)}
 .lring .fg{stroke:var(--claude);stroke-linecap:round}
@@ -1471,7 +1475,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <h3>Alerts</h3>
     <div class="g"><button data-act="alarm">Alarm</button><button data-act="timerDone">Timer done</button><button data-act="todoRem">Todo reminder</button></div>
     <h3>Claude 5-hour window</h3>
-    <div class="g"><button data-act="limStart">Start a window (ends in 12 s)</button><button data-act="limHit">Limit reached</button></div>
+    <div class="g"><button data-act="limStart">Start a window (ends in 12 s)</button><button data-act="limHit">Limit reached</button><button data-act="wkStart">Weekly reset (in 12 s)</button></div>
     <h3>Claude sessions</h3>
     <div class="g"><button data-act="clWork">Start working</button><button data-act="clAsk">Ask a question</button><button data-act="clPerm">Ask permission</button><button data-act="clPlan">Plan ready</button><button data-act="clAnswer">Answer in Claude</button><button data-act="clDone">Finish</button><button data-act="clEsc">Stop with Esc</button><button data-act="clTwo">Second session</button><button data-act="clTerm">Terminal session</button><button data-act="clFocus">Switch to Claude</button></div>
     <p class="note">The first buttons drive one Claude Desktop session. Finish while another app is in front to see the green bubble; switch to Claude (or click its taskbar icon) to clear it.</p>
@@ -1549,7 +1553,7 @@ const S={
   order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,projects:1,notes:1,clipboard:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1,1],
-  gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,pos:'top',hideTb:0,h12:0,secs:1,
+  gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,wk:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
   wideKey:null,wideT:0,leaveT:0,cardT:0,clip:null,
@@ -2058,6 +2062,7 @@ const CARDS={
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
   ltimer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`${esc(LC.l)} done`,s:()=>`Timer ${fmtT(LC.total)}`,b:[['Repeat','ltrepeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
+  wk:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude weekly limit reset',s:'Your weekly limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
   pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${nextRound()} of ${PLAN.rounds} ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
 };
 const val=v=>typeof v==='function'?v():v;
@@ -3333,8 +3338,33 @@ function limRow(){
   return `<button class="crow lrow ${S.lim.hit?'ask':''}" id="limRow" title="${limTip()}&#10;${LIM_HINT}"><svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>
     <span class="cn"><b>5-hour window</b><span>${S.lim.hit?'Limit reached · ':''}Resets ${pad(r.getHours())}:${pad(r.getMinutes())}</span></span><span class="cr num" id="limLeft">${fmtDur(left)}</span></button>`;
 }
-// When the window ends: the card rings like a timer.
+// Claude's weekly limit (revision 19): its day, hour and minutes set by hand; the Claude page only, never the slot.
+const WK_HINT='Click to set the weekly reset shown in Claude';
+const wkDays=()=>[...Array(8)].map((_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);return d});
+const wkDayTxt=d=>`${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]} ${d.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}`;
+const wkLeft=s=>s>=86400?`${Math.floor(s/86400)}d ${Math.floor(s%86400/3600)}h`:fmtDur(s);
+// The picked day and a time with its hour and minutes; only after now and within 7 days.
+function limParseAny(day,v){
+  const m=/^\s*(\d{1,2}):(\d{2})\s*([ap])?\.?\s*m?\.?\s*$/i.exec(v);if(!m)return null;
+  let h=+m[1];const mi=+m[2];
+  if(m[3]){if(h<1||h>12)return null;h=h%12+(m[3].toLowerCase()==='p'?12:0)}
+  if(h>23||mi>59)return null;
+  const d=new Date(day);d.setHours(h,mi,0,0);
+  return d>Date.now()&&d-Date.now()<=7*86400e3?+d:null;
+}
+function wkRow(){
+  if(!S.limOn)return '';
+  const ring=f=>`<svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>`;
+  if(S.wkEdit){const days=wkDays(),i=S.wkDay;
+    return `<form class="crow lrow lform" id="wkForm"><b>Resets on</b><span class="wkday"><button type="button" id="wkPrev" tabindex="-1" aria-label="Previous day" ${i<=0?'disabled':''}>${icon('chevl')}</button><span class="num">${wkDayTxt(days[i])}</span><button type="button" id="wkNext" tabindex="-1" aria-label="Next day" ${i>=7?'disabled':''}>${icon('chevr')}</button></span><input class="field ftime num" id="wkIn" maxlength="8" placeholder="04:00" value="${esc(S.wkTime||'')}" aria-label="Weekly reset time" title="The weekly reset Claude Desktop shows, within the next 7 days"><button class="pill pri iconbtn" aria-label="Save">${icon('check')}</button></form>`}
+  if(!S.wk)return `<button class="crow lrow" id="wkRow" title="${WK_HINT}">${ring(1)}<span class="cn"><b>Weekly limit</b><span>Not set</span></span><span class="cr num"></span></button>`;
+  const left=Math.max(0,(S.wk.end-Date.now())/1000),r=new Date(S.wk.end),when=`${wkDayTxt(r)}, ${pad(r.getHours())}:${pad(r.getMinutes())}`;
+  return `<button class="crow lrow" id="wkRow" title="Claude weekly limit · resets ${when}&#10;${WK_HINT}">${ring(1-left/(7*86400))}<span class="cn"><b>Weekly limit</b><span>Resets ${when}</span></span><span class="cr num" id="wkLeft">${wkLeft(left)}</span></button>`;
+}
+// When the window ends: the card rings like a timer; the weekly reset rings the same way and is then unset.
 function limCheck(){
+  if(S.wk){const w=$('#wkLeft');if(w)w.textContent=wkLeft(Math.max(0,(S.wk.end-Date.now())/1000));
+    if(Date.now()>=S.wk.end){S.wk=null;renderClPage();if(S.limOn)showCard('wk')}}
   if(!S.lim)return;
   const l=$('#limLeft');if(l)l.textContent=fmtDur((S.lim.end-Date.now())/1000);
   if(Date.now()>=S.lim.end){S.lim=null;renderSlot();renderClPage();if(S.limOn)showCard('lim')}
@@ -3966,7 +3996,7 @@ function clRight(s){
 function renderClPage(){
   if(S.page!==PAGE.claude)return;
   const list=[...S.cl].sort((a,b)=>CL_ORDER[a.st]-CL_ORDER[b.st]);
-  $('#clist').innerHTML=limRow()+(list.length?list.map(s=>{
+  $('#clist').innerHTML=limRow()+wkRow()+(list.length?list.map(s=>{
     const sub=s.st==='ask'?esc(s.kind==='ask'?`"${s.q}"`:s.q||CL_ASK[s.kind][0]):`${esc(s.dir)} · ${CL_APP[s.app][3]}`;
     return `<button class="crow ${s.st}" data-cl="${s.id}"><span class="clp${s.st==='work'?' work':''}">${icon(s.st==='done'?'check':'claude')}</span>
       <span class="cn"><b>${esc(clName(s))}</b><span>${sub}</span></span><span class="cr num">${clRight(s)}</span></button>`;
@@ -3975,20 +4005,37 @@ function renderClPage(){
 }
 function clTick(){$$('#clist .crow.work').forEach(r=>{r.querySelector('.cr').textContent=clRight(clById(+r.dataset.cl))})}
 $('#clist').addEventListener('click',e=>{
-  if(e.target.closest('#limRow')){S.limEdit=true;renderClPage();const i=$('#limIn');i.focus();i.select();return}
+  if(e.target.closest('#limRow')){S.limEdit=true;S.wkEdit=false;renderClPage();const i=$('#limIn');i.focus();i.select();return}
+  if(e.target.closest('#wkRow')){
+    const days=wkDays(),r=S.wk&&new Date(S.wk.end);
+    S.wkDay=r?Math.max(0,days.findIndex(d=>d.toDateString()===r.toDateString())):0;
+    S.wkTime=r?`${pad(r.getHours())}:${pad(r.getMinutes())}`:'';S.wkEdit=true;S.limEdit=false;renderClPage();const i=$('#wkIn');i.focus();i.select();return}
+  const step=e.target.closest('#wkPrev,#wkNext');
+  // The arrows change the day in place, with the caret back in the time, so the form never closes under them.
+  if(step){$('#wkIn').focus();S.wkDay=Math.min(7,Math.max(0,S.wkDay+(step.id==='wkNext'?1:-1)));
+    $('.wkday .num').textContent=wkDayTxt(wkDays()[S.wkDay]);$('#wkPrev').disabled=S.wkDay<=0;$('#wkNext').disabled=S.wkDay>=7;$('#wkIn').classList.remove('bad');return}
   const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl));
 });
 // The reset form: Enter or the check saves a time within 5 hours (the window becomes Claude's own, no longer Estimated),
 // any other stays in red; Esc or a click elsewhere cancels.
 $('#clist').addEventListener('submit',e=>{
-  e.preventDefault();const i=$('#limIn'),end=limParse(i.value);
+  e.preventDefault();
+  if(e.target.id==='wkForm'){const i=$('#wkIn'),end=limParseAny(wkDays()[S.wkDay],i.value);
+    if(!end){i.classList.add('bad');i.focus();return}
+    S.wk={end};S.wkEdit=false;renderClPage();return}
+  const i=$('#limIn'),end=limParse(i.value);
   if(!end){i.classList.add('bad');i.focus();return}
   const running=S.lim&&Date.now()<S.lim.end;
   S.lim={end,len:5*3600e3,hit:running?S.lim.hit:false,official:true};S.limEdit=false;renderSlot();renderClPage();
 });
-$('#clist').addEventListener('input',e=>{if(e.target.id==='limIn')e.target.classList.remove('bad')});
-$('#clist').addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target.id==='limIn'){e.stopPropagation();S.limEdit=false;renderClPage()}});
-$('#clist').addEventListener('focusout',e=>{const f=$('#limForm');if(S.limEdit&&f&&!f.contains(e.relatedTarget)){S.limEdit=false;renderClPage()}});
+$('#clist').addEventListener('input',e=>{if(e.target.id==='limIn'||e.target.id==='wkIn')e.target.classList.remove('bad')});
+$('#clist').addEventListener('keydown',e=>{
+  // Up and Down in the weekly time step the day, like its arrows.
+  if(e.target.id==='wkIn'&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();const b=$(e.key==='ArrowUp'?'#wkNext':'#wkPrev');if(!b.disabled)b.click();return}
+  if(e.key==='Escape'&&(e.target.id==='limIn'||e.target.closest('#wkForm'))){e.stopPropagation();S.limEdit=S.wkEdit=false;renderClPage()}});
+$('#clist').addEventListener('focusout',e=>{
+  const f=$('#limForm');if(S.limEdit&&f&&!f.contains(e.relatedTarget)){S.limEdit=false;renderClPage();return}
+  const w=$('#wkForm');if(S.wkEdit&&w&&!w.contains(e.relatedTarget)){S.wkEdit=false;renderClPage()}});
 function clWork(s){
   Object.assign(s,{st:'work',t0:Date.now(),unseen:false,q:''});
   if(S.clEnd===s.id){clearTimeout(S.clEndT);S.clEnd=null}
@@ -4168,6 +4215,7 @@ const ACT={
     fitApps();hint(`${S.apps.length} apps open: the ones that don't fit go into +N`);
   },
   limStart:()=>{S.lim={end:Date.now()+12e3,len:12e3,hit:false};renderSlot();renderClPage();hint('Window ends in 12 seconds; the reset card follows')},
+  wkStart:()=>{S.wk={end:Date.now()+12e3};renderClPage();hint('Weekly reset in 12 seconds; its card follows')},
   limHit:()=>{S.lim={end:Date.now()+3852e3,len:5*3600e3,hit:true};renderSlot();renderClPage()},
   extra:()=>{const on=!S.mods.gpu;S.mods.gpu=S.mods.disk=on?1:0;setPressed('extra',on);layout()},
   fs:()=>{closeExpanded();if(S.state==='wide')setState('compact');S.fs=!S.fs;$('#desk').classList.toggle('fs',S.fs);setPressed('fs',S.fs);

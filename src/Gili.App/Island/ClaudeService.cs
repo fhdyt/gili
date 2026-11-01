@@ -36,17 +36,21 @@ public sealed class ClaudeService : IDisposable
     private readonly Dictionary<int, SessionWindow?> _windows = [];
     private readonly HashSet<int> _hostTried = [];
 
-    public ClaudeService(Dispatcher dispatcher, SettingsHub settings, FileLog log, InstallKind kind, IClaudeWindowStore? windows)
+    public ClaudeService(Dispatcher dispatcher, SettingsHub settings, FileLog log, InstallKind kind, IClaudeWindowStore? windows,
+        IClaudeWeeklyStore? weekly = null)
     {
         _dispatcher = dispatcher;
         _log = log;
         _kind = kind;
         _usage = new ClaudeUsage(windows, () => DateTimeOffset.Now);
         _usage.Changed += OnUsageChanged;
+        _weekly = new ClaudeWeekly(weekly, () => DateTimeOffset.Now);
+        _weekly.Changed += OnUsageChanged;
         _reset.Tick += (_, _) =>
         {
             _reset.Stop();
             if (Usage.Tick()) UsageEnded?.Invoke();
+            if (Weekly.Tick()) WeeklyEnded?.Invoke();
             ScheduleReset();
         };
         _real = new ClaudeBoard(() => DateTimeOffset.Now, IsFront, desktopOnly: true);
@@ -77,9 +81,17 @@ public sealed class ClaudeService : IDisposable
     private readonly ClaudeUsage _usage;
     private readonly DispatcherTimer _reset = new();
     private ClaudeUsage? _demoUsage;
+    private readonly ClaudeWeekly _weekly;
+    private ClaudeWeekly? _demoWeekly;
 
     /// <summary>The Claude 5-hour window (F-CLD-08): the demo's while it plays.</summary>
     public ClaudeUsage Usage => _demoUsage ?? _usage;
+
+    /// <summary>Claude's weekly limit reset, set by hand (revision 19): the demo's while it plays.</summary>
+    public ClaudeWeekly Weekly => _demoWeekly ?? _weekly;
+
+    /// <summary>The weekly reset has just come: the Claude weekly limit reset card rings (revision 19).</summary>
+    public event Action? WeeklyEnded;
 
     /// <summary>Show Claude Code sessions is on.</summary>
     public bool IsOn => _on;
@@ -234,6 +246,7 @@ public sealed class ClaudeService : IDisposable
         }));
         _files.Start();
         _usage.Load();
+        _weekly.Load();
     }
 
     private void Stop()
@@ -271,6 +284,9 @@ public sealed class ClaudeService : IDisposable
     /// <summary>The demo's own 5-hour window, never stored (F-BAR-09).</summary>
     public void ApplyDemo(ClaudeUsageWindow window) => _demoUsage?.ShowDemo(window);
 
+    /// <summary>The demo's own weekly reset, never stored (F-BAR-09).</summary>
+    public void ApplyDemo(ClaudeWeeklyReset reset) => _demoWeekly?.ShowDemo(reset);
+
     private void OnUsageChanged()
     {
         ScheduleReset();
@@ -280,8 +296,11 @@ public sealed class ClaudeService : IDisposable
     private void ScheduleReset()
     {
         _reset.Stop();
-        if (Usage.NextDeadline is not { } at || (!_on && _demoUsage is null)) return;
-        _reset.Interval = TimeSpan.FromMilliseconds(Math.Clamp((at - DateTimeOffset.Now).TotalMilliseconds, 1, int.MaxValue));
+        // The sooner of the 5-hour window's end and the weekly reset.
+        var at = Usage.NextDeadline;
+        if (Weekly.NextDeadline is { } weekly && (at is null || weekly < at)) at = weekly;
+        if (at is null || (!_on && _demoUsage is null)) return;
+        _reset.Interval = TimeSpan.FromMilliseconds(Math.Clamp((at.Value - DateTimeOffset.Now).TotalMilliseconds, 1, int.MaxValue));
         _reset.Start();
     }
 
@@ -314,6 +333,8 @@ public sealed class ClaudeService : IDisposable
         _demoCards = new ClaudeCards();
         _demoUsage = new ClaudeUsage(null, () => DateTimeOffset.Now);
         _demoUsage.Changed += OnUsageChanged;
+        _demoWeekly = new ClaudeWeekly(null, () => DateTimeOffset.Now);
+        _demoWeekly.Changed += OnUsageChanged;
         _demo.Changed += OnBoardChanged;
         OnBoardChanged();
     }
@@ -330,6 +351,8 @@ public sealed class ClaudeService : IDisposable
         _demoCards = null;
         _demoUsage!.Changed -= OnUsageChanged;
         _demoUsage = null;
+        _demoWeekly!.Changed -= OnUsageChanged;
+        _demoWeekly = null;
         ScheduleReset();
         OnBoardChanged();
     }

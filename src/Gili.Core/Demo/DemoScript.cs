@@ -70,6 +70,9 @@ public sealed record DemoClaudeHook(string Event, string Id, string? Tool = null
 /// <summary>The demo's 5-hour window, ending <paramref name="SecondsLeft"/> from now; never stored (plan 3j).</summary>
 public sealed record DemoClaudeWindow(double SecondsLeft, bool LimitHit) : DemoAction;
 
+/// <summary>The demo's weekly limit reset, <paramref name="SecondsLeft"/> from now; never stored (revision 19).</summary>
+public sealed record DemoClaudeWeekly(double SecondsLeft) : DemoAction;
+
 /// <summary>Explorer's progress dialog as the demo fakes it (F-ISL-15); an empty list ends the operation.</summary>
 public sealed record DemoFileOps(IReadOnlyList<Gili.Core.FileOps.FileOpTile> Tiles) : DemoAction;
 
@@ -146,6 +149,8 @@ public static class DemoScript
             // finish behind other windows, so a green dot, then the green bubble with 2, then the Claude page. Only Claude
             // Desktop's sessions show (revision 17).
             Step(60, new DemoClaudeSession(Desk, "Integrate taskbar with Claude", @"C:\Projects\gili", Desktop: true)),
+            // The weekly limit's reset, set by hand, shows on the Claude page under the 5-hour row (revision 19).
+            Step(60, new DemoClaudeWeekly(3 * 86400 + 4 * 3600)),
             Step(60, new DemoClaudeSession(Desk2, "Island timeline polish", @"C:\Projects\top-taskbar", Desktop: true)),
             Step(60.2, new DemoClaudeHook("UserPromptSubmit", Desk)),
             Step(63, new DemoClaudeHook("PreToolUse", Desk, "AskUserQuestion", "Which island layout do you prefer for the session list?")),

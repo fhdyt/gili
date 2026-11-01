@@ -36,7 +36,7 @@ public sealed class DatabaseTests : IDisposable
         using var db = Database.Open(_folder);
         var tables = Column(db.Connection, "SELECT name FROM sqlite_master WHERE type = 'table'");
         Assert.Superset(
-            new HashSet<string> { "schema_version", "notes", "todos", "alarms", "timers", "stopwatch", "clipboard_history", "claude_window", "shelf_items", "projects", "project_tasks" },
+            new HashSet<string> { "schema_version", "notes", "todos", "alarms", "timers", "stopwatch", "clipboard_history", "claude_window", "shelf_items", "projects", "project_tasks", "claude_weekly" },
             tables.ToHashSet());
     }
 
@@ -44,7 +44,7 @@ public sealed class DatabaseTests : IDisposable
     public void Version_is_the_latest_after_the_first_open()
     {
         using var db = Database.Open(_folder);
-        Assert.Equal(5, db.Version);
+        Assert.Equal(6, db.Version);
     }
 
     [Fact]
@@ -52,8 +52,8 @@ public sealed class DatabaseTests : IDisposable
     {
         Database.Open(_folder).Dispose();
         using var db = Database.Open(_folder);
-        Assert.Equal(5, db.Version);
-        Assert.Equal(["5"], Column(db.Connection, "SELECT version FROM schema_version"));
+        Assert.Equal(6, db.Version);
+        Assert.Equal(["6"], Column(db.Connection, "SELECT version FROM schema_version"));
     }
 
     [Fact]

@@ -28,6 +28,31 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- The weekly form's day arrows, like the Calendar's month arrows; grey at the first or last day. They never take
+             the keyboard, so the caret stays in the time and the form doesn't close under them; Up and Down there step too. -->
+        <Style x:Key="DayStep" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="#8E8E93" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Width="20" Height="20" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#F5F5F7" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.3" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <!-- The Claude page (mockup section "Claude", .clist): every live session, 6 px apart, without scrolling (PRD 6.3). -->
@@ -106,6 +131,61 @@
                              AutomationProperties.Name="Reset time" AutomationProperties.HelpText="20:40"
                              ToolTip="The reset time Claude Desktop shows, within the next 5 hours" />
                     <Button Grid.Column="2" Style="{StaticResource CheckPill}" Margin="6,0,0,0" Command="{Binding SaveResetCommand}"
+                            AutomationProperties.Name="Save">
+                        <c:IconView Glyph="{StaticResource Icon.Check}" Width="14" Height="14" StrokeThickness="2.6" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+        <!-- Claude's weekly limit (revision 19): a ring of the week, Weekly limit, Resets Sun 8 Nov, 04:00 or Not set, and the
+             time left in days and hours. Its click turns it into Resets on, ‹ day ›, an 86 px time, and the check. -->
+        <Grid Margin="0,0,0,6" Visibility="{Binding HasWindow, Converter={StaticResource VisibleWhen}}">
+            <Button Style="{StaticResource SessionRow}" Command="{Binding EditWeeklyCommand}" ToolTip="{Binding WeeklyTooltip}"
+                    AutomationProperties.Name="Weekly limit" AutomationProperties.HelpText="{Binding WeeklyResets}"
+                    Visibility="{Binding IsEditingWeekly, Converter={StaticResource VisibleWhenFalse}}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Left" Width="22" Height="22" VerticalAlignment="Center">
+                        <Ellipse Width="19.25" Height="19.25" Stroke="#2C2C2E" StrokeThickness="2.75" />
+                        <Ellipse Width="19.25" Height="19.25" Stroke="#D97757" StrokeThickness="2.75" StrokeDashCap="Round"
+                                 StrokeDashArray="{Binding WeeklyArc}" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <RotateTransform Angle="-90" />
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                    </Grid>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding WeeklyLeft}" FontSize="12" Foreground="#8E8E93" Margin="12,0,0,0"
+                               VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Weekly limit" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding WeeklyResets}" FontSize="12" Foreground="#8E8E93" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+            <Border x:Name="WeeklyForm" MinHeight="44" Padding="12,6" CornerRadius="12" Background="#1C1C1E" PreviewKeyDown="OnWeeklyKey"
+                    IsKeyboardFocusWithinChanged="OnWeeklyFocus" Visibility="{Binding IsEditingWeekly, Converter={StaticResource VisibleWhen}}">
+                <Grid VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="86" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Resets on" FontSize="14" FontWeight="SemiBold" Foreground="#F5F5F7" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0" VerticalAlignment="Center">
+                        <Button Style="{StaticResource DayStep}" Command="{Binding PreviousDayCommand}" AutomationProperties.Name="Previous day">
+                            <c:IconView Glyph="{StaticResource Icon.ChevronLeft}" Width="12" Height="12" />
+                        </Button>
+                        <TextBlock Text="{Binding WeeklyDay}" Width="76" FontSize="13" Foreground="#F5F5F7" TextAlignment="Center"
+                                   VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+                        <Button Style="{StaticResource DayStep}" Command="{Binding NextDayCommand}" AutomationProperties.Name="Next day">
+                            <c:IconView Glyph="{StaticResource Icon.ChevronRight}" Width="12" Height="12" />
+                        </Button>
+                    </StackPanel>
+                    <TextBox x:Name="WeeklyTime" Grid.Column="2" Style="{StaticResource Field}" Text="{Binding WeeklyTimeText, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="{Binding WeeklyState}" Typography.NumeralAlignment="Tabular" MaxLength="8"
+                             AutomationProperties.Name="Weekly reset time" AutomationProperties.HelpText="04:00"
+                             ToolTip="The weekly reset Claude Desktop shows, within the next 7 days" />
+                    <Button Grid.Column="3" Style="{StaticResource CheckPill}" Margin="6,0,0,0" Command="{Binding SaveWeeklyCommand}"
                             AutomationProperties.Name="Save">
                         <c:IconView Glyph="{StaticResource Icon.Check}" Width="14" Height="14" StrokeThickness="2.6" />
                     </Button>

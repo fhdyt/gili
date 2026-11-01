@@ -218,7 +218,8 @@ public partial class App : Application
             if (_systemPageShown) _islandWindow.SystemStats.Apply(s);
         };
         _islandWindow.CompactChanged += _bar.SetIslandCompact;
-        _claude = new ClaudeService(Dispatcher, _settings, _log, Kind, _database is null ? null : new Data.ClaudeWindowStore(_database));
+        _claude = new ClaudeService(Dispatcher, _settings, _log, Kind, _database is null ? null : new Data.ClaudeWindowStore(_database),
+            _database is null ? null : new Data.ClaudeWeeklyStore(_database));
         _claude.Changed += ShowClaude;
         _islandController.ClaudeSessionRequested += _claude.Focus;
         _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
@@ -235,6 +236,11 @@ public partial class App : Application
         };
         _islandController.OpenClaude = _claude.OpenClaude;
         _islandController.SetClaudeReset = at => _claude.Usage.SetReset(at);
+        _islandController.SetClaudeWeeklyReset = at => _claude.Weekly.Set(at);
+        _claude.WeeklyEnded += () =>
+        {
+            if (_claude.InDemo || (_settings.Current.ClaudeUsageTimer && _claude.DesktopOpen)) _islandController.ShowClaudeWeeklyReset();
+        };
         _bar.TimeChanged += _claude.RescheduleUsage;
         _settings.Changed += _ => ShowClaude();
         _demo.Claude = _claude;
@@ -405,6 +411,7 @@ public partial class App : Application
         // in the demo (F-CLD-08, revision 17). Closed, the window is still kept, so it is right when Desktop opens again.
         var showWindow = _claude.InDemo || (_claude.IsOn && _settings!.Current.ClaudeUsageTimer && _claude.DesktopOpen);
         _islandController.SetClaudeWindow(_claude.Usage.Current, showWindow);
+        _islandController.SetClaudeWeekly(_claude.Weekly.Current);
         _bar!.ShowClaude(sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.NeedsInput),
             sessions.Any(s => s.Status == Core.Claude.ClaudeStatus.Working), Core.Claude.ClaudeSlot.Unseen(sessions).Count > 0,
             Core.Claude.ClaudeSlot.LauncherTooltip(sessions));

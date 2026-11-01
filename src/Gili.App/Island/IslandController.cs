@@ -468,18 +468,23 @@ public sealed class IslandController : IDisposable
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
             FileConflictCard => FileConflictContent(id),
             ClaudeCards.CardId when _claudeCard is { } claude => ClaudeContent(id, claude),
-            ClaudeResetCard => new("Icon.Hourglass", Color.FromRgb(0xD9, 0x77, 0x57), "Claude usage reset", "Your 5-hour limit is available again",
-                [
-                    new("Close", false, Card(id, () => { })),
-                    new("Open Claude", true, Card(id, () =>
-                    {
-                        if (OpenClaude?.Invoke() != true) _coordinator.Open(IslandPage.Claude);
-                    })),
-                ]),
+            ClaudeResetCard => ClaudeResetContent(id, "Claude usage reset", "Your 5-hour limit is available again"),
+            ClaudeWeeklyResetCard => ClaudeResetContent(id, "Claude weekly limit reset", "Your weekly limit is available again"),
             _ => null,
         };
         return content is null ? null : WithMuteWarning(id, content);
     }
+
+    /// <summary>A Claude limit is available again: the orange hourglass, Close and Open Claude (PRD 6.3, revision 19).</summary>
+    private CardContent ClaudeResetContent(string id, string title, string sub) =>
+        new("Icon.Hourglass", Color.FromRgb(0xD9, 0x77, 0x57), title, sub,
+            [
+                new("Close", false, Card(id, () => { })),
+                new("Open Claude", true, Card(id, () =>
+                {
+                    if (OpenClaude?.Invoke() != true) _coordinator.Open(IslandPage.Claude);
+                })),
+            ]);
 
     private Gili.Core.Timers.LabeledTimer? LabeledTimerOf(string cardId) =>
         Timers.Labeled.FirstOrDefault(t => TimerService.CardId(t.Id) == cardId);
@@ -625,6 +630,26 @@ public sealed class IslandController : IDisposable
 
     public const string ClaudeResetCard = "claude-reset";
 
+    public const string ClaudeWeeklyResetCard = "claude-weekly-reset";
+
+    /// <summary>Claude's weekly limit reset on show (revision 19); null while none is set or the timer is off.</summary>
+    public ClaudeWeeklyReset? ClaudeWeekly { get; private set; }
+
+    /// <summary>The weekly reset's day and time, typed on the Claude page (revision 19).</summary>
+    public Action<DateTimeOffset>? SetClaudeWeeklyReset { get; set; }
+
+    /// <summary>The weekly row shows on the Claude page only: a reset days away never takes the slot.</summary>
+    public void SetClaudeWeekly(ClaudeWeeklyReset? reset)
+    {
+        ClaudeWeekly = ClaudeTimerShown ? reset : null;
+        SyncWindowSecond();
+        ClaudeChanged?.Invoke();
+    }
+
+    /// <summary>The weekly reset came: a card like the 5-hour one's, held during a focus phase.</summary>
+    public void ShowClaudeWeeklyReset() =>
+        _coordinator.ShowCard(new IslandCard(ClaudeWeeklyResetCard, CardPriority.Urgent, TimeSpan.Zero, HoldInFocus: true));
+
     /// <summary>The Claude 5-hour window on show (F-CLD-08); null while there is none or its switch is off.</summary>
     public ClaudeUsageWindow? ClaudeWindow { get; private set; }
 
@@ -664,9 +689,8 @@ public sealed class IslandController : IDisposable
     private void SyncWindowSecond()
     {
         var view = View;
-        var shown = ClaudeWindow is not null && (
-            (view.Mode == IslandMode.Compact && view.Slot is ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow)
-            || (view.Mode == IslandMode.Expanded && view.Page == IslandPage.Claude));
+        var shown = (ClaudeWindow is not null && view.Mode == IslandMode.Compact && view.Slot is ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow)
+            || ((ClaudeWindow is not null || ClaudeWeekly is not null) && view.Mode == IslandMode.Expanded && view.Page == IslandPage.Claude);
         _windowSecond.IsEnabled = shown;
     }
 

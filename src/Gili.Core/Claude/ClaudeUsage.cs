@@ -75,6 +75,8 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
     {
         var at = now();
         var reset = ResetIn(text, at);
+        // A reset days away is the weekly limit's, never this window's (revision 19).
+        if (reset - at > Length) return;
         var window = Running(at);
         if (window is null)
         {
@@ -103,8 +105,28 @@ public sealed class ClaudeUsage(IClaudeWindowStore? store, Func<DateTimeOffset> 
     /// A reset time typed from Claude Desktop with its hour and minutes ("20:40", "8:40 PM"), as the next such time after
     /// <paramref name="at"/>; null without minutes, or when not within the next 5 hours, so no running window could reset then.
     /// </summary>
-    public static DateTimeOffset? ParseReset(string text, DateTimeOffset at) =>
-        text.Contains(':') && ResetIn("resets " + text.Trim(), at) is { } reset && reset - at <= Length ? reset : null;
+    public static DateTimeOffset? ParseReset(string text, DateTimeOffset at)
+    {
+        if (TimeOfDay(text) is not { } time) return null;
+        var reset = new DateTimeOffset(DateOnly.FromDateTime(at.DateTime), time, at.Offset);
+        if (reset <= at) reset = reset.AddDays(1);
+        return reset - at <= Length ? reset : null;
+    }
+
+    /// <summary>A time typed with its hour and minutes, "20:40" or "8:40 PM"; null for "8pm", "8" or anything else.</summary>
+    public static TimeOnly? TimeOfDay(string text)
+    {
+        var clock = Regex.Match(text, @"^\s*(\d{1,2}):(\d{2})\s*(?:([ap])\.?\s*m\.?)?\s*$", RegexOptions.IgnoreCase);
+        if (!clock.Success) return null;
+        var hour = int.Parse(clock.Groups[1].Value, CultureInfo.InvariantCulture);
+        var minute = int.Parse(clock.Groups[2].Value, CultureInfo.InvariantCulture);
+        if (clock.Groups[3].Success)
+        {
+            if (hour is < 1 or > 12) return null;
+            hour = hour % 12 + (char.ToLowerInvariant(clock.Groups[3].Value[0]) == 'p' ? 12 : 0);
+        }
+        return hour > 23 || minute > 59 ? null : new TimeOnly(hour, minute);
+    }
 
     /// <summary>
     /// The reset time shown in Claude Desktop, set by hand (revision 18): Gili can't read it, so this window is Claude's own,

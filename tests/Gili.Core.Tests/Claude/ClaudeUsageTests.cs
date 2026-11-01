@@ -109,10 +109,21 @@ public sealed class ClaudeUsageTests : IDisposable
     {
         var usage = new ClaudeUsage(null, () => _now);
         usage.Used();
-        usage.LimitReached("5-hour limit reached ∙ resets 7:30pm");
+        usage.LimitReached("5-hour limit reached ∙ resets 7:10pm");
         Assert.True(usage.Current!.LimitHit);
-        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 30, 0, Jakarta), usage.Current.ResetsAt);
+        Assert.Equal(new DateTimeOffset(2026, 10, 31, 19, 10, 0, Jakarta), usage.Current.ResetsAt);
         Assert.Equal(ClaudeWindowSource.Official, usage.Current.Source);
+    }
+
+    [Fact]
+    public void The_weekly_limit_leaves_the_5_hour_window_alone()
+    {
+        // Its reset is days away, not the 5-hour window's (revision 19).
+        var usage = new ClaudeUsage(null, () => _now);
+        usage.Used();
+        var before = usage.Current;
+        usage.LimitReached("You've hit your weekly limit · resets 4am");
+        Assert.Equal(before, usage.Current);
     }
 
     [Fact]

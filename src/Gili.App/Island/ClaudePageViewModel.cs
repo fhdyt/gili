@@ -50,6 +50,40 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     public const string ResetHint = "Click to set the reset time shown in Claude";
 
+    /// <summary>
+    /// The weekly limit's row under the 5-hour one (revision 19): ring of the week, Resets Sun 8 Nov, 04:00, and the time
+    /// left; Not set until its day and time are typed from Claude Desktop.
+    /// </summary>
+    [ObservableProperty] private string _weeklyResets = "";
+    [ObservableProperty] private string _weeklyLeft = "";
+    [ObservableProperty] private string _weeklyTooltip = "";
+    [ObservableProperty] private System.Windows.Media.DoubleCollection _weeklyArc = [0, 100];
+
+    /// <summary>The weekly row is a form: Resets on, ‹ day ›, the time, and the check.</summary>
+    [ObservableProperty] private bool _isEditingWeekly;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WeeklyDay))]
+    [NotifyCanExecuteChangedFor(nameof(PreviousDayCommand), nameof(NextDayCommand))]
+    private int _weeklyDayIndex;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WeeklyState))]
+    private string _weeklyTimeText = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WeeklyState))]
+    private bool _isWeeklyInvalid;
+
+    private IReadOnlyList<DateOnly> _weeklyDays = [];
+
+    /// <summary>The stepper's day: Sun 8 Nov.</summary>
+    public string WeeklyDay => _weeklyDays.Count == 0 ? "" : ClaudeWeeklyText.Day(_weeklyDays[WeeklyDayIndex]);
+
+    public string? WeeklyState => IsWeeklyInvalid ? "Invalid" : null;
+
+    public const string WeeklyHint = "Click to set the weekly reset shown in Claude";
+
     public ClaudePageViewModel(IslandController island, Func<bool> use24Hour)
     {
         _island = island;
@@ -74,7 +108,12 @@ public sealed partial class ClaudePageViewModel : ObservableObject
     {
         var hadWindow = HasWindow;
         HasWindow = _island.ClaudeTimerShown;
-        if (!HasWindow) IsEditingReset = false;
+        if (!HasWindow)
+        {
+            IsEditingReset = false;
+            IsEditingWeekly = false;
+        }
+        RefreshWeekly();
         if (_island.ClaudeWindow is { } window)
         {
             var view = ClaudeUsageText.For(window, DateTimeOffset.Now, _use24Hour());
@@ -96,10 +135,79 @@ public sealed partial class ClaudePageViewModel : ObservableObject
         if (hadWindow != HasWindow) ContentChanged?.Invoke();
     }
 
+    private void RefreshWeekly()
+    {
+        if (_island.ClaudeWeekly is { } reset)
+        {
+            var view = ClaudeWeeklyText.For(reset, DateTimeOffset.Now, _use24Hour());
+            WeeklyResets = view.Resets;
+            WeeklyLeft = view.Left;
+            WeeklyTooltip = view.Tooltip + Environment.NewLine + WeeklyHint;
+            const double Circle = 18.85;
+            WeeklyArc = [Math.Max(0.001, Circle * (1 - view.Elapsed)), 100];
+        }
+        else
+        {
+            WeeklyResets = "Not set";
+            WeeklyLeft = "";
+            WeeklyTooltip = WeeklyHint;
+            WeeklyArc = [0.001, 100];
+        }
+    }
+
+    /// <summary>The weekly row's click: the form opens on the day and time set, else today with no time.</summary>
+    [RelayCommand]
+    private void EditWeekly()
+    {
+        IsEditingReset = false;
+        var now = DateTimeOffset.Now;
+        _weeklyDays = ClaudeWeekly.Days(now);
+        var set = _island.ClaudeWeekly?.ResetsAt.ToLocalTime();
+        var index = set is { } at ? Array.IndexOf([.. _weeklyDays], DateOnly.FromDateTime(at.DateTime)) : 0;
+        WeeklyDayIndex = Math.Max(0, index);
+        OnPropertyChanged(nameof(WeeklyDay));
+        WeeklyTimeText = set is { } time
+            ? time.ToString(_use24Hour() ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
+            : "";
+        IsWeeklyInvalid = false;
+        IsEditingWeekly = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGoBack))]
+    private void PreviousDay() => WeeklyDayIndex--;
+
+    [RelayCommand(CanExecute = nameof(CanGoOn))]
+    private void NextDay() => WeeklyDayIndex++;
+
+    private bool CanGoBack() => WeeklyDayIndex > 0;
+
+    private bool CanGoOn() => WeeklyDayIndex < _weeklyDays.Count - 1;
+
+    [RelayCommand]
+    private void CancelWeekly() => IsEditingWeekly = false;
+
+    /// <summary>Enter or the check: a day and time within the next week becomes the weekly reset; any other stays, in red.</summary>
+    [RelayCommand]
+    public void SaveWeekly()
+    {
+        if (_weeklyDays.Count == 0 || ClaudeWeekly.ParseReset(_weeklyDays[WeeklyDayIndex], WeeklyTimeText, DateTimeOffset.Now) is not { } reset)
+        {
+            IsWeeklyInvalid = true;
+            return;
+        }
+        IsEditingWeekly = false;
+        _island.SetClaudeWeeklyReset?.Invoke(reset);
+    }
+
+    partial void OnWeeklyTimeTextChanged(string value) => IsWeeklyInvalid = false;
+
+    partial void OnWeeklyDayIndexChanged(int value) => IsWeeklyInvalid = false;
+
     /// <summary>The row's click: the form opens with the reset time Gili has, ready to be typed over.</summary>
     [RelayCommand]
     private void EditReset()
     {
+        IsEditingWeekly = false;
         ResetText = _island.ClaudeWindow is { } window
             ? window.ResetsAt.ToLocalTime().ToString(_use24Hour() ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
             : "";

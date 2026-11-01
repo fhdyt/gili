@@ -65,6 +65,7 @@ public sealed class DemoService
         _island.DismissCard(DemoReminder.CardId);
         _island.DismissClaudeCard();
         _island.DismissCard(IslandController.ClaudeResetCard);
+        _island.DismissCard(IslandController.ClaudeWeeklyResetCard);
         Claude?.EndDemo();
         _island.EndDemo();
         _island.Lyrics.SetDemo(null);
@@ -156,6 +157,9 @@ public sealed class DemoService
                     break;
                 case DemoClaudeHook hook:
                     Claude?.ApplyDemo(new ClaudeHookMessage(hook.Event, hook.Id, null, hook.Tool, null, null, hook.Question));
+                    break;
+                case DemoClaudeWeekly weekly:
+                    Claude?.ApplyDemo(new ClaudeWeeklyReset(0, DateTimeOffset.Now.AddSeconds(weekly.SecondsLeft), false));
                     break;
                 case DemoClaudeWindow window:
                     var end = DateTimeOffset.Now.AddSeconds(window.SecondsLeft);

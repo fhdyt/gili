@@ -415,6 +415,13 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 - Selama fase fokus pomodoro kartu ditahan sampai istirahat, seperti kartu prioritas 2; toast tetap dikirim.
 - Jendela baru tidak dimulai otomatis; baru dimulai saat prompt berikutnya dikirim.
 
+**Batas mingguan** (revisi 19)
+- Di halaman Claude, tepat di bawah baris 5 jam, ada baris `Weekly limit` dengan gaya yang sama: ring sisa waktu dari 7 hari (oranye Claude), `Resets Sun 8 Nov, 04:00` (jam mengikuti setelan 12/24 jam), dan sisa waktu di kanan, `6d 11h` bila sehari atau lebih, `11:20:05` bila kurang. Sebelum diisi, barisnya `Not set` tanpa sisa waktu. Tooltip: `Claude weekly limit · resets Sun 8 Nov, 04:00` dan baris kedua `Click to set the weekly reset shown in Claude`.
+- Gili tidak bisa membaca waktu reset mingguan, jadi diisi pengguna dari Claude Desktop: klik baris membuka form `Resets on`, pemilih hari `‹ Sun 8 Nov ›` (hari ini sampai 7 hari ke depan; panah abu-abu di ujungnya), kolom waktu 86 px berisi jam dan menit (`04:00` atau `4:00 AM`), dan tombol centang. Panah tidak mengambil fokus keyboard; tombol ↑/↓ di kolom waktu juga menggeser hari. Enter atau centang menyimpan, Esc atau klik di luar membatalkan. Waktu yang sudah lewat, lebih dari 7 hari, atau tanpa menit membuat kolomnya bertepi merah. Kolom waktunya bertooltip `The weekly reset Claude Desktop shows, within the next 7 days`.
+- Baris ini hanya di halaman Claude, tidak pernah di slot atau gelembung, dan tampil dengan aturan yang sama dengan baris 5 jam: saklar **Show 5-hour usage timer** nyala dan Claude Desktop terbuka.
+- Saat waktunya tiba muncul kartu `Claude weekly limit reset`, `Your weekly limit is available again`, dengan Close dan Open Claude, suara dan aturan pomodoro seperti kartu 5 jam; lalu barisnya kembali `Not set`. Reset berikutnya tidak ditebak. Reset yang lewat saat Gili mati atau laptop tidur selesai tanpa kartu.
+- Pesan batas dari `StopFailure` yang waktu resetnya lebih dari 5 jam lagi adalah batas mingguan, jadi tidak mengubah jendela 5 jam.
+
 **Jendela sesi**: Gili menelusuri proses induk dari proses `claude` sebuah sesi sampai menemukan jendela pertama yang terlihat: Claude Desktop untuk sesi Desktop, atau jendela terminal (wmux, Windows Terminal) untuk sesi CLI. Membawa ke depan berarti memulihkan jendela kalau diminimize, lalu memfokuskannya. Membuka percakapan tertentu di dalam Claude Desktop di luar cakupan.
 
 #### Indikator kamera dan mikrofon
@@ -724,6 +731,7 @@ Timeline project sederhana ala Notion, untuk melihat jalannya project dan task-t
 | Timer habis | `Timer 10:00 done`, label | Repeat, Close |
 | Timer berlabel habis | Judul `<label> done` (contoh `Tea done`), baris kedua `Timer 10:00`; ikon jam pasir oranye seperti kartu timer | Repeat, Close |
 | Jendela Claude 5 jam berakhir | `Claude usage reset`, `Your 5-hour limit is available again` | Close, Open Claude |
+| Batas mingguan Claude reset (revisi 19) | `Claude weekly limit reset`, `Your weekly limit is available again` | Close, Open Claude |
 | Pengingat todo | Judul tugas, waktu jatuh tempo | Snooze 10m, Done |
 | Fokus selesai | `Focus session done`, `5-minute break · session 1 of 4` | Skip, Start break |
 | Istirahat selesai | `Break over`, `Session 2 of 4 ready` | Stop, Start focus |
@@ -868,6 +876,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Alarm | Dipilih per alarm (default Radar) | Berulang sampai Snooze atau Stop, maksimal 5 menit; volume naik bertahap |
 | Timer habis | Dipilih di Settings (default Chime) | Berulang sampai Repeat atau Close, maksimal 5 menit; langsung di volume penuh |
 | Jendela Claude 5 jam berakhir | Sama dengan suara timer | Berulang sampai Close atau Open Claude, maksimal 5 menit; ditahan selama fase fokus pomodoro |
+| Batas mingguan Claude reset | Sama dengan suara timer | Seperti jendela 5 jam |
 | Fase pomodoro selesai | Bell | Sekali |
 | Pengingat todo | Ping | Sekali; dibisukan selama fase fokus pomodoro (ikut F-TOOL-04) |
 | Claude butuh jawaban | Ping | Sekali per pertanyaan; dibisukan selama fase fokus pomodoro |
@@ -1089,6 +1098,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Pulau kontrol | Daftar Wi‑Fi, Bluetooth, dan perangkat audio hanya dibaca saat pulaunya terbuka; ikon bar memakai event sistem | 0 saat tidak tampil | — |
 | Detik di jam | Satu teks kecil diperbarui sekali per detik; timer diselaraskan ke pergantian detik sistem, bukan polling cepat; tata letak bar dihitung ulang hanya saat menit atau tanggal berganti | Tidak terukur (< 0,1%) | Show seconds dimatikan |
 | Timer jendela Claude 5 jam | Satu teks diperbarui tiap detik saat tampil di slot | Tidak terukur | Saat hanya di gelembung, tidak ada pembaruan teks |
+| Batas mingguan Claude (revisi 19) | Satu timer tenggat; teks sisa waktu diperbarui tiap detik hanya saat halaman Claude terbuka | Tidak terukur | Tidak pernah di slot |
 | Tinggi pulau mengikuti isi, posisi bawah, sembunyikan taskbar, tombol Start, jam di kanan | Hanya saat ada perubahan | Tidak terukur | — |
 | Ekspresi Gili | `GetLastInputInfo` sekali per detik untuk tidur; status tombol mouse dibaca di pembacaan kursor 30×/detik yang sudah ada (tanpa hook); satu kedipan 230 ms per klik; ekspresi dihitung ulang hanya saat ada perubahan; anggukan musik menggambar ulang area mata (lingkaran 24 px) hanya saat bergerak, sekitar 60% waktu selama musik diputar | CPU ≤ 0,2% selama musik diputar, 0% saat tidur dan saat ekspresi lain diam | Anggukan dimatikan (mata setengah terpejam diam) |
 | Kartu note tumbuh jadi editor | Animasi ±420 ms di dalam jendela pulau (layered, digambar CPU) hanya saat membuka/menutup note; isi editor ditata sekali di ukuran akhir, bukan tiap frame | Masuk anggaran animasi (< 5%) selama animasi, 0% setelahnya | Ukuran berpindah dengan cross-fade 100 ms |
@@ -1339,6 +1349,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 | `stopwatch` | `id`, `started_at`, `accumulated_ms`, `laps` (JSON) |
 | `clipboard_history` | `id`, `text` (teks, nama PNG di `clipboard\`, atau path file per baris), `source_app`, `copied_at`, `kind` (`Text`/`Image`/`Files`, migrasi 4), `name` (nama gambar), `width`, `height` (dibatasi 50 baris, 20 gambar) |
 | `claude_window` | `id`, `started_at`, `resets_at`, `source` (official/estimated), `limit_hit_at` (opsional), `notified` (1 baris aktif) |
+| `claude_weekly` | `id`, `resets_at` (UTC), `notified` (1 baris aktif; migrasi 6, revisi 19) |
 | `shelf_items` | `id`, `paths` (JSON, satu path atau banyak untuk bundel), `display_name`, `size_bytes`, `sort_order`, `added_at`, `mode` (`Copy`/`Cut`, migrasi 3), `folder` (subfolder `shelf\` milik Gili atau kosong, migrasi 3) (dibatasi 8 baris) |
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan. `gili.db` yang rusak diganti backup harian terbaru, lalu salinan untuk reinstall.
@@ -1449,6 +1460,8 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 **Revisi 17 (keputusan pengguna 2026-11-01)**: untuk saat ini integrasi Claude hanya untuk Claude Desktop. Sesi Claude Code dan timer 5 jam tampil di pulau hanya selama Claude Desktop terbuka (punya jendela di taskbar); sesi CLI yang terpasang di Windows tidak pernah tampil. Hook tetap satu set di `~/.claude/settings.json` (CLI dan Desktop memakainya bersama), dan pemakaian dari CLI tetap menghitung jendela 5 jam. Terbuka atau tidaknya Claude Desktop dibaca dari daftar jendela taskbar yang sudah diikuti lewat WinEvents, tanpa polling; saat strip Running apps mati, daftar itu tetap dibaca saat jendela muncul atau hilang (digabung per 100 ms), hanya untuk memeriksa Claude Desktop. Kode jendela terminal dibiarkan, supaya sesi CLI bisa dinyalakan lagi dengan mencabut saringan ini.
 
 **Revisi 18 (keputusan pengguna 2026-11-01)**: waktu reset 5 jam bisa disinkronkan manual dari Claude Desktop lewat baris `5-hour window` di halaman Claude (lihat "Batas pemakaian Claude" di 6.3), dan perkiraan otomatis dibulatkan per 10 menit, bukan per jam. Sinkron otomatis dicoba dan ditolak: statusline tidak dijalankan Claude Desktop, endpoint usage OAuth butuh token CLI yang cepat kedaluwarsa dan membaca rahasia app lain, token Desktop terenkripsi, dan menjalankan `claude -p` berkala memakai kuota serta bisa memulai jendela sendiri.
+
+**Revisi 19 (keputusan pengguna 2026-11-01)**: batas mingguan Claude ikut ditampilkan sebagai baris `Weekly limit` di halaman Claude, dengan hari, jam, dan menit resetnya diisi manual dari Claude Desktop, dan kartu `Claude weekly limit reset` saat waktunya tiba (lihat "Batas pemakaian Claude" di 6.3). Disimpan di tabel `claude_weekly` (migrasi 6). Biaya: satu timer tenggat dan satu teks per detik hanya saat halaman Claude terbuka.
 
 ## 15. Di luar cakupan
 
