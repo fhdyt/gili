@@ -23,6 +23,7 @@ public sealed class DemoService
     private readonly Stopwatch _clock = new();
     private DemoPlayer? _player;
     private byte[]? _cover;
+    private byte[]? _thumb;
     private bool _timerCardPending;
 
     public DemoService(Dispatcher dispatcher, IslandController island, MediaService media)
@@ -88,7 +89,10 @@ public sealed class DemoService
             switch (action)
             {
                 case DemoMedia { State: { } state }:
-                    _media.SetDemo(state with { Cover = _cover ??= Cover() });
+                    _media.SetDemo(state with
+                    {
+                        Cover = state.Kind == Gili.Core.Media.MediaKind.Video ? _thumb ??= Cover(320, 180) : _cover ??= Cover(300, 300),
+                    });
                     break;
                 case DemoMedia:
                     _media.SetDemo(null);
@@ -160,16 +164,19 @@ public sealed class DemoService
         }
     }
 
-    /// <summary>A purple-to-blue square as the fake song's artwork, so the Media page's glow has colours (plan 1g decision 3).</summary>
-    private static byte[] Cover()
+    /// <summary>
+    /// A purple-to-blue gradient as the fake song's artwork, so the Media page's glow has colours (plan 1g decision 3),
+    /// and at 16:9 as the fake video's thumbnail (issue #31).
+    /// </summary>
+    private static byte[] Cover(int width, int height)
     {
         var visual = new DrawingVisual();
         using (var dc = visual.RenderOpen())
         {
             var brush = new LinearGradientBrush(Color.FromRgb(0x5E, 0x5C, 0xE6), Color.FromRgb(0x0A, 0x84, 0xFF), 45);
-            dc.DrawRectangle(brush, null, new Rect(0, 0, 300, 300));
+            dc.DrawRectangle(brush, null, new Rect(0, 0, width, height));
         }
-        var bitmap = new RenderTargetBitmap(300, 300, 96, 96, PixelFormats.Pbgra32);
+        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(visual);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));

@@ -105,7 +105,18 @@
                                 </Button>
                             </Grid>
                             <DockPanel MinWidth="172" Visibility="{Binding IsVideo, Converter={StaticResource VisibleWhen}}">
-                                <c:IconView DockPanel.Dock="Left" Glyph="{StaticResource Icon.Film}" Width="14" Height="14" Foreground="#FF9F0A" />
+                                <!-- The video's thumbnail, 16:9 at the artwork's height, or a film glyph in the same box (issue #31). -->
+                                <Border DockPanel.Dock="Left" Width="{Binding ThumbWidth}" Height="{Binding ArtworkSize}" CornerRadius="4" Background="#1C1C1E">
+                                    <Grid>
+                                        <c:IconView Glyph="{StaticResource Icon.Film}" Width="12" Height="12" Foreground="#FF9F0A" />
+                                        <Border CornerRadius="4" Visibility="{Binding HasArtwork, Converter={StaticResource VisibleWhen}}">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="{Binding Artwork}" Stretch="UniformToFill" />
+                                            </Border.Background>
+                                        </Border>
+                                        <Border CornerRadius="4" BorderBrush="#24FFFFFF" BorderThickness="0.5" />
+                                    </Grid>
+                                </Border>
                                 <Grid DockPanel.Dock="Right" Width="36" Height="3" Margin="6,0,0,0" VerticalAlignment="Center"
                                       Visibility="{Binding HasTimeline, Converter={StaticResource VisibleWhen}}">
                                     <Border Background="#3A3A3C" CornerRadius="1.5" />

@@ -18,6 +18,7 @@ public sealed class MediaSessionMonitor : IDisposable
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
     private Session? _current;
     private (string Key, byte[] Cover)? _cover;
+    private volatile bool _coverChanged;
     private volatile bool _disposed;
 
     /// <summary>The session to show, or null when there is none. Raised on a background thread.</summary>
@@ -91,7 +92,13 @@ public sealed class MediaSessionMonitor : IDisposable
         session.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
     }
 
-    private void OnMediaPropertiesChanged(Session sender, MediaPropertiesChangedEventArgs args) => _ = RefreshAsync(sender);
+    // Browsers change the title first and attach the new video's thumbnail a moment later, under the same title, so the
+    // thumbnail is read again on every properties change (revision 14, issue #31), never on position or playback changes.
+    private void OnMediaPropertiesChanged(Session sender, MediaPropertiesChangedEventArgs args)
+    {
+        _coverChanged = true;
+        _ = RefreshAsync(sender);
+    }
 
     private void OnPlaybackInfoChanged(Session sender, PlaybackInfoChangedEventArgs args) => _ = RefreshAsync(sender);
 
@@ -104,6 +111,8 @@ public sealed class MediaSessionMonitor : IDisposable
         if (properties is null || string.IsNullOrWhiteSpace(properties.Title)) return null;
         var playback = session.GetPlaybackInfo();
         var timeline = session.GetTimelineProperties();
+        // A session that is closing (a browser tab leaving fullscreen or going away) can answer without these.
+        if (playback is null || timeline is null) return null;
         var appId = session.SourceAppUserModelId;
         var type = (properties.PlaybackType ?? playback.PlaybackType) switch
         {
@@ -123,16 +132,21 @@ public sealed class MediaSessionMonitor : IDisposable
             timeline.Position - timeline.StartTime,
             timeline.EndTime - timeline.StartTime,
             updatedAt,
-            playback.Controls.IsPlaybackPositionEnabled,
-            playback.Controls.IsNextEnabled,
+            playback.Controls?.IsPlaybackPositionEnabled ?? false,
+            playback.Controls?.IsNextEnabled ?? false,
             await ReadCoverAsync(properties, appId));
     }
 
-    /// <summary>Cover art bytes, read once per track. Apps often attach the thumbnail a moment after the title, so a miss is not cached.</summary>
+    /// <summary>
+    /// Cover art or video thumbnail bytes: read once per track, and again after the session changes its properties. A miss
+    /// is not cached, and the same picture keeps its array, so the island decodes it only when it really changed.
+    /// </summary>
     private async Task<byte[]?> ReadCoverAsync(GlobalSystemMediaTransportControlsSessionMediaProperties properties, string appId)
     {
         var key = $"{appId}\n{properties.Title}\n{properties.Artist}";
-        if (_cover is { } cached && cached.Key == key) return cached.Cover;
+        var changed = _coverChanged;
+        _coverChanged = false;
+        if (_cover is { } cached && cached.Key == key && !changed) return cached.Cover;
         if (properties.Thumbnail is null) return null;
         using var stream = await properties.Thumbnail.OpenReadAsync();
         using var reader = new DataReader(stream);
@@ -140,6 +154,7 @@ public sealed class MediaSessionMonitor : IDisposable
         await reader.LoadAsync(size);
         var bytes = new byte[size];
         reader.ReadBytes(bytes);
+        if (_cover is { } same && same.Cover.AsSpan().SequenceEqual(bytes)) bytes = same.Cover;
         _cover = (key, bytes);
         return bytes;
     }

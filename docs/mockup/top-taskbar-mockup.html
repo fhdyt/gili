@@ -451,9 +451,16 @@ body.reduce .gin,body.reduce .gcirc{transition:opacity 100ms ease!important}
 /* In the compact island a new lyric line rises into place */
 .slot .tt.lyin{animation:lyIn 260ms var(--out)}
 @keyframes lyIn{from{transform:translateY(5px);opacity:0}}
-.vid{flex-direction:column;justify-content:center;width:100%;max-width:520px;margin:0 auto}
+.vid{flex-direction:row;align-items:center;gap:24px;width:100%;max-width:743px;margin:0 auto}
+.vtext{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;max-width:520px}
+/* A video's thumbnail on the Media page: 16:9, 199 × 112 px, radius 12 (revision 14, issue #31). */
+.vthumb{width:199px;height:112px;border-radius:12px;flex-shrink:0;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14)}
+.vthumb[hidden]{display:none}
+/* The slot's thumbnail: 16:9 at the artwork's height, radius 4 px. */
+.art.vth{width:calc((var(--isl-h,24px) - 6px) * 16 / 9);border-radius:4px}
+.art.vth .ic{width:12px!important;height:12px!important;color:var(--orange)}
 .vtitle{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.vid .mprog{margin-top:18px}
+.vtext .mprog{margin-top:18px}
 
 /* timer */
 .seg{display:inline-flex;background:var(--surface);border-radius:9px;padding:2px}
@@ -1123,9 +1130,12 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
               <div class="lyr" id="lyr" hidden><p class="l0"></p><p class="l1"></p><p class="l2"></p><span class="lsrc">Lyrics from LRCLIB</span></div>
               </div>
               <div class="vid">
+                <div class="vthumb" id="vThumb" aria-hidden="true" hidden></div>
+                <div class="vtext">
                 <div class="msrc" id="vSrc"></div>
                 <div class="vtitle" id="vTitle"></div>
                 <div class="mprog num"><span id="vCur"></span><div class="bar2"><i id="vFill"></i></div><span id="vLeft"></span></div>
+                </div>
               </div>
             </section>
             <section class="page" aria-label="Timer">
@@ -1299,7 +1309,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Notes</button><button data-page="6">Clipboard</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
-    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false" title="Update after the first public release (PRD phase 6)">Lyrics (phase 6)</button><button data-act="video">Play a video (VLC)</button><button data-act="timer10">Timer 10 s</button><button data-act="teacard">Labeled timer card (Tea)</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
+    <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false" title="Update after the first public release (PRD phase 6)">Lyrics (phase 6)</button><button data-act="video">Play a video (VLC)</button><button data-act="videoThumb">Video with a thumbnail</button><button data-act="timer10">Timer 10 s</button><button data-act="teacard">Labeled timer card (Tea)</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="num">Num Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat10">Battery 10%</button><button data-act="bat80">80% reached</button><button data-act="batHold">Charging on hold</button><button data-act="batFull">Fully charged</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
     <p class="note">Clipboard: click the VS Code window first, then the Clipboard icon (or Ctrl+Alt+V) and pick an item. It is pasted where the cursor was.</p>
@@ -1378,6 +1388,8 @@ const MEDIA=[
   {kind:'music',t:'Evaluasi',a:'Hindia',d:238,src:'Spotify',c:['#f97316','#9f1239']},
   {kind:'music',t:'Rumah ke Rumah',a:'Hindia',d:261,src:'Spotify',c:['#0ea5e9','#1e3a8a']},
   {kind:'video',t:'Lecture 07 – Linear Algebra.mp4',d:3125,src:'VLC media player',c:['#ff9f0a','#ff9f0a']},
+  // th: the video's thumbnail the player sends (revision 14, issue #31); VLC above sends none, so it keeps the film glyph.
+  {kind:'video',t:'How the James Webb telescope sees',d:1012,src:'Media Player',c:['#38bdf8','#4338ca'],th:['#38bdf8','#4338ca']},
   {kind:'music',t:'Lofi beats to study to',a:'Lofi Girl',d:3600,src:'YouTube · Chrome',c:['#22c55e','#0f766e']},
 ];
 const S={
@@ -1950,7 +1962,7 @@ function slotHTML(k){
   }
   if(ACT_ICON[k]){const[i,c]=ACT_ICON[k];return `<span style="color:${c}">${icon(i)}</span><span class="num sv">${slotValue(k)}</span>`}
   const m=cur();
-  if(m.kind==='video')return `<span style="color:var(--orange)">${icon('film')}</span><span class="tt">${esc(trunc(m.t,32))}</span><span class="mini"><i class="sv" style="width:${pct()}%"></i></span>`;
+  if(m.kind==='video')return `${thumbHTML(m)}<span class="tt">${esc(trunc(m.t,32))}</span><span class="mini"><i class="sv" style="width:${pct()}%"></i></span>`;
   const ly=curLyric();
   return `${artHTML(m)}${ly?`<span class="tt lyin" title="${esc(ly)}">${esc(trunc(ly,44))}</span>`:`<span class="tt">${esc(trunc(m.t+' – '+m.a,36))}</span>`}<span class="viz ${S.media.playing?'':'off'}" style="color:${m.c[0]}"><i></i><i></i><i></i><i></i></span><button class="pp" data-pp aria-label="${S.media.playing?'Pause':'Play'}">${icon(S.media.playing?'pause':'play')}</button>`;
 }
@@ -1962,6 +1974,8 @@ function shelfSlotHTML(){
   return `<span style="color:#64d2ff">${icon('tray')}</span><span class="tt">${esc(trunc(name,28))}</span>${total?`<span class="num k2">${fmtSize(total)}</span>`:''}`;
 }
 // The track's artwork (the mockup draws it from the cover's two colours); a note glyph when the player sends none.
+// A video's 16:9 thumbnail at the artwork's height, or the film glyph in the same box (revision 14, issue #31).
+const thumbHTML=m=>`<span class="art vth" style="${m.th?`--art:linear-gradient(135deg,${m.th[0]},${m.th[1]})`:''}" aria-hidden="true">${m.th?'':`<span style="color:var(--orange)">${icon('film')}</span>`}</span>`;
 const artHTML=(m,round)=>m.c?`<span class="art${round?' round':''}" style="--art:linear-gradient(135deg,${m.c[0]},${m.c[1]})" aria-hidden="true"></span>`:`<span class="art${round?' round':''}" aria-hidden="true">${icon('music')}</span>`;
 function renderSlot(){
   const a=activities(),k=a[0];
@@ -1977,7 +1991,7 @@ function renderSlot(){
     else if(a[1]){
       const xo=a[1]==='xop'&&XOPS[(S.xop||S.xopEnd).kind];
       const[i,c]=a[1]==='media'?[cur().kind==='video'?'film':'music','var(--text)']:xo?[xo.ic,xo.c]:ACT_ICON[a[1]];
-      bubble.innerHTML=a[1]==='media'&&cur().kind!=='video'?artHTML(cur(),true):`<span style="color:${c}">${icon(i)}</span>`;
+      bubble.innerHTML=a[1]==='media'&&(cur().kind!=='video'||cur().th)?artHTML(cur().th?{c:cur().th}:cur(),true):`<span style="color:${c}">${icon(i)}</span>`;
     }
     bubble.dataset.k=a[1]||'';
     renderCbub();layout();
@@ -2140,6 +2154,7 @@ function renderMedia(){
   const m=cur(),video=m.kind==='video';
   $('#pgMedia').classList.toggle('is-video',video);
   if(video){
+    const th=$('#vThumb');th.hidden=!m.th;if(m.th)th.style.background=`linear-gradient(135deg,${m.th[0]},${m.th[1]})`;
     $('#vSrc').innerHTML=srcHTML(m);$('#vTitle').textContent=m.t;
     $('#vCur').textContent=fmtDur(S.media.pos);$('#vLeft').textContent='-'+fmtDur(m.d-S.media.pos);$('#vFill').style.width=pct()+'%';
   }else{
@@ -3861,6 +3876,7 @@ const ACT={
   },
   song:()=>nextSong(1),
   video:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'),pos:724,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack()},
+  videoThumb:()=>{Object.assign(S.media,{i:MEDIA.findIndex(m=>m.kind==='video'&&m.th),pos:212,playing:true,active:true});renderMedia();renderSlot();setPressed('music',true);lyricsTrack()},
   lyrics:()=>$('#mLyr').click(),
   teacard:()=>{LQ.push({l:'Tea',total:600});ltPump()},
   timer10:()=>{Object.assign(S.timer,{mode:'timer',total:10,left:10,running:true});renderTimerPage();renderSlot()},

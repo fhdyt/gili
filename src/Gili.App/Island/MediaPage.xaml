@@ -118,27 +118,36 @@
             </StackPanel>
         </DockPanel>
 
-        <!-- Video: only the title, source app and progress with elapsed and remaining time, no cover and no buttons (PRD 6.3). -->
-        <StackPanel MaxWidth="520" Margin="32,0" VerticalAlignment="Center" Visibility="{Binding IsVideo, Converter={StaticResource VisibleWhen}}">
-            <StackPanel Orientation="Horizontal">
-                <Ellipse Width="8" Height="8" Fill="#FF9F0A" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding MediaApp}" Margin="6,0,0,0" FontSize="12" Foreground="#8E8E93" />
+        <!-- Video: its 16:9 thumbnail when the player sends one (issue #31), then the title, source app and progress with
+             elapsed and remaining time; no buttons (PRD 6.3). -->
+        <DockPanel Margin="32,0" VerticalAlignment="Center" Visibility="{Binding IsVideo, Converter={StaticResource VisibleWhen}}">
+            <Border DockPanel.Dock="Left" Width="199" Height="112" CornerRadius="12" Margin="0,0,24,0"
+                    Visibility="{Binding HasCover, Converter={StaticResource VisibleWhen}}">
+                <Border.Background>
+                    <ImageBrush ImageSource="{Binding Cover}" Stretch="UniformToFill" />
+                </Border.Background>
+            </Border>
+            <StackPanel MaxWidth="520" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Fill="#FF9F0A" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding MediaApp}" Margin="6,0,0,0" FontSize="12" Foreground="#8E8E93" />
+                </StackPanel>
+                <TextBlock Text="{Binding MediaTitle}" FontSize="24" FontWeight="Bold" Margin="0,6,0,0" TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="28.8" MaxHeight="57.6" />
+                <DockPanel Margin="0,18,0,0" TextElement.FontSize="11" TextElement.Foreground="#8E8E93"
+                           Visibility="{Binding HasTimeline, Converter={StaticResource VisibleWhen}}">
+                    <TextBlock DockPanel.Dock="Left" Text="{Binding PositionText}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding RemainingText}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+                    <Grid Height="4" Margin="10,0">
+                        <Border CornerRadius="2" Background="#2C2C2E" />
+                        <Border CornerRadius="2" Background="#F5F5F7" RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="{Binding Progress}" />
+                            </Border.RenderTransform>
+                        </Border>
+                    </Grid>
+                </DockPanel>
             </StackPanel>
-            <TextBlock Text="{Binding MediaTitle}" FontSize="24" FontWeight="Bold" Margin="0,6,0,0" TextWrapping="Wrap"
-                       TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="28.8" MaxHeight="57.6" />
-            <DockPanel Margin="0,18,0,0" TextElement.FontSize="11" TextElement.Foreground="#8E8E93"
-                       Visibility="{Binding HasTimeline, Converter={StaticResource VisibleWhen}}">
-                <TextBlock DockPanel.Dock="Left" Text="{Binding PositionText}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding RemainingText}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
-                <Grid Height="4" Margin="10,0">
-                    <Border CornerRadius="2" Background="#2C2C2E" />
-                    <Border CornerRadius="2" Background="#F5F5F7" RenderTransformOrigin="0,0.5">
-                        <Border.RenderTransform>
-                            <ScaleTransform ScaleX="{Binding Progress}" />
-                        </Border.RenderTransform>
-                    </Border>
-                </Grid>
-            </DockPanel>
-        </StackPanel>
+        </DockPanel>
     </Grid>
 </UserControl>

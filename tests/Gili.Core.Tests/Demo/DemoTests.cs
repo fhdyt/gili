@@ -108,6 +108,14 @@ public class DemoTests
     }
 
     [Fact]
+    public void Plays_a_video_so_its_thumbnail_shows_in_the_slot()
+    {
+        var video = Steps.Select(s => s.Action).OfType<DemoMedia>().Select(m => m.State).Single(m => m?.Kind == Gili.Core.Media.MediaKind.Video)!;
+        Assert.True(video.IsPlaying);
+        Assert.Equal(Gili.Core.Media.MediaKind.Video, Gili.Core.Media.MediaRules.Classify(Gili.Core.Media.PlaybackType.Unknown, video.AppId));
+    }
+
+    [Fact]
     public void Ends_with_no_media_and_the_island_closed()
     {
         Assert.IsType<DemoEnd>(Steps[^1].Action);

@@ -31,11 +31,18 @@ public sealed partial class IslandViewModel : ObservableObject
     private readonly IslandController _island;
     private readonly SettingsHub _settings;
     private byte[]? _coverBytes;
+    private bool _coverForVideo;
+
+    /// <summary>The slot's picture in pixels: the artwork square, or a video's wider thumbnail, at twice its size.</summary>
+    private int SlotPixels => (int)(IsVideo ? ThumbWidth : ArtworkSize) * 2;
     private string? _levelColor;
 
     [ObservableProperty] private double _fontSize = 12;
     [ObservableProperty] private int _islandHeight = 24;
     [ObservableProperty] private double _artworkSize = 18;
+
+    /// <summary>A video's thumbnail in the slot is 16:9 at the artwork's height: 32 × 18 px on a 24 px island (issue #31).</summary>
+    [ObservableProperty] private double _thumbWidth = 32;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowMediaSlot), nameof(ShowChargingSlot), nameof(ShowClipboardSlot), nameof(ShowTimerSlot), nameof(ShowClaudeSlot), nameof(ShowUsageSlot), nameof(ShowShelfSlot), nameof(HasActivity))]
@@ -348,7 +355,8 @@ public sealed partial class IslandViewModel : ObservableObject
         if (ArtworkSize != height - 6)
         {
             ArtworkSize = height - 6;
-            Artwork = Decode(_coverBytes, (int)ArtworkSize * 2);
+            ThumbWidth = Math.Round(ArtworkSize * 16 / 9);
+            Artwork = Decode(_coverBytes, SlotPixels);
         }
     }
 
@@ -378,8 +386,8 @@ public sealed partial class IslandViewModel : ObservableObject
 
     private void UpdateBubble()
     {
-        // Music as the second activity shows its artwork in the bubble instead of a note glyph.
-        BubbleIsMusic = _island.View.Bubble == ActivityKind.Media && IsMusic;
+        // Music as the second activity shows its artwork in the bubble instead of a note glyph, and a video its thumbnail.
+        BubbleIsMusic = _island.View.Bubble == ActivityKind.Media && (IsMusic || HasArtwork);
         BubbleDot = _island.View.Bubble is ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking && _island.Claude.Dot;
         (BubbleGlyph, BubbleBrush, BubbleFilled) = _island.View.Bubble switch
         {
@@ -421,11 +429,13 @@ public sealed partial class IslandViewModel : ObservableObject
         MediaTitle = media.Title;
         MediaArtist = media.Artist;
         MediaApp = MediaRules.AppName(media.AppId);
-        if (!ReferenceEquals(media.Cover, _coverBytes))
+        if (!ReferenceEquals(media.Cover, _coverBytes) || IsVideo != _coverForVideo)
         {
             _coverBytes = media.Cover;
-            Cover = Decode(media.Cover, 224);
-            Artwork = Decode(media.Cover, (int)ArtworkSize * 2);
+            _coverForVideo = IsVideo;
+            // A video's 16:9 thumbnail is 199 px wide on the Media page, twice that for high DPI.
+            Cover = Decode(media.Cover, IsVideo ? 400 : 224);
+            Artwork = Decode(media.Cover, SlotPixels);
             _levelColor = null;
         }
         // The artwork's main colour tints the level meter, the source dot and the glow; the app's colour without artwork.

@@ -90,6 +90,10 @@ public static class DemoScript
         var song = new MediaState("Midnight City", "M83", "Spotify.exe", MediaKind.Music, IsPlaying: true, StartPosition,
             Duration, start + playAt, CanSeek: true, CanSkip: true, Cover: null);
         var paused = song with { IsPlaying = false, Position = StartPosition + (pauseAt - playAt), PositionUpdatedAt = start + pauseAt };
+        // A video with its thumbnail in the slot, behind the battery notices (revision 14, issue #31).
+        var video = new MediaState("How the James Webb telescope sees", "", "Microsoft.ZuneVideo_8wekyb3d8bbwe!Microsoft.ZuneVideo",
+            MediaKind.Video, IsPlaying: true, TimeSpan.FromSeconds(212), TimeSpan.FromSeconds(1012), start + TimeSpan.FromSeconds(52),
+            CanSeek: true, CanSkip: false, Cover: null);
         return
         [
             Step(0.3, new DemoCopy("Meeting at 3 in the Merapi room, bring a charger")),
@@ -126,8 +130,10 @@ public static class DemoScript
             Step(41.8, new DemoShelfGone()),
             Step(42, new DemoReminder("Prepare meeting slides", new TimeOnly(15, 0))),
             // After the reminder: the battery runs low, then a charge limit holds the charge (plan 3a).
+            Step(52, new DemoMedia(video)),
             Step(52.2, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: false, Charging: false, Percent: 20))),
             Step(57.4, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: false, Percent: 79))),
+            Step(59.5, new DemoMedia(null)),
             // Claude (plan 3i): Desktop works, asks (card and Ping, 8 s), is answered; a terminal session joins; both finish
             // behind other windows, so a green dot, then the green bubble with 2, then the Claude page.
             Step(60, new DemoClaudeSession(Desk, "Integrate taskbar with Claude", @"C:\Projects\gili", Desktop: true)),
