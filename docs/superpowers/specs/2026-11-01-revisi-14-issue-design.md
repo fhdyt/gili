@@ -68,7 +68,8 @@ Fase: semuanya revisi sebelum rilis publik pertama (Fase 5), kecuali #28 yang me
 - **Video punya gambar** (menggantikan "Video tidak menampilkan gambar"):
   - Slot compact: thumbnail 16:9 setinggi pulau − 6 px (32 × 18 px pada pulau 24 px), radius 4 px, garis putih 14%, dipotong mengisi kotaknya, di tempat ikon film. Tanpa thumbnail: kotak `#1C1C1E` dengan ikon film abu-abu di ukuran yang sama.
   - Gelembung (video sebagai aktivitas kedua): thumbnail sebagai lingkaran, seperti artwork musik.
-  - Halaman Media: thumbnail 16:9 selebar halaman (tinggi 112 px, radius 12 px) di atas judul; tanpa thumbnail tetap tampilan lama (judul dan progres saja). Ambient glow mengambil warna dari thumbnail.
+  - Halaman Media: thumbnail 16:9 di kiri (199 × 112 px, radius 12 px, sejajar dengan cover musik yang 112 px), judul dan progres di kanannya; tanpa thumbnail tetap tampilan lama (judul dan progres saja). Ambient glow mengambil warna dari thumbnail.
+  - Mode demo memutar video dengan thumbnail di slot selama ±7 detik setelah pengingat todo.
 - Musik dari browser (YouTube di Chrome/Edge dilaporkan sebagai musik oleh Chromium) sudah memakai artwork; dengan pembacaan ulang, thumbnail video YouTube yang benar tampil.
 - Ringan: satu decode per perubahan properti, sama seperti artwork musik (PRD 8.1).
 
@@ -86,9 +87,9 @@ Fase: semuanya revisi sebelum rilis publik pertama (Fase 5), kecuali #28 yang me
 ## #27 Update otomatis tanpa kehilangan data
 
 - **Saklar** Settings → About → `Install updates automatically` (default nyala), keterangan `Gili installs a new version while you're away. Your notes and settings stay`.
-- **Alur**: cek update tetap seperti Fase 5d. Kalau ada versi baru dan saklarnya nyala, installer langsung diunduh dan diverifikasi di latar belakang (tanda tangan dari penerbit yang sama). Installer yang lolos dijalankan senyap saat **komputer tidak dipakai 10 menit** (`GetLastInputInfo`, sudah dibaca untuk tidur Gili), tidak ada aplikasi fullscreen, pulau compact (tidak ada kartu atau halaman terbuka), dan tidak ada alarm atau timer yang habis dalam 15 menit ke depan. Tombol `Install update` tetap memasang seketika.
+- **Alur**: cek update tetap seperti Fase 5d. Kalau ada versi baru dan saklarnya nyala, Gili memeriksa tiap menit apakah saatnya memasang; saat itu tiba, installer diunduh, diverifikasi (tanda tangan dari penerbit yang sama), lalu dijalankan senyap, persis seperti tombol Install update. Saatnya: **komputer tidak dipakai 10 menit** (`GetLastInputInfo`, sudah dibaca untuk tidur Gili), tidak ada aplikasi fullscreen, pulau compact (tidak ada kartu atau halaman terbuka), dan tidak ada alarm atau timer yang habis dalam 15 menit ke depan. Tombol `Install update` tetap memasang seketika.
 - **Data**: installer tidak menyentuh `%LOCALAPPDATA%\Gili\` dan `%USERPROFILE%\.gili\`; `--quit` menjalankan jalur Quit biasa, yang menulis salinan `gili.db` dan `settings.json` ke `.gili\backups`; versi baru menyalin database ke `gili-before-v<N>.db` sebelum migrasi (desain data reinstall). Jadi note, todo, alarm, Shelf, dan pengaturan tetap ada.
-- **Setelah update**: start pertama versi baru menampilkan kejadian wide `Updated to Gili 0.2.0` (ikon Gili, 4 detik), dari `LastRunVersion` di `settings.json`.
+- **Setelah update**: start pertama versi baru menampilkan kejadian wide `Updated to Gili 0.2.0` (ikon panah putar, hijau, 4 detik), dari `LastRunVersion` di `settings.json`; run pertama yang belum punya nilai itu tidak menampilkan apa pun.
 - Mati: perilaku Fase 5d (titik biru dan tombol Install update).
 - Batasan sekarang: cek update hanya menyala di `Gili.exe` bertanda tangan, dan sertifikat OV masih ditunda, jadi salinan harian di laptop ini belum memeriksa. Logika keputusan kapan memasang ada di Core (`UpdateRules.ShouldInstallNow`) dengan unit test.
 

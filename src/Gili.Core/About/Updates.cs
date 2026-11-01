@@ -40,6 +40,12 @@ public sealed record ReleaseInfo(Version Version, string PageUrl, string? Instal
 
 public enum UpdateStatus { Off, NotChecked, UpToDate, Available, Installing, NotVerified, CouldNotCheck }
 
+/// <summary>
+/// What Gili sees when it thinks about installing an update by itself (revision 14, issue #27): how long the computer has
+/// been left alone, a fullscreen app, the island compact or open, and how soon the next alarm or timer ends.
+/// </summary>
+public readonly record struct UpdateMoment(TimeSpan Idle, bool Fullscreen, bool IslandCompact, TimeSpan? NextAlert);
+
 /// <summary>Where the update check stands. <paramref name="OffReason"/> says why this copy never checks.</summary>
 public sealed record UpdateState(UpdateStatus Status, string? OffReason = null, Version? Latest = null, string? PageUrl = null);
 
@@ -93,6 +99,29 @@ public static class UpdateRules
         UpdateStatus.Installing => "Installing…",
         _ => null,
     };
+
+    /// <summary>Install updates automatically waits this long without a key or the mouse (revision 14, issue #27).</summary>
+    public static readonly TimeSpan AwayFor = TimeSpan.FromMinutes(10);
+
+    /// <summary>An alarm or a timer ending sooner than this keeps Gili from restarting under it.</summary>
+    public static readonly TimeSpan AlertMargin = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// A verified update installs by itself only while nobody is using the computer: away 10 minutes, no fullscreen app, the
+    /// island compact, and no alarm or timer within 15 minutes, so a restart never cuts into something.
+    /// </summary>
+    public static bool ShouldInstallNow(bool autoUpdate, UpdateStatus status, UpdateMoment now) =>
+        autoUpdate && status == UpdateStatus.Available && now.Idle >= AwayFor && !now.Fullscreen && now.IslandCompact
+        && (now.NextAlert is not { } alert || alert > AlertMargin);
+
+    /// <summary>The version this run is, when the last run was an older one; null on the first run ever.</summary>
+    public static Version? JustUpdated(string? lastRun, Version mine) =>
+        Version.TryParse(lastRun, out var last) && ThreeParts(mine) > ThreeParts(last) ? ThreeParts(mine) : null;
+
+    /// <summary>The first start of a new version says so for 4 s: "Updated to Gili 0.2.0".</summary>
+    public static Island.WideEvent UpdatedWide(Version version) => new("updated", Island.WideIcon.Restart, Island.WideTone.Accent,
+        [new Island.WideRun("Updated to Gili"), new Island.WideRun(AboutInfo.Format(version), Island.WideRunStyle.Number, SpaceBefore: true)],
+        TimeSpan.FromSeconds(4));
 
     /// <summary>1.2.3, so 1.2.3.0 (the assembly's version) and 1.2.3 (a tag) compare equal.</summary>
     public static Version ThreeParts(Version v) => new(v.Major, v.Minor, Math.Max(v.Build, 0));

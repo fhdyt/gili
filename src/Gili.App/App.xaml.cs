@@ -718,6 +718,23 @@ public partial class App : Application
     {
         _updates = new UpdateService(_settings!, _log!, Kind);
         _updates.Changed += () => _bar?.ShowGiliUpdate(_updates.State.Status is Core.About.UpdateStatus.Available or Core.About.UpdateStatus.Installing);
+        // Install updates automatically (issue #27) waits until the computer is left alone and nothing is due soon.
+        _updates.Moment = () =>
+        {
+            var now = DateTimeOffset.Now;
+            var due = new[] { _timers?.NextEnd, _alarms?.Next?.NextFireAt }.OfType<DateTimeOffset>().ToList();
+            return new Core.About.UpdateMoment(Platform.Input.PointerState.IdleTime(), _islandController?.IsFullscreen == true,
+                _islandController?.View.Mode == Core.Island.IslandMode.Compact, due.Count == 0 ? null : due.Min() - now);
+        };
+        // The first start of a new version says so; notes and settings came along untouched (issue #27).
+        var mine = typeof(App).Assembly.GetName().Version!;
+        if (Core.About.UpdateRules.JustUpdated(_settings!.Current.LastRunVersion, mine) is { } updated)
+        {
+            _log?.Write("Updated to " + Core.About.AboutInfo.Format(updated));
+            _islandController?.ShowNotice(Core.About.UpdateRules.UpdatedWide(updated));
+        }
+        var version = Core.About.AboutInfo.Format(Core.About.UpdateRules.ThreeParts(mine));
+        if (_settings.Current.LastRunVersion != version) _settings.Update(s => s with { LastRunVersion = version });
         _ = _updates.StartAsync();
         if (Kind == InstallKind.Store) RestartRegistration.ForUpdates();
     }

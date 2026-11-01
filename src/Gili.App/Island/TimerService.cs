@@ -315,6 +315,10 @@ public sealed class TimerService
         Changed?.Invoke();
     }
 
+    /// <summary>When the nearest running timer or pomodoro phase ends; null when none runs.</summary>
+    public DateTimeOffset? NextEnd =>
+        new[] { Timer.EndsAt, Pomodoro.Clock.EndsAt }.Concat(_labeled.Select(t => t.Clock.EndsAt)).OfType<DateTimeOffset>().Cast<DateTimeOffset?>().Min();
+
     /// <summary>The 1 s tick while anything runs, and one timer to the nearest end.</summary>
     private void Arm()
     {

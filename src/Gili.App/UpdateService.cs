@@ -21,6 +21,9 @@ public sealed class UpdateService : IDisposable
     private readonly FileLog _log;
     private readonly InstallKind _kind;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(60) };
+
+    /// <summary>While a GitHub update waits, once a minute: is now a good moment to install it by itself (issue #27)?</summary>
+    private readonly DispatcherTimer _autoTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private string? _installerUrl;
     private bool _checking;
 
@@ -35,6 +38,22 @@ public sealed class UpdateService : IDisposable
             _timer.Interval = TimeSpan.FromHours(1);
             await CheckAsync();
         };
+        _autoTimer.Tick += (_, _) => InstallIfAway();
+    }
+
+    /// <summary>How the computer is being used right now, for Install updates automatically; set by the app.</summary>
+    public Func<UpdateMoment>? Moment { get; set; }
+
+    /// <summary>
+    /// Install updates automatically (F-PUB-04, revision 14): the GitHub copy installs a waiting update once nobody is
+    /// using the computer. The Store keeps its own copy up to date, so it never does this.
+    /// </summary>
+    private void InstallIfAway()
+    {
+        if (Moment is null || !UpdateRules.ShouldInstallNow(_settings.Current.AutoUpdate, State.Status, Moment())) return;
+        _autoTimer.Stop();
+        _log.Write("Installing the update by itself while the computer is not in use");
+        _ = InstallAsync(0, _ => { });
     }
 
     public UpdateState State { get; private set; }
@@ -137,8 +156,14 @@ public sealed class UpdateService : IDisposable
     {
         if (state == State) return;
         State = state;
+        if (_kind == InstallKind.Installed && state.Status == UpdateStatus.Available) _autoTimer.Start();
+        else _autoTimer.Stop();
         Changed?.Invoke();
     }
 
-    public void Dispose() => _timer.Stop();
+    public void Dispose()
+    {
+        _timer.Stop();
+        _autoTimer.Stop();
+    }
 }

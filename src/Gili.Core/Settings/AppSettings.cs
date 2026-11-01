@@ -88,6 +88,12 @@ public sealed record AppSettings
     public double WeatherLatitude { get; init; } = -6.2088;
     public double WeatherLongitude { get; init; } = 106.8456;
 
+    /// <summary>Install updates automatically (F-PUB-04, revision 14): a verified update installs while the computer is left alone.</summary>
+    public bool AutoUpdate { get; init; } = true;
+
+    /// <summary>The version that ran last, so the first start of a new one can say "Updated to Gili 0.2.0".</summary>
+    public string? LastRunVersion { get; init; }
+
     /// <summary>The last update check that got an answer, so a restart does not ask again and PRD 11's 3 days survive one (design 5d).</summary>
     public DateTimeOffset? LastUpdateCheck { get; init; }
 

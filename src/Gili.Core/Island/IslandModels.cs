@@ -18,7 +18,7 @@ public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
 /// </summary>
 public enum ActivityKind { ClipboardSnippet, ClaudeAttention, ClaudeLimit, FileOperation, Shelf, Timer, Stopwatch, ClaudeWorking, Media, Charging, ClaudeWindow }
 
-public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone, Clipboard, TrayDown }
+public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone, Clipboard, TrayDown, Restart }
 
 /// <summary>The colour of a wide notice's icon (PRD 8.3 tokens).</summary>
 public enum WideTone { Text, Accent, Warn, Danger, Blue, Muted }

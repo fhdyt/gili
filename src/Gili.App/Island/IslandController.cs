@@ -649,6 +649,9 @@ public sealed class IslandController : IDisposable
     }
 
     /// <summary>No window could take the paste (desktop, admin window): the text waits on the clipboard (PRD 6.3).</summary>
+    /// <summary>A short notice from outside the island, like "Updated to Gili 0.2.0" (issue #27).</summary>
+    public void ShowNotice(WideEvent wide) => _coordinator.ShowWide(wide);
+
     public void ShowPasteHint() => _coordinator.ShowWide(new WideEvent("clipboard-paste", WideIcon.Clipboard, WideTone.Text,
         [new WideRun("Copied"), new WideRun("· press Ctrl+V to paste", WideRunStyle.Muted, SpaceBefore: true)], TimeSpan.FromSeconds(2)));
 
