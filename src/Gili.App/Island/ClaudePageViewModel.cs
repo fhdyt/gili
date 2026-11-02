@@ -165,7 +165,10 @@ public sealed partial class ClaudePageViewModel : ObservableObject
         var set = _island.ClaudeWeekly?.ResetsAt.ToLocalTime();
         var index = set is { } at ? Array.IndexOf([.. _weeklyDays], DateOnly.FromDateTime(at.DateTime)) : 0;
         WeeklyDayIndex = Math.Max(0, index);
+        // The index is often 0 again, which raises nothing: the stepper asked before there were days and stayed off.
         OnPropertyChanged(nameof(WeeklyDay));
+        PreviousDayCommand.NotifyCanExecuteChanged();
+        NextDayCommand.NotifyCanExecuteChanged();
         WeeklyTimeText = set is { } time
             ? time.ToString(_use24Hour() ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
             : "";
