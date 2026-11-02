@@ -117,4 +117,27 @@ public sealed class ClipboardHistoryTests : IDisposable
             Assert.Equal([("first", "Notepad")], history.Items.Select(e => (e.Text, e.SourceApp)));
         }
     }
+
+    [Fact]
+    public void Copies_from_before_this_sign_in_are_gone_with_their_images()
+    {
+        var signIn = _now.AddMinutes(30);
+        using (var db = Database.Open(_folder))
+        {
+            var history = New(new ClipboardHistoryStore(db));
+            history.Add("yesterday", "Chrome");
+            history.AddImage("old.png", "Screenshot", 10, 10, null);
+            _now = signIn.AddMinutes(1);
+            history.Add("today", "Word");
+        }
+        var discarded = new List<string>();
+        using (var db = Database.Open(_folder))
+        {
+            var history = new ClipboardHistory(new ClipboardHistoryStore(db), () => _now, discarded.Add, since: signIn);
+            Assert.Equal(["today"], history.Items.Select(e => e.Text));
+            Assert.Equal(["old.png"], discarded);
+        }
+        using (var db = Database.Open(_folder))
+            Assert.Equal(["today"], New(new ClipboardHistoryStore(db)).Items.Select(e => e.Text));
+    }
 }

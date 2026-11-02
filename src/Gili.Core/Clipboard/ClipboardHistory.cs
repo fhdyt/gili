@@ -42,7 +42,8 @@ public interface IClipboardHistoryStore
 /// <summary>
 /// The last 50 copies, newest first (F-LEFT-03, PRD 6.3 "Halaman Clipboard"): text, images and files (F-ISL-32). The
 /// same copy again moves to the top instead of becoming a second row; past 50 the oldest goes, and past 20 images the
-/// oldest image. An image that leaves takes its PNG with it.
+/// oldest image. An image that leaves takes its PNG with it. The history lasts one Windows sign-in: copies from before
+/// it are dropped at start (revision 20).
 /// </summary>
 public sealed class ClipboardHistory
 {
@@ -60,12 +61,19 @@ public sealed class ClipboardHistory
     private readonly List<ClipboardEntry> _items;
 
     /// <param name="discardImage">Deletes an image's PNG once its row is gone.</param>
-    public ClipboardHistory(IClipboardHistoryStore? store, Func<DateTimeOffset> now, Action<string>? discardImage = null)
+    /// <param name="since">When this Windows sign-in began; older rows and their PNGs are deleted.</param>
+    public ClipboardHistory(IClipboardHistoryStore? store, Func<DateTimeOffset> now, Action<string>? discardImage = null, DateTimeOffset? since = null)
     {
         _store = store;
         _now = now;
         _discardImage = discardImage;
-        _items = [.. (store?.All() ?? []).OrderByDescending(e => e.CopiedAt).Take(Max)];
+        var stored = (store?.All() ?? []).OrderByDescending(e => e.CopiedAt).ToList();
+        foreach (var stale in stored.Where(e => e.CopiedAt < since))
+        {
+            store!.Delete(stale.Id);
+            Discard(stale);
+        }
+        _items = [.. stored.Where(e => !(e.CopiedAt < since)).Take(Max)];
     }
 
     public IReadOnlyList<ClipboardEntry> Items => _items;

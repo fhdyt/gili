@@ -37,6 +37,10 @@ public static partial class Backups
     /// <summary>A consistent copy of the open database at <paramref name="path"/>, written aside first so a reader never sees half of it.</summary>
     internal static void Copy(Database db, string path) => Copy(db.Connection, path);
 
+    /// <summary>
+    /// The copy leaves the clipboard history out, vacuumed so its rows are not left in free pages: the history lasts
+    /// one Windows sign-in and must not live on in seven days of copies (revision 20).
+    /// </summary>
     internal static void Copy(SqliteConnection source, string path)
     {
         var temp = path + ".tmp";
@@ -44,6 +48,13 @@ public static partial class Backups
         {
             target.Open();
             source.BackupDatabase(target);
+            using var strip = target.CreateCommand();
+            strip.CommandText = "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'clipboard_history'";
+            if ((long)strip.ExecuteScalar()! > 0)
+            {
+                strip.CommandText = "DELETE FROM clipboard_history; VACUUM;";
+                strip.ExecuteNonQuery();
+            }
         }
         File.Move(temp, path, overwrite: true);
     }

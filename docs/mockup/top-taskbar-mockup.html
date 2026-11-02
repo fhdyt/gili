@@ -3049,7 +3049,8 @@ function landTear(d){
 
 /* clipboard page (PRD 6.3 "Halaman Clipboard"): the last 50 texts copied, newest first. Picking one pastes it where the
    user was typing: Gili puts it on the clipboard, gives focus back to the window that was in front before the island
-   opened, and sends Ctrl+V. The mockup's VS Code window shows the paste. */
+   opened, and sends Ctrl+V. The mockup's VS Code window shows the paste. The history lasts one Windows sign-in (revision
+   20): the app drops copies from before it at start, so these samples stand for copies made since the laptop was turned on. */
 const COPY_SAMPLES=['Meeting at 3 in the Merapi room, bring a charger','https://github.com/fhdyt/gili/issues/16','Thanks Dina, the revised report is attached.'];
 let copyN=0;
 S.cb=[

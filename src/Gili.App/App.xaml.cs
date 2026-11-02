@@ -144,7 +144,7 @@ public partial class App : Application
         shelfFolder.Sweep(shelf.KeptFolders);
         var clipboardImages = new ClipboardImages(Data.Clipboard);
         var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow,
-            clipboardImages.Delete);
+            clipboardImages.Delete, Gili.Platform.Power.SignIn.StartedAt());
         clipboardImages.Sweep(clipboardHistory.ImageFiles);
         _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, _projects, bluetooth, shelf, () => _settings.Current, clipboardHistory, clipboardImages)
         {

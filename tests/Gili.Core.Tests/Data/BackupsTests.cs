@@ -44,6 +44,23 @@ public sealed class BackupsTests : IDisposable
     }
 
     [Fact]
+    public void Backups_leave_the_clipboard_history_out()
+    {
+        using var db = Database.Open(_folder);
+        AddNote(db, "kept");
+        new ClipboardHistoryStore(db).Save(new Gili.Core.Clipboard.ClipboardEntry(0, "secret", null, DateTimeOffset.UtcNow));
+        Backups.BackUpIfDue(db, BackupFolder, Today);
+        using var copy = new SqliteConnection($"Data Source={Backups.List(BackupFolder)[0]};Pooling=False");
+        copy.Open();
+        using var count = copy.CreateCommand();
+        count.CommandText = "SELECT (SELECT count(*) FROM clipboard_history), (SELECT count(*) FROM notes)";
+        using var reader = count.ExecuteReader();
+        reader.Read();
+        Assert.Equal((0L, 1L), (reader.GetInt64(0), reader.GetInt64(1)));
+        Assert.Single(new ClipboardHistoryStore(db).All());
+    }
+
+    [Fact]
     public void Only_seven_backups_are_kept()
     {
         using var db = Database.Open(_folder);
