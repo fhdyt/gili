@@ -217,7 +217,6 @@ public sealed class IslandCoordinator
     private static IslandPage? PageFor(ActivityKind? kind) => kind switch
     {
         ActivityKind.Media => IslandPage.Media,
-        ActivityKind.ClipboardSnippet => IslandPage.Clipboard,
         ActivityKind.Shelf => IslandPage.Shelf,
         ActivityKind.Timer or ActivityKind.Stopwatch => IslandPage.Timer,
         ActivityKind.ClaudeAttention or ActivityKind.ClaudeWorking or ActivityKind.ClaudeLimit or ActivityKind.ClaudeWindow => IslandPage.Claude,

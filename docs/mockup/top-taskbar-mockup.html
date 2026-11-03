@@ -707,35 +707,6 @@ li.done .chk .ic{opacity:1;transform:none}
 .kcap{min-width:120px;height:30px;padding:0 12px;border-radius:8px;background:var(--ctl);font-size:13px;font-variant-numeric:tabular-nums}
 .kcap:hover{background:var(--ctl-h)}
 
-/* clipboard: text you copied, newest first; picking an item pastes it where you were typing */
-.page.pg-clip{align-items:stretch;padding:2px 24px 4px}
-.cbw{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
-.cbtop{display:flex;gap:8px;flex-shrink:0}
-.cbtop .field{flex:1;min-width:0;height:32px;border-radius:10px;padding:0 12px}
-.cbtop .pill{height:32px;border-radius:10px}
-.cbtop .pill.confirm{background:var(--danger);color:#fff}
-.cblist{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#48484a transparent}
-.cbr{position:relative;flex-shrink:0;border-radius:12px;background:var(--surface);transition:background 120ms}
-.cbr:hover,.cbr.sel{background:var(--ctl)}
-.cbr.new{animation:pop 420ms var(--pop)}
-.cbr.gone{animation:gone 260ms var(--out) forwards}
-.cbp{display:flex;flex-direction:column;justify-content:center;gap:2px;width:100%;min-height:44px;padding:6px 44px 6px 12px;text-align:left;border-radius:12px}
-.cbp b{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* An image's thumbnail or a file's icon before the text (F-ISL-32). */
-.cbp.lead{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:10px;row-gap:2px;align-content:center}
-.cbp.lead .cbt{grid-row:1/3;align-self:center}
-.cbt{width:40px;height:28px;border-radius:6px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.16);display:block}
-span.cbt{box-shadow:none;background:var(--ctl);display:grid;place-items:center;color:#aeaeb2}
-span.cbt .ic{width:16px;height:16px}
-.cbp span{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cbx{position:absolute;top:50%;right:8px;width:28px;height:28px;margin-top:-14px;border-radius:14px;display:grid;place-items:center;color:var(--text2);opacity:0;transition:opacity 120ms,background 120ms,color 120ms}
-.cbr:hover .cbx,.cbr.sel .cbx,.cbx:focus-visible{opacity:1}
-.cbx:hover{background:var(--ctl-h);color:var(--danger)}
-.cbx .ic{width:13px;height:13px}
-.cbnone{padding:8px 2px;font-size:13px;color:var(--text2);line-height:1.5}
-.cbnone small{display:block;font-size:12px;color:var(--text3)}
-.code .pasted{background:rgba(48,209,88,.28);border-radius:3px;transition:background 1.2s ease}
-
 /* shelf */
 .shsum{width:150px;flex-shrink:0}
 .shbig{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.02em}
@@ -1109,7 +1080,6 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></symbol>
   <symbol id="i-clip" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></symbol>
   <symbol id="i-lyrics" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
-  <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 11h8M8 15h5"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></symbol>
   <symbol id="i-files" viewBox="0 0 24 24"><path d="M15 2H9a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7z"/><path d="M15 2v5h5"/><path d="M4 7v13a2 2 0 0 0 2 2h9"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
@@ -1207,7 +1177,6 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
         <button data-tool="Todo" data-l="todo" aria-label="Open Todo" title="Todo"><svg class="ic" aria-hidden="true"><use href="#i-todo"/></svg></button>
         <button data-tool="Projects" data-l="projects" aria-label="Open Projects" title="Projects"><svg class="ic" aria-hidden="true"><use href="#i-gantt"/></svg></button>
         <button data-tool="Notes" data-l="notes" aria-label="Open Notes" title="Notes"><svg class="ic" aria-hidden="true"><use href="#i-note"/></svg></button>
-        <button data-tool="Clipboard" data-l="clipboard" aria-label="Open Clipboard" title="Clipboard"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg></button>
         <button class="lsh" id="mShelf" data-l="shelf" aria-label="Open the Shelf" title="Shelf"><svg class="ic" aria-hidden="true"><use href="#i-tray"/></svg><span class="num" id="mShelfN"></span></button>
         <button class="lcl" id="mClaude" data-l="claude" aria-label="Open Claude sessions" title="Claude sessions"><svg class="ic" aria-hidden="true"><use href="#i-claude"/></svg></button>
         <span class="favs" id="favs" data-l="favorites" role="toolbar" aria-label="Favorite apps"></span>
@@ -1340,15 +1309,6 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
                 </div></div>
               </div>
             </section>
-            <section class="page pg-clip" aria-label="Clipboard">
-              <div class="cbw">
-                <div class="cbtop">
-                  <input class="field" id="cbSearch" placeholder="Search clipboard" aria-label="Search clipboard" autocomplete="off">
-                  <button class="pill sm" id="cbClear">Clear all</button>
-                </div>
-                <div class="cblist" id="cbList" role="listbox" aria-label="Clipboard history. Pick an item to paste it where you were typing."></div>
-              </div>
-            </section>
             <section class="page" aria-label="Shelf">
               <div class="shsum">
                 <div class="shbig num" id="shCount">0</div>
@@ -1453,13 +1413,12 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     <p class="note">Click the island, the clock, the Notes icon, or CPU in the bar. Drag a real file from your desktop onto the island. Swipe the island with a touchpad or use the arrow keys; Esc closes it.</p>
     <div class="g"><button data-act="demo" aria-pressed="false">Play the demo</button></div>
     <h3>Island</h3>
-    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Projects</button><button data-page="6">Notes</button><button data-page="7">Clipboard</button><button data-page="8">Shelf</button><button data-page="9">Claude</button><button data-page="10">System</button><button data-act="pjEmpty">Projects: first run</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
+    <div class="g"><button data-act="expand">Open / close</button><button data-page="0">Media</button><button data-page="1">Timer</button><button data-page="2">Alarms</button><button data-page="3">Calendar</button><button data-page="4">Todo</button><button data-page="5">Projects</button><button data-page="6">Notes</button><button data-page="7">Shelf</button><button data-page="8">Claude</button><button data-page="9">System</button><button data-act="pjEmpty">Projects: first run</button><button data-act="note">New note (Ctrl+Alt+N)</button><button data-act="float">Float a note</button><button data-act="many" aria-pressed="false">Dozens of notes</button></div>
     <p class="note">On Notes, drag a card out past the island's edge to float it on top of other windows; drag out more than one. An open note (or a new one) drags out by the grip along its top. The arrow on a floating note sends it back into the island.</p>
     <h3>Live activities</h3>
     <div class="g"><button data-act="idle">No activity (Gili)</button><button data-act="sleep">Gili falls asleep (skip 5 min)</button><button data-act="music" aria-pressed="true">Media playing</button><button data-act="song">Next track</button><button data-act="lyrics" aria-pressed="false" title="Phase 6, built in revision 15">Lyrics</button><button data-act="video">Play a video (VLC)</button><button data-act="videoThumb">Video with a thumbnail</button><button data-act="timer10">Timer 10 s</button><button data-act="teacard">Labeled timer card (Tea)</button><button data-act="pomo">Pomodoro (fast)</button><button data-act="sw" aria-pressed="false">Stopwatch</button><button data-act="charge" aria-pressed="false">Charger</button></div>
     <h3>Quick events</h3>
     <div class="g"><button data-act="caps">Caps Lock</button><button data-act="num">Num Lock</button><button data-act="bat20">Battery 20%</button><button data-act="bat10">Battery 10%</button><button data-act="bat80">80% reached</button><button data-act="batHold">Charging on hold</button><button data-act="batFull">Fully charged</button><button data-act="bt">Earbuds connected</button><button data-act="btOff">Earbuds disconnected</button></div>
-    <p class="note">Clipboard: click the VS Code window first, then the Clipboard icon (or Ctrl+Alt+V) and pick an item. It is pasted where the cursor was.</p>
     <h3>Left side</h3>
     <div class="g"><button data-act="manyApps">Open many apps</button><button data-act="copyText">Copy text</button><button data-act="copyImg">Copy image</button><button data-act="copyFile">Copy files</button><button data-act="cutFile">Cut files</button><button data-act="copySecret">Copy a password</button></div>
     <h3>Windows notifications</h3>
@@ -1552,7 +1511,7 @@ const S={
   // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
   order:['weather','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
-  left:{start:1,timer:1,alarms:1,todo:1,projects:1,notes:1,clipboard:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1,1],
+  left:{start:1,timer:1,alarms:1,todo:1,projects:1,notes:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,wk:null,pos:'top',hideTb:0,h12:0,secs:1,
   cam:false,mic:false,fs:false,xop:null,leftMax:400,
   reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -1579,7 +1538,7 @@ const S={
   apps:[{n:'Chrome',i:'a-chrome'},{n:'Visual Studio Code',i:'a-code'},{n:'Spotify',i:'a-spotify'},{n:'Claude',i:'a-claude'},{n:'wmux',i:'a-term'}],
 };
 // Controls (10) has no tab: the Wi-Fi, Bluetooth, Volume, Brightness and Power buttons open it, one control at a time.
-const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,projects:5,notes:6,clipboard:7,shelf:8,claude:9,system:10,controls:11};
+const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,projects:5,notes:6,shelf:7,claude:8,system:9,controls:10};
 const LAST=11,GAP=24;
 const HIDE_ORDER=['weather','net','disk','gpu','ram','cpu'];
 
@@ -1771,8 +1730,6 @@ function pageNeed(i){
   // Notes: the cards, or the open editor when it is taller, so a note always has room to grow into.
   // The page's own top and bottom padding counts too, or the grid ends a few pixels short and scrolls.
   if(i===PAGE.notes){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+Math.max($('#nGridIn').offsetHeight,S.editing?EDH:0)+parseFloat(cs.paddingBottom)}
-  // Clipboard: the search row stays put and only the list scrolls, once the island is as tall as the screen.
-  if(i===PAGE.clipboard){const cs=getComputedStyle(p);return parseFloat(cs.paddingTop)+42+$('#cbList').scrollHeight+parseFloat(cs.paddingBottom)}
   // Projects: the timeline and the task form, or the open project list when it reaches further down.
   // The timeline cancels the page's bottom padding, so only the top one counts.
   if(i===PAGE.projects)return parseFloat(getComputedStyle(p).paddingTop)+pjNeed();
@@ -2191,7 +2148,6 @@ $('#lc').addEventListener('click',e=>{
     const k=slot.dataset.k;
     if(k==='xop'){xopClick();return}
     if(k==='cl'){clClick();return}
-    if(k==='clip'){openClipboard();return}
     if(k==='timer'&&ltSlot()){openTools('Timer');return}
     openExpanded(pageFor(k));return;
   }
@@ -2202,7 +2158,7 @@ cbub.addEventListener('click',()=>{const u=clUnseen();u.length===1?clFocus(u[0])
 
 /* ---------- expanded: pages ---------- */
 // Page menu: every page by icon and name, so any page is one click away.
-const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calendar','cal'],['Todo','todo'],['Projects','gantt'],['Notes','note'],['Clipboard','clipboard'],['Shelf','tray'],['Claude','claude'],['System','cpu']];
+const TABS=[['Media','music'],['Timer','hourglass'],['Alarms','alarm'],['Calendar','cal'],['Todo','todo'],['Projects','gantt'],['Notes','note'],['Shelf','tray'],['Claude','claude'],['System','cpu']];
 const xtabs=$('#xtabs'),xind=$('#xind');
 xtabs.insertAdjacentHTML('beforeend',TABS.map(([n,ic],i)=>`<button class="xtab" role="tab" data-i="${i}" aria-selected="false" aria-controls="xp">${icon(ic)}${i===PAGE.media?'<span class="viz" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':''}<span class="tl">${n}</span></button>`).join(''));
 xtabs.addEventListener('click',e=>{const b=e.target.closest('.xtab');if(b)goPage(+b.dataset.i)});
@@ -2279,7 +2235,7 @@ function goPage(i,instant){
   renderTimerPage();renderSys();renderClPage();renderGlow();
 }
 // Ambient glow colours per page. Media takes the cover's two colours (dimmer while paused); Timer follows the mode and pomodoro phase.
-const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.projects]:'#5e5ce6',[PAGE.notes]:'#ffd60a',[PAGE.clipboard]:'#66d4cf',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2',[PAGE.controls]:'#0a84ff'};
+const GLOW={[PAGE.alarms]:'#ffd60a',[PAGE.calendar]:'#ff453a',[PAGE.todo]:'#0a84ff',[PAGE.projects]:'#5e5ce6',[PAGE.notes]:'#ffd60a',[PAGE.shelf]:'#64d2ff',[PAGE.claude]:'#d97757',[PAGE.system]:'#bf5af2',[PAGE.controls]:'#0a84ff'};
 const tint=(hex,a)=>{const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`};
 function renderGlow(){
   const g=$('#glow');let c1,c2,k=1;
@@ -2294,7 +2250,7 @@ let wheelAcc=0,wheelLock=0;
 $('#xp').addEventListener('wheel',e=>{
   const horiz=Math.abs(e.deltaX)>Math.abs(e.deltaY);
   // Vertical wheel over scrollable content scrolls it; on Notes it never changes page.
-  if(e.target.closest('.tlist,.clist,.cblist,.pg-note,textarea')&&!horiz)return;
+  if(e.target.closest('.tlist,.clist,.pg-note,textarea')&&!horiz)return;
   e.preventDefault();
   if(Date.now()<wheelLock)return;
   wheelAcc+=horiz?e.deltaX:e.deltaY;
@@ -3047,92 +3003,10 @@ function landTear(d){
   gWatch(el,1500);
 }
 
-/* clipboard page (PRD 6.3 "Halaman Clipboard"): the last 50 texts copied, newest first. Picking one pastes it where the
-   user was typing: Gili puts it on the clipboard, gives focus back to the window that was in front before the island
-   opened, and sends Ctrl+V. The mockup's VS Code window shows the paste. The history lasts one Windows sign-in (revision
-   20): the app drops copies from before it at start, so these samples stand for copies made since the laptop was turned on. */
+/* copy snippets (PRD 6.3 "Cuplikan clipboard"): a copy or cut shows in the slot for 3 s and is kept nowhere; the
+   Clipboard page and its history were removed in revision 21. */
 const COPY_SAMPLES=['Meeting at 3 in the Merapi room, bring a charger','https://github.com/fhdyt/gili/issues/16','Thanks Dina, the revised report is attached.'];
 let copyN=0;
-S.cb=[
-  {id:1,t:'dotnet test tests/Gili.Core.Tests --filter "FullyQualifiedName~IslandCoordinatorTests"',app:'wmux',at:Date.now()-4*60e3},
-  {id:2,t:'Jl. Kemang Raya No. 12, Jakarta Selatan 12730',app:'Chrome',at:Date.now()-38*60e3},
-  {id:3,t:'SHAppBarMessage(ABM.SETPOS, ref data);',app:'Visual Studio Code',at:Date.now()-2*3600e3},
-  {id:4,t:'INV-2026-1043',app:'Excel',at:Date.now()-5*3600e3},
-  {id:5,t:'Can we move the review to Thursday morning?',app:'Slack',at:Date.now()-26*3600e3},
-];
-// Images and files join the history too (F-ISL-32): k is the kind, t what search reads (the image's or files' names).
-S.cb.splice(1,0,{id:90,k:'image',t:'Screenshot',name:'Screenshot',w:1920,h:1080,app:'Snipping Tool',at:Date.now()-12*60e3});
-S.cb.splice(3,0,{id:91,k:'files',t:'Q3 report.pdf',files:['C:\\Users\\me\\Documents\\Q3 report.pdf'],app:'File Explorer',at:Date.now()-55*60e3});
-S.cbSel=-1;
-const CB_MAX=50;
-function ago(t){const m=Math.floor((Date.now()-t)/60e3);return m<1?'now':m<60?m+' min':m<1440?Math.floor(m/60)+' h':m<2880?'Yesterday':Math.floor(m/1440)+' days'}
-const cbVisible=()=>{const q=$('#cbSearch').value.trim().toLowerCase();return S.cb.filter(c=>!q||c.t.toLowerCase().includes(q))};
-// Copying the same text, image or files again moves it to the top instead of adding a second row; at most 20 images.
-function cbAdd(t,app,extra={}){
-  const k=extra.k||'text';
-  S.cb=S.cb.filter(c=>!((c.k||'text')===k&&c.t===t));S.cb.unshift({id:S.nextId++,t,app,at:Date.now(),fresh:1,...extra});
-  const imgs=S.cb.filter(c=>c.k==='image');if(imgs.length>20)S.cb=S.cb.filter(c=>c!==imgs[imgs.length-1]);
-  S.cb.length=Math.min(S.cb.length,CB_MAX);
-  renderClipPage();
-}
-const cbLine=c=>c.k==='image'?`${c.name} · ${c.w} × ${c.h}`:c.k==='files'?(c.files.length===1?c.files[0].split('\\').pop():c.files.length+' files'):c.t.replace(/\s+/g,' ');
-const cbTip=c=>c.k==='image'?cbLine(c):c.k==='files'?c.files.join('\n').slice(0,400):c.t.slice(0,400);
-const cbLead=c=>c.k==='image'?`<img class="cbt" src="${SHOT}" alt="">`:c.k==='files'?`<span class="cbt">${icon(c.files.length>1?'files':'file')}</span>`:'';
-function renderClipPage(){
-  const list=cbVisible(),q=$('#cbSearch').value.trim();
-  S.cbSel=Math.min(S.cbSel,list.length-1);
-  $('#cbList').innerHTML=list.length?list.map((c,k)=>`<div class="cbr ${k===S.cbSel?'sel':''} ${c.fresh?'new':''}" role="option" aria-selected="${k===S.cbSel}" data-cb="${c.id}" title="${esc(cbTip(c))}">
-      <button class="cbp ${c.k?'lead':''}" tabindex="-1">${cbLead(c)}<b>${esc(cbLine(c))}</b><span>${esc(c.app)} · ${ago(c.at)}</span></button>
-      <button class="cbx" aria-label="Remove from history" title="Remove">${icon('x')}</button></div>`).join('')
-    :q?'<div class="cbnone">No matches</div>':'<div class="cbnone">Nothing copied yet<small>Text, images and files you copy show up here</small></div>';
-  S.cb.forEach(c=>delete c.fresh);
-  $('#cbClear').hidden=!S.cb.length;
-  if(S.state==='expanded'&&S.page===PAGE.clipboard)layout();
-}
-// The bar icon and the snippet in the slot open the page; Ctrl+Alt+V also puts the cursor in the search field,
-// so typing filters at once and arrows + Enter pick an item.
-function openClipboard(fromKeys){
-  $('#cbSearch').value='';S.cbSel=fromKeys?0:-1;renderClipPage();
-  if(S.state==='expanded')goPage(PAGE.clipboard);else openExpanded(PAGE.clipboard);
-  if(fromKeys)setTimeout(()=>$('#cbSearch').focus(),S.reduce?0:200);
-}
-// Paste: the item goes to the top of the history and onto the clipboard, the island closes, and Ctrl+V lands in the
-// window that was in front before the island opened (the active app on the left of the bar).
-function cbPaste(id){
-  const c=S.cb.find(x=>x.id===id);if(!c)return;
-  S.cb=[c,...S.cb.filter(x=>x!==c)];c.at=Date.now();
-  closeExpanded();renderClipPage();
-  setTimeout(()=>{
-    if(S.fgName==='Visual Studio Code'){
-      const code=$('#winB .code'),sp=document.createElement('span');sp.className='pasted';sp.textContent='\n'+c.t;code.appendChild(sp);
-      setTimeout(()=>sp.style.background='transparent',600);hint('Pasted into Visual Studio Code');
-    }else hint('Pasted into '+S.fgName);
-  },S.reduce?0:220);
-}
-function cbRemove(id){
-  const r=$(`#cbList [data-cb="${id}"]`);if(r)r.classList.add('gone');
-  setTimeout(()=>{S.cb=S.cb.filter(x=>x.id!==id);renderClipPage()},S.reduce?0:260);
-}
-$('#cbList').addEventListener('click',e=>{
-  const r=e.target.closest('[data-cb]');if(!r)return;
-  if(e.target.closest('.cbx')){cbRemove(+r.dataset.cb);return}
-  cbPaste(+r.dataset.cb);
-});
-$('#cbSearch').oninput=()=>{S.cbSel=$('#cbSearch').value.trim()?0:-1;renderClipPage()};
-// Arrows move the highlight, Enter pastes it, Delete removes it; this works from the search field too.
-$('.pg-clip').addEventListener('keydown',e=>{
-  const list=cbVisible();if(!list.length)return;
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopPropagation();S.cbSel=Math.max(0,Math.min(list.length-1,S.cbSel+(e.key==='ArrowDown'?1:-1)));renderClipPage();
-    const r=$('#cbList .cbr.sel');if(r)r.scrollIntoView({block:'nearest'})}
-  else if(e.key==='Enter'&&S.cbSel>=0){e.preventDefault();cbPaste(list[S.cbSel].id)}
-  else if(e.key==='Delete'&&S.cbSel>=0&&e.target.tagName!=='INPUT'){e.preventDefault();cbRemove(list[S.cbSel].id)}
-});
-// Clear all asks once, like deleting a note.
-$('#cbClear').onclick=e=>{
-  const b=e.currentTarget;
-  if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Clear all?';clearTimeout(b.t);b.t=setTimeout(()=>{b.classList.remove('confirm');b.textContent='Clear all'},3000);return}
-  b.classList.remove('confirm');b.textContent='Clear all';S.cb=[];renderClipPage();hint('Clipboard history cleared');
-};
 
 /* shelf */
 const FILE_COLORS={pdf:'#ff6961',jpg:'#bf5af2',png:'#bf5af2',zip:'#ffd60a',docx:'#64d2ff',xlsx:'#30d158',mp4:'#ff9f0a',mkv:'#ff9f0a'};
@@ -3375,19 +3249,19 @@ function limCheck(){
 const SET={
   General:[['pos','Bar position','seg',['Top','Bottom']],['hideTb','Hide Windows taskbar','sw',null,'Gili gives you Start, tray icons and Controls instead'],['h12','12-hour clock','sw'],['secs','Show seconds','sw',null,'The clock on the bar ticks every second'],['auto','Start with Windows','sw'],['tray','Icon in the notification area','sw',null,'Right-click it to quit Gili']],
   Appearance:[['barColor','Bar color','color'],['opacity','Bar opacity','range',[40,100,'%']],['openOp','Opacity while open','range',[0,100,'%'],'How much of the bar stays while the island is open'],['desktop','Same on the desktop','sw',null,'The bar looks like this while the desktop is in front'],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
-  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.projects','Projects'],['L.notes','Notes'],['L.clipboard','Clipboard'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
+  'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.projects','Projects'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
   'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
-  Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.clipboard','Clipboard','key',['Ctrl+Alt+V']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
+  Shortcuts:[['keys','Keyboard shortcuts','sw',null,'Click a shortcut, then press the new keys. Esc keeps the old one'],['hk.island','Open or close the island','key',['Ctrl+Alt+Space']],['hk.note','New note','key',['Ctrl+Alt+N']],['hk.task','Add task for today','key',['Ctrl+Alt+T']]],
   // Privacy policy waits for its page online; Updates and Release notes follow the update check (design 5d); Prepare to uninstall is the Store copy's (design 5a).
   About:[['version','Version','info',['0.1.1 · GitHub']],['updates','Updates','info',['Up to date']],['autoUpd','Install updates automatically','sw',null,"Gili installs a new version while you're away. Your notes and settings stay"],['privacy','Privacy policy','btn',['Open'],'Coming in a later version'],['notes','Release notes','btn',['Open']],['logs','Open logs folder','btn',['Open'],'Logs from the last 7 days, for bug reports'],['prepare','Prepare to uninstall','btn',['Prepare'],"Removes Gili's Claude hooks and brings the Windows taskbar back, then quits. Uninstall Gili in Windows Settings next"]],
 };
 let setSec='General';
 // Left-side icons that have an island page: switching the icon off switches its page's tab off too, and back on.
-const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,projects:PAGE.projects,notes:PAGE.notes,clipboard:PAGE.clipboard,shelf:PAGE.shelf,claude:PAGE.claude};
+const LEFT_TAB={timer:PAGE.timer,alarms:PAGE.alarms,todo:PAGE.todo,projects:PAGE.projects,notes:PAGE.notes,shelf:PAGE.shelf,claude:PAGE.claude};
 const leftOff=i=>Object.keys(LEFT_TAB).some(k=>LEFT_TAB[k]===i&&!S.left[k]);
 // The only page still on: its switch, and its icon's in Left side, are disabled so the island never has no tab.
 const lastTab=i=>S.tabs[i]&&S.tabs.filter(Boolean).length===1;
@@ -4086,7 +3960,7 @@ function clClick(){
   const ask=clBy('ask'),end=S.clEnd&&clById(S.clEnd),inv=ask.length?ask:end?[end]:clBy('work');
   inv.length===1?clFocus(inv[0]):openExpanded(PAGE.claude);
 }
-const TOOL_PAGE={Timer:PAGE.timer,Alarms:PAGE.alarms,Todo:PAGE.todo,Projects:PAGE.projects,Notes:PAGE.notes,Clipboard:PAGE.clipboard};
+const TOOL_PAGE={Timer:PAGE.timer,Alarms:PAGE.alarms,Todo:PAGE.todo,Projects:PAGE.projects,Notes:PAGE.notes};
 $$('#launch button[data-tool]').forEach(b=>b.onclick=()=>openFromBar(TOOL_PAGE[b.dataset.tool]));
 $$('.win').forEach(w=>w.addEventListener('pointerdown',()=>{
   $$('.win').forEach(x=>x.style.zIndex=4);w.style.zIndex=5;setApp(w.dataset.name,w.dataset.icon);
@@ -4146,10 +4020,10 @@ const ACT={
     showWide('bFull',`<span style="color:var(--accent)">${icon('bolt')}</span><span>Fully charged</span>`,5000)},
   bat80:()=>{if(!S.charging){S.charging=true;setPressed('charge',true)}S.battery=80;renderSlot();
     showWide('b80',`<span style="color:var(--accent)">${icon('bolt')}</span><span><b class="num">${S['W.unplug']}%</b> reached · unplug</span>`,5000)},
-  copyText:()=>{const t=COPY_SAMPLES[copyN++%COPY_SAMPLES.length];showClip(`${icon('clip')}<span class="tt">"${esc(trunc(t,40))}"</span>`,'Copied: '+t);cbAdd(t,S.fgName)},
-  copyImg:()=>(cbAdd('bali-sunset.jpg',S.fgName,{k:'image',name:'bali-sunset.jpg',w:1920,h:1080}),showClip(`<img class="thumb" src="${SHOT}" width="36" height="20" alt="Copied image"><span class="tt">bali-sunset.jpg</span><span class="k2 num">1920 × 1080</span>`,'Image copied · bali-sunset.jpg · 1920 × 1080')),
-  copyFile:()=>{cbAdd('report.pdf budget.xlsx logo.png','File Explorer',{k:'files',files:['C:\\Work\\report.pdf','C:\\Work\\budget.xlsx','C:\\Work\\logo.png']});showClip(`${icon('file')}<span>3 files</span>`,'Copied: report.pdf, budget.xlsx, logo.png')},
-  cutFile:()=>{cbAdd('report.pdf budget.xlsx logo.png','File Explorer',{k:'files',files:['C:\\Work\\report.pdf','C:\\Work\\budget.xlsx','C:\\Work\\logo.png']});showClip(`<span style="color:var(--blue)">${icon('scissors')}</span><span>3 files</span>`,'Cut: report.pdf, budget.xlsx, logo.png')},
+  copyText:()=>{const t=COPY_SAMPLES[copyN++%COPY_SAMPLES.length];showClip(`${icon('clip')}<span class="tt">"${esc(trunc(t,40))}"</span>`,'Copied: '+t)},
+  copyImg:()=>(showClip(`<img class="thumb" src="${SHOT}" width="36" height="20" alt="Copied image"><span class="tt">bali-sunset.jpg</span><span class="k2 num">1920 × 1080</span>`,'Image copied · bali-sunset.jpg · 1920 × 1080')),
+  copyFile:()=>{showClip(`${icon('file')}<span>3 files</span>`,'Copied: report.pdf, budget.xlsx, logo.png')},
+  cutFile:()=>{showClip(`<span style="color:var(--blue)">${icon('scissors')}</span><span>3 files</span>`,'Cut: report.pdf, budget.xlsx, logo.png')},
   copySecret:()=>showClip(`${icon('lock')}<span>Copied (hidden)</span>`,'Hidden because the app marked it as sensitive'),
   explorer:()=>explorerOp('copy'),
   xmove:()=>explorerOp('move'),
@@ -4283,7 +4157,6 @@ document.addEventListener('keyup',e=>{if(e.key==='CapsLock'){S.caps=e.getModifie
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.altKey&&e.code==='Space'){e.preventDefault();ACT.expand();return}
   if(e.ctrlKey&&e.altKey&&e.code==='KeyN'){e.preventDefault();openNote(true);return}
-  if(e.ctrlKey&&e.altKey&&e.code==='KeyV'){e.preventDefault();openClipboard(true);return}
   if(S.state==='drop'&&e.key==='Escape'){leaveDrop();return}
   if(S.state!=='expanded')return;
   const typing=/INPUT|TEXTAREA/.test(e.target.tagName);
@@ -4588,7 +4461,7 @@ ACT.pjEmpty=()=>{
 document.body.classList.toggle('reduce',S.reduce);setPressed('reduce',S.reduce);
 for(let i=0;i<60;i++)sample();
 renderApps();setApp('Chrome','a-chrome');renderClLauncher();
-renderClock();renderMedia();renderTodos();buildCal();renderPj();renderNotes();renderClipPage();renderShelf();renderRight();renderTimerPage();
+renderClock();renderMedia();renderTodos();buildCal();renderPj();renderNotes();renderShelf();renderRight();renderTimerPage();
 renderSlot();goPage(PAGE.todo,true);setState('compact',true);applySettings();setTimeout(gBlink,2500);
 if(document.fonts)document.fonts.ready.then(layout);
 addEventListener('resize',layout);

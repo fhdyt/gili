@@ -7,8 +7,7 @@ public enum SnippetKind { Text, Image, Files, Cut, Hidden }
 
 /// <summary>
 /// What the clipboard holds after a copy, as read by Platform. Nothing of a sensitive copy is read: only
-/// <paramref name="Sensitive"/> is set (PRD 6.3). <paramref name="OwnerWindow"/> is the copying app's clipboard window,
-/// for the history's app name.
+/// <paramref name="Sensitive"/> is set (PRD 6.3).
 /// </summary>
 public sealed record ClipboardContent(
     bool Sensitive,
@@ -20,8 +19,7 @@ public sealed record ClipboardContent(
     int ImageHeight,
     string? Html,
     string? Url,
-    string? OwnerProcess,
-    nint OwnerWindow = 0);
+    string? OwnerProcess);
 
 /// <summary>The island slot's line for a copy; <paramref name="Detail"/> is an image's size, shown grey.</summary>
 public sealed record ClipboardSnippet(SnippetKind Kind, string Text, string? Detail, string Tooltip);

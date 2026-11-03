@@ -12,7 +12,7 @@ public sealed record DataFolders(string Root)
     /// <summary>Files the Shelf keeps itself, one folder per drop (F-ISL-31).</summary>
     public string Shelf => Path.Combine(Root, "shelf");
 
-    /// <summary>Images in the clipboard history, as PNG (F-ISL-32).</summary>
+    /// <summary>The clipboard history's PNGs from revisions 12–20, deleted at start since revision 21.</summary>
     public string Clipboard => Path.Combine(Root, "clipboard");
 }
 

@@ -6,9 +6,9 @@ namespace Gili.Core.Tests.Island;
 public class IslandTabsTests
 {
     [Fact]
-    public void The_menu_is_the_eleven_pages_without_controls()
+    public void The_menu_is_the_ten_pages_without_controls()
     {
-        Assert.Equal(11, IslandTabs.Menu.Count);
+        Assert.Equal(10, IslandTabs.Menu.Count);
         Assert.Equal(IslandPage.Media, IslandTabs.Menu[0]);
         Assert.Equal(IslandPage.Projects, IslandTabs.Menu[5]);
         Assert.DoesNotContain(IslandPage.Controls, IslandTabs.Menu);
@@ -24,7 +24,7 @@ public class IslandTabsTests
     public void Hidden_tabs_leave_the_menu()
     {
         var visible = IslandTabs.Visible(PageSet.Timer | PageSet.Shelf, temporary: null);
-        Assert.Equal(9, visible.Count);
+        Assert.Equal(8, visible.Count);
         Assert.DoesNotContain(IslandPage.Timer, visible);
         Assert.DoesNotContain(IslandPage.Shelf, visible);
     }
@@ -34,7 +34,7 @@ public class IslandTabsTests
     {
         var visible = IslandTabs.Visible(PageSet.Timer, temporary: IslandPage.Timer);
         Assert.Equal(IslandPage.Timer, visible[1]);
-        Assert.Equal(11, visible.Count);
+        Assert.Equal(10, visible.Count);
     }
 
     [Fact]

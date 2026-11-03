@@ -38,8 +38,8 @@ public static partial class Backups
     internal static void Copy(Database db, string path) => Copy(db.Connection, path);
 
     /// <summary>
-    /// The copy leaves the clipboard history out, vacuumed so its rows are not left in free pages: the history lasts
-    /// one Windows sign-in and must not live on in seven days of copies (revision 20).
+    /// The copy leaves out the clipboard history an older file still has, vacuumed so its rows are not left in free
+    /// pages: the copy made before migrating must not keep what revisions 20 and 21 removed.
     /// </summary>
     internal static void Copy(SqliteConnection source, string path)
     {

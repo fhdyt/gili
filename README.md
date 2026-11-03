@@ -23,7 +23,7 @@ Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan s
 
 Bar dibagi tiga bagian.
 
-**Kiri:** tombol Start, ikon launcher (Timer, Alarms, Todo, Notes, Clipboard), ikon Shelf, ikon Claude, lalu ikon aplikasi yang sedang terbuka. Aplikasi aktif selalu menampilkan namanya; aplikasi lain cukup ikon.
+**Kiri:** tombol Start, ikon launcher (Timer, Alarms, Todo, Projects, Notes), ikon Shelf, ikon Claude, lalu ikon aplikasi yang sedang terbuka. Aplikasi aktif selalu menampilkan namanya; aplikasi lain cukup ikon.
 
 **Tengah, pulau:**
 - Maskot Gili saat tidak ada aktivitas.
@@ -43,7 +43,7 @@ Bar dibagi tiga bagian.
 - Bar position Bottom, setelah taskbar Windows disembunyikan.
 - Demo mode: skenario palsu ±30 detik untuk melihat semua keadaan pulau.
 
-**Belum ada, menyusul di Fase 4 (sebelum rilis pertama):** halaman Clipboard dan riwayat clipboard, hotkey global (`Ctrl+Alt+N`, `Ctrl+Alt+V`, `Ctrl+Alt+Space`), dan pilihan kota cuaca (sementara Jakarta). **Menyusul sebagai update setelah rilis (Fase 6):** lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan menyalakan Do Not Disturb Windows saat fase fokus. Baris Settings untuk fitur ini tampil abu-abu dengan keterangan `Coming in a later version`.
+**Belum ada, menyusul di Fase 4 (sebelum rilis pertama):** hotkey global (`Ctrl+Alt+N`, `Ctrl+Alt+T`, `Ctrl+Alt+Space`), dan pilihan kota cuaca (sementara Jakarta). **Menyusul sebagai update setelah rilis (Fase 6):** lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan menyalakan Do Not Disturb Windows saat fase fokus. Baris Settings untuk fitur ini tampil abu-abu dengan keterangan `Coming in a later version`.
 
 Semua teks di app berbahasa Inggris, tanpa pilihan bahasa.
 
@@ -150,7 +150,7 @@ Semua perubahan berlaku langsung, tanpa tombol Save.
 |---|---|
 | General | Bar position, Hide Windows taskbar, 12-hour clock, Show seconds, Start with Windows |
 | Appearance | Bar opacity, Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
-| Left side | Saklar Start, Timer, Alarms, Todo, Notes, Clipboard, Shelf, Claude |
+| Left side | Saklar Start, Timer, Alarms, Todo, Projects, Notes, Shelf, Claude |
 | Island | Show Gili, dan saklar tiap halaman pulau |
 | Right side | Saklar dan urutan modul, Battery alert, Unplug reminder |
 | Claude | Show Claude Code sessions |

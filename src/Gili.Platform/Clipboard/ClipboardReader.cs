@@ -16,6 +16,7 @@ public static class ClipboardReader
     private const uint CF_DIB = 8;
     private const uint CF_DIBV5 = 17;
     private const int DROPEFFECT_MOVE = 2;
+    private const int MaxText = 4096;
 
     private static readonly uint Exclude = RegisterClipboardFormat("ExcludeClipboardContentFromMonitorProcessing");
     private static readonly uint HistoryAllowed = RegisterClipboardFormat("CanIncludeInClipboardHistory");
@@ -36,8 +37,8 @@ public static class ClipboardReader
             var (width, height) = ImageSize();
             return new ClipboardContent(
                 Sensitive: false,
-                // Whole copies up to the history's limit (design 4a); the snippet reads only the first line.
-                Text: ReadUnicode(CF_UNICODETEXT, Gili.Core.Clipboard.ClipboardHistory.MaxLength),
+                // The snippet shows the first line and its tooltip the first 120 characters.
+                Text: ReadUnicode(CF_UNICODETEXT, MaxText),
                 Files: files,
                 Cut: files.Count > 0 && IsClipboardFormatAvailable(DropEffect) && (ReadDword(DropEffect) & DROPEFFECT_MOVE) != 0,
                 HasImage: width > 0,
@@ -45,8 +46,7 @@ public static class ClipboardReader
                 ImageHeight: height,
                 Html: ReadUtf8(Html, 64 * 1024),
                 Url: ReadUnicode(Url, 2048),
-                OwnerProcess: owner,
-                OwnerWindow: GetClipboardOwner());
+                OwnerProcess: owner);
         }
         finally
         {

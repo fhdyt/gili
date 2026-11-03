@@ -7,7 +7,7 @@ namespace Gili.Core.Settings;
 public enum HotkeyModifiers { None = 0, Alt = 1, Ctrl = 2, Shift = 4, Win = 8 }
 
 /// <summary>What a global hotkey does (F-TOOL-10).</summary>
-public enum HotkeyAction { Island, Clipboard, NewNote, AddTask }
+public enum HotkeyAction { Island, NewNote, AddTask }
 
 /// <summary>A key combination: modifiers and a virtual-key code.</summary>
 public readonly record struct Hotkey(HotkeyModifiers Modifiers, int Key)
@@ -24,7 +24,6 @@ public static class Hotkeys
     public static readonly IReadOnlyList<(HotkeyAction Action, string Key, string Label, string Default)> All =
     [
         (HotkeyAction.Island, "hk.island", "Open or close the island", "Ctrl+Alt+Space"),
-        (HotkeyAction.Clipboard, "hk.clipboard", "Clipboard", "Ctrl+Alt+V"),
         (HotkeyAction.NewNote, "hk.note", "New note", "Ctrl+Alt+N"),
         (HotkeyAction.AddTask, "hk.task", "Add task for today", "Ctrl+Alt+T"),
     ];

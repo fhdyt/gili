@@ -33,7 +33,7 @@ public sealed class HotkeysTests
     {
         var s = new AppSettings();
         Assert.True(s.KeyboardShortcuts);
-        Assert.Equal(["Ctrl+Alt+Space", "Ctrl+Alt+V", "Ctrl+Alt+N", "Ctrl+Alt+T"],
+        Assert.Equal(["Ctrl+Alt+Space", "Ctrl+Alt+N", "Ctrl+Alt+T"],
             Hotkeys.All.Select(h => (string)SettingsCatalog.Read(s, h.Key)));
     }
 
@@ -43,8 +43,8 @@ public sealed class HotkeysTests
         var s = new AppSettings();
         var changed = SettingsCatalog.Write(s, "hk.note", "Win+Shift+n");
         Assert.Equal("Shift+Win+N", changed.HotkeyNewNote);
-        Assert.Equal("Already used for Clipboard", Hotkeys.Problem(s, HotkeyAction.NewNote, Hotkeys.Parse("Ctrl+Alt+V")!.Value));
-        Assert.Equal(s, SettingsCatalog.Write(s, "hk.note", "Ctrl+Alt+V"));
+        Assert.Equal("Already used for Add task for today", Hotkeys.Problem(s, HotkeyAction.NewNote, Hotkeys.Parse("Ctrl+Alt+T")!.Value));
+        Assert.Equal(s, SettingsCatalog.Write(s, "hk.note", "Ctrl+Alt+T"));
         Assert.Equal(Hotkeys.NeedsModifier, Hotkeys.Problem(s, HotkeyAction.NewNote, new Hotkey(HotkeyModifiers.Shift, 'N')));
     }
 

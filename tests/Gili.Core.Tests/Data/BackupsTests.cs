@@ -44,11 +44,15 @@ public sealed class BackupsTests : IDisposable
     }
 
     [Fact]
-    public void Backups_leave_the_clipboard_history_out()
+    public void Backups_leave_an_older_files_clipboard_history_out()
     {
         using var db = Database.Open(_folder);
         AddNote(db, "kept");
-        new ClipboardHistoryStore(db).Save(new Gili.Core.Clipboard.ClipboardEntry(0, "secret", null, DateTimeOffset.UtcNow));
+        using (var older = db.Connection.CreateCommand())
+        {
+            older.CommandText = "CREATE TABLE clipboard_history (id INTEGER PRIMARY KEY, text TEXT NOT NULL); INSERT INTO clipboard_history (text) VALUES ('secret')";
+            older.ExecuteNonQuery();
+        }
         Backups.BackUpIfDue(db, BackupFolder, Today);
         using var copy = new SqliteConnection($"Data Source={Backups.List(BackupFolder)[0]};Pooling=False");
         copy.Open();
@@ -57,7 +61,6 @@ public sealed class BackupsTests : IDisposable
         using var reader = count.ExecuteReader();
         reader.Read();
         Assert.Equal((0L, 1L), (reader.GetInt64(0), reader.GetInt64(1)));
-        Assert.Single(new ClipboardHistoryStore(db).All());
     }
 
     [Fact]

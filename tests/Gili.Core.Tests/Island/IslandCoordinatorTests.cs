@@ -298,11 +298,13 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
-    public void Clicking_a_snippet_opens_the_clipboard_page()
+    public void Clicking_a_snippet_opens_the_last_page_viewed()
     {
+        _island.Open(IslandPage.Notes);
+        _island.Close();
         _island.ShowClipboard();
         _island.OpenFor(_island.View.Slot);
-        Assert.Equal((IslandMode.Expanded, IslandPage.Clipboard), (_island.View.Mode, _island.View.Page));
+        Assert.Equal((IslandMode.Expanded, IslandPage.Notes), (_island.View.Mode, _island.View.Page));
     }
 
     [Fact]

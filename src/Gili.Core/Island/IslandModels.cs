@@ -6,7 +6,7 @@ public enum IslandMode { Hidden, Compact, Wide, Expanded, Card, DropZone }
 /// Pages of the expanded island, in menu order (PRD 6.3). Controls has no tab: the Power icon (and from Phase 3 Wi-Fi,
 /// Bluetooth, volume and brightness) opens it alone, without the menu (PRD 6.4 "Pulau kontrol").
 /// </summary>
-public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Clipboard, Shelf, Claude, System, Controls }
+public enum IslandPage { Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Shelf, Claude, System, Controls }
 
 /// <summary>The control a control island shows (PRD 6.4 "Pulau kontrol"): one per bar icon.</summary>
 public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
@@ -18,7 +18,7 @@ public enum ControlKind { Power, Volume, Brightness, Wifi, Bluetooth }
 /// </summary>
 public enum ActivityKind { ClipboardSnippet, ClaudeAttention, ClaudeLimit, FileOperation, Shelf, Timer, Stopwatch, ClaudeWorking, Media, Charging, ClaudeWindow }
 
-public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone, Clipboard, TrayDown, Restart }
+public enum WideIcon { None, Bolt, Caps, NumLock, Bluetooth, Headphones, Mouse, Keyboard, Gamepad, Phone, TrayDown, Restart }
 
 /// <summary>The colour of a wide notice's icon (PRD 8.3 tokens).</summary>
 public enum WideTone { Text, Accent, Warn, Danger, Blue, Muted }

@@ -32,14 +32,12 @@ public sealed record AppSettings
     /// <summary>Keyboard shortcuts (F-TOOL-10): the global hotkeys, each changeable in Settings (F-TOOL-11).</summary>
     public bool KeyboardShortcuts { get; init; } = true;
     public string HotkeyIsland { get; init; } = Hotkeys.Default(HotkeyAction.Island);
-    public string HotkeyClipboard { get; init; } = Hotkeys.Default(HotkeyAction.Clipboard);
     public string HotkeyNewNote { get; init; } = Hotkeys.Default(HotkeyAction.NewNote);
     public string HotkeyAddTask { get; init; } = Hotkeys.Default(HotkeyAction.AddTask);
 
     public string HotkeyFor(HotkeyAction action) => action switch
     {
         HotkeyAction.Island => HotkeyIsland,
-        HotkeyAction.Clipboard => HotkeyClipboard,
         HotkeyAction.NewNote => HotkeyNewNote,
         _ => HotkeyAddTask,
     };
@@ -47,7 +45,6 @@ public sealed record AppSettings
     public AppSettings WithHotkey(HotkeyAction action, string hotkey) => action switch
     {
         HotkeyAction.Island => this with { HotkeyIsland = hotkey },
-        HotkeyAction.Clipboard => this with { HotkeyClipboard = hotkey },
         HotkeyAction.NewNote => this with { HotkeyNewNote = hotkey },
         _ => this with { HotkeyAddTask = hotkey },
     };
@@ -161,6 +158,8 @@ public sealed record AppSettings
         var barHeight = Math.Clamp(BarHeight, MinBarHeight, MaxBarHeight);
         var plan = Pomodoro.Normalize();
         var bottom = BarPosition == BarPosition.Bottom;
+        // Clipboard's icon and page are gone (revision 21): an older file's flag for the page is dropped.
+        var pages = HiddenPages & ~PageSet.Clipboard;
         return this with
         {
             BarPosition = bottom && HideTaskbar ? BarPosition.Bottom : BarPosition.Top,
@@ -175,8 +174,9 @@ public sealed record AppSettings
             AlertVolume = Math.Clamp(AlertVolume, 0, 100),
             BatteryAlert = Math.Clamp(BatteryAlert, 5, 50),
             UnplugReminder = Math.Clamp(UnplugReminder, 50, 100),
+            HiddenLeft = HiddenLeft & ~LeftIcons.Clipboard,
             // Media has no left icon, so freeing it always leaves the island one tab.
-            HiddenPages = (HiddenPages | HiddenRules.PagesOf(ShownHiddenLeft)) == PageSet.All ? HiddenPages & ~PageSet.Media : HiddenPages,
+            HiddenPages = (pages | HiddenRules.PagesOf(ShownHiddenLeft)) == PageSet.All ? pages & ~PageSet.Media : pages,
             TimerSound = Sound.Voices.Find(TimerSound).Name,
             ModuleOrder = string.Join(",", Order),
             PomodoroFocus = plan.FocusMinutes,

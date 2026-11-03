@@ -63,8 +63,7 @@ public sealed class AppsService : IDisposable
 
     /// <summary>
     /// Settings → Left side → Running apps (F-LEFT-07). While off the window list is read only to see whether Claude
-    /// Desktop is open, with no icons; the foreground window is still followed, since the Clipboard page's paste and
-    /// Claude's sessions need it.
+    /// Desktop is open, with no icons; the foreground window is still followed, since Claude's sessions need it.
     /// </summary>
     public void ShowStrip(bool show)
     {

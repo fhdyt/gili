@@ -64,8 +64,6 @@ public partial class IslandWindow : Window
     private readonly AlarmsViewModel _alarmsPage;
     private readonly ShelfViewModel _shelfPage;
     private readonly ClaudePageViewModel _claudePage;
-    private readonly ClipboardPageViewModel _clipboardPage;
-    private ClipboardPage? _clipboardView;
     private readonly CalendarViewModel _calendarPage;
     private readonly TodoViewModel _todoPage;
     private readonly NotesViewModel _notesPage;
@@ -105,7 +103,6 @@ public partial class IslandWindow : Window
         [IslandPage.Todo] = Color.FromRgb(0x0A, 0x84, 0xFF),
         [IslandPage.Projects] = Color.FromRgb(0x5E, 0x5C, 0xE6),
         [IslandPage.Notes] = Color.FromRgb(0xFF, 0xD6, 0x0A),
-        [IslandPage.Clipboard] = Color.FromRgb(0x66, 0xD4, 0xCF),
         [IslandPage.Shelf] = Color.FromRgb(0x64, 0xD2, 0xFF),
         [IslandPage.Claude] = Color.FromRgb(0xD9, 0x77, 0x57),
         [IslandPage.System] = Color.FromRgb(0xBF, 0x5A, 0xF2),
@@ -157,9 +154,6 @@ public partial class IslandWindow : Window
         _shelfPage.ContentChanged += () => PageContentChanged(IslandPage.Shelf);
         _claudePage = new ClaudePageViewModel(island, () => settings.Current.Use24HourClock);
         _claudePage.ContentChanged += () => PageContentChanged(IslandPage.Claude);
-        _clipboardPage = new ClipboardPageViewModel(island);
-        _clipboardPage.ContentChanged += () => PageContentChanged(IslandPage.Clipboard);
-        island.PasteRequested += PasteIntoPrevious;
         _bottom = settings.Current.BarPosition == BarPosition.Bottom;
         settings.Changed += s =>
         {
@@ -996,14 +990,6 @@ public partial class IslandWindow : Window
             case Gili.Core.Settings.HotkeyAction.Island:
                 _island.ToggleIsland();
                 return;
-            case Gili.Core.Settings.HotkeyAction.Clipboard:
-                _island.Open(IslandPage.Clipboard);
-                AfterOpen(() =>
-                {
-                    _clipboardPage.SelectFirst();
-                    _clipboardView?.FocusSearch();
-                });
-                return;
             case Gili.Core.Settings.HotkeyAction.NewNote:
                 _island.Open(IslandPage.Notes);
                 AfterOpen(() => _notesView?.StartNewNote());
@@ -1023,39 +1009,6 @@ public partial class IslandWindow : Window
     {
         if (_mode == IslandMode.Expanded) action();
     }, DispatcherPriority.Loaded);
-
-    /// <summary>
-    /// A Clipboard row was picked (PRD 6.3): the island closes, which gives focus back to the window that was in front
-    /// before it opened, and once that window really is in front (checked every 15 ms, up to 300 ms) Ctrl+V pastes there.
-    /// The desktop, a closed window, or an admin window can't take it: the text waits on the clipboard with a hint.
-    /// </summary>
-    private void PasteIntoPrevious()
-    {
-        var target = _previousForeground;
-        _island.Close();
-        if (!Gili.Platform.Clipboard.ClipboardPaste.CanPasteInto(target))
-        {
-            _island.ShowPasteHint();
-            return;
-        }
-        var waited = 0;
-        var poll = new DispatcherTimer(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(15) };
-        poll.Tick += (_, _) =>
-        {
-            if (Gili.Platform.Clipboard.ClipboardPaste.Foreground() == target)
-            {
-                poll.Stop();
-                Gili.Platform.Clipboard.ClipboardPaste.SendCtrlV();
-                return;
-            }
-            if (waited == 0) ForegroundWindow.Restore(target);
-            waited += 15;
-            if (waited < 300) return;
-            poll.Stop();
-            _island.ShowPasteHint();
-        };
-        poll.Start();
-    }
 
     private void OnDoneBubbleClick(object sender, MouseButtonEventArgs e)
     {
@@ -1186,7 +1139,6 @@ public partial class IslandWindow : Window
         IslandPage.System => new SystemPage(SystemStats),
         IslandPage.Shelf => new ShelfPage(_shelfPage, _island),
         IslandPage.Claude => new ClaudePage(_claudePage),
-        IslandPage.Clipboard => _clipboardView = new ClipboardPage(_clipboardPage, _island.Close),
         _ => Placeholder(tab),
     };
 

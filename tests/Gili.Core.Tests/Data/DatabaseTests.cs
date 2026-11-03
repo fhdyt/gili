@@ -36,7 +36,7 @@ public sealed class DatabaseTests : IDisposable
         using var db = Database.Open(_folder);
         var tables = Column(db.Connection, "SELECT name FROM sqlite_master WHERE type = 'table'");
         Assert.Superset(
-            new HashSet<string> { "schema_version", "notes", "todos", "alarms", "timers", "stopwatch", "clipboard_history", "claude_window", "shelf_items", "projects", "project_tasks", "claude_weekly" },
+            new HashSet<string> { "schema_version", "notes", "todos", "alarms", "timers", "stopwatch", "claude_window", "shelf_items", "projects", "project_tasks", "claude_weekly" },
             tables.ToHashSet());
     }
 
@@ -44,7 +44,7 @@ public sealed class DatabaseTests : IDisposable
     public void Version_is_the_latest_after_the_first_open()
     {
         using var db = Database.Open(_folder);
-        Assert.Equal(6, db.Version);
+        Assert.Equal(7, db.Version);
     }
 
     [Fact]
@@ -52,8 +52,23 @@ public sealed class DatabaseTests : IDisposable
     {
         Database.Open(_folder).Dispose();
         using var db = Database.Open(_folder);
-        Assert.Equal(6, db.Version);
-        Assert.Equal(["6"], Column(db.Connection, "SELECT version FROM schema_version"));
+        Assert.Equal(7, db.Version);
+        Assert.Equal(["7"], Column(db.Connection, "SELECT version FROM schema_version"));
+    }
+
+    [Fact]
+    public void An_older_files_clipboard_history_is_dropped()
+    {
+        using (var older = Database.Open(_folder))
+        {
+            using var command = older.Connection.CreateCommand();
+            command.CommandText = "CREATE TABLE clipboard_history (id INTEGER PRIMARY KEY, text TEXT NOT NULL); INSERT INTO clipboard_history (text) VALUES ('secret'); " +
+                "DELETE FROM schema_version; INSERT INTO schema_version (version) VALUES (6)";
+            command.ExecuteNonQuery();
+        }
+        using var db = Database.Open(_folder);
+        Assert.Equal(7, db.Version);
+        Assert.Empty(Column(db.Connection, "SELECT name FROM sqlite_master WHERE name = 'clipboard_history'"));
     }
 
     [Fact]

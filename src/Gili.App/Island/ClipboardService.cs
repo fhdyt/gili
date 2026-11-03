@@ -8,9 +8,8 @@ using Gili.Platform.Clipboard;
 namespace Gili.App.Island;
 
 /// <summary>
-/// Turns each copy into the island's snippet (F-ISL-17), with a small thumbnail for images, and into a history row:
-/// text, files, or a copied image saved as a PNG (F-LEFT-03, F-ISL-32). The snippet's thumbnails live in memory only
-/// (PRD 10).
+/// Turns each copy into the island's snippet (F-ISL-17), with a small thumbnail for images. Nothing is kept: the
+/// thumbnails live in memory only (PRD 10).
 /// </summary>
 public sealed class ClipboardService : IDisposable
 {
@@ -21,32 +20,9 @@ public sealed class ClipboardService : IDisposable
     private static readonly string[] ImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".ico"];
 
     private readonly ClipboardMonitor _monitor = new();
-    private readonly ClipboardHistory? _history;
-    private readonly ClipboardImages? _images;
     private int _copy;
-    private string? _own;
-    private DateTimeOffset _ownUntil;
-    private DateTimeOffset _ownAnyUntil;
 
-    public ClipboardService(ClipboardHistory? history = null, ClipboardImages? images = null)
-    {
-        _history = history;
-        _images = images;
-        _monitor.Changed += () => _ = ReadAsync(++_copy);
-    }
-
-    /// <summary>
-    /// Gili is about to put this text on the clipboard itself (the Clipboard page's paste): that change shows no snippet
-    /// and adds no row (PRD 6.3).
-    /// </summary>
-    public void Ignore(string text)
-    {
-        _own = text;
-        _ownUntil = DateTimeOffset.UtcNow.AddSeconds(3);
-    }
-
-    /// <summary>The same for an image or files from the history: the next change within 3 s is Gili's own.</summary>
-    public void IgnoreNext() => _ownAnyUntil = DateTimeOffset.UtcNow.AddSeconds(3);
+    public ClipboardService() => _monitor.Changed += () => _ = ReadAsync(++_copy);
 
     /// <summary>Raised on the UI thread.</summary>
     public event Action<ClipboardSnippet, ImageSource?>? Copied;
@@ -70,38 +46,11 @@ public sealed class ClipboardService : IDisposable
             content = ClipboardReader.TryRead();
         }
         if (content is null) return;
-        if (_own is not null && content.Text == _own && DateTimeOffset.UtcNow < _ownUntil)
-        {
-            _own = null;
-            return;
-        }
-        if (DateTimeOffset.UtcNow < _ownAnyUntil)
-        {
-            _ownAnyUntil = default;
-            return;
-        }
         if (ClipboardSnippets.For(content, ImageFileSize) is not { } snippet) return;
-        // Text, files and copied images join the history (F-LEFT-03, F-ISL-32); sensitive copies stay hidden snippets.
-        var source = snippet.Kind == SnippetKind.Hidden ? null : ClipboardPaste.SourceApp(content.OwnerWindow);
-        BitmapSource? bitmap = null;
-        if (snippet.Kind == SnippetKind.Text && content.Text is { } text) _history?.Add(text, source);
-        else if (snippet.Kind != SnippetKind.Hidden && content.Files.Count > 0) _history?.AddFiles(content.Files, source);
-        else if (snippet.Kind == SnippetKind.Image)
-        {
-            bitmap = ClipboardBitmap();
-            if (bitmap is not null) _ = KeepImage(bitmap, ClipboardSnippets.ImageName(content), source);
-        }
         var thumb = snippet.Kind != SnippetKind.Image ? null
             : content.Files.Count == 1 ? FileThumb(content.Files[0])
-            : bitmap is null ? null : Shrink(bitmap);
+            : ClipboardBitmap() is { } bitmap ? Shrink(bitmap) : null;
         Copied?.Invoke(snippet, thumb);
-    }
-
-    /// <summary>The copied image becomes a PNG off the UI thread, then its row (F-ISL-32).</summary>
-    private async Task KeepImage(BitmapSource bitmap, string name, string? source)
-    {
-        if (_images is null || _history is null) return;
-        if (await _images.Save(bitmap) is { } file) _history.AddImage(file, name, bitmap.PixelWidth, bitmap.PixelHeight, source);
     }
 
     private static (int W, int H)? ImageFileSize(string path)
@@ -139,14 +88,12 @@ public sealed class ClipboardService : IDisposable
         }
     }
 
-    /// <summary>The copied bitmap, frozen so the PNG can be written on a worker thread; null when it can't be read.</summary>
+    /// <summary>The copied bitmap; null when it can't be read.</summary>
     private static BitmapSource? ClipboardBitmap()
     {
         try
         {
-            if (System.Windows.Clipboard.GetImage() is not { PixelWidth: > 0, PixelHeight: > 0 } source) return null;
-            if (source.CanFreeze) source.Freeze();
-            return source.IsFrozen ? source : new WriteableBitmap(source).GetAsFrozen() as BitmapSource;
+            return System.Windows.Clipboard.GetImage() is { PixelWidth: > 0, PixelHeight: > 0 } source ? source : null;
         }
         catch (COMException)
         {

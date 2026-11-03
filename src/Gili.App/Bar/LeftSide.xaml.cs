@@ -66,7 +66,7 @@ public partial class LeftSide : UserControl
 
     private bool ShowsApps => _hidden?.HasFlag(LeftIcons.Apps) != true;
 
-    private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon);
+    private static readonly LeftIcons EveryIcon = Enum.GetValues<LeftIcons>().Aggregate((all, icon) => all | icon) & ~LeftIcons.Clipboard;
 
     /// <summary>The Shelf's file count beside its icon and in its tooltip (PRD 6.2); a new drop bounces the tray.</summary>
     /// <summary>

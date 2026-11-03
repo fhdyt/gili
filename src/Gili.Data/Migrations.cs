@@ -95,6 +95,9 @@ internal static class Migrations
         """,
         // 6: Claude's weekly limit reset, set by hand from Claude Desktop (revision 19); UTC like claude_window.
         "CREATE TABLE claude_weekly (id INTEGER PRIMARY KEY AUTOINCREMENT, resets_at TEXT NOT NULL, notified INTEGER NOT NULL DEFAULT 0);",
+        // 7: the clipboard history is gone with its page (revision 21); secure_delete zeroes its rows instead of leaving
+        // them in free pages.
+        "PRAGMA secure_delete = ON; DELETE FROM clipboard_history; DROP TABLE clipboard_history; PRAGMA secure_delete = OFF;",
     ];
 
     /// <summary>The schema version the file holds; 0 for a new file.</summary>

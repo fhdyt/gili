@@ -38,7 +38,7 @@ public static class SettingsCatalog
     /// <summary>The Left side switches: the icon's flag name and its label (PRD 6.5).</summary>
     private static readonly (string Name, string Label)[] LeftRows =
     [
-        ("Start", "Start"), ("Timer", "Timer"), ("Alarms", "Alarms"), ("Todo", "Todo"), ("Projects", "Projects"), ("Notes", "Notes"), ("Clipboard", "Clipboard"),
+        ("Start", "Start"), ("Timer", "Timer"), ("Alarms", "Alarms"), ("Todo", "Todo"), ("Projects", "Projects"), ("Notes", "Notes"),
         ("Shelf", "Shelf"), ("Claude", "Claude"), ("Favorites", "Favorites"), ("Apps", "Running apps"),
     ];
     /// <summary>The Right side switches by label, with the bar's id for each module (PRD 6.4).</summary>
@@ -59,7 +59,7 @@ public static class SettingsCatalog
         ["Power"] = "power",
     };
 
-    private static readonly string[] Pages = ["Media", "Timer", "Alarms", "Calendar", "Todo", "Projects", "Notes", "Clipboard", "Shelf", "Claude", "System"];
+    private static readonly string[] Pages = ["Media", "Timer", "Alarms", "Calendar", "Todo", "Projects", "Notes", "Shelf", "Claude", "System"];
 
     public static IReadOnlyList<SettingsSection> Sections { get; } =
     [

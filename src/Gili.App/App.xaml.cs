@@ -142,11 +142,8 @@ public partial class App : Application
         var shelfFolder = new Gili.Platform.Shelf.ShelfFolder(Data.Shelf);
         var shelf = new ShelfService(_database is null ? null : new ShelfStore(_database), ProbeFile, shelfFolder.Delete);
         shelfFolder.Sweep(shelf.KeptFolders);
-        var clipboardImages = new ClipboardImages(Data.Clipboard);
-        var clipboardHistory = new Core.Clipboard.ClipboardHistory(_database is null ? null : new Data.ClipboardHistoryStore(_database), () => DateTimeOffset.UtcNow,
-            clipboardImages.Delete, Gili.Platform.Power.SignIn.StartedAt());
-        clipboardImages.Sweep(clipboardHistory.ImageFiles);
-        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, _projects, bluetooth, shelf, () => _settings.Current, clipboardHistory, clipboardImages)
+        DeleteClipboardImages();
+        _islandController = new IslandController(Dispatcher, _media, _timers, _alarms, _todos, _notes, _projects, bluetooth, shelf, () => _settings.Current)
         {
             Use24Hour = () => _settings.Current.Use24HourClock,
             ShelfFolder = shelfFolder,
@@ -588,6 +585,19 @@ public partial class App : Application
             // Unreadable counts as gone.
         }
         return null;
+    }
+
+    /// <summary>The clipboard history's PNGs, left by revisions 12–20, go with the history (revision 21).</summary>
+    private void DeleteClipboardImages()
+    {
+        try
+        {
+            if (Directory.Exists(Data.Clipboard)) Directory.Delete(Data.Clipboard, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log?.Write("Could not delete the old clipboard images", ex);
+        }
     }
 
     private NoteStore? OpenNotes()

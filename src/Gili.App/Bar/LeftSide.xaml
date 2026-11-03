@@ -112,9 +112,6 @@
             <Button Style="{StaticResource BarIconButton}" Tag="Notes" ToolTip="Notes" AutomationProperties.Name="Open Notes" Click="OnLaunch" Margin="2,0,0,0">
                 <c:IconView Glyph="{StaticResource Icon.Note}" Width="16" Height="16" />
             </Button>
-            <Button Style="{StaticResource BarIconButton}" Tag="Clipboard" ToolTip="Clipboard" AutomationProperties.Name="Open Clipboard" Click="OnLaunch" Margin="2,0,0,0">
-                <c:IconView Glyph="{StaticResource Icon.Clipboard}" Width="16" Height="16" />
-            </Button>
             <!-- Shelf (mockup .lsh): the file count follows the tray, and the tray bounces when a drop lands. -->
             <Button x:Name="ShelfButton" Style="{StaticResource BarIconButton}" Tag="Shelf" ToolTip="Shelf" AutomationProperties.Name="Open the Shelf"
                     Click="OnLaunch" Margin="2,0,0,0" Width="NaN" MinWidth="26">

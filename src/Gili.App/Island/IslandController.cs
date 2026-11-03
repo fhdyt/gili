@@ -24,7 +24,7 @@ public sealed class IslandController : IDisposable
     private readonly IslandCoordinator _coordinator = new(() => DateTimeOffset.Now);
     private readonly DispatcherTimer _deadline = new(DispatcherPriority.Normal);
     private readonly PowerMonitor _power = new();
-    private readonly ClipboardService _clipboard;
+    private readonly ClipboardService _clipboard = new();
     private readonly LockKeyMonitor _lockKeys = new();
     private readonly PrivacyMonitor _privacy = new();
     private readonly Func<AppSettings> _settings;
@@ -39,11 +39,8 @@ public sealed class IslandController : IDisposable
     private string? _soundCard;
 
     public IslandController(Dispatcher dispatcher, MediaService media, TimerService timers, AlarmService alarms, TodoService todos, NoteService notes,
-        ProjectService projects, BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings, ClipboardHistory clipboardHistory, ClipboardImages? clipboardImages = null)
+        ProjectService projects, BluetoothMonitor bluetooth, ShelfService shelf, Func<AppSettings> settings)
     {
-        ClipboardHistory = clipboardHistory;
-        ClipboardImages = clipboardImages;
-        _clipboard = new ClipboardService(clipboardHistory, clipboardImages);
         _settings = settings;
         Shelf = shelf;
         Lyrics = new LyricsService(media, settings);
@@ -702,59 +699,8 @@ public sealed class IslandController : IDisposable
 
     public event Action? ClipboardChanged;
 
-    /// <summary>The last 50 texts copied (F-LEFT-03).</summary>
-    public ClipboardHistory ClipboardHistory { get; }
-
-    /// <summary>The history's images on disk (F-ISL-32); null without a data folder.</summary>
-    public ClipboardImages? ClipboardImages { get; }
-
-    /// <summary>A history row was picked: the island closes and the text goes where the user was typing (F-ISL-28).</summary>
-    public event Action? PasteRequested;
-
-    /// <summary>
-    /// Puts the row on the clipboard (without a snippet or a new row): text as plain text, an image as a bitmap, files
-    /// as a file list to copy (F-ISL-32). It moves to the top, then the island closes and pastes it. A row whose image
-    /// or files are gone pastes nothing and leaves.
-    /// </summary>
-    public void Paste(long id)
-    {
-        if (ClipboardHistory.Items.FirstOrDefault(e => e.Id == id) is not { } entry) return;
-        switch (entry.Kind)
-        {
-            case ClipKind.Image:
-                if (ClipboardImages?.Load(entry.Text) is not { } image)
-                {
-                    ClipboardHistory.Remove(id);
-                    return;
-                }
-                _clipboard.IgnoreNext();
-                if (!ClipboardWrite.Image(image)) return;
-                break;
-            case ClipKind.Files:
-                var files = entry.Files.Where(p => System.IO.File.Exists(p) || System.IO.Directory.Exists(p)).ToList();
-                if (files.Count == 0)
-                {
-                    ClipboardHistory.Remove(id);
-                    return;
-                }
-                _clipboard.IgnoreNext();
-                if (!ClipboardWrite.Files(files)) return;
-                break;
-            default:
-                _clipboard.Ignore(entry.Text);
-                Gili.Platform.Clipboard.ClipboardPaste.SetText(entry.Text);
-                break;
-        }
-        ClipboardHistory.Use(id);
-        PasteRequested?.Invoke();
-    }
-
     /// <summary>A short notice from outside the island, like "Updated to Gili 0.2.0" (issue #27).</summary>
     public void ShowNotice(WideEvent wide) => _coordinator.ShowWide(wide);
-
-    /// <summary>No window could take the paste (desktop, admin window): the text waits on the clipboard (PRD 6.3).</summary>
-    public void ShowPasteHint() => _coordinator.ShowWide(new WideEvent("clipboard-paste", WideIcon.Clipboard, WideTone.Text,
-        [new WideRun("Copied"), new WideRun("· press Ctrl+V to paste", WideRunStyle.Muted, SpaceBefore: true)], TimeSpan.FromSeconds(2)));
 
     /// <summary>The demo's copy, shown exactly like a real one (F-BAR-09).</summary>
     public void ShowDemoClipboard(ClipboardSnippet snippet) => ShowClipboard(snippet, null);
