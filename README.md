@@ -2,7 +2,7 @@
 
 Bar kaca di tepi atas layar Windows 11, dengan "pulau" hitam ala Dynamic Island di tengahnya. Nama Gili diambil dari kata Indonesia untuk pulau kecil, dan maskot sepasang mata di pulau memakai nama yang sama.
 
-Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan sesekali berkedip. Saat ada aktivitas (musik, timer, progres copy, sesi Claude Code), Gili bergeser ke kiri sebagai lingkaran kecil dan pulau menampilkan aktivitas itu. Klik pulau, dan pulau lepas dari bar menjadi panel mengambang berisi halaman Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, dan System.
+Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan sesekali berkedip. Saat ada aktivitas (musik, timer, progres copy, sesi Claude Code), Gili bergeser ke kiri sebagai lingkaran kecil dan pulau menampilkan aktivitas itu. Klik pulau, dan pulau lepas dari bar menjadi panel mengambang berisi halaman Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Shelf, Claude, dan System.
 
 > **Status:** gratis, dirilis lewat installer `.exe` di [GitHub Releases](https://github.com/fhdyt/gili/releases/latest) (lihat [Instalasi](#instalasi)). Installer belum bertanda tangan, jadi Windows menampilkan peringatan saat pertama dijalankan.
 
@@ -23,27 +23,30 @@ Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan s
 
 Bar dibagi tiga bagian.
 
-**Kiri:** tombol Start, ikon launcher (Timer, Alarms, Todo, Projects, Notes), ikon Shelf, ikon Claude, lalu ikon aplikasi yang sedang terbuka. Aplikasi aktif selalu menampilkan namanya; aplikasi lain cukup ikon.
+**Kiri:** tombol Start, ikon launcher (Timer, Alarms, Todo, Projects, Notes), ikon Shelf, ikon Claude, aplikasi favorit, lalu ikon aplikasi yang sedang terbuka. Aplikasi aktif selalu menampilkan namanya; aplikasi lain cukup ikon.
 
 **Tengah, pulau:**
 - Maskot Gili saat tidak ada aktivitas.
-- Aktivitas di slot compact: media yang sedang diputar, timer dan pomodoro, progres copy/move/delete Explorer, status sesi Claude Code, ngecas. Aktivitas kedua muncul sebagai gelembung di kanan pulau.
+- Aktivitas di slot compact: cuplikan copy/cut selama 3 detik, media yang sedang diputar, timer dan pomodoro, progres copy/move/delete Explorer, file di Shelf, status sesi Claude, ngecas. Aktivitas kedua muncul sebagai gelembung di kanan pulau.
 - Kartu notifikasi untuk alarm, timer habis, dan pengingat todo, dengan suara dan toast Windows.
-- Halaman yang dibuka dari menu tab ikon: Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, System (grafik CPU/RAM/GPU 60 detik dan sisa disk).
+- Halaman yang dibuka dari menu tab ikon: Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Shelf, Claude, System (grafik CPU/RAM/GPU 60 detik dan sisa disk).
 - Pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power, masing-masing dibuka dari ikonnya di kanan bar.
 - Titik kamera dan mikrofon di samping pulau saat ada aplikasi yang memakainya.
 
-**Kanan:** cuaca, kecepatan jaringan, CPU, RAM, GPU, disk, Wi‑Fi, Bluetooth, volume, brightness, tombol Tray (ikon tersembunyi Windows), jam dan tanggal, Settings, dan Power. Setiap modul bisa dimatikan, dan modul sistem bisa diurutkan ulang.
+**Kanan:** cuaca, kecepatan jaringan, CPU, RAM, GPU, disk, Wi‑Fi, Bluetooth, volume, brightness, tombol Tray (ikon tersembunyi Windows), jam dan tanggal, Settings, dan Power. Setiap modul bisa dimatikan, dan modul sistem bisa diurutkan ulang. GPU dan disk mati secara default.
 
 **Lainnya:**
 - Jendela Tools untuk mengelola timer, pomodoro, stopwatch, alarm, dan todo.
 - Note ditulis langsung di pulau. Satu note bisa diseret keluar menjadi jendela kecil yang selalu di atas.
+- Projects: timeline harian per proyek. Tugas tampil sebagai batang yang bisa digeser, diubah tanggalnya dari ujungnya, dan dicentang selesai.
 - Shelf: seret file ke bar atau pulau untuk menyimpannya sementara, lalu seret keluar ke folder tujuan.
+- Lirik lagu tersinkron dari LRCLIB, mati secara default.
+- Shortcut global yang bisa diganti di Settings: `Ctrl+Alt+Space` (buka atau tutup pulau), `Ctrl+Alt+N` (note baru), `Ctrl+Alt+T` (tugas untuk hari ini).
 - Hide Windows taskbar: Gili bisa menggantikan taskbar Windows sehari-hari. Taskbar dipulihkan setiap kali Gili keluar, termasuk setelah crash.
 - Bar position Bottom, setelah taskbar Windows disembunyikan.
-- Demo mode: skenario palsu ±30 detik untuk melihat semua keadaan pulau.
+- Demo mode: skenario palsu sekitar 2 menit untuk melihat semua keadaan pulau.
 
-**Belum ada, menyusul di Fase 4 (sebelum rilis pertama):** hotkey global (`Ctrl+Alt+N`, `Ctrl+Alt+T`, `Ctrl+Alt+Space`), dan pilihan kota cuaca (sementara Jakarta). **Menyusul sebagai update setelah rilis (Fase 6):** lirik lagu, notifikasi Windows di pulau, progres operasi file Explorer, dan menyalakan Do Not Disturb Windows saat fase fokus. Baris Settings untuk fitur ini tampil abu-abu dengan keterangan `Coming in a later version`.
+**Belum ada:** notifikasi Windows di pulau dan menyalakan Do Not Disturb Windows otomatis. Baris Settings untuk notifikasi Windows tampil abu-abu dengan keterangan `Coming in a later version`.
 
 Semua teks di app berbahasa Inggris, tanpa pilihan bahasa.
 
@@ -130,10 +133,10 @@ Klik kanan di area kosong bar:
 |---|---|
 | Open Tools | Jendela Tools: timer, pomodoro, stopwatch, alarm, todo |
 | Settings | Jendela Settings |
-| Demo mode | Memutar skenario palsu ±30 detik |
-| Quit | Menutup Gili dan melepas ruang di atas layar |
+| Demo mode | Memutar skenario palsu sekitar 2 menit |
+| Quit Gili | Menutup Gili dan melepas ruang di atas layar |
 
-Settings juga terbuka dari ikon roda gigi di kanan bar, atau dengan menjalankan Gili lagi saat sudah berjalan.
+Settings juga terbuka dari ikon roda gigi di kanan bar, atau dengan menjalankan Gili lagi saat sudah berjalan. Ikon Gili di notification area juga punya menu untuk menutupnya.
 
 ### Pulau
 
@@ -148,19 +151,22 @@ Semua perubahan berlaku langsung, tanpa tombol Save.
 
 | Bagian | Isi |
 |---|---|
-| General | Bar position, Hide Windows taskbar, 12-hour clock, Show seconds, Start with Windows |
-| Appearance | Bar opacity, Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
-| Left side | Saklar Start, Timer, Alarms, Todo, Projects, Notes, Shelf, Claude |
-| Island | Show Gili, dan saklar tiap halaman pulau |
-| Right side | Saklar dan urutan modul, Battery alert, Unplug reminder |
-| Claude | Show Claude Code sessions |
+| General | Bar position, Hide Windows taskbar, 12-hour clock, Show seconds, Start with Windows, Icon in the notification area |
+| Appearance | Bar color, Bar opacity, Opacity while open, Same on the desktop, Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
+| Left side | Saklar Start, Timer, Alarms, Todo, Projects, Notes, Shelf, Claude, Favorites, Running apps, dan daftar Favorite apps |
+| Island | Show Gili, Show lyrics, dan saklar tiap halaman pulau |
+| Right side | Saklar dan urutan modul, Weather city, Battery alert, Unplug reminder |
+| Notifications | Belum aktif (`Coming in a later version`) |
+| Claude | Show Claude Code sessions, Show 5-hour usage timer |
 | Sounds | Timer sound, Alert volume, Gradually increase |
+| Shortcuts | Keyboard shortcuts, dan kombinasi tombol tiap shortcut |
+| About | Version, Updates, Release notes, Open logs folder |
 
 Mematikan ikon di **Left side** ikut menyembunyikan halaman dengan nama yang sama di pulau. Modul sistem di **Right side** bisa diurutkan dengan menyeret pegangan titik-titik di kiri barisnya, atau Alt + panah atas/bawah.
 
 ## Tutorial: integrasi Claude Code
 
-Gili bisa menampilkan status sesi Claude Code di pulau, supaya kamu tahu kapan Claude sedang bekerja, butuh jawaban, atau sudah selesai tanpa membuka jendelanya. Ini berlaku untuk tab **Code** di Claude Desktop dan `claude` di terminal (Windows Terminal, wmux, dan lainnya). Tab Chat di Claude Desktop tidak didukung karena tidak mengirim sinyal apa pun keluar aplikasinya.
+Gili bisa menampilkan status sesi Claude Code di pulau, supaya kamu tahu kapan Claude sedang bekerja, butuh jawaban, atau sudah selesai tanpa membuka jendelanya. Ini berlaku untuk tab **Code** di Claude Desktop, dan sesi serta timer hanya tampil selama Claude Desktop punya jendela di taskbar. Sesi `claude` di terminal tidak ditampilkan, tetapi pemakaiannya tetap dihitung untuk jendela 5 jam. Tab Chat di Claude Desktop tidak didukung karena tidak mengirim sinyal apa pun keluar aplikasinya.
 
 Integrasi ini **mati secara default** karena menyalakannya mengubah file konfigurasi Claude Code milikmu.
 
@@ -173,18 +179,18 @@ Claude Code ──hook──▶ Gili.ClaudeHook.exe <Event> ──named pipe \\.
 
 - Claude Code memanggil `Gili.ClaudeHook.exe` di setiap hook. Helper ini program NativeAOT kecil yang meneruskan satu baris kejadian ke Gili lewat named pipe, lalu keluar. Ia tidak menulis apa pun ke stdout, selalu keluar dengan kode 0, dan selesai dalam ±16 ms (p95) saat Gili jalan. Kalau Gili tidak jalan, helper keluar tanpa efek dan Claude bekerja seperti biasa.
 - Gili juga membaca file sesi di `~/.claude/sessions/` untuk nama sesi dan untuk sesi yang sudah berjalan sebelum Gili mulai.
-- Isi prompt tidak pernah dibaca. Semua data sesi hanya di memori, tidak ditulis ke database atau log.
+- Isi prompt tidak pernah dibaca. Data sesi hanya di memori, tidak ditulis ke database atau log. Yang disimpan di `gili.db` hanya waktu jendela 5 jam dan limit mingguan.
 
 ### Menyalakan
 
 1. Pastikan Gili dipasang lewat installer, `scripts/publish.ps1`, atau `scripts/package.ps1 -Install`. Helper `Gili.ClaudeHook.exe` ikut terpasang di sana. Build `dotnet run` memakai helper dari salinan terpasang kalau ada.
 2. Buka **Settings → Claude**, lalu nyalakan **Show Claude Code sessions**.
 3. Baris di bawah saklar menampilkan `Applies to Claude sessions started from now on`. Hook hanya berlaku untuk sesi Claude yang dimulai **setelah** saklar dinyalakan, jadi mulai sesi baru (atau restart sesi lama).
-4. Kirim satu prompt. Baris status berubah menjadi `Connected · last event …`, dan pulau menampilkan nama sesi dengan waktu berjalannya.
+4. Kirim satu prompt di tab Code Claude Desktop. Baris status berubah menjadi `Connected · last event …`, dan pulau menampilkan nama sesi dengan waktu berjalannya.
 
 ### Yang diubah di `~/.claude/settings.json`
 
-Sebelum menulis, Gili menyalin file aslimu ke `~/.claude/settings.json.gili-backup`. Lalu Gili menambahkan tujuh entri hook. Contoh untuk salinan terpasang (path mengikuti folder pengguna):
+Sebelum menulis, Gili menyalin file aslimu ke `~/.claude/settings.json.gili-backup`. Lalu Gili menambahkan delapan entri hook. Contoh untuk salinan terpasang (path mengikuti folder pengguna):
 
 ```json
 {
@@ -201,6 +207,9 @@ Sebelum menulis, Gili menyalin file aslimu ke `~/.claude/settings.json.gili-back
       { "matcher": "*", "hooks": [ … ] }
     ],
     "Stop": [ … ],
+    "StopFailure": [
+      { "matcher": "rate_limit", "hooks": [ … ] }
+    ],
     "SessionEnd": [ … ]
   }
 }
@@ -220,9 +229,17 @@ Aturan penggabungnya:
 | Needs input | Ikon Claude kuning, nama sesi, `Needs input`. Muncul saat Claude bertanya, meminta persetujuan rencana, atau meminta izin menjalankan tool |
 | Done | Centang hijau, nama sesi, `Done · 4m 12s`, selama 4 detik |
 
-Nama sesi diambil dari judul sesi di Claude Desktop. Sesi terminal tanpa judul memakai nama foldernya. Ikon Claude di kiri bar ikut menandai status: titik kuning saat ada sesi yang butuh jawaban, dan berdenyut saat ada sesi yang bekerja. Menekan Esc di Claude mengembalikan sesi ke diam tanpa tanda Done.
+Nama sesi diambil dari judul sesi di Claude Desktop, atau nama foldernya kalau belum berjudul. Ikon Claude di kiri bar ikut menandai status: titik kuning saat ada sesi yang butuh jawaban, dan berdenyut saat ada sesi yang bekerja. Menekan Esc di Claude mengembalikan sesi ke diam tanpa tanda Done.
 
-Kartu `Claude needs your input` dengan bunyi Ping, gelembung hijau untuk sesi selesai yang belum dilihat, halaman Claude, dan timer jendela 5 jam menyusul di sub-fase berikutnya.
+Saat Claude butuh jawaban, kartu `Claude needs your input` terbuka dengan bunyi Ping lalu mengecil ke slot kuning setelah 8 detik. Sesi yang selesai saat jendelanya tidak aktif meninggalkan gelembung hijau sampai kamu melihatnya. Halaman Claude di pulau mendaftar semua sesi yang hidup, dan klik barisnya membuka jendela Claude Desktop.
+
+### Jendela 5 jam dan limit mingguan
+
+**Show 5-hour usage timer** di Settings → Claude (nyala secara default) menampilkan hitung mundur di pulau. Jendela dimulai dari pemakaian pertama setelah reset. Kalau waktu resetnya tidak tersedia, tooltip menandainya `Estimated`. Saat jendela berakhir, kartu `Claude usage reset` muncul dengan suara dan toast.
+
+Supaya sama persis dengan Claude:
+- **5 jam:** klik baris jendela 5 jam di halaman Claude, lalu isi **Resets at** dengan waktu yang ditampilkan Claude Desktop.
+- **Mingguan:** klik baris **Weekly limit**, lalu isi **Resets on** dengan hari dan jam dari Claude Desktop.
 
 ### Mematikan
 
@@ -249,7 +266,7 @@ Kalau Gili sudah terhapus duluan, Claude tetap bekerja (hook yang gagal tidak me
 2. Lepas. Satu file menjadi satu tile; beberapa file yang dilepas bersamaan menjadi satu bundel (`12 files`).
 3. Buka folder tujuan, lalu seret tile dari halaman Shelf ke sana. Explorer menawarkan Copy atau Move; tahan Shift untuk memaksa Move.
 
-Shelf menyimpan referensi ke file asli, bukan salinannya, maksimal 8 item, dan isinya tetap ada setelah restart. File yang dipindahkan keluar otomatis hilang dari Shelf. File dari jendela yang jalan sebagai admin tidak bisa diterima, karena Windows memblokir drag-and-drop dari proses admin.
+Shelf menyimpan referensi ke file asli, kecuali file dari dalam zip atau folder temp yang disalin ke folder Gili. Maksimal 8 item, dan isinya tetap ada setelah restart. File yang dipindahkan keluar otomatis hilang dari Shelf. File dari jendela yang jalan sebagai admin tidak bisa diterima, karena Windows memblokir drag-and-drop dari proses admin.
 
 ### Note yang mengambang
 
@@ -265,7 +282,7 @@ Taskbar Windows dikembalikan ke keadaan aslinya saat saklar dimatikan, saat Quit
 
 ### Mode demo
 
-Klik kanan bar → **Demo mode**. Gili memutar skenario palsu sekitar 30 detik (musik, timer, progres file, sesi Claude, kartu alarm, dan lainnya) tanpa menyentuh data aslimu. Berguna untuk melihat tampilan semua keadaan pulau.
+Klik kanan bar → **Demo mode**. Gili memutar skenario palsu sekitar 2 menit (musik, timer, progres file, sesi Claude, kartu alarm, dan lainnya) tanpa menyentuh data aslimu. Berguna untuk melihat tampilan semua keadaan pulau.
 
 ## Data, backup, dan privasi
 
@@ -275,21 +292,22 @@ Klik kanan bar → **Demo mode**. Gili memutar skenario palsu sekitar 30 detik (
 | Paket MSIX / Store | `%LOCALAPPDATA%\Packages\Gili_*\LocalState\` |
 
 Isi folder data:
-- `gili.db`: note, todo, alarm, timer, stopwatch, dan Shelf (SQLite, mode WAL, setiap commit di-fsync).
+- `gili.db`: note, todo, proyek, alarm, timer, stopwatch, Shelf, dan waktu jendela 5 jam serta limit mingguan Claude (SQLite, mode WAL, setiap commit di-fsync).
 - `settings.json`: semua pengaturan.
 - `backups\`: backup harian `gili.db`, 7 salinan.
 - `logs\`: log harian, 7 hari. Buka foldernya kalau perlu melaporkan crash.
+- `shelf\`: salinan file Shelf yang berasal dari zip dan folder temp.
 
 Salinan `gili.db` dan `settings.json` juga ditulis ke `%USERPROFILE%\.gili\backups\` saat start, tiap jam, dan saat Quit. Folder ini di luar folder data mana pun, jadi note dan pengaturan kembali sendiri setelah Gili di-uninstall lalu dipasang ulang, juga saat pindah antara versi GitHub dan Store.
 
 Privasi:
 - Tanpa telemetri, tanpa akun, tanpa sinkronisasi cloud.
-- Data sesi Claude dan thumbnail clipboard hanya di memori, tidak pernah ditulis ke disk atau log.
-- Satu-satunya akses internet saat ini adalah cuaca. Mematikan modul Weather menghentikannya.
+- Data sesi Claude dan cuplikan copy/cut beserta thumbnail-nya hanya di memori, tidak pernah ditulis ke disk atau log. Gili tidak menyimpan riwayat clipboard.
+- Akses internet hanya untuk cuaca dan pencarian kota (Open-Meteo), lirik kalau **Show lyrics** dinyalakan (LRCLIB), dan cek versi baru di versi GitHub. Rinciannya di [kebijakan privasi](docs/release/privacy-policy.md).
 
 ## Menutup dan melepas Gili
 
-**Menutup:** klik kanan bar → **Quit**. Dari terminal:
+**Menutup:** klik kanan bar → **Quit Gili**. Dari terminal:
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\Gili\Gili.exe" --quit
@@ -316,7 +334,7 @@ Privasi:
 | Menjalankan Gili hanya membuka Settings | Sudah ada Gili yang jalan. Tutup dulu dengan Quit atau `--quit` |
 | Nama Wi‑Fi tidak tampil, hanya ikon | Izinkan akses lokasi untuk Gili di Settings → Privacy & security → Location |
 | Modul menampilkan `—` | Sumber datanya gagal dibaca. Alasannya ada di tooltip, dan Gili mencoba lagi setelah 5 detik, 30 detik, lalu tiap 2 menit |
-| Sesi Claude tidak muncul di pulau | Cek baris status di Settings → Claude. Ingat hook hanya berlaku untuk sesi yang dimulai setelah saklar dinyalakan |
+| Sesi Claude tidak muncul di pulau | Pastikan Claude Desktop terbuka dan sesinya ada di tab Code; sesi `claude` di terminal tidak ditampilkan. Cek baris status di Settings → Claude, dan ingat hook hanya berlaku untuk sesi yang dimulai setelah saklar dinyalakan |
 | `Publishing Gili.ClaudeHook failed` saat `publish.ps1` | Pasang workload **Desktop development with C++** di Visual Studio Build Tools |
 
 Kalau Gili crash, ia menulis log, melepas AppBar, memulihkan taskbar, lalu restart sendiri sekali. Crash kedua dalam satu menit menghentikan Gili.
