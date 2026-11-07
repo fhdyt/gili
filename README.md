@@ -4,7 +4,7 @@ Bar kaca di tepi atas layar Windows 11, dengan "pulau" hitam ala Dynamic Island 
 
 Saat tidak ada yang berjalan, pulau berisi mata Gili yang mengikuti kursor dan sesekali berkedip. Saat ada aktivitas (musik, timer, progres copy, sesi Claude Code), Gili bergeser ke kiri sebagai lingkaran kecil dan pulau menampilkan aktivitas itu. Klik pulau, dan pulau lepas dari bar menjadi panel mengambang berisi halaman Media, Timer, Alarms, Calendar, Todo, Notes, Shelf, Claude, dan System.
 
-> **Status:** pra-rilis, versi `0.1.1` (lihat `Directory.Build.props`). Gili sedang di Fase 4 dari 6. Rilis publik gratis lewat Microsoft Store dan installer bertanda tangan di GitHub menyusul setelah Fase 4 (Fase 5); Fase 6 berisi fitur yang dirilis sebagai update sesudahnya. Repo ini akan dibuat publik; installer dan release notes ada di GitHub Releases repo ini. Sampai saat itu, Gili hanya bisa dipasang dari kode sumber (lihat [Instalasi](#instalasi)).
+> **Status:** gratis, dirilis lewat installer `.exe` di [GitHub Releases](https://github.com/fhdyt/gili/releases/latest) (lihat [Instalasi](#instalasi)). Installer belum bertanda tangan, jadi Windows menampilkan peringatan saat pertama dijalankan.
 
 ## Daftar isi
 
@@ -57,18 +57,18 @@ Gili memesan ruang setinggi bar (default 32 px) di tepi atas layar, jadi jendela
 
 ## Instalasi
 
-### Untuk pengguna umum
+### Dengan installer (disarankan)
 
-Belum tersedia. Setelah rilis publik, ada dua jalur yang dibangun dari kode yang sama:
+1. Buka [halaman rilis terbaru](https://github.com/fhdyt/gili/releases/latest), lalu unduh `Gili-Setup-<versi>.exe` dari bagian **Assets**.
+2. Klik dua kali file itu. Installer tidak meminta hak admin dan tidak perlu .NET terpasang.
+3. Kalau muncul **Windows protected your PC**, pilih **More info → Run anyway**. Peringatan ini muncul karena installer belum bertanda tangan.
+4. Ikuti wizard sampai selesai. Gili terpasang di `%LOCALAPPDATA%\Programs\Gili\` dan langsung berjalan kalau **Launch Gili** tetap dicentang.
 
-| | Microsoft Store | Installer GitHub |
-|---|---|---|
-| Bentuk | Paket MSIX | `Gili-Setup-<versi>.exe`, terpasang di `%LOCALAPPDATA%\Programs\Gili\` |
-| Tanda tangan | Microsoft | Sertifikat code signing milik pengembang |
-| Update | Lewat Store | Gili memeriksa update tiap 24 jam |
-| Butuh .NET terpasang | Tidak | Tidak |
+Gili ikut jalan saat Windows mulai. Matikan lewat Settings → General → **Start with Windows** kalau tidak mau.
 
-Installer GitHub adalah satu file `.exe` (dibangun dengan Inno Setup): unduh, klik dua kali, selesai, tanpa UAC. Installer ini baru dibuat setelah semua fitur Fase 1–4 selesai (awal Fase 5). Sebelum rilis publik, versi tanpa tanda tangan dibagikan dulu ke beberapa teman penguji; Windows akan menampilkan "Windows protected your PC" sekali, lalu pilih **More info → Run anyway**. Rinciannya di PRD 9.4.
+**Memperbarui:** Gili memeriksa rilis baru 60 detik setelah mulai, lalu sekali sehari. Kalau ada, Settings → About menampilkan `Update available`, dan tombol **Download** membuka halaman rilisnya. Unduh `Gili-Setup` yang baru lalu jalankan di atas yang lama. Installer menutup Gili yang sedang jalan, dan note serta pengaturan tetap ada.
+
+Cara melepasnya ada di [Menutup dan melepas Gili](#menutup-dan-melepas-gili).
 
 ### Dari kode sumber
 
@@ -177,7 +177,7 @@ Claude Code ──hook──▶ Gili.ClaudeHook.exe <Event> ──named pipe \\.
 
 ### Menyalakan
 
-1. Pastikan Gili dipasang lewat `scripts/publish.ps1` atau `scripts/package.ps1 -Install`. Helper `Gili.ClaudeHook.exe` ikut terpasang di sana. Build `dotnet run` memakai helper dari salinan terpasang kalau ada.
+1. Pastikan Gili dipasang lewat installer, `scripts/publish.ps1`, atau `scripts/package.ps1 -Install`. Helper `Gili.ClaudeHook.exe` ikut terpasang di sana. Build `dotnet run` memakai helper dari salinan terpasang kalau ada.
 2. Buka **Settings → Claude**, lalu nyalakan **Show Claude Code sessions**.
 3. Baris di bawah saklar menampilkan `Applies to Claude sessions started from now on`. Hook hanya berlaku untuk sesi Claude yang dimulai **setelah** saklar dinyalakan, jadi mulai sesi baru (atau restart sesi lama).
 4. Kirim satu prompt. Baris status berubah menjadi `Connected · last event …`, dan pulau menampilkan nama sesi dengan waktu berjalannya.
@@ -239,7 +239,7 @@ Kalau Gili sudah terhapus duluan, Claude tetap bekerja (hook yang gagal tidak me
 | `Connected · last event 2 min ago` | Gili menerima kejadian dari hook |
 | `Can't read Claude settings` | `~/.claude/settings.json` bukan JSON yang valid; file dibiarkan apa adanya |
 | `Can't save Claude settings` | File terkunci atau tidak bisa ditulis |
-| `Hook helper not found · Reinstall` | `Gili.ClaudeHook.exe` tidak ada di samping `Gili.exe`; jalankan `pwsh scripts/publish.ps1` lagi |
+| `Hook helper not found · Reinstall` | `Gili.ClaudeHook.exe` tidak ada di samping `Gili.exe`; jalankan installer lagi, atau `pwsh scripts/publish.ps1` kalau memasang dari kode sumber |
 
 ## Tutorial lain
 
@@ -297,7 +297,9 @@ Privasi:
 
 `--quit` (dari exe Gili mana pun) meminta instance yang sedang jalan keluar lewat jalur Quit biasa, jadi ruang AppBar dilepas dan taskbar Windows dipulihkan. **Jangan pakai `taskkill`**: perintah itu ikut menutup jendela tersembunyi WPF dan bisa membuat proses tetap hidup tanpa bar.
 
-**Melepas salinan terpasang** (belum ada uninstaller sampai Fase 5):
+**Melepas versi installer:** buka Settings Windows → Apps → Installed apps, pilih Gili, lalu **Uninstall**. Uninstaller menutup Gili, melepas hook Claude, memulihkan taskbar Windows, dan menghapus entri autostart. Saat muncul `Also delete my notes and settings?`, pilih **Yes** untuk ikut menghapus `%LOCALAPPDATA%\Gili\` dan `%USERPROFILE%\.gili\`, atau **No** untuk menyimpannya.
+
+**Melepas salinan `publish.ps1`** (kalau tidak pernah memakai installer, salinan ini belum punya uninstaller):
 1. Matikan **Show Claude Code sessions** di Settings → Claude, dan **Hide Windows taskbar** di Settings → General.
 2. Matikan **Start with Windows** supaya entri `HKCU\...\Run` dihapus.
 3. Quit Gili, lalu hapus folder `%LOCALAPPDATA%\Programs\Gili\`.
