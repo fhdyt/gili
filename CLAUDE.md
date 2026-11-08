@@ -46,7 +46,7 @@ Proyek dan arah dependensi (PRD 9.1):
 | `Gili.Core` | `IslandCoordinator`, `Scheduler`, `ShelfService`, model, interface provider, format angka/tanggal | Tanpa WPF dan tanpa Win32. Semua logika yang bisa dites ada di sini |
 | `Gili.Platform` | Implementasi provider Windows, `AppBarService`, `BarMaterial`, hotkey, notifikasi, drag-and-drop | Bergantung ke Core |
 | `Gili.Data` | Repository SQLite (Microsoft.Data.Sqlite), `SettingsStore` | Bergantung ke Core |
-| `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow`, `IslandWindow`, `ToolsWindow`, `SettingsWindow`, ViewModel | Komposisi semuanya |
+| `Gili.App` | WPF + CommunityToolkit.Mvvm: `BarWindow`, `IslandWindow`, `ToolsWindow`, `SettingsWindow`, `ProjectsWindow`, ViewModel | Komposisi semuanya |
 | `Gili.ClaudeHook` | Console NativeAOT yang dipanggil hook Claude Code | Berdiri sendiri |
 | `Gili.Core.Tests` | xUnit untuk Core dan Data | |
 

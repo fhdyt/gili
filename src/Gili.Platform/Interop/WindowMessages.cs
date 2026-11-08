@@ -4,6 +4,7 @@ public static class WindowMessages
 {
     public const int WM_ACTIVATE = 0x0006;
     public const int WM_TIMECHANGE = 0x001E;
+    public const int WM_GETMINMAXINFO = 0x0024;
     public const int WM_WINDOWPOSCHANGED = 0x0047;
     public const int WM_DISPLAYCHANGE = 0x007E;
     public const int WM_POWERBROADCAST = 0x0218;

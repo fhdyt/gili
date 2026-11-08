@@ -53,6 +53,22 @@ public static class WindowStyles
         return (info.rcWork.Left, info.rcWork.Top, info.rcWork.Right, info.rcWork.Bottom);
     }
 
+    /// <summary>
+    /// For WM_GETMINMAXINFO on a borderless window: maximized, it fills its monitor's work area exactly, instead of hanging
+    /// a frame's width off every edge and under the bar.
+    /// </summary>
+    public static void FitMaximizedToWorkArea(IntPtr hwnd, IntPtr minMaxInfo)
+    {
+        var monitor = new Win32.MONITORINFO { cbSize = (uint)Marshal.SizeOf<Win32.MONITORINFO>() };
+        if (!Win32.GetMonitorInfo(Win32.MonitorFromWindow(hwnd, Win32.MONITOR_DEFAULTTONEAREST), ref monitor)) return;
+        var info = Marshal.PtrToStructure<Win32.MINMAXINFO>(minMaxInfo);
+        info.ptMaxPosition.X = monitor.rcWork.Left - monitor.rcMonitor.Left;
+        info.ptMaxPosition.Y = monitor.rcWork.Top - monitor.rcMonitor.Top;
+        info.ptMaxSize.X = monitor.rcWork.Right - monitor.rcWork.Left;
+        info.ptMaxSize.Y = monitor.rcWork.Bottom - monitor.rcWork.Top;
+        Marshal.StructureToPtr(info, minMaxInfo, false);
+    }
+
     /// <summary>The island takes focus only while it is open, so Esc and the arrow keys reach it.</summary>
     public static void SetNoActivate(IntPtr hwnd, bool noActivate)
     {

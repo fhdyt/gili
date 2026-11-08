@@ -40,16 +40,19 @@ public sealed partial class ProjectsViewModel : ObservableObject
     private readonly ProjectService _projects;
     private readonly Func<long?> _savedId;
     private readonly Action<long?> _save;
+    private readonly Action<long?>? _openWindow;
     private readonly DispatcherTimer _confirmTask = new() { Interval = TimeSpan.FromSeconds(3) };
     private readonly DispatcherTimer _confirmProject = new() { Interval = TimeSpan.FromSeconds(3) };
     private long? _currentId;
     private int _lastColor;
 
-    public ProjectsViewModel(ProjectService projects, Func<long?> savedId, Action<long?> save)
+    /// <param name="openWindow">The island's page opens the Projects window with this (F-ISL-35); the window's own page has none.</param>
+    public ProjectsViewModel(ProjectService projects, Func<long?> savedId, Action<long?> save, Action<long?>? openWindow = null)
     {
         _projects = projects;
         _savedId = savedId;
         _save = save;
+        _openWindow = openWindow;
         Colors = [.. NoteStyle.Colors.Select((c, i) => new ProjectColorItem(i, c))];
         _confirmTask.Tick += (_, _) =>
         {
@@ -108,6 +111,8 @@ public sealed partial class ProjectsViewModel : ObservableObject
 
     public const string DateHint = "A date like 5 Nov, or ↑ and ↓ a day at a time";
 
+    public bool CanOpenWindow => _openWindow is not null;
+
     public bool IsEditing => SelectedId is not null;
 
     public string SaveLabel => IsEditing ? "Save" : "Add task";
@@ -138,6 +143,31 @@ public sealed partial class ProjectsViewModel : ObservableObject
         }
         if (IsMenuOpen) FillMenu();
         if (hadProject != HasProject || count != Tasks.Count) ContentChanged?.Invoke();
+    }
+
+    /// <summary>Stops following the projects: a closed window's page would otherwise stay alive and keep refreshing.</summary>
+    public void Detach()
+    {
+        _projects.Changed -= Refresh;
+        _confirmTask.Stop();
+        _confirmProject.Stop();
+    }
+
+    /// <summary>Shows that project without remembering it: the window opens on the project the island has on show.</summary>
+    public void ShowProject(long? id)
+    {
+        if (id is null || id == _currentId) return;
+        _currentId = id;
+        CloseForm();
+        CloseMenu();
+        Refresh();
+    }
+
+    [RelayCommand]
+    private void OpenWindow()
+    {
+        CloseMenu();
+        _openWindow?.Invoke(_currentId);
     }
 
     /// <summary>Step one: the first project's name; step two opens the task form at once.</summary>

@@ -38,7 +38,7 @@ Bar dibagi tiga bagian.
 **Lainnya:**
 - Jendela Tools untuk mengelola timer, pomodoro, stopwatch, alarm, dan todo.
 - Note ditulis langsung di pulau. Satu note bisa diseret keluar menjadi jendela kecil yang selalu di atas.
-- Projects: timeline harian per proyek. Tugas tampil sebagai batang yang bisa digeser, diubah tanggalnya dari ujungnya, dan dicentang selesai.
+- Projects: timeline harian per proyek. Tugas tampil sebagai batang yang bisa digeser, diubah tanggalnya dari ujungnya, dan dicentang selesai. Tombol Open in window membuka timeline yang sama di jendela besar.
 - Shelf: seret file ke bar atau pulau untuk menyimpannya sementara, lalu seret keluar ke folder tujuan.
 - Lirik lagu tersinkron dari LRCLIB, mati secara default.
 - Shortcut global yang bisa diganti di Settings: `Ctrl+Alt+Space` (buka atau tutup pulau), `Ctrl+Alt+N` (note baru), `Ctrl+Alt+T` (tugas untuk hari ini).

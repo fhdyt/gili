@@ -408,6 +408,16 @@ public sealed class IslandController : IDisposable
         ToolsRequested?.Invoke("Alarms");
     }
 
+    /// <summary>The Projects page's Open in window (F-ISL-35), with the project on show.</summary>
+    public event Action<long?>? ProjectsWindowRequested;
+
+    /// <summary>The island closes first: it is topmost and would cover the top of the window.</summary>
+    public void OpenProjectsWindow(long? project)
+    {
+        Close();
+        ProjectsWindowRequested?.Invoke(project);
+    }
+
     /// <summary>The demo's alarm, shown like a real one and never saved (F-BAR-09).</summary>
     public void ShowDemoAlarm(TimeOnly time, string label) =>
         Ring(new Alarm(0, time, Gili.Core.Time.Days.None, label, "Radar", true, null), missed: false, Gili.Core.Demo.DemoAlarm.CardId);

@@ -63,6 +63,7 @@ public partial class App : Application
     private readonly System.Windows.Threading.DispatcherTimer _releaseTimer = new() { Interval = TimeSpan.FromSeconds(30) };
     private SettingsWindow? _settingsWindow;
     private ToolsWindow? _toolsWindow;
+    private ProjectsWindow? _projectsWindow;
     private bool? _autostartApplied;
     private StartupState? _startup;
     private bool _quitting;
@@ -171,6 +172,7 @@ public partial class App : Application
         _bar.SettingsRequested += ShowSettings;
         _bar.ToolsRequested += () => ShowTools(ToolsViewModel.AlarmsTab);
         _islandController.ToolsRequested += ShowTools;
+        _islandController.ProjectsWindowRequested += ShowProjects;
         _bar.ClockClicked += () => _islandController.Toggle(Core.Island.IslandPage.Calendar);
         _bar.ControlRequested += _islandController.Toggle;
         _demo = new DemoService(Dispatcher, _islandController, _media);
@@ -492,9 +494,34 @@ public partial class App : Application
         _toolsWindow.Activate();
     }
 
+    /// <summary>One Projects window (F-ISL-35), made when opened and let go when closed; opening it again brings it to the front.</summary>
+    private void ShowProjects(long? project)
+    {
+        if (_projectsWindow is null)
+        {
+            _releaseTimer.Stop();
+            var model = new ProjectsViewModel(_projects!, () => _settings!.Current.ProjectId, id => _settings!.Update(s => s with { ProjectId = id }));
+            _projectsWindow = new ProjectsWindow(model);
+            _projectsWindow.Closed += (_, _) =>
+            {
+                _projectsWindow = null;
+                ReleaseLater();
+            };
+            _projectsWindow.ShowProject(project);
+            _projectsWindow.Show();
+        }
+        else
+        {
+            if (_projectsWindow.WindowState == WindowState.Minimized) _projectsWindow.WindowState = WindowState.Normal;
+            _projectsWindow.ShowProject(project);
+        }
+        // The bar never takes focus, so Show alone can leave it behind the active app.
+        _projectsWindow.Activate();
+    }
+
     /// <summary>
-    /// A closed Tools or Settings window leaves nothing referenced, but the GC keeps its memory in gen2 until something
-    /// forces a collection. 30 s after the last close, with neither window open again, one full compacting collection
+    /// A closed Tools, Projects or Settings window leaves nothing referenced, but the GC keeps its memory in gen2 until something
+    /// forces a collection. 30 s after the last close, with none of them open again, one full compacting collection
     /// gives it back (PRD 8.1). Each close restarts the wait; opening either window cancels it.
     /// </summary>
     private void ReleaseLater()
@@ -506,7 +533,7 @@ public partial class App : Application
     private void OnReleaseTimer(object? sender, EventArgs e)
     {
         _releaseTimer.Stop();
-        if (_toolsWindow is not null || _settingsWindow is not null) return;
+        if (_toolsWindow is not null || _settingsWindow is not null || _projectsWindow is not null) return;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
     }
 

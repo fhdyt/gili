@@ -146,7 +146,7 @@ public partial class IslandWindow : Window
         _alarmsPage = new AlarmsViewModel(island.Alarms, () => settings.Current.Use24HourClock, island.ManageAlarms);
         _calendarPage = new CalendarViewModel(island.Todos, island.Alarms, () => settings.Current.Use24HourClock);
         _todoPage = new TodoViewModel(island.Todos, () => settings.Current.Use24HourClock);
-        _projectsPage = new ProjectsViewModel(island.Projects, () => settings.Current.ProjectId, id => settings.Update(s => s with { ProjectId = id }));
+        _projectsPage = new ProjectsViewModel(island.Projects, () => settings.Current.ProjectId, id => settings.Update(s => s with { ProjectId = id }), island.OpenProjectsWindow);
         _projectsPage.ContentChanged += () => PageContentChanged(IslandPage.Projects);
         _notesPage = new NotesViewModel(island.Notes, () => settings.Current.Use24HourClock, island.Close);
         SystemStats = new SystemViewModel(island.Close);

@@ -1066,6 +1066,16 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
 .pjempty form{display:flex;gap:6px;margin-top:10px;width:320px}
 .pjempty .field{flex:1;min-width:0;height:34px;border-radius:10px}
 .pjempty .pill{height:34px;border-radius:10px}
+/* Open in window (F-ISL-35, revision 22): the same page in a window of its own, to see many weeks at once. */
+.pjtop .pjopen{width:32px;padding:0;display:grid;place-items:center}
+.pjtop .pjopen .ic{width:14px;height:14px}
+.setw.pjwin{width:1000px;height:560px;min-width:560px;min-height:320px;resize:both;transform:none;left:calc(50% - 500px);top:calc(50% - 280px);background:var(--island);font-size:12px}
+.setw.pjwin.max{left:0;top:var(--bar-h,32px);width:100%;max-width:none;height:calc(100% - var(--bar-h,32px));max-height:none;border-radius:0;resize:none}
+.pjwin .stb b{font-weight:400;flex:1}
+.pjwin .stb button{margin-left:0;flex-shrink:0}
+.pjwin .stb button:not(#pjwX):hover{background:rgba(255,255,255,.08);color:#fff}
+.pjwb{flex:1;min-height:0;display:flex;padding:14px 24px 4px}
+.pjwb .pjtl{flex:1 1 0;min-height:0;height:auto!important}
 </style>
 </head>
 <body>
@@ -1074,6 +1084,9 @@ body.solid .bar{background:rgb(var(--bar-rgb));backdrop-filter:none;-webkit-back
   <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
   <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M7 2v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V2M7 22v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3"/></symbol>
   <symbol id="i-gantt" viewBox="0 0 24 24"><path d="M4 6h9M8 12h10M6 18h7"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+  <symbol id="i-wmin" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-wmax" viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/></symbol>
   <symbol id="i-todo" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
@@ -1288,7 +1301,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
               </div>
               <ul class="tlist" id="tlist"></ul>
             </section>
-            <section class="page pg-proj" aria-label="Projects">
+            <section class="page pg-proj" id="pjPage" aria-label="Projects">
               <div class="pjw" id="pjw"></div>
             </section>
             <section class="page pg-note" aria-label="Notes">
@@ -1385,6 +1398,11 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
   <div class="setw" id="setw" role="dialog" aria-label="Gili Settings" hidden>
     <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Gili Settings<button id="setX" aria-label="Close Settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="setb"><nav class="setn" id="setn" role="tablist" aria-label="Settings sections"></nav><div class="setp" id="setp" role="tabpanel"></div></div>
+  </div>
+
+  <div class="setw pjwin" id="pjwin" role="dialog" aria-label="Gili Projects" hidden>
+    <div class="stb"><svg class="ic" aria-hidden="true"><use href="#i-gantt"/></svg><b>Gili Projects</b><button id="pjwMin" aria-label="Minimize"><svg class="ic" aria-hidden="true"><use href="#i-wmin"/></svg></button><button id="pjwMax" aria-label="Maximize"><svg class="ic" aria-hidden="true"><use href="#i-wmax"/></svg></button><button id="pjwX" aria-label="Close Projects"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="pjwb" id="pjwb"></div>
   </div>
 
   <div class="setw toolw" id="toolw" role="dialog" aria-label="Gili Tools" hidden>
@@ -2271,7 +2289,7 @@ function armLeave(){
 iw.addEventListener('pointerleave',()=>{setHover(false);armLeave()});
 document.addEventListener('pointerdown',e=>{
   // Bar icons that open island pages handle the click themselves (switch page or close).
-  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mBt,#mVol,#mBri,#mPower,#mWifi,#setw,#toolw'))closeExpanded();
+  if(S.state==='expanded'&&!iw.contains(e.target)&&!$('#ctl').contains(e.target)&&!e.target.closest('#launch,[data-sys],#mClock,#mBt,#mVol,#mBri,#mPower,#mWifi,#setw,#toolw,#pjwin'))closeExpanded();
 });
 
 /* media */
@@ -4247,7 +4265,7 @@ function renderPj(keepX){
   if(!p){
     w.innerHTML=`<div class="pjempty"><span class="pjei">${icon('gantt')}</span><b>Plan a project</b><span>Name it, then add its tasks with dates. Drag them along the timeline as plans change.</span>`
       +`<form id="pjFirst"><input class="field" id="pjFirstIn" placeholder="Project name" maxlength="60" aria-label="Project name" autocomplete="off"><button class="pill pri">Create</button></form></div>`;
-    if(S.state==='expanded'&&S.page===PAGE.projects)layout();return;
+    pjMirror();if(S.state==='expanded'&&S.page===PAGE.projects)layout();return;
   }
   const n=p.tasks.length,done=p.tasks.filter(t=>t.d).length;
   const a=n?Math.min(...p.tasks.map(t=>t.s)):T0,b=n?Math.max(...p.tasks.map(t=>t.e)):T0;
@@ -4264,13 +4282,15 @@ function renderPj(keepX){
   w.innerHTML=`<div class="pjtop"><button class="pjsel" id="pjSel" aria-haspopup="menu" aria-expanded="${PJ.menu}" title="Projects"><span>${esc(p.name)}</span>${icon('chevr')}</button>`
     +`<span class="pjmeta num">${n?`${done}/${n} done · ${pjShort(a)} – ${pjShort(b)}`:'No tasks yet'}</span>`
     +`<span class="pjnav"><button data-pn="-7" aria-label="Previous week" title="Previous week">${icon('chevl')}</button><button class="pjtd" data-pn="0">Today</button><button data-pn="7" aria-label="Next week" title="Next week">${icon('chevr')}</button></span>`
-    +`<button class="pill sm" id="pjAddBtn">${icon('plus')}Add task</button></div>`
+    +`<button class="pill sm" id="pjAddBtn">${icon('plus')}Add task</button>`
+    +(PJ.win?'':`<button class="pill sm pjopen" id="pjOpenWin" aria-label="Open in window" title="Open in window">${icon('expand')}</button>`)+`</div>`
     +(PJ.form?pjFormHTML():'')
     +`<div class="pjtl" id="pjTl" role="group" aria-label="Timeline of ${esc(p.name)}. Drag a task to move it, or an end to change its dates." style="height:${PJ_TOP+(n+1)*PJ_ROW+6}px"><div class="pjin" id="pjIn" style="width:${(PJ.R1-PJ.R0+1)*PJ_DW}px">${inner}</div><span class="pjmon" id="pjMon"></span></div>`
     +(PJ.menu?pjMenuHTML():'');
   PJ.fresh=-1;
   // Keep the same days in view when the range around the project grows or shrinks.
   if(keepX)pjScroll(abs-PJ.R0*PJ_DW);else pjHome();
+  pjMirror();
   if(S.state==='expanded'&&S.page===PAGE.projects)layout();
 }
 const pjVW=()=>$('#pjTl')?.clientWidth||520;
@@ -4292,12 +4312,30 @@ function pjMonth(){
   const d=dateOf(PJ.R0+Math.floor(PJ.x/PJ_DW)),nx=pjL(dnOf(new Date(d.getFullYear(),d.getMonth()+1,1)))-PJ.x;
   m.textContent=MONTHS_FULL[d.getMonth()]+' '+d.getFullYear();m.style.transform=`translateX(${Math.min(0,nx-m.offsetWidth)}px)`;
 }
-function pjOpened(){requestAnimationFrame(()=>{if(PJ.moved)pjScroll(PJ.x);else pjHome()})}
+function pjOpened(){if(PJ.win)return;requestAnimationFrame(()=>{if(PJ.moved)pjScroll(PJ.x);else pjHome()})}
 function pjNeed(){
   if(!pjCur())return 236;
-  let h=32+10+$('#pjTl').offsetHeight+(PJ.form?72:0);
-  const m=$('#pjMenu');if(m)h=Math.max(h,m.offsetTop+m.offsetHeight+6);
+  // The height the timeline asks for, not what it has: in the window it stretches to the window's bottom edge.
+  let h=32+10+parseFloat($('#pjTl').style.height)+(PJ.form?72:0);
+  const m=$('#pjMenu');if(m&&!PJ.win)h=Math.max(h,m.offsetTop+m.offsetHeight+6);
   return h;
+}
+/* Mockup only: the page has one live copy, so while the window holds it the island's page shows a read-only picture of it.
+   In the app the island and the window are both live and share the same data. */
+function pjMirror(){
+  if(!PJ.win)return;
+  const c=$('#pjw').cloneNode(true);c.removeAttribute('id');c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
+  c.querySelector('.pjopen')?.remove();c.inert=true;$('#pjPage').replaceChildren(c);
+}
+// Open in window (F-ISL-35): the island closes (it is topmost and would cover the window's top); opening it again only brings it forward.
+function pjOpenWin(){
+  closeExpanded();
+  const w=$('#pjwin');w.style.display='';
+  if(!PJ.win){PJ.win=true;PJ.menu=false;$('#pjwb').append($('#pjw'));w.hidden=false;PJ.moved=false;renderPj()}
+}
+function pjCloseWin(){
+  PJ.win=false;PJ.menu=false;PJ.form=null;$('#pjwin').hidden=true;$('#pjwin').classList.remove('max');
+  $('#pjPage').replaceChildren($('#pjw'));renderPj();
 }
 function pjFocusBar(i){const b=$(`#pjIn .pjbar[data-i="${i}"]`);if(b)b.focus({preventScroll:true})}
 // Moves a bar to new days with the spring, then redraws once it has landed (its state and the range may change).
@@ -4405,6 +4443,7 @@ pjw.addEventListener('click',e=>{
   const nav=e.target.closest('[data-pn]');if(nav){const d=+nav.dataset.pn;PJ.moved=true;if(d)pjScroll(PJ.x+d*PJ_DW,true);else pjScroll(pjL(T0)-pjVW()/3,true);return}
   const sw=e.target.closest('.pjsw button');if(sw){const f=PJ.form;f.c=+sw.dataset.c;$$('#pjw .pjsw button').forEach(b=>b.setAttribute('aria-pressed',b===sw));
     if(f.i>=0){$(`#pjIn .pjbar[data-i="${f.i}"]`).style.setProperty('--bc',NOTE_COLORS[f.c][1]);pjCur().tasks[f.i].c=f.c}return}
+  if(e.target.closest('#pjOpenWin')){pjOpenWin();return}
   if(e.target.closest('#pjAddBtn')){pjOpenForm(-1,T0);return}
   const lane=e.target.closest('#pjLane');if(lane&&lane.dataset.d){pjOpenForm(-1,+lane.dataset.d);return}
   if(e.target.closest('#pjDl')){
@@ -4450,6 +4489,11 @@ pjw.addEventListener('keydown',e=>{
     if(e.shiftKey)pjSettle(i,t.s,Math.max(t.s,t.e+d),true);else pjSettle(i,t.s+d,t.e+d,true)}
   else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();pjFocusBar(i+(e.key==='ArrowDown'?1:-1))}
 });
+$('#pjwX').onclick=pjCloseWin;
+$('#pjwMin').onclick=()=>{$('#pjwin').style.display='none';hint('Gili Projects is minimized: Open in window brings it back')};
+$('#pjwMax').onclick=()=>{const m=$('#pjwin').classList.toggle('max');$('#pjwMax').setAttribute('aria-label',m?'Restore':'Maximize');pjScroll(PJ.x)};
+// Esc closes what's open on the page first (its own handler stops those); the next Esc closes the window.
+$('#pjwin').addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();pjCloseWin()}});
 // Mockup only: switch to the first-run state (no project yet) and back.
 ACT.pjEmpty=()=>{
   if(PJS.length)PJ.saved=PJS.splice(0);else if(PJ.saved)PJS.push(...PJ.saved);
