@@ -4,15 +4,15 @@ using Gili.Core.Claude;
 namespace Gili.Data;
 
 /// <summary>
-/// The claude_weekly table (PRD 10, revision 19): the weekly limit's reset set by hand, in UTC. The active one is the newest
-/// not yet notified.
+/// The claude_weekly table (PRD 10, revisions 19 and 23): the weekly limit's reset set by hand, in UTC. The active one is the
+/// newest, the last one set, which then moves on a week each time it comes; older rows are closed.
 /// </summary>
 public sealed class ClaudeWeeklyStore(Database db) : IClaudeWeeklyStore
 {
     public ClaudeWeeklyReset? Active()
     {
         using var command = db.Connection.CreateCommand();
-        command.CommandText = "SELECT id, resets_at, notified FROM claude_weekly WHERE notified = 0 ORDER BY id DESC LIMIT 1";
+        command.CommandText = "SELECT id, resets_at, notified FROM claude_weekly ORDER BY id DESC LIMIT 1";
         using var reader = command.ExecuteReader();
         if (!reader.Read()) return null;
         return new ClaudeWeeklyReset(reader.GetInt64(0), Time(reader.GetString(1)), reader.GetInt64(2) != 0);

@@ -8,7 +8,7 @@ public sealed record ClaudeWeeklyReset(long Id, DateTimeOffset ResetsAt, bool No
 /// <summary>Keeps the one weekly reset across restarts (PRD 9.2: stored as UTC).</summary>
 public interface IClaudeWeeklyStore
 {
-    /// <summary>The newest reset not yet notified, or null.</summary>
+    /// <summary>The newest reset, the last one set, or null when none ever was.</summary>
     ClaudeWeeklyReset? Active();
 
     /// <summary>Inserts a reset with Id 0, closing any other, else updates it; returns it with its id.</summary>
@@ -16,9 +16,9 @@ public interface IClaudeWeeklyStore
 }
 
 /// <summary>
-/// Claude's weekly limit (PRD 6.3 "Batas pemakaian Claude", revision 19): Gili can't read when it resets, so its day, hour
-/// and minutes are set by hand from Claude Desktop. When that time comes, <see cref="Tick"/> says so once, for the card,
-/// and the reset is unset: no next one is guessed.
+/// Claude's weekly limit (PRD 6.3 "Batas pemakaian Claude", revisions 19 and 23): Gili can't read when it resets, so its day,
+/// hour and minutes are set by hand from Claude Desktop, once. When that time comes, <see cref="Tick"/> says so once, for the
+/// card, and the reset moves on a week, until it is edited.
 /// </summary>
 public sealed class ClaudeWeekly(IClaudeWeeklyStore? store, Func<DateTimeOffset> now)
 {
@@ -49,11 +49,11 @@ public sealed class ClaudeWeekly(IClaudeWeeklyStore? store, Func<DateTimeOffset>
         return reset > at && reset - at <= Length ? reset : null;
     }
 
-    /// <summary>Reads the reset kept from before; one that came while Gili was closed ends quietly.</summary>
+    /// <summary>Reads the reset kept from before; one that came while Gili was closed moves on quietly.</summary>
     public void Load()
     {
         Current = store?.Active();
-        if (Current is { } reset && now() - reset.ResetsAt > ClaudeUsage.StaleAfter) Finish();
+        if (Current is { } reset && now() - reset.ResetsAt > ClaudeUsage.StaleAfter) MoveOn(reset);
         Changed?.Invoke();
     }
 
@@ -69,7 +69,7 @@ public sealed class ClaudeWeekly(IClaudeWeeklyStore? store, Func<DateTimeOffset>
     {
         if (Current is not { } reset || now() < reset.ResetsAt) return false;
         var fresh = now() - reset.ResetsAt <= ClaudeUsage.StaleAfter;
-        Finish();
+        MoveOn(reset);
         Changed?.Invoke();
         return fresh;
     }
@@ -81,10 +81,12 @@ public sealed class ClaudeWeekly(IClaudeWeeklyStore? store, Func<DateTimeOffset>
         Changed?.Invoke();
     }
 
-    private void Finish()
+    /// <summary>The next reset still to come, whole weeks after this one, so the day and time set stay.</summary>
+    private void MoveOn(ClaudeWeeklyReset reset)
     {
-        if (Current is { } reset) store?.Save(reset with { Notified = true });
-        Current = null;
+        var weeks = Math.Floor((now() - reset.ResetsAt) / Length) + 1;
+        var next = reset with { ResetsAt = reset.ResetsAt + weeks * Length, Notified = false };
+        Current = store?.Save(next) ?? next;
     }
 }
 

@@ -235,11 +235,11 @@ Saat Claude butuh jawaban, kartu `Claude needs your input` terbuka dengan bunyi 
 
 ### Jendela 5 jam dan limit mingguan
 
-**Show 5-hour usage timer** di Settings → Claude (nyala secara default) menampilkan hitung mundur di pulau. Jendela dimulai dari pemakaian pertama setelah reset. Kalau waktu resetnya tidak tersedia, tooltip menandainya `Estimated`. Saat jendela berakhir, kartu `Claude usage reset` muncul dengan suara dan toast.
+**Show 5-hour usage timer** di Settings → Claude (nyala secara default) menampilkan hitung mundur di pulau. Jendela dimulai dari pemakaian pertama setelah reset. Kalau waktu resetnya tidak tersedia, tooltip menandainya `Estimated`. Saat jendela berakhir, kartu `Claude usage reset` muncul dengan suara selama 1 menit dan toast.
 
 Supaya sama persis dengan Claude:
 - **5 jam:** klik baris jendela 5 jam di halaman Claude, lalu isi **Resets at** dengan waktu yang ditampilkan Claude Desktop.
-- **Mingguan:** klik baris **Weekly limit**, lalu isi **Resets on** dengan hari dan jam dari Claude Desktop.
+- **Mingguan:** klik baris **Weekly limit**, lalu isi **Resets on** dengan hari dan jam dari Claude Desktop. Cukup sekali: setiap kali tiba, Gili memajukannya 7 hari, dan barisnya tetap bisa diklik untuk diubah.
 
 ### Mematikan
 

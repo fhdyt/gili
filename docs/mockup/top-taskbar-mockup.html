@@ -1940,14 +1940,14 @@ const VOICES={
   soft:{every:2,play:(o,t)=>[659.25,783.99,987.77].forEach((f,i)=>tone(o,t+i*.22,f,.9,'sine',.16))},
   ping:{every:2,play:(o,t)=>{tone(o,t,1760,.5,'sine',.2);tone(o,t+.09,2637,.35,'sine',.08)}},
 };
-// Loops until stopped or for 5 minutes; with ramp, starts at 30% of the alert volume and reaches 100% after 30 s.
-function ring(name,ramp){
+// Loops until stopped or for 5 minutes (a Claude reset card: 1 minute, revision 23); with ramp, starts at 30% of the alert volume and reaches 100% after 30 s.
+function ring(name,ramp,max=300000){
   stopSound();
   const c=Sound.on&&!S.winMuted&&audio();if(!c)return;
   const g=c.createGain(),t=c.currentTime,v=VOICES[name];g.connect(c.destination);
   if(ramp){g.gain.setValueAtTime(Sound.vol*.3,t);g.gain.linearRampToValueAtTime(Sound.vol,t+30)}else g.gain.setValueAtTime(Sound.vol,t);
   v.play(g,t+.02);
-  Sound.cur={g,iv:setInterval(()=>v.play(g,c.currentTime+.02),v.every*1000),to:setTimeout(stopSound,300000)};
+  Sound.cur={g,iv:setInterval(()=>v.play(g,c.currentTime+.02),v.every*1000),to:setTimeout(stopSound,max)};
 }
 function chimeOnce(name){
   const c=Sound.on&&!S.winMuted&&audio();if(!c)return;
@@ -2036,8 +2036,8 @@ const CARDS={
   conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
   ltimer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`${esc(LC.l)} done`,s:()=>`Timer ${fmtT(LC.total)}`,b:[['Repeat','ltrepeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
-  lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
-  wk:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude weekly limit reset',s:'Your weekly limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime'},
+  lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime',max:60e3},
+  wk:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude weekly limit reset',s:'Your weekly limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime',max:60e3},
   pomo2:{c:'var(--accent)',i:'hourglass',cls:'pulse',t:'Break over',s:()=>`Session ${nextRound()} of ${PLAN.rounds} ready`,b:[['Stop','stop'],['Start focus','focus',1]],ring:'once',snd:'bell'},
 };
 const val=v=>typeof v==='function'?v():v;
@@ -2053,7 +2053,7 @@ function showCard(k){
   if(k==='todo')S.cardT=setTimeout(closeCard,10000);
   else if(k==='claude')S.cardT=setTimeout(()=>{closeCard();renderSlot()},8000);
   setState('card');
-  if(c.ring==='loop')ring(val(c.snd),c.ramp&&Sound.ramp);
+  if(c.ring==='loop')ring(val(c.snd),c.ramp&&Sound.ramp,c.max);
   else if(c.ring==='once'&&!(k==='todo'&&S.pomo.running&&S.pomo.phase==='focus')){stopSound();chimeOnce(val(c.snd))}
 }
 function closeCard(){clearTimeout(S.cardT);stopSound();S.card=null;setState(S.cardReturn)}
@@ -3254,10 +3254,10 @@ function wkRow(){
   const left=Math.max(0,(S.wk.end-Date.now())/1000),r=new Date(S.wk.end),when=`${wkDayTxt(r)}, ${pad(r.getHours())}:${pad(r.getMinutes())}`;
   return `<button class="crow lrow" id="wkRow" title="Claude weekly limit · resets ${when}&#10;${WK_HINT}">${ring(1-left/(7*86400))}<span class="cn"><b>Weekly limit</b><span>Resets ${when}</span></span><span class="cr num" id="wkLeft">${wkLeft(left)}</span></button>`;
 }
-// When the window ends: the card rings like a timer; the weekly reset rings the same way and is then unset.
+// When the window ends: the card rings like a timer; the weekly reset rings the same way and moves on a week (revision 23).
 function limCheck(){
   if(S.wk){const w=$('#wkLeft');if(w)w.textContent=wkLeft(Math.max(0,(S.wk.end-Date.now())/1000));
-    if(Date.now()>=S.wk.end){S.wk=null;renderClPage();if(S.limOn)showCard('wk')}}
+    if(Date.now()>=S.wk.end){S.wk={end:S.wk.end+7*864e5};renderClPage();if(S.limOn)showCard('wk')}}
   if(!S.lim)return;
   const l=$('#limLeft');if(l)l.textContent=fmtDur((S.lim.end-Date.now())/1000);
   if(Date.now()>=S.lim.end){S.lim=null;renderSlot();renderClPage();if(S.limOn)showCard('lim')}

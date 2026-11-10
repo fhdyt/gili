@@ -46,6 +46,19 @@ public class AlertMixerTests
     }
 
     [Fact]
+    public void A_ring_with_its_own_limit_stops_then()
+    {
+        var mixer = new AlertMixer(Rate);
+        mixer.Ring(Voices.Find("Chime"), 1, ramp: false, limit: TimeSpan.FromMinutes(1));
+        var total = 0L;
+        var buffer = new float[Rate];
+        int written;
+        while ((written = mixer.Read(buffer)) > 0) total += written;
+        Assert.InRange(total, 60L * Rate, 60L * Rate + Rate / 10 + 1);
+        Assert.False(mixer.IsPlaying);
+    }
+
+    [Fact]
     public void Stop_fades_out_in_100_ms()
     {
         var mixer = new AlertMixer(Rate);

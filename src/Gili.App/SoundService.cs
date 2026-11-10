@@ -41,7 +41,7 @@ public sealed class SoundService : IDisposable
         }
         lock (_mixer)
         {
-            if (sound.Loop) _mixer.Ring(Voices.Find(sound.Voice), s.AlertVolume / 100.0, sound.Ramp && s.GraduallyIncrease);
+            if (sound.Loop) _mixer.Ring(Voices.Find(sound.Voice), s.AlertVolume / 100.0, sound.Ramp && s.GraduallyIncrease, SoundRules.RingLimit(cardId));
             else _mixer.Once(Voices.Find(sound.Voice), s.AlertVolume / 100.0);
         }
         EnsurePlaying();

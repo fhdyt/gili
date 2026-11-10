@@ -411,7 +411,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 
 **Saat jendela berakhir**
 - Kartu notifikasi (prioritas 1, seperti timer habis): ikon jam pasir oranye, `Claude usage reset`, baris kedua `Your 5-hour limit is available again`. Tombol **Close** dan **Open Claude**.
-- Suara mengikuti timer (default Chime, berulang sampai ditanggapi, maksimal 5 menit) dan toast tanpa suara dikirim ke Notification Center, sama seperti timer.
+- Suara mengikuti timer (default Chime, berulang sampai ditanggapi, maksimal 1 menit sejak revisi 23; kartunya tetap tampil sampai ditutup) dan toast tanpa suara dikirim ke Notification Center, sama seperti timer.
 - Selama fase fokus pomodoro kartu ditahan sampai istirahat, seperti kartu prioritas 2; toast tetap dikirim.
 - Jendela baru tidak dimulai otomatis; baru dimulai saat prompt berikutnya dikirim.
 
@@ -419,7 +419,7 @@ Paket langganan Claude membatasi pemakaian per jendela 5 jam yang dimulai saat p
 - Di halaman Claude, tepat di bawah baris 5 jam, ada baris `Weekly limit` dengan gaya yang sama: ring sisa waktu dari 7 hari (oranye Claude), `Resets Sun 8 Nov, 04:00` (jam mengikuti setelan 12/24 jam), dan sisa waktu di kanan, `6d 11h` bila sehari atau lebih, `11:20:05` bila kurang. Sebelum diisi, barisnya `Not set` tanpa sisa waktu. Tooltip: `Claude weekly limit · resets Sun 8 Nov, 04:00` dan baris kedua `Click to set the weekly reset shown in Claude`.
 - Gili tidak bisa membaca waktu reset mingguan, jadi diisi pengguna dari Claude Desktop: klik baris membuka form `Resets on`, pemilih hari `‹ Sun 8 Nov ›` (hari ini sampai 7 hari ke depan; panah abu-abu di ujungnya), kolom waktu 86 px berisi jam dan menit (`04:00` atau `4:00 AM`), dan tombol centang. Panah tidak mengambil fokus keyboard; tombol ↑/↓ di kolom waktu juga menggeser hari. Enter atau centang menyimpan, Esc atau klik di luar membatalkan. Waktu yang sudah lewat, lebih dari 7 hari, atau tanpa menit membuat kolomnya bertepi merah. Kolom waktunya bertooltip `The weekly reset Claude Desktop shows, within the next 7 days`.
 - Baris ini hanya di halaman Claude, tidak pernah di slot atau gelembung, dan tampil dengan aturan yang sama dengan baris 5 jam: saklar **Show 5-hour usage timer** nyala dan Claude Desktop terbuka.
-- Saat waktunya tiba muncul kartu `Claude weekly limit reset`, `Your weekly limit is available again`, dengan Close dan Open Claude, suara dan aturan pomodoro seperti kartu 5 jam; lalu barisnya kembali `Not set`. Reset berikutnya tidak ditebak. Reset yang lewat saat Gili mati atau laptop tidur selesai tanpa kartu.
+- Saat waktunya tiba muncul kartu `Claude weekly limit reset`, `Your weekly limit is available again`, dengan Close dan Open Claude, suara dan aturan pomodoro seperti kartu 5 jam. Sejak revisi 23 waktu reset cukup diisi sekali: saat tiba, barisnya langsung maju tepat 7 hari dengan jam dan menit yang sama, terus begitu sampai pengguna mengeditnya lewat form yang sama. `Not set` hanya tampil kalau belum pernah diisi. Reset yang lewat saat Gili mati atau laptop tidur maju tanpa kartu ke reset berikutnya yang belum lewat.
 - Pesan batas dari `StopFailure` yang waktu resetnya lebih dari 5 jam lagi adalah batas mingguan, jadi tidak mengubah jendela 5 jam.
 
 **Jendela sesi**: Gili menelusuri proses induk dari proses `claude` sebuah sesi sampai menemukan jendela pertama yang terlihat: Claude Desktop untuk sesi Desktop, atau jendela terminal (wmux, Windows Terminal) untuk sesi CLI. Membawa ke depan berarti memulihkan jendela kalau diminimize, lalu memfokuskannya. Membuka percakapan tertentu di dalam Claude Desktop di luar cakupan.
@@ -866,7 +866,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 |---|---|---|
 | Alarm | Dipilih per alarm (default Radar) | Berulang sampai Snooze atau Stop, maksimal 5 menit; volume naik bertahap |
 | Timer habis | Dipilih di Settings (default Chime) | Berulang sampai Repeat atau Close, maksimal 5 menit; langsung di volume penuh |
-| Jendela Claude 5 jam berakhir | Sama dengan suara timer | Berulang sampai Close atau Open Claude, maksimal 5 menit; ditahan selama fase fokus pomodoro |
+| Jendela Claude 5 jam berakhir | Sama dengan suara timer | Berulang sampai Close atau Open Claude, maksimal 1 menit (revisi 23); ditahan selama fase fokus pomodoro |
 | Batas mingguan Claude reset | Sama dengan suara timer | Seperti jendela 5 jam |
 | Fase pomodoro selesai | Bell | Sekali |
 | Pengingat todo | Ping | Sekali; dibisukan selama fase fokus pomodoro (ikut F-TOOL-04) |
@@ -1339,7 +1339,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 | `stopwatch` | `id`, `started_at`, `accumulated_ms`, `laps` (JSON) |
 | `clipboard_history` | Dihapus di migrasi 7 (revisi 21) dengan `secure_delete`, jadi barisnya tidak tertinggal di halaman kosong file |
 | `claude_window` | `id`, `started_at`, `resets_at`, `source` (official/estimated), `limit_hit_at` (opsional), `notified` (1 baris aktif) |
-| `claude_weekly` | `id`, `resets_at` (UTC), `notified` (1 baris aktif; migrasi 6, revisi 19) |
+| `claude_weekly` | `id`, `resets_at` (UTC), `notified` (baris terbaru adalah reset aktif, yang maju 7 hari setiap kali tiba; baris lama ditutup; migrasi 6, revisi 19 dan 23) |
 | `shelf_items` | `id`, `paths` (JSON, satu path atau banyak untuk bundel), `display_name`, `size_bytes`, `sort_order`, `added_at`, `mode` (`Copy`/`Cut`, migrasi 3), `folder` (subfolder `shelf\` milik Gili atau kosong, migrasi 3) (dibatasi 8 baris) |
 
 - Database dibackup sekali sehari ke `backups\`, disimpan 7 salinan. Salinan dari file lama yang masih punya `clipboard_history` (misalnya salinan sebelum migrasi) dibuat tanpa isi tabel itu. `gili.db` yang rusak diganti backup harian terbaru, lalu salinan untuk reinstall.
@@ -1455,6 +1455,8 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 **Revisi 21 (keputusan pengguna 2026-11-03)**: tab Clipboard dihapus. Bersamanya hilang riwayat clipboard (teks, gambar, file), menempel ke kursor, ikon Clipboard di launcher kiri beserta saklarnya di Settings → Left side dan Island, dan hotkey `Ctrl+Alt+V` (F-LEFT-03, F-ISL-28, F-ISL-32 dihapus). Cuplikan copy/cut di slot pulau tetap tampil 3 detik (F-ISL-17); mengekliknya membuka halaman terakhir yang dilihat. Riwayat ikut dihapus karena tanpa tab tidak ada yang bisa melihatnya, dan menyimpan isi clipboard tanpa bisa dilihat hanya menambah risiko privasi. Data lama dibersihkan sekali: migrasi 7 menghapus tabel `clipboard_history` dengan `secure_delete`, dan folder `clipboard\` dihapus saat Gili mulai. Pilihan lama di `settings.json` (ikon dan tab Clipboard disembunyikan, `hotkeyClipboard`) tetap terbaca lalu diabaikan. Menu pulau jadi 10 tab, jadi pulau terbuka menyempit dari ≈ 614 px ke ≈ 566 px. Biaya: berkurang (tidak ada encode PNG, tulisan database per copy, dan pembacaan LSA saat mulai).
 
 **Revisi 22 (keputusan pengguna 2026-11-08)**: halaman Projects mendapat tombol Open in window yang membuka timeline yang sama di jendela besar, dengan semua pengeditan seperti di pulau dan data yang tersinkron (F-ISL-35). Keputusan saat merancang: memakai ulang halaman yang sama dengan view model sendiri, supaya form dan daftar di pulau dan jendela tidak saling meniru; lebar kolom tetap 30 px; ukuran jendela tidak disimpan.
+
+**Revisi 23 (keputusan pengguna 2026-11-10, issue 40 dan 41)**: bunyi kartu `Claude usage reset` berhenti sendiri setelah 1 menit, bukan 5 menit; kartunya tetap tampil sampai ditutup. Waktu reset mingguan cukup diisi sekali: setiap kali tiba, barisnya maju 7 hari dan tetap bisa diedit. Keputusan saat merancang: kartu `Claude weekly limit reset` ikut 1 menit karena aturannya memang "seperti jendela 5 jam" (revisi 19); alarm dan timer tetap 5 menit; maju tepat 7 x 24 jam dalam UTC; reset yang sudah selesai di versi lama ikut hidup lagi karena reset aktif kini baris terbaru, tanpa migrasi. Biaya CPU/RAM tidak berubah.
 
 ## 15. Di luar cakupan
 

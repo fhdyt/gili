@@ -8,6 +8,10 @@ public static class SoundRules
     /// <summary>Muted, or so low it would not be heard (under 5%).</summary>
     public static bool WarnMuted(int volumePercent, bool muted) => muted || volumePercent < 5;
 
+    /// <summary>How long a ringing card rings unanswered: a Claude reset is only news, so a minute (revision 23, issue #40).</summary>
+    public static TimeSpan RingLimit(string cardId) =>
+        cardId is "claude-reset" or "claude-weekly-reset" ? TimeSpan.FromMinutes(1) : AlertMixer.MaxRing;
+
     /// <summary>
     /// A timer rings the chosen timer sound until answered; an alarm rings its own sound (Radar by default) and rises
     /// slowly; a pomodoro phase rings Bell once; a task reminder pings once.

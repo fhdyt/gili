@@ -2,7 +2,7 @@ namespace Gili.Core.Sound;
 
 /// <summary>
 /// The sample stream Gili plays (PRD 6.6): one voice at a time, rung on repeat or played once, at the alert volume,
-/// with the 30 s rise for alarms, a 100 ms fade when stopped, and an end of its own after 5 minutes.
+/// with the 30 s rise for alarms, a 100 ms fade when stopped, and an end of its own after 5 minutes or the ring's own limit.
 /// </summary>
 public sealed class AlertMixer(int sampleRate)
 {
@@ -17,6 +17,7 @@ public sealed class AlertMixer(int sampleRate)
     private bool _loop;
     private bool _ramp;
     private double _volume;
+    private TimeSpan _limit = MaxRing;
 
     public bool IsPlaying { get; private set; }
 
@@ -25,9 +26,9 @@ public sealed class AlertMixer(int sampleRate)
         ramp ? volume * Math.Min(1, 0.3 + 0.7 * elapsed.TotalSeconds / RampLength.TotalSeconds) : volume;
 
     /// <summary>Rings the voice on repeat, replacing whatever played.</summary>
-    public void Ring(Voice voice, double volume, bool ramp) => Start(voice, volume, ramp, loop: true);
+    public void Ring(Voice voice, double volume, bool ramp, TimeSpan? limit = null) => Start(voice, volume, ramp, loop: true, limit ?? MaxRing);
 
-    public void Once(Voice voice, double volume) => Start(voice, volume, ramp: false, loop: false);
+    public void Once(Voice voice, double volume) => Start(voice, volume, ramp: false, loop: false, MaxRing);
 
     /// <summary>Fades out over 100 ms, then the stream ends.</summary>
     public void Stop()
@@ -39,7 +40,7 @@ public sealed class AlertMixer(int sampleRate)
     public int Read(Span<float> buffer)
     {
         var fade = (long)(FadeLength.TotalSeconds * sampleRate);
-        var limit = (long)(MaxRing.TotalSeconds * sampleRate);
+        var limit = (long)(_limit.TotalSeconds * sampleRate);
         var written = 0;
         while (written < buffer.Length && IsPlaying)
         {
@@ -60,8 +61,9 @@ public sealed class AlertMixer(int sampleRate)
         return written;
     }
 
-    private void Start(Voice voice, double volume, bool ramp, bool loop)
+    private void Start(Voice voice, double volume, bool ramp, bool loop, TimeSpan limit)
     {
+        _limit = limit;
         _pattern = Voices.Render(voice, sampleRate);
         _period = (long)Math.Round(voice.Every * sampleRate);
         _position = 0;

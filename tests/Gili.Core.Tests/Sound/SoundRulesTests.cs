@@ -30,6 +30,19 @@ public class SoundRulesTests
         Assert.Null(SoundRules.ForCard("conflict", "Chime"));
     }
 
+    [Theory]
+    [InlineData("claude-reset")]
+    [InlineData("claude-weekly-reset")]
+    public void Claude_reset_cards_ring_for_a_minute(string card) =>
+        Assert.Equal(TimeSpan.FromMinutes(1), SoundRules.RingLimit(card));
+
+    [Theory]
+    [InlineData("timer")]
+    [InlineData("timer:7")]
+    [InlineData("alarm:7")]
+    public void Timers_and_alarms_ring_for_5_minutes(string card) =>
+        Assert.Equal(TimeSpan.FromMinutes(5), SoundRules.RingLimit(card));
+
     [Fact]
     public void Todo_reminders_ping_once() =>
         Assert.Equal(("Ping", false, false), SoundRules.ForCard("todo:3", "Chime"));

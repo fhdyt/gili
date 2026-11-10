@@ -21,7 +21,7 @@ public sealed class ClaudeWeeklyTests : IDisposable
     {
         public ClaudeWeeklyReset? Row;
 
-        public ClaudeWeeklyReset? Active() => Row is { Notified: false } ? Row : null;
+        public ClaudeWeeklyReset? Active() => Row;
 
         public ClaudeWeeklyReset Save(ClaudeWeeklyReset reset) => Row = reset.Id == 0 ? reset with { Id = 1 } : reset;
     }
@@ -50,7 +50,7 @@ public sealed class ClaudeWeeklyTests : IDisposable
         Assert.Null(ClaudeWeekly.ParseReset(new DateOnly(2026, 11, day), time, _now));
 
     [Fact]
-    public void A_set_reset_rings_once_when_it_comes_and_is_then_unset()
+    public void A_set_reset_rings_once_when_it_comes_and_moves_a_week_on()
     {
         var store = new MemoryStore();
         var weekly = new ClaudeWeekly(store, () => _now);
@@ -61,21 +61,60 @@ public sealed class ClaudeWeeklyTests : IDisposable
         Assert.False(weekly.Tick());
         _now = _now.AddSeconds(1);
         Assert.True(weekly.Tick());
-        Assert.Null(weekly.Current);
-        Assert.True(store.Row!.Notified);
+        Assert.Equal(new DateTimeOffset(2026, 11, 15, 4, 0, 0, Jakarta), weekly.Current!.ResetsAt);
+        Assert.Equal(weekly.Current.ResetsAt, store.Row!.ResetsAt);
         Assert.False(weekly.Tick());
     }
 
     [Fact]
-    public void A_reset_that_came_while_gili_was_closed_ends_quietly()
+    public void A_reset_that_came_while_gili_was_closed_moves_on_quietly()
     {
         var store = new MemoryStore();
         new ClaudeWeekly(store, () => _now).Set(new DateTimeOffset(2026, 11, 8, 4, 0, 0, Jakarta));
         _now = new DateTimeOffset(2026, 11, 8, 9, 0, 0, Jakarta);
         var again = new ClaudeWeekly(store, () => _now);
         again.Load();
-        Assert.Null(again.Current);
+        Assert.Equal(new DateTimeOffset(2026, 11, 15, 4, 0, 0, Jakarta), again.Current!.ResetsAt);
         Assert.False(again.Tick());
+    }
+
+    [Fact]
+    public void Weeks_missed_are_skipped_to_the_next_reset_to_come()
+    {
+        var store = new MemoryStore();
+        new ClaudeWeekly(store, () => _now).Set(new DateTimeOffset(2026, 11, 8, 4, 0, 0, Jakarta));
+        _now = new DateTimeOffset(2026, 11, 23, 9, 0, 0, Jakarta);
+        var again = new ClaudeWeekly(store, () => _now);
+        again.Load();
+        Assert.Equal(new DateTimeOffset(2026, 11, 29, 4, 0, 0, Jakarta), again.Current!.ResetsAt);
+    }
+
+    [Fact]
+    public void An_edited_reset_is_the_one_that_repeats()
+    {
+        var weekly = new ClaudeWeekly(new MemoryStore(), () => _now);
+        weekly.Set(new DateTimeOffset(2026, 11, 8, 4, 0, 0, Jakarta));
+        _now = new DateTimeOffset(2026, 11, 8, 4, 0, 0, Jakarta);
+        weekly.Tick();
+        weekly.Set(new DateTimeOffset(2026, 11, 14, 5, 30, 0, Jakarta));
+        _now = new DateTimeOffset(2026, 11, 14, 5, 30, 0, Jakarta);
+        Assert.True(weekly.Tick());
+        Assert.Equal(new DateTimeOffset(2026, 11, 21, 5, 30, 0, Jakarta), weekly.Current!.ResetsAt);
+    }
+
+    [Fact]
+    public void A_reset_an_older_gili_finished_comes_back_a_week_on()
+    {
+        using (var db = Database.Open(_folder))
+            new ClaudeWeeklyStore(db).Save(new ClaudeWeeklyReset(0, new DateTimeOffset(2026, 10, 31, 4, 0, 0, Jakarta), true));
+        using (var db = Database.Open(_folder))
+        {
+            var weekly = new ClaudeWeekly(new ClaudeWeeklyStore(db), () => _now);
+            weekly.Load();
+            Assert.Equal(new DateTimeOffset(2026, 11, 7, 4, 0, 0, Jakarta), weekly.Current!.ResetsAt);
+        }
+        using (var db = Database.Open(_folder))
+            Assert.Equal(new DateTimeOffset(2026, 11, 7, 4, 0, 0, Jakarta), new ClaudeWeeklyStore(db).Active()!.ResetsAt);
     }
 
     [Fact]
