@@ -31,22 +31,19 @@ public sealed class ClaudeWeekly(IClaudeWeeklyStore? store, Func<DateTimeOffset>
     /// <summary>When the set reset comes.</summary>
     public DateTimeOffset? NextDeadline => Current?.ResetsAt;
 
-    /// <summary>The days the form's stepper offers: today up to a week ahead.</summary>
-    public static IReadOnlyList<DateOnly> Days(DateTimeOffset at)
-    {
-        var today = DateOnly.FromDateTime(at.DateTime);
-        return [.. Enumerable.Range(0, 8).Select(today.AddDays)];
-    }
+    /// <summary>The form's stepper: the next or previous day, round the week.</summary>
+    public static DayOfWeek StepDay(DayOfWeek day, int by) => (DayOfWeek)(((int)day + by + 7) % 7);
 
     /// <summary>
-    /// The day and the time typed with its hour and minutes ("04:00", "4:00 AM"); null when it is no time, already past,
-    /// or more than a week away.
+    /// The next time that day comes at the time typed with its hour and minutes ("04:00", "4:00 AM"): today while the time
+    /// is still ahead, otherwise up to a week on; null when it is no time.
     /// </summary>
-    public static DateTimeOffset? ParseReset(DateOnly day, string time, DateTimeOffset at)
+    public static DateTimeOffset? ParseReset(DayOfWeek day, string time, DateTimeOffset at)
     {
         if (ClaudeUsage.TimeOfDay(time) is not { } clock) return null;
-        var reset = new DateTimeOffset(day, clock, at.Offset);
-        return reset > at && reset - at <= Length ? reset : null;
+        var date = DateOnly.FromDateTime(at.DateTime).AddDays(((int)day - (int)at.DayOfWeek + 7) % 7);
+        var reset = new DateTimeOffset(date, clock, at.Offset);
+        return reset > at ? reset : reset + Length;
     }
 
     /// <summary>Reads the reset kept from before; one that came while Gili was closed moves on quietly.</summary>
@@ -105,6 +102,6 @@ public static class ClaudeWeeklyText
         return new("Resets " + when, text, "Claude weekly limit · resets " + when, Math.Clamp(1 - left / ClaudeWeekly.Length, 0, 1));
     }
 
-    /// <summary>A day as the stepper and the row show it: Sun 8 Nov.</summary>
+    /// <summary>A day as the row shows it: Sun 8 Nov.</summary>
     public static string Day(DateOnly day) => day.ToString("ddd d MMM", CultureInfo.InvariantCulture);
 }

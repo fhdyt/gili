@@ -184,7 +184,7 @@
                     <TextBox x:Name="WeeklyTime" Grid.Column="2" Style="{StaticResource Field}" Text="{Binding WeeklyTimeText, UpdateSourceTrigger=PropertyChanged}"
                              Tag="{Binding WeeklyState}" Typography.NumeralAlignment="Tabular" MaxLength="8"
                              AutomationProperties.Name="Weekly reset time" AutomationProperties.HelpText="04:00"
-                             ToolTip="The weekly reset Claude Desktop shows, within the next 7 days" />
+                             ToolTip="The day and time of the weekly reset Claude Desktop shows" />
                     <Button Grid.Column="3" Style="{StaticResource CheckPill}" Margin="6,0,0,0" Command="{Binding SaveWeeklyCommand}"
                             AutomationProperties.Name="Save">
                         <c:IconView Glyph="{StaticResource Icon.Check}" Width="14" Height="14" StrokeThickness="2.6" />

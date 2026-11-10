@@ -64,8 +64,7 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(WeeklyDay))]
-    [NotifyCanExecuteChangedFor(nameof(PreviousDayCommand), nameof(NextDayCommand))]
-    private int _weeklyDayIndex;
+    private DayOfWeek _weeklyDayOfWeek;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(WeeklyState))]
@@ -75,10 +74,8 @@ public sealed partial class ClaudePageViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(WeeklyState))]
     private bool _isWeeklyInvalid;
 
-    private IReadOnlyList<DateOnly> _weeklyDays = [];
-
-    /// <summary>The stepper's day: Sun 8 Nov.</summary>
-    public string WeeklyDay => _weeklyDays.Count == 0 ? "" : ClaudeWeeklyText.Day(_weeklyDays[WeeklyDayIndex]);
+    /// <summary>The stepper's day: Tuesday.</summary>
+    public string WeeklyDay => WeeklyDayOfWeek.ToString();
 
     public string? WeeklyState => IsWeeklyInvalid ? "Invalid" : null;
 
@@ -160,15 +157,8 @@ public sealed partial class ClaudePageViewModel : ObservableObject
     private void EditWeekly()
     {
         IsEditingReset = false;
-        var now = DateTimeOffset.Now;
-        _weeklyDays = ClaudeWeekly.Days(now);
         var set = _island.ClaudeWeekly?.ResetsAt.ToLocalTime();
-        var index = set is { } at ? Array.IndexOf([.. _weeklyDays], DateOnly.FromDateTime(at.DateTime)) : 0;
-        WeeklyDayIndex = Math.Max(0, index);
-        // The index is often 0 again, which raises nothing: the stepper asked before there were days and stayed off.
-        OnPropertyChanged(nameof(WeeklyDay));
-        PreviousDayCommand.NotifyCanExecuteChanged();
-        NextDayCommand.NotifyCanExecuteChanged();
+        WeeklyDayOfWeek = (set ?? DateTimeOffset.Now).DayOfWeek;
         WeeklyTimeText = set is { } time
             ? time.ToString(_use24Hour() ? "HH:mm" : "h:mm tt", System.Globalization.CultureInfo.InvariantCulture)
             : "";
@@ -176,24 +166,20 @@ public sealed partial class ClaudePageViewModel : ObservableObject
         IsEditingWeekly = true;
     }
 
-    [RelayCommand(CanExecute = nameof(CanGoBack))]
-    private void PreviousDay() => WeeklyDayIndex--;
+    [RelayCommand]
+    private void PreviousDay() => WeeklyDayOfWeek = ClaudeWeekly.StepDay(WeeklyDayOfWeek, -1);
 
-    [RelayCommand(CanExecute = nameof(CanGoOn))]
-    private void NextDay() => WeeklyDayIndex++;
-
-    private bool CanGoBack() => WeeklyDayIndex > 0;
-
-    private bool CanGoOn() => WeeklyDayIndex < _weeklyDays.Count - 1;
+    [RelayCommand]
+    private void NextDay() => WeeklyDayOfWeek = ClaudeWeekly.StepDay(WeeklyDayOfWeek, 1);
 
     [RelayCommand]
     private void CancelWeekly() => IsEditingWeekly = false;
 
-    /// <summary>Enter or the check: a day and time within the next week becomes the weekly reset; any other stays, in red.</summary>
+    /// <summary>Enter or the check: the day and time become the next such reset; a time that can't be stays, in red.</summary>
     [RelayCommand]
     public void SaveWeekly()
     {
-        if (_weeklyDays.Count == 0 || ClaudeWeekly.ParseReset(_weeklyDays[WeeklyDayIndex], WeeklyTimeText, DateTimeOffset.Now) is not { } reset)
+        if (ClaudeWeekly.ParseReset(WeeklyDayOfWeek, WeeklyTimeText, DateTimeOffset.Now) is not { } reset)
         {
             IsWeeklyInvalid = true;
             return;
@@ -204,7 +190,7 @@ public sealed partial class ClaudePageViewModel : ObservableObject
 
     partial void OnWeeklyTimeTextChanged(string value) => IsWeeklyInvalid = false;
 
-    partial void OnWeeklyDayIndexChanged(int value) => IsWeeklyInvalid = false;
+    partial void OnWeeklyDayOfWeekChanged(DayOfWeek value) => IsWeeklyInvalid = false;
 
     /// <summary>The row's click: the form opens with the reset time Gili has, ready to be typed over.</summary>
     [RelayCommand]

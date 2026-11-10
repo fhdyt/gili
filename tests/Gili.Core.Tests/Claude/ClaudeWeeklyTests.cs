@@ -26,28 +26,37 @@ public sealed class ClaudeWeeklyTests : IDisposable
         public ClaudeWeeklyReset Save(ClaudeWeeklyReset reset) => Row = reset.Id == 0 ? reset with { Id = 1 } : reset;
     }
 
-    [Fact]
-    public void The_days_to_pick_run_from_today_to_a_week_ahead() =>
-        Assert.Equal(Enumerable.Range(0, 8).Select(d => new DateOnly(2026, 11, 1).AddDays(d)), ClaudeWeekly.Days(_now));
+    [Theory]
+    [InlineData(DayOfWeek.Saturday, 1, DayOfWeek.Sunday)]
+    [InlineData(DayOfWeek.Sunday, -1, DayOfWeek.Saturday)]
+    [InlineData(DayOfWeek.Tuesday, 1, DayOfWeek.Wednesday)]
+    public void The_days_to_pick_go_round_the_week(DayOfWeek day, int by, DayOfWeek next) =>
+        Assert.Equal(next, ClaudeWeekly.StepDay(day, by));
+
+    // _now is Sunday 1 Nov, 16:30.
+    [Theory]
+    [InlineData(DayOfWeek.Tuesday, "04:00", 3, 4, 0)]
+    [InlineData(DayOfWeek.Tuesday, "4:00 AM", 3, 4, 0)]
+    [InlineData(DayOfWeek.Saturday, "23:59", 7, 23, 59)]
+    [InlineData(DayOfWeek.Sunday, "20:40", 1, 20, 40)]
+    [InlineData(DayOfWeek.Sunday, "8:40 pm", 1, 20, 40)]
+    public void A_day_and_time_become_the_next_time_that_day_comes(DayOfWeek day, string time, int date, int h, int mi) =>
+        Assert.Equal(new DateTimeOffset(2026, 11, date, h, mi, 0, Jakarta), ClaudeWeekly.ParseReset(day, time, _now));
 
     [Theory]
-    [InlineData(8, "04:00", 2026, 11, 8, 4, 0)]
-    [InlineData(8, "4:00 AM", 2026, 11, 8, 4, 0)]
-    [InlineData(1, "20:40", 2026, 11, 1, 20, 40)]
-    [InlineData(1, "8:40 pm", 2026, 11, 1, 20, 40)]
-    public void A_weekly_reset_typed_from_claude_desktop(int day, string time, int y, int mo, int d, int h, int mi) =>
-        Assert.Equal(new DateTimeOffset(y, mo, d, h, mi, 0, Jakarta), ClaudeWeekly.ParseReset(new DateOnly(2026, 11, day), time, _now));
+    [InlineData("16:00", 16, 0)]
+    [InlineData("16:30", 16, 30)]
+    public void Todays_day_with_its_time_gone_is_next_week(string time, int h, int mi) =>
+        Assert.Equal(new DateTimeOffset(2026, 11, 8, h, mi, 0, Jakarta), ClaudeWeekly.ParseReset(DayOfWeek.Sunday, time, _now));
 
     [Theory]
-    [InlineData(1, "16:00")]
-    [InlineData(8, "17:00")]
-    [InlineData(8, "4am")]
-    [InlineData(8, "4")]
-    [InlineData(8, "")]
-    [InlineData(8, "24:00")]
-    // Past, more than 7 days away, without its minutes, or not a time.
-    public void A_weekly_reset_that_cant_be_is_refused(int day, string time) =>
-        Assert.Null(ClaudeWeekly.ParseReset(new DateOnly(2026, 11, day), time, _now));
+    [InlineData("4am")]
+    [InlineData("4")]
+    [InlineData("")]
+    [InlineData("24:00")]
+    // Without its minutes, or not a time.
+    public void A_weekly_reset_that_cant_be_is_refused(string time) =>
+        Assert.Null(ClaudeWeekly.ParseReset(DayOfWeek.Tuesday, time, _now));
 
     [Fact]
     public void A_set_reset_rings_once_when_it_comes_and_moves_a_week_on()
@@ -146,5 +155,5 @@ public sealed class ClaudeWeeklyTests : IDisposable
     }
 
     [Fact]
-    public void A_day_reads_as_the_stepper_shows_it() => Assert.Equal("Sun 8 Nov", ClaudeWeeklyText.Day(new DateOnly(2026, 11, 8)));
+    public void A_day_reads_as_the_row_shows_it() => Assert.Equal("Sun 8 Nov", ClaudeWeeklyText.Day(new DateOnly(2026, 11, 8)));
 }

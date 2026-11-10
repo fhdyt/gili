@@ -3233,23 +3233,23 @@ function limRow(){
 }
 // Claude's weekly limit (revision 19): its day, hour and minutes set by hand; the Claude page only, never the slot.
 const WK_HINT='Click to set the weekly reset shown in Claude';
-const wkDays=()=>[...Array(8)].map((_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);return d});
+const WK_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const wkDayTxt=d=>`${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]} ${d.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}`;
 const wkLeft=s=>s>=86400?`${Math.floor(s/86400)}d ${Math.floor(s%86400/3600)}h`:fmtDur(s);
-// The picked day and a time with its hour and minutes; only after now and within 7 days.
-function limParseAny(day,v){
+// The next time the picked day comes at a time with its hour and minutes (revision 24).
+function limParseAny(dow,v){
   const m=/^\s*(\d{1,2}):(\d{2})\s*([ap])?\.?\s*m?\.?\s*$/i.exec(v);if(!m)return null;
   let h=+m[1];const mi=+m[2];
   if(m[3]){if(h<1||h>12)return null;h=h%12+(m[3].toLowerCase()==='p'?12:0)}
   if(h>23||mi>59)return null;
-  const d=new Date(day);d.setHours(h,mi,0,0);
-  return d>Date.now()&&d-Date.now()<=7*86400e3?+d:null;
+  const d=new Date();d.setDate(d.getDate()+(dow-d.getDay()+7)%7);d.setHours(h,mi,0,0);
+  return +d>Date.now()?+d:+d+7*864e5;
 }
 function wkRow(){
   if(!S.limOn)return '';
   const ring=f=>`<svg class="lring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="fg" cx="12" cy="12" r="9" stroke-dasharray="56.55" stroke-dashoffset="${(56.55*f).toFixed(2)}"/></svg>`;
-  if(S.wkEdit){const days=wkDays(),i=S.wkDay;
-    return `<form class="crow lrow lform" id="wkForm"><b>Resets on</b><span class="wkday"><button type="button" id="wkPrev" tabindex="-1" aria-label="Previous day" ${i<=0?'disabled':''}>${icon('chevl')}</button><span class="num">${wkDayTxt(days[i])}</span><button type="button" id="wkNext" tabindex="-1" aria-label="Next day" ${i>=7?'disabled':''}>${icon('chevr')}</button></span><input class="field ftime num" id="wkIn" maxlength="8" placeholder="04:00" value="${esc(S.wkTime||'')}" aria-label="Weekly reset time" title="The weekly reset Claude Desktop shows, within the next 7 days"><button class="pill pri iconbtn" aria-label="Save">${icon('check')}</button></form>`}
+  if(S.wkEdit){const i=S.wkDay;
+    return `<form class="crow lrow lform" id="wkForm"><b>Resets on</b><span class="wkday"><button type="button" id="wkPrev" tabindex="-1" aria-label="Previous day">${icon('chevl')}</button><span class="num">${WK_DAYS[i]}</span><button type="button" id="wkNext" tabindex="-1" aria-label="Next day">${icon('chevr')}</button></span><input class="field ftime num" id="wkIn" maxlength="8" placeholder="04:00" value="${esc(S.wkTime||'')}" aria-label="Weekly reset time" title="The day and time of the weekly reset Claude Desktop shows"><button class="pill pri iconbtn" aria-label="Save">${icon('check')}</button></form>`}
   if(!S.wk)return `<button class="crow lrow" id="wkRow" title="${WK_HINT}">${ring(1)}<span class="cn"><b>Weekly limit</b><span>Not set</span></span><span class="cr num"></span></button>`;
   const left=Math.max(0,(S.wk.end-Date.now())/1000),r=new Date(S.wk.end),when=`${wkDayTxt(r)}, ${pad(r.getHours())}:${pad(r.getMinutes())}`;
   return `<button class="crow lrow" id="wkRow" title="Claude weekly limit · resets ${when}&#10;${WK_HINT}">${ring(1-left/(7*86400))}<span class="cn"><b>Weekly limit</b><span>Resets ${when}</span></span><span class="cr num" id="wkLeft">${wkLeft(left)}</span></button>`;
@@ -3900,20 +3900,20 @@ function clTick(){$$('#clist .crow.work').forEach(r=>{r.querySelector('.cr').tex
 $('#clist').addEventListener('click',e=>{
   if(e.target.closest('#limRow')){S.limEdit=true;S.wkEdit=false;renderClPage();const i=$('#limIn');i.focus();i.select();return}
   if(e.target.closest('#wkRow')){
-    const days=wkDays(),r=S.wk&&new Date(S.wk.end);
-    S.wkDay=r?Math.max(0,days.findIndex(d=>d.toDateString()===r.toDateString())):0;
+    const r=S.wk&&new Date(S.wk.end);
+    S.wkDay=(r||new Date()).getDay();
     S.wkTime=r?`${pad(r.getHours())}:${pad(r.getMinutes())}`:'';S.wkEdit=true;S.limEdit=false;renderClPage();const i=$('#wkIn');i.focus();i.select();return}
   const step=e.target.closest('#wkPrev,#wkNext');
   // The arrows change the day in place, with the caret back in the time, so the form never closes under them.
-  if(step){$('#wkIn').focus();S.wkDay=Math.min(7,Math.max(0,S.wkDay+(step.id==='wkNext'?1:-1)));
-    $('.wkday .num').textContent=wkDayTxt(wkDays()[S.wkDay]);$('#wkPrev').disabled=S.wkDay<=0;$('#wkNext').disabled=S.wkDay>=7;$('#wkIn').classList.remove('bad');return}
+  if(step){$('#wkIn').focus();S.wkDay=(S.wkDay+(step.id==='wkNext'?1:6))%7;
+    $('.wkday .num').textContent=WK_DAYS[S.wkDay];$('#wkIn').classList.remove('bad');return}
   const r=e.target.closest('[data-cl]');if(r)clFocus(clById(+r.dataset.cl));
 });
 // The reset form: Enter or the check saves a time within 5 hours (the window becomes Claude's own, no longer Estimated),
 // any other stays in red; Esc or a click elsewhere cancels.
 $('#clist').addEventListener('submit',e=>{
   e.preventDefault();
-  if(e.target.id==='wkForm'){const i=$('#wkIn'),end=limParseAny(wkDays()[S.wkDay],i.value);
+  if(e.target.id==='wkForm'){const i=$('#wkIn'),end=limParseAny(S.wkDay,i.value);
     if(!end){i.classList.add('bad');i.focus();return}
     S.wk={end};S.wkEdit=false;renderClPage();return}
   const i=$('#limIn'),end=limParse(i.value);
@@ -3924,7 +3924,7 @@ $('#clist').addEventListener('submit',e=>{
 $('#clist').addEventListener('input',e=>{if(e.target.id==='limIn'||e.target.id==='wkIn')e.target.classList.remove('bad')});
 $('#clist').addEventListener('keydown',e=>{
   // Up and Down in the weekly time step the day, like its arrows.
-  if(e.target.id==='wkIn'&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();const b=$(e.key==='ArrowUp'?'#wkNext':'#wkPrev');if(!b.disabled)b.click();return}
+  if(e.target.id==='wkIn'&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();$(e.key==='ArrowUp'?'#wkNext':'#wkPrev').click();return}
   if(e.key==='Escape'&&(e.target.id==='limIn'||e.target.closest('#wkForm'))){e.stopPropagation();S.limEdit=S.wkEdit=false;renderClPage()}});
 $('#clist').addEventListener('focusout',e=>{
   const f=$('#limForm');if(S.limEdit&&f&&!f.contains(e.relatedTarget)){S.limEdit=false;renderClPage();return}
