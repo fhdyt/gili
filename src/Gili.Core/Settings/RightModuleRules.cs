@@ -18,19 +18,24 @@ public enum RightModules
     Tray = 1024,
     Clock = 2048,
     Power = 4096,
+    AirQuality = 8192,
 }
 
 /// <summary>
-/// The bar's module ids and the order of the six system modules, which Settings can rearrange (PRD 6.4); Wi‑Fi through
+/// The bar's module ids and the order of the seven system modules, which Settings can rearrange (PRD 6.4); Wi‑Fi through
 /// Power keep their place.
 /// </summary>
 public static class RightModuleRules
 {
-    public static IReadOnlyList<string> DefaultOrder { get; } = ["weather", "net", "cpu", "ram", "gpu", "disk"];
+    public static IReadOnlyList<string> DefaultOrder { get; } = ["weather", "air", "net", "cpu", "ram", "gpu", "disk"];
+
+    /// <summary>Modules added after an order could be saved, and the module they come after when an old order lacks them.</summary>
+    private static readonly Dictionary<string, string> AddedAfter = new() { ["air"] = "weather" };
 
     public static RightModules Of(string id) => id switch
     {
         "weather" => RightModules.Weather,
+        "air" => RightModules.AirQuality,
         "net" => RightModules.Network,
         "cpu" => RightModules.Cpu,
         "ram" => RightModules.Ram,
@@ -46,11 +51,19 @@ public static class RightModuleRules
         _ => RightModules.None,
     };
 
-    /// <summary>Keeps the known ids once each, in their order, and adds any missing one at the end.</summary>
+    /// <summary>
+    /// Keeps the known ids once each, in their order, and adds any missing one at the end; a module added later (Air
+    /// quality, revision 25) goes right after the module it follows by default, so an old order gets it there.
+    /// </summary>
     public static IReadOnlyList<string> Repair(IEnumerable<string>? order)
     {
         var known = (order ?? []).Select(id => id.Trim()).Where(DefaultOrder.Contains).Distinct().ToList();
-        known.AddRange(DefaultOrder.Except(known));
+        foreach (var id in DefaultOrder.Except(known).ToList())
+        {
+            var anchor = AddedAfter.TryGetValue(id, out var after) ? known.IndexOf(after) : -1;
+            if (anchor >= 0) known.Insert(anchor + 1, id);
+            else known.Add(id);
+        }
         return known;
     }
 

@@ -20,7 +20,7 @@ public class SettingsCatalogTests
             new HashSet<string> { "version", "updates", "autoUpd", "notes", "logs", "prepare", "clOn", "limOn", "keys", "W.city", "hk.island", "hk.note", "hk.task", "pos", "hideTb", "h12", "secs", "auto", "tray", "barColor", "opacity", "openOp", "desktop", "glass", "barH", "islH", "glow", "motion", "gili", "lyrics", "snd", "alertVol", "ramp", "W.bat", "W.unplug",
                 "L.Start", "L.Timer", "L.Alarms", "L.Todo", "L.Projects", "L.Notes", "L.Shelf", "L.Claude", "L.Favorites", "favs", "L.Apps",
                 "T.Media", "T.Timer", "T.Alarms", "T.Calendar", "T.Todo", "T.Projects", "T.Notes", "T.Shelf", "T.Claude", "T.System",
-                "M.Weather", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
+                "M.Weather", "M.Air quality", "M.Network", "M.CPU", "M.RAM", "M.GPU", "M.Disk", "M.Wi‑Fi", "M.Bluetooth", "M.Volume", "M.Brightness", "M.Tray icons", "M.Clock and date", "M.Power" },
             AllRows.Where(r => r.Available).Select(r => r.Key).ToHashSet());
 
     [Fact]
@@ -38,7 +38,7 @@ public class SettingsCatalogTests
     {
         var rows = Section("Right side").Rows;
         Assert.Equal(
-            ["Weather", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Power", "Weather city", "Battery alert", "Unplug reminder"],
+            ["Weather", "Air quality", "Network", "CPU", "RAM", "GPU", "Disk", "Wi‑Fi", "Bluetooth", "Volume", "Brightness", "Tray icons", "Clock and date", "Power", "Weather city", "Battery alert", "Unplug reminder"],
             rows.Select(r => r.Label));
         Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.GPU"));
         Assert.Equal(false, SettingsCatalog.Read(new AppSettings(), "M.Disk"));
@@ -248,10 +248,10 @@ public class SettingsCatalogModuleTests
     [Fact]
     public void Right_side_rows_follow_order()
     {
-        var s = new AppSettings { ModuleOrder = "disk,cpu,weather,net,ram,gpu" };
+        var s = new AppSettings { ModuleOrder = "disk,cpu,weather,air,net,ram,gpu" };
         Assert.Equal(
-            ["M.Disk", "M.CPU", "M.Weather", "M.Network", "M.RAM", "M.GPU", "M.Wi‑Fi"],
-            SettingsCatalog.RowsOf(RightSide, s).Take(7).Select(r => r.Key));
+            ["M.Disk", "M.CPU", "M.Weather", "M.Air quality", "M.Network", "M.RAM", "M.GPU", "M.Wi‑Fi"],
+            SettingsCatalog.RowsOf(RightSide, s).Take(8).Select(r => r.Key));
         Assert.Equal(RightSide.Rows.Count, SettingsCatalog.RowsOf(RightSide, s).Count);
     }
 
@@ -267,6 +267,7 @@ public class SettingsCatalogModuleTests
     {
         Assert.Equal("net", SettingsCatalog.ModuleId("M.Network"));
         Assert.Equal("disk", SettingsCatalog.ModuleId("M.Disk"));
+        Assert.Equal("air", SettingsCatalog.ModuleId("M.Air quality"));
         Assert.Null(SettingsCatalog.ModuleId("M.Wi‑Fi"));
         Assert.Null(SettingsCatalog.ModuleId("h12"));
     }

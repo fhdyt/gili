@@ -138,6 +138,16 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                <!-- Air quality (F-RIGHT-13): a dot in the US AQI level's colour, then AQI over the number; grey while stale. -->
+                <Border Tag="air" Style="{StaticResource Module}" ToolTip="{Binding AirTooltip}" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" Opacity="{Binding AirOpacity}">
+                        <Ellipse Width="8" Height="8" Fill="{Binding AirBrush}" VerticalAlignment="Center" />
+                        <StackPanel Style="{StaticResource TwoLine}" Margin="6,0,0,0">
+                            <TextBlock Text="AQI" Style="{StaticResource ModuleLabel}" />
+                            <TextBlock Text="{Binding AirValue}" Style="{StaticResource ModuleValue}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
                 <Border Tag="net" Style="{StaticResource Module}" ToolTip="{Binding NetTooltip}">
                     <StackPanel VerticalAlignment="Center" MinWidth="58">
                         <TextBlock Text="{Binding UpText}" Style="{StaticResource NetLine}" />

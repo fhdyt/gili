@@ -23,7 +23,7 @@ public static class SoundRules
         _ when cardId.StartsWith("timer:", StringComparison.Ordinal) => (Voices.Find(timerSound).Name, true, false),
         "pomo-focus" or "pomo-break" => ("Bell", false, false),
         _ when cardId.StartsWith("todo:", StringComparison.Ordinal) => ("Ping", false, false),
-        "claude" => ("Ping", false, false),
+        "claude" or "claude-done" => ("Ping", false, false),
         "claude-reset" or "claude-weekly-reset" => (Voices.Find(timerSound).Name, true, false),
         _ => null,
     };

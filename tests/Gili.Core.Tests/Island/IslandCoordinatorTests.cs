@@ -158,6 +158,23 @@ public class IslandCoordinatorTests
     }
 
     [Fact]
+    public void A_reminder_without_a_timeout_stays_until_dismissed_but_still_waits_in_focus_and_goes_in_fullscreen()
+    {
+        _island.ShowCard(new IslandCard("claude-done", CardPriority.Reminder, Timeout.InfiniteTimeSpan));
+        Advance(3600);
+        Assert.Equal("claude-done", _island.View.Card?.Id);
+        Assert.Null(_island.NextDeadline);
+
+        _island.SetFocus(true);
+        Assert.Equal(IslandMode.Compact, _island.View.Mode);
+        _island.SetFocus(false);
+        Assert.Equal("claude-done", _island.View.Card?.Id);
+
+        _island.SetFullscreen(true);
+        Assert.False(_island.HasCard("claude-done"));
+    }
+
+    [Fact]
     public void A_waiting_card_is_still_held()
     {
         _island.ShowCard(Urgent("alarm"));

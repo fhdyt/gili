@@ -118,6 +118,8 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px so
 .right button.mod:hover{background:rgba(255,255,255,.08)}
 .right button.mod:active{background:rgba(255,255,255,.14)}
 .mod[data-m="weather"]>.ic{color:#aeaeb2}
+/* Air quality (revision 25): an 8 px dot in the US AQI level's colour, left of AQI over the number. */
+.aqd{width:8px;height:8px;border-radius:50%;flex:none;background:var(--aq,#30d158)}
 /* Two-line modules (iStat Menus style): a small caps label over the value. */
 .tw{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:28px;line-height:1.08;text-align:left}
 .tw small{font-size:8.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa0}
@@ -1199,6 +1201,7 @@ data.rc.bottom = <span class="t">DpiScale</span>(32);
     </div>
     <div class="right" id="right">
       <span class="mod" data-m="weather" title="Partly cloudy · 31° / 24° · Jakarta"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg><span class="tw"><small>Cloudy</small><b class="num">29°</b></span></span>
+      <span class="mod" data-m="air" id="mAir" title="US AQI 57 · Moderate · PM2.5 14 µg/m³ · Jakarta"><span class="aqd" style="--aq:#ffd60a" aria-hidden="true"></span><span class="tw"><small>AQI</small><b class="num" id="mAirV">57</b></span></span>
       <span class="mod" data-m="net" title="Wi-Fi · today ↓1.8 GB ↑240 MB"><span class="nt num"><span id="mUp"></span><span id="mDown"></span></span></span>
       <button class="mod" data-m="cpu" data-sys><span class="tw"><small>CPU</small><b class="num" id="mCpu"></b></span></button>
       <button class="mod" data-m="ram" data-sys title="8.6 / 16 GB"><span class="tw"><small>RAM</small><b class="num" id="mRam"></b></span></button>
@@ -1525,9 +1528,9 @@ const S={
   charging:false,battery:64,caps:false,num:false,barH:32,islH:24,
   cpu:12,gpu:4,ram:54,down:2100,up:300,
   hist:{cpu:[],ram:[],gpu:[],down:[]},
-  mods:{weather:1,net:1,cpu:1,ram:1,gpu:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1,power:1},
+  mods:{weather:1,air:1,net:1,cpu:1,ram:1,gpu:0,disk:0,wifi:1,bt:1,vol:1,bri:1,tray:1,clock:1,power:1},
   // The system modules' order, set in Settings → Right side by dragging a row's grip or Alt + Up/Down (PRD 6.4).
-  order:['weather','net','cpu','ram','gpu','disk'],
+  order:['weather','air','net','cpu','ram','gpu','disk'],
   // Settings: what shows on the bar and in the island, bar position, and the Claude 5-hour window.
   left:{start:1,timer:1,alarms:1,todo:1,projects:1,notes:1,shelf:1,claude:1,apps:1},tabs:[1,1,1,1,1,1,1,1,1,1],
   gili:1,glow:1,motion:1,lyrics:0,limOn:1,clOn:1,'W.city':'jakarta','W.bat':20,'W.unplug':80,snd:'chime',alertVol:80,ramp:1,keys:1,updates:1,logs:1,lim:null,wk:null,pos:'top',hideTb:0,h12:0,secs:1,
@@ -1558,7 +1561,7 @@ const S={
 // Controls (10) has no tab: the Wi-Fi, Bluetooth, Volume, Brightness and Power buttons open it, one control at a time.
 const PAGE={media:0,timer:1,alarms:2,calendar:3,todo:4,projects:5,notes:6,shelf:7,claude:8,system:9,controls:10};
 const LAST=11,GAP=24;
-const HIDE_ORDER=['weather','net','disk','gpu','ram','cpu'];
+const HIDE_ORDER=['weather','air','net','disk','gpu','ram','cpu'];
 
 const iw=$('#iw'),isl=$('#isl'),bar=$('#bar'),bubble=$('#bubble'),cbub=$('#cbub'),lcI=$('#lcI'),lwI=$('#lwI'),lcard=$('#lcard');
 const slot=$('#slot'),track=$('#track');
@@ -2035,6 +2038,8 @@ const CARDS={
   pomo:{c:'var(--danger)',i:'hourglass',cls:'pulse',t:'Focus session done',s:()=>`${breakLen()/60}-minute break · session ${S.pomo.round} of ${PLAN.rounds}`,b:[['Skip','dismiss'],['Start break','break',1]],ring:'once',snd:'bell'},
   conflict:{c:'var(--warn)',i:'alert',cls:'',t:'',s:'',b:[]},
   claude:{c:'var(--warn)',i:'claude',cls:'',t:'',s:'',q:'',b:[],ring:'once',snd:'ping'},
+  // Claude is done (revision 25): a finish behind another window opens the island like a finished timer, until answered.
+  cldone:{c:'var(--accent)',i:'claude',cls:'',t:'Claude is done',s:'',q:'',b:[['Close','cldclose'],['Open Claude','cldopen',1]],ring:'once',snd:'ping'},
   ltimer:{c:'var(--orange)',i:'hourglass',cls:'pulse',t:()=>`${esc(LC.l)} done`,s:()=>`Timer ${fmtT(LC.total)}`,b:[['Repeat','ltrepeat'],['Close','dismiss',1]],ring:'loop',snd:'chime'},
   lim:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude usage reset',s:'Your 5-hour limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime',max:60e3},
   wk:{c:'var(--claude)',i:'hourglass',cls:'pulse',t:'Claude weekly limit reset',s:'Your weekly limit is available again',b:[['Close','dismiss'],['Open Claude','limopen',1]],ring:'loop',snd:'chime',max:60e3},
@@ -2063,6 +2068,9 @@ lcard.addEventListener('click',e=>{
   if(a==='unmute'){S.winMuted=false;setPressed('winmute',false);showCard(S.card);return}
   if(a==='xskip'||a==='xreplace')resolveConflict(a);
   if(a==='clopen')clFocus(clById(S.clCard));
+  // Close counts the finish as seen, so no green bubble follows; Open Claude brings its window forward.
+  if(a==='cldclose'){const s=clById(S.clDoneCard);if(s&&s.unseen){s.unseen=false;if(S.clEnd!==s.id)s.st='idle';clUpdate()}}
+  if(a==='cldopen')clFocus(clById(S.clDoneCard));
   if(a==='limopen')hint('Opening Claude');
   if(a==='ntfopen')hint(`${S.ntfCard.app} brought to front`);
   if(a==='ntfopen'||a==='ntfdismiss'){closeCard();nextMsg();return}
@@ -3107,7 +3115,7 @@ function renderRight(){
   $('#mUp').textContent='↑ '+fmtNet(S.up);$('#mDown').textContent='↓ '+fmtNet(S.down);
 }
 $$('[data-sys]').forEach(b=>b.onclick=()=>openFromBar(PAGE.system));
-$('#mMore').onclick=()=>{const names={weather:'weather',net:'network',disk:'disk',gpu:'GPU',ram:'RAM',cpu:'CPU'};hint('Hidden to keep space around the island: '+S.overflow.map(k=>names[k]).join(', '))};
+$('#mMore').onclick=()=>{const names={weather:'weather',air:'air quality',net:'network',disk:'disk',gpu:'GPU',ram:'RAM',cpu:'CPU'};hint('Hidden to keep space around the island: '+S.overflow.map(k=>names[k]).join(', '))};
 
 /* power: Sleep, Shut down and Restart sit on the island's Controls page; the update variants only appear when Windows has updates waiting */
 function renderUpdates(){
@@ -3269,7 +3277,7 @@ const SET={
   Appearance:[['barColor','Bar color','color'],['opacity','Bar opacity','range',[40,100,'%']],['openOp','Opacity while open','range',[0,100,'%'],'How much of the bar stays while the island is open'],['desktop','Same on the desktop','sw',null,'The bar looks like this while the desktop is in front'],['glass','Glass','seg',['Off','Light','Strong']],['barH','Bar height','range',[28,44,' px']],['islH','Island height','range',[20,'bar',' px'],'From 20 px up to the bar height minus 4 px'],['glow','Ambient glow','sw'],['motion','Ambient motion','sw',null,'The glow drifts slowly while the island is open']],
   'Left side':[['L.start','Start'],['L.timer','Timer'],['L.alarms','Alarms'],['L.todo','Todo'],['L.projects','Projects'],['L.notes','Notes'],['L.shelf','Shelf'],['L.claude','Claude'],['L.favorites','Favorites'],['L.apps','Running apps']].flatMap(([k,n])=>k==='L.favorites'?[[k,n,'sw',null,'Right-click an open app to add it'],['favs','Favorite apps','favs']]:[[k,n,'sw',null,k==='L.start'?'':k==='L.apps'?'The apps that are open, after the divider':'Turning it off also hides the '+n+' page in the island']]),
   Island:[['gili','Show Gili','sw',null,'Eyes in the idle island that follow the pointer'],['lyrics','Show lyrics','sw',null,'Synced lyrics from lrclib.net. Only the song title, artist, album and length are sent']].concat(TABS.map(([n],i)=>['T.'+i,n+' page','sw'])),
-  'Right side':[['weather','Weather'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
+  'Right side':[['weather','Weather'],['air','Air quality'],['net','Network'],['cpu','CPU'],['ram','RAM'],['gpu','GPU'],['disk','Disk'],['wifi','Wi‑Fi'],['bt','Bluetooth'],['vol','Volume'],['bri','Brightness'],['tray','Tray icons'],['clock','Clock and date'],['power','Power']].map(([k,n])=>['M.'+k,n,'sw',null,k==='power'?'Sleep, restart and shut down stay in the Start menu':k==='air'?'US AQI, the index IQAir shows, from Open-Meteo for the Weather city':'']).concat([['W.city','Weather city','key',['Jakarta'],'Search by name. Only the name you type is sent, to Open-Meteo'],['W.bat','Battery alert','range',[5,50,'%'],'Also at 10%'],['W.unplug','Unplug reminder','range',[50,100,'%'],'Only on laptops that keep charging past it. 100% turns it off']]),
   Notifications:[['ntf','Show Windows notifications','sw',null,'New notifications from other apps also appear in the island for a few seconds. Windows asks for permission first. Tip: turn off banners for an app in Windows Settings to see it only here'],['ntfText','Show message text','sw',null,'Off: only the app and the sender'],['A.WhatsApp','WhatsApp','sw'],['A.Outlook','Outlook','sw'],['A.Telegram','Telegram','sw'],['A.Microsoft Teams','Microsoft Teams','sw']],
   Claude:[['clOn','Show Claude Code sessions','sw'],['limOn','Show 5-hour usage timer','sw',null,'Counts down to the reset and alerts you when the window ends']],
   Sounds:[['snd','Timer sound','seg',['Radar','Chime','Bell','Soft','Ping']],['alertVol','Alert volume','range',[0,100,'%']],['ramp','Gradually increase','sw']],
@@ -3932,13 +3940,14 @@ $('#clist').addEventListener('focusout',e=>{
 function clWork(s){
   Object.assign(s,{st:'work',t0:Date.now(),unseen:false,q:''});
   if(S.clEnd===s.id){clearTimeout(S.clEndT);S.clEnd=null}
-  clUpdate();
+  clDoneGone(s);clUpdate();
 }
 function clAsk(s,kind){
   if(s.st!=='work')clWork(s);
   Object.assign(s,{st:'ask',kind,q:CL_ASK[kind][1],carded:false});clUpdate();
   // Held during a focus phase, in fullscreen (no toast either), or behind another card; the yellow slot still shows.
-  if(focusOn()||S.fs||(S.state==='card'&&S.card!=='claude'))return;
+  // A question outranks Claude is done: that card gives way, and its finish stays as the green bubble.
+  if(focusOn()||S.fs||(S.state==='card'&&S.card!=='claude'&&S.card!=='cldone'))return;
   clCardFor(s);
 }
 function clCardFor(s){
@@ -3946,7 +3955,18 @@ function clCardFor(s){
   S.clCard=s.id;s.carded=true;showCard('claude');
 }
 // A question that was held during focus gets its card when the break starts.
-function clHeld(){const s=clBy('ask').find(x=>!x.carded);if(s&&!focusOn()&&!S.fs&&S.state!=='card')clCardFor(s)}
+function clHeld(){
+  if(focusOn()||S.fs||S.state==='card')return;
+  const s=clBy('ask').find(x=>!x.carded);if(s){clCardFor(s);return}
+  // A finish still unseen when the break starts gets its Claude is done card then.
+  const d=S.cl.filter(x=>x.st==='done'&&x.unseen&&!x.dcarded).sort((a,b)=>b.at-a.at)[0];if(d)clDoneCardFor(d);
+}
+function clDoneCardFor(s){
+  Object.assign(CARDS.cldone,{s:esc(clName(s)),q:'Finished in '+durTxt(s.dur)});
+  S.clDoneCard=s.id;s.dcarded=true;showCard('cldone');
+}
+// Seen another way (its window in front, a new prompt): the Claude is done card goes with it.
+function clDoneGone(s){if(S.state==='card'&&S.card==='cldone'&&S.clDoneCard===s.id)closeCard()}
 function clCloseCard(s){if(S.state==='card'&&S.card==='claude'&&S.clCard===s.id)closeCard()}
 function clAnswer(s){
   if(s.st!=='ask')return;
@@ -3954,10 +3974,16 @@ function clAnswer(s){
 }
 function clDone(s){
   clCloseCard(s);
-  Object.assign(s,{st:'done',dur:Date.now()-s.t0,q:'',unseen:CL_APP[s.app][0]!==S.fgName,at:Date.now()});
+  Object.assign(s,{st:'done',dur:Date.now()-s.t0,q:'',unseen:CL_APP[s.app][0]!==S.fgName,at:Date.now(),dcarded:false});
   S.clEnd=s.id;clearTimeout(S.clEndT);
   S.clEndT=setTimeout(()=>{S.clEnd=null;S.cl.forEach(x=>{if(x.st==='done'&&!x.unseen)x.st='idle'});clUpdate()},4000);
   clUpdate();
+  // Behind another window: the Claude is done card (Ping once); held during focus, skipped in fullscreen, and behind
+  // any other card except the Needs input one it replaces or an earlier Claude is done, whose content it takes over.
+  if(s.unseen){
+    if(S.fs){s.dcarded=true;return}
+    if(!focusOn()&&!(S.state==='card'&&S.card!=='cldone'&&S.card!=='claude'))clDoneCardFor(s);
+  }
 }
 // Esc in Claude never fires the Stop hook; the session file going idle is what brings the session back to Idle.
 function clEsc(s){
@@ -3966,7 +3992,7 @@ function clEsc(s){
 }
 function clSeen(){
   let ch=false;
-  for(const s of S.cl)if(s.unseen&&CL_APP[s.app][0]===S.fgName){s.unseen=false;if(S.clEnd!==s.id)s.st='idle';ch=true}
+  for(const s of S.cl)if(s.unseen&&CL_APP[s.app][0]===S.fgName){s.unseen=false;if(S.clEnd!==s.id)s.st='idle';clDoneGone(s);ch=true}
   if(ch)clUpdate();
 }
 function clFocus(s){
@@ -4010,7 +4036,7 @@ const ACT={
     if(S.xop){clearInterval(S.xop.t);S.xop=null}
     clearTimeout(S.xopEndT);S.xopEnd=null;clearTimeout(S.clipT);S.clip=null;
     S.cl.forEach(s=>{if(s.st!=='idle')Object.assign(s,{st:'idle',at:Date.now()});Object.assign(s,{unseen:false,q:''})});
-    clearTimeout(S.clEndT);S.clEnd=null;if(S.card==='claude')closeCard();renderClPage();
+    clearTimeout(S.clEndT);S.clEnd=null;if(S.card==='claude'||S.card==='cldone')closeCard();renderClPage();
     S.shelf=[];renderShelf();
     renderMedia();renderTimerPage();renderSlot();
     S.lim=null;renderClPage();

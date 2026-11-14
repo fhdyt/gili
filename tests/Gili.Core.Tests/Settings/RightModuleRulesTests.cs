@@ -4,7 +4,7 @@ namespace Gili.Core.Tests.Settings;
 
 public class RightModuleRulesTests
 {
-    private static readonly string[] Default = ["weather", "net", "cpu", "ram", "gpu", "disk"];
+    private static readonly string[] Default = ["weather", "air", "net", "cpu", "ram", "gpu", "disk"];
 
     [Fact]
     public void Defaults_hide_gpu_and_disk_in_the_prd_order()
@@ -17,21 +17,28 @@ public class RightModuleRulesTests
 
     [Fact]
     public void Order_repairs_duplicates_unknown_and_missing() =>
-        Assert.Equal(["cpu", "weather", "net", "ram", "gpu", "disk"], RightModuleRules.Repair(["cpu", "cpu", "x", "weather"]));
+        Assert.Equal(["cpu", "weather", "air", "net", "ram", "gpu", "disk"], RightModuleRules.Repair(["cpu", "cpu", "x", "weather"]));
+
+    [Fact]
+    public void A_saved_order_from_before_air_quality_gets_it_after_weather()
+    {
+        Assert.Equal(["cpu", "ram", "weather", "air", "net", "gpu", "disk"], RightModuleRules.Repair(["cpu", "ram", "weather", "net", "gpu", "disk"]));
+        Assert.Equal(["net", "weather", "air", "cpu", "ram", "gpu", "disk"], RightModuleRules.Repair(["net", "weather", "cpu", "ram", "gpu", "disk"]));
+    }
 
     [Fact]
     public void Empty_or_missing_order_is_the_default()
     {
         Assert.Equal(Default, RightModuleRules.Repair(null));
         Assert.Equal(Default, new AppSettings { ModuleOrder = "" }.Normalize().Order);
-        Assert.Equal("cpu,weather,net,ram,gpu,disk", new AppSettings { ModuleOrder = " cpu ,cpu,x,weather" }.Normalize().ModuleOrder);
+        Assert.Equal("cpu,weather,air,net,ram,gpu,disk", new AppSettings { ModuleOrder = " cpu ,cpu,x,weather" }.Normalize().ModuleOrder);
     }
 
     [Fact]
     public void Move_down_and_up()
     {
-        Assert.Equal(["net", "weather", "cpu", "ram", "gpu", "disk"], RightModuleRules.Move(Default, "weather", 1));
-        Assert.Equal(["weather", "net", "cpu", "ram", "disk", "gpu"], RightModuleRules.Move(Default, "disk", -1));
+        Assert.Equal(["air", "weather", "net", "cpu", "ram", "gpu", "disk"], RightModuleRules.Move(Default, "weather", 1));
+        Assert.Equal(["weather", "air", "net", "cpu", "ram", "disk", "gpu"], RightModuleRules.Move(Default, "disk", -1));
     }
 
     [Fact]
@@ -45,12 +52,13 @@ public class RightModuleRulesTests
     [Fact]
     public void MoveTo_places_at_index()
     {
-        Assert.Equal(["gpu", "weather", "net", "cpu", "ram", "disk"], RightModuleRules.MoveTo(Default, "gpu", 0));
-        Assert.Equal(["net", "cpu", "ram", "gpu", "disk", "weather"], RightModuleRules.MoveTo(Default, "weather", 99));
+        Assert.Equal(["gpu", "weather", "air", "net", "cpu", "ram", "disk"], RightModuleRules.MoveTo(Default, "gpu", 0));
+        Assert.Equal(["air", "net", "cpu", "ram", "gpu", "disk", "weather"], RightModuleRules.MoveTo(Default, "weather", 99));
     }
 
     [Theory]
     [InlineData("weather", RightModules.Weather)]
+    [InlineData("air", RightModules.AirQuality)]
     [InlineData("net", RightModules.Network)]
     [InlineData("cpu", RightModules.Cpu)]
     [InlineData("ram", RightModules.Ram)]

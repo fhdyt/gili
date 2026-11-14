@@ -109,14 +109,14 @@ public sealed class SettingsStoreTests : IDisposable
         File.WriteAllText(SettingsFile, """{ "barHeight": 36 }""");
         var settings = Store.Load().Settings;
         Assert.Equal(RightModules.Gpu | RightModules.Disk, settings.HiddenModules);
-        Assert.Equal("weather,net,cpu,ram,gpu,disk", settings.ModuleOrder);
+        Assert.Equal("weather,air,net,cpu,ram,gpu,disk", settings.ModuleOrder);
     }
 
     [Fact]
     public void Module_switches_and_order_survive_a_restart()
     {
-        Store.Save(new AppSettings { HiddenModules = RightModules.Weather, ModuleOrder = "cpu,ram,net,weather,gpu,disk" });
+        Store.Save(new AppSettings { HiddenModules = RightModules.Weather | RightModules.AirQuality, ModuleOrder = "cpu,ram,net,weather,air,gpu,disk" });
         var loaded = Store.Load().Settings;
-        Assert.Equal((RightModules.Weather, "cpu,ram,net,weather,gpu,disk"), (loaded.HiddenModules, loaded.ModuleOrder));
+        Assert.Equal((RightModules.Weather | RightModules.AirQuality, "cpu,ram,net,weather,air,gpu,disk"), (loaded.HiddenModules, loaded.ModuleOrder));
     }
 }

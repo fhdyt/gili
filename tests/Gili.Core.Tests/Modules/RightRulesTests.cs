@@ -76,6 +76,43 @@ public class RightRulesTests
         Assert.Equal("", BatteryText.Line(null, false, null));
     }
 
+    [Theory]
+    [InlineData(0, AirLevel.Good, "Good")]
+    [InlineData(50, AirLevel.Good, "Good")]
+    [InlineData(51, AirLevel.Moderate, "Moderate")]
+    [InlineData(100, AirLevel.Moderate, "Moderate")]
+    [InlineData(101, AirLevel.Sensitive, "Unhealthy for sensitive groups")]
+    [InlineData(150, AirLevel.Sensitive, "Unhealthy for sensitive groups")]
+    [InlineData(151, AirLevel.Unhealthy, "Unhealthy")]
+    [InlineData(200, AirLevel.Unhealthy, "Unhealthy")]
+    [InlineData(201, AirLevel.VeryUnhealthy, "Very unhealthy")]
+    [InlineData(300, AirLevel.VeryUnhealthy, "Very unhealthy")]
+    [InlineData(301, AirLevel.Hazardous, "Hazardous")]
+    [InlineData(500, AirLevel.Hazardous, "Hazardous")]
+    public void Us_aqi_levels_follow_the_epa_breakpoints(int aqi, AirLevel level, string name)
+    {
+        Assert.Equal(level, AirQualityText.Level(aqi));
+        Assert.Equal(name, AirQualityText.Name(level));
+    }
+
+    [Fact]
+    public void Air_quality_reads_like_the_mockup()
+    {
+        Assert.Equal("184", AirQualityText.Value(184));
+        Assert.Equal("US AQI 184 · Unhealthy · PM2.5 43 µg/m³ · Jakarta", AirQualityText.Tooltip(184, 42.6, "Jakarta"));
+        Assert.Equal("US AQI 12 · Good · Jakarta", AirQualityText.Tooltip(12, null, "Jakarta"));
+    }
+
+    [Fact]
+    public void Overflow_hides_weather_then_air_quality_then_network()
+    {
+        var modules = new[] { ("weather", 70.0), ("air", 50.0), ("net", 66.0), ("cpu", 36.0), ("wifi", 90.0) };
+        Assert.Empty(RightOverflow.Hide(modules, 320));
+        Assert.Equal(["weather"], RightOverflow.Hide(modules, 300));
+        Assert.Equal(["weather", "air"], RightOverflow.Hide(modules, 230));
+        Assert.Equal(["weather", "air", "net"], RightOverflow.Hide(modules, 180));
+    }
+
     [Fact]
     public void Overflow_hides_weather_first_then_network()
     {

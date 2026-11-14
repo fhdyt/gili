@@ -174,6 +174,7 @@ public partial class BarWindow : Window
         !_settings.Current.HiddenModules.HasFlag(Core.Settings.RightModuleRules.Of(id)) && id switch
         {
             "weather" => _vm.HasWeather,
+            "air" => _vm.HasAir,
             "wifi" => _vm.HasWifi,
             "bt" => _vm.HasBluetooth,
             "vol" => _vm.HasVolume,
@@ -223,6 +224,7 @@ public partial class BarWindow : Window
             var text = id switch
             {
                 "weather" => $"Weather · {_vm.WeatherLabel} {_vm.WeatherValue}",
+                "air" => $"Air quality · AQI {_vm.AirValue}",
                 "net" => $"Network · {_vm.UpText}  {_vm.DownText}",
                 "cpu" => $"CPU · {_vm.CpuText}",
                 "ram" => $"RAM · {_vm.RamText}",

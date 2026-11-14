@@ -48,7 +48,8 @@ public sealed class IslandCoordinator
         {
             DateTimeOffset? next = _wide is null ? null : _wideUntil;
             if (_clipboardUntil is { } clip && (next is null || clip < next)) next = clip;
-            if (_shownCard is { Priority: CardPriority.Reminder } && (next is null || _cardUntil < next)) next = _cardUntil;
+            if (_shownCard is { Priority: CardPriority.Reminder } && _cardUntil != DateTimeOffset.MaxValue && (next is null || _cardUntil < next))
+                next = _cardUntil;
             return next;
         }
     }
@@ -256,7 +257,9 @@ public sealed class IslandCoordinator
         if (card != _shownCard)
         {
             _shownCard = card;
-            if (card is { Priority: CardPriority.Reminder }) _cardUntil = now + card.Timeout;
+            // A reminder without a timeout (Claude is done, F-CLD-09) stays until it is dismissed, like a finished timer.
+            if (card is { Priority: CardPriority.Reminder })
+                _cardUntil = card.Timeout == Timeout.InfiniteTimeSpan ? DateTimeOffset.MaxValue : now + card.Timeout;
         }
 
         IslandMode mode;

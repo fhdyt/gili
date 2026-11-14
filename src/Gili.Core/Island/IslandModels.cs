@@ -39,7 +39,8 @@ public sealed record WideEvent(string Key, WideIcon Icon, WideTone Tone, IReadOn
 public enum CardPriority { Urgent = 1, Reminder = 2 }
 
 /// <summary>
-/// A notification card. Urgent cards stay until answered; reminders close after <paramref name="Timeout"/>. An urgent card
+/// A notification card. Urgent cards stay until answered; reminders close after <paramref name="Timeout"/>, or never with
+/// <see cref="Timeout.InfiniteTimeSpan"/> (Claude is done, F-CLD-09), yet still wait in focus and go in fullscreen. An urgent card
 /// that <paramref name="HoldInFocus"/> waits for a pomodoro break like a reminder (Claude usage reset, PRD 6.3).
 /// </summary>
 public sealed record IslandCard(string Id, CardPriority Priority, TimeSpan Timeout, bool HoldInFocus = false);

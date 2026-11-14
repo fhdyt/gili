@@ -32,6 +32,7 @@ public sealed class ClaudeService : IDisposable
     private string? _problem;
     private ClaudeBoard? _demo;
     private ClaudeCards? _demoCards;
+    private ClaudeDoneCards? _demoDoneCards;
     // Each session process's window, found once; the PIDs whose terminal name was looked for.
     private readonly Dictionary<int, SessionWindow?> _windows = [];
     private readonly HashSet<int> _hostTried = [];
@@ -78,6 +79,7 @@ public sealed class ClaudeService : IDisposable
 
     private readonly ClaudeBoard _real;
     private readonly ClaudeCards _cards = new();
+    private readonly ClaudeDoneCards _doneCards = new();
     private readonly ClaudeUsage _usage;
     private readonly DispatcherTimer _reset = new();
     private ClaudeUsage? _demoUsage;
@@ -125,6 +127,9 @@ public sealed class ClaudeService : IDisposable
 
     /// <summary>Which wait the Needs input card stands for (F-CLD-03); the demo has its own.</summary>
     public ClaudeCards Cards => _demoCards ?? _cards;
+
+    /// <summary>Which finish the Claude is done card stands for (F-CLD-09); the demo has its own.</summary>
+    public ClaudeDoneCards DoneCards => _demoDoneCards ?? _doneCards;
 
     /// <summary>The sessions or the running time changed.</summary>
     public event Action? Changed;
@@ -331,6 +336,7 @@ public sealed class ClaudeService : IDisposable
         if (_demo is not null) return;
         _demo = new ClaudeBoard(() => DateTimeOffset.Now, _ => false, desktopOnly: true);
         _demoCards = new ClaudeCards();
+        _demoDoneCards = new ClaudeDoneCards();
         _demoUsage = new ClaudeUsage(null, () => DateTimeOffset.Now);
         _demoUsage.Changed += OnUsageChanged;
         _demoWeekly = new ClaudeWeekly(null, () => DateTimeOffset.Now);
@@ -349,6 +355,7 @@ public sealed class ClaudeService : IDisposable
         _demo.Changed -= OnBoardChanged;
         _demo = null;
         _demoCards = null;
+        _demoDoneCards = null;
         _demoUsage!.Changed -= OnUsageChanged;
         _demoUsage = null;
         _demoWeekly!.Changed -= OnUsageChanged;

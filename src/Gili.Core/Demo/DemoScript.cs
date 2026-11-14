@@ -146,7 +146,8 @@ public static class DemoScript
             Step(57.4, new DemoPower(new PowerSnapshot(HasBattery: true, PluggedIn: true, Charging: false, Percent: 79))),
             Step(59.5, new DemoMedia(null)),
             // Claude (plan 3i): Desktop works, asks (card and Ping, 8 s), is answered; a second Desktop session joins; both
-            // finish behind other windows, so a green dot, then the green bubble with 2, then the Claude page. Only Claude
+            // finish behind other windows, each opening the Claude is done card (revision 25), so a green dot, then the green
+            // bubble with 2, then the Claude page. Only Claude
             // Desktop's sessions show (revision 17).
             Step(60, new DemoClaudeSession(Desk, "Integrate taskbar with Claude", @"C:\Projects\gili", Desktop: true)),
             // The weekly limit's reset, set by hand, shows on the Claude page under the 5-hour row (revision 19).
@@ -158,6 +159,8 @@ public static class DemoScript
             Step(73.5, new DemoClaudeHook("UserPromptSubmit", Desk2)),
             Step(76.5, new DemoClaudeHook("Stop", Desk)),
             Step(81.5, new DemoClaudeHook("Stop", Desk2)),
+            // Each finish opened the Claude is done card (revision 25); closing it shows the Done, the dot, then the bubble.
+            Step(84.5, new DemoDismiss(DoneCard)),
             Step(87, new DemoOpen(IslandPage.Claude)),
             Step(91, new DemoClose()),
             // The 5-hour window (plan 3j): the limit reached, then a window that ends 6 s later with its card.
@@ -207,6 +210,9 @@ public static class DemoScript
 
     /// <summary>The Claude usage reset card's id, as the island raises it.</summary>
     public const string ResetCard = "claude-reset";
+
+    /// <summary>The Claude is done card's id (F-CLD-09).</summary>
+    public const string DoneCard = Gili.Core.Claude.ClaudeDoneCards.CardId;
 
     private const string Desk = "demo-desktop";
     private const string Desk2 = "demo-desktop-2";

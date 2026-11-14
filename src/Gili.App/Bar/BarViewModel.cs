@@ -32,6 +32,11 @@ public sealed partial class BarViewModel : ObservableObject
     [ObservableProperty] private string _weatherValue = "";
     [ObservableProperty] private string? _weatherTooltip;
     [ObservableProperty] private double _weatherOpacity = 1;
+    [ObservableProperty] private bool _hasAir;
+    [ObservableProperty] private string _airValue = "";
+    [ObservableProperty] private Brush _airBrush = Brushes.Transparent;
+    [ObservableProperty] private string? _airTooltip;
+    [ObservableProperty] private double _airOpacity = 1;
     [ObservableProperty] private bool _hasWifi;
     [ObservableProperty] private bool _wifiHasText;
     [ObservableProperty] private string _wifiLabel = "";
@@ -58,6 +63,20 @@ public sealed partial class BarViewModel : ObservableObject
     /// <summary>The widest the time can be, laid under it so the bar never shifts as the digits tick (PRD 6.4).</summary>
     [ObservableProperty] private string _clockTemplate = "00:00:00";
 
+    /// <summary>The air quality dot for each US AQI level, from Good to Hazardous (F-RIGHT-13, mockup AIR_COLORS).</summary>
+    private static readonly Brush[] AirBrushes =
+    [
+        Frozen(0x30, 0xD1, 0x58), Frozen(0xFF, 0xD6, 0x0A), Frozen(0xFF, 0x9F, 0x0A),
+        Frozen(0xFF, 0x45, 0x3A), Frozen(0xBF, 0x5A, 0xF2), Frozen(0xA8, 0x32, 0x4E),
+    ];
+
+    private static SolidColorBrush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     /// <summary>The right-hand readings as the mockup shows them (PRD 6.4).</summary>
     public void ApplyRight(RightService right, Func<string, Geometry> glyph)
     {
@@ -76,6 +95,15 @@ public sealed partial class BarViewModel : ObservableObject
             WeatherTooltip = WeatherText.Tooltip(condition, weather.Max, weather.Min, right.City);
             // A stale reading stays, greyed out, until the next one arrives (F-RIGHT-05).
             WeatherOpacity = right.WeatherStale ? 0.5 : 1;
+        }
+
+        HasAir = right.Air is not null;
+        if (right.Air is { } air)
+        {
+            AirValue = AirQualityText.Value(air.UsAqi);
+            AirBrush = AirBrushes[(int)AirQualityText.Level(air.UsAqi)];
+            AirTooltip = AirQualityText.Tooltip(air.UsAqi, air.Pm25, right.City);
+            AirOpacity = right.AirStale ? 0.5 : 1;
         }
 
         HasWifi = right.Wifi is not null;

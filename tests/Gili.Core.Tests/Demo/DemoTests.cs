@@ -169,6 +169,17 @@ public class DemoTests
     }
 
     [Fact]
+    public void The_claude_is_done_card_shows_after_the_finishes_and_goes_before_the_green_bubble()
+    {
+        // Each Stop behind another window opens the Claude is done card, which stays like a timer's until answered
+        // (F-CLD-09); the demo closes it before the second Done's 4 s are over, so the green dot and bubble still show.
+        var stops = Steps.Where(s => s.Action is DemoClaudeHook { Event: "Stop" }).ToList();
+        var close = Steps.Single(s => s.Action is DemoDismiss { Card: DemoScript.DoneCard });
+        Assert.True(close.At - stops[1].At >= TimeSpan.FromSeconds(2.5));
+        Assert.True(close.At - stops[1].At < TimeSpan.FromSeconds(4));
+    }
+
+    [Fact]
     public void Every_demo_claude_session_is_a_claude_desktop_one()
     {
         // Gili shows only Claude Desktop's sessions for now; the CLI's never appear (revision 17).

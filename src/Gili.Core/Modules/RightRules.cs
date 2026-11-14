@@ -30,6 +30,45 @@ public static class WeatherText
         $"{condition} · {Temperature(max)} / {Temperature(min)} · {city}";
 }
 
+/// <summary>The US AQI's six EPA levels (F-RIGHT-13).</summary>
+public enum AirLevel { Good, Moderate, Sensitive, Unhealthy, VeryUnhealthy, Hazardous }
+
+/// <summary>
+/// Air quality as the bar shows it (F-RIGHT-13, revision 25): AQI over the US AQI number, a dot in the level's colour, and
+/// a tooltip with the level, PM2.5 and the Weather city. US AQI is the index IQAir shows.
+/// </summary>
+public static class AirQualityText
+{
+    public static AirLevel Level(int aqi) => aqi switch
+    {
+        <= 50 => AirLevel.Good,
+        <= 100 => AirLevel.Moderate,
+        <= 150 => AirLevel.Sensitive,
+        <= 200 => AirLevel.Unhealthy,
+        <= 300 => AirLevel.VeryUnhealthy,
+        _ => AirLevel.Hazardous,
+    };
+
+    public static string Name(AirLevel level) => level switch
+    {
+        AirLevel.Good => "Good",
+        AirLevel.Moderate => "Moderate",
+        AirLevel.Sensitive => "Unhealthy for sensitive groups",
+        AirLevel.Unhealthy => "Unhealthy",
+        AirLevel.VeryUnhealthy => "Very unhealthy",
+        _ => "Hazardous",
+    };
+
+    public static string Value(int aqi) => aqi.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>"US AQI 184 · Unhealthy · PM2.5 43 µg/m³ · Jakarta"; PM2.5 is left out when Open-Meteo has none.</summary>
+    public static string Tooltip(int aqi, double? pm25, string city)
+    {
+        var pm = pm25 is { } p ? $" · PM2.5 {Math.Round(p).ToString(CultureInfo.InvariantCulture)} µg/m³" : "";
+        return $"US AQI {Value(aqi)} · {Name(Level(aqi))}{pm} · {city}";
+    }
+}
+
 public static class WifiText
 {
     private const int MaxName = 16;
@@ -78,7 +117,7 @@ public static class BatteryText
 /// </summary>
 public static class RightOverflow
 {
-    private static readonly string[] Order = ["weather", "net", "disk", "gpu", "ram", "cpu"];
+    private static readonly string[] Order = ["weather", "air", "net", "disk", "gpu", "ram", "cpu"];
     private const double MoreWidth = 32;
 
     public static IReadOnlyList<string> Hide(IReadOnlyList<(string Id, double Width)> modules, double available)

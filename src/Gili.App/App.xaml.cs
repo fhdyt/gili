@@ -222,6 +222,13 @@ public partial class App : Application
         _claude.Changed += ShowClaude;
         _islandController.ClaudeSessionRequested += _claude.Focus;
         _islandController.ClaudeCardClosed += () => _claude.Cards.Close();
+        _islandController.ClaudeDoneClosed += seen =>
+        {
+            var id = _claude.DoneCards.Current?.SessionId;
+            _claude.DoneCards.Close();
+            // Close counts the finish as seen, so its green bubble goes too; a Needs input card taking its place keeps it.
+            if (seen && id is not null) _claude.Board.MarkSeen(id);
+        };
         _apps.ForegroundChanged += _claude.OnForeground;
         _apps.ClaudeDesktopChanged += _claude.SetDesktopOpen;
         // Explorer's copy, move and delete progress (F-ISL-15): read only while Explorer's dialog is open.
@@ -386,8 +393,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Claude's sessions in the slot, the green bubble, the page and on the left icon (F-CLD-02, F-CLD-04, F-LEFT-05), and
-    /// the Needs input card for a new wait (F-CLD-03).
+    /// Claude's sessions in the slot, the green bubble, the page and on the left icon (F-CLD-02, F-CLD-04, F-LEFT-05), the
+    /// Needs input card for a new wait (F-CLD-03) and the Claude is done card for an unseen finish (F-CLD-09).
     /// </summary>
     private void ShowClaude()
     {
@@ -404,6 +411,17 @@ public partial class App : Application
                 break;
             case Core.Claude.ClaudeCardChange.Dismiss:
                 _islandController.DismissClaudeCard();
+                break;
+        }
+        // A finish behind another window opens the Claude is done card, like a finished timer (F-CLD-09).
+        var done = _claude.DoneCards;
+        switch (done.Update(sessions, _islandController.IsFullscreen))
+        {
+            case Core.Claude.ClaudeCardChange.Show:
+                _islandController.ShowClaudeDone(done.Current!);
+                break;
+            case Core.Claude.ClaudeCardChange.Dismiss:
+                _islandController.DismissClaudeDone();
                 break;
         }
         // The 5-hour window shows while the integration and its own switch are on and Claude Desktop is open, and always

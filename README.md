@@ -28,12 +28,12 @@ Bar dibagi tiga bagian.
 **Tengah, pulau:**
 - Maskot Gili saat tidak ada aktivitas.
 - Aktivitas di slot compact: cuplikan copy/cut selama 3 detik, media yang sedang diputar, timer dan pomodoro, progres copy/move/delete Explorer, file di Shelf, status sesi Claude, ngecas. Aktivitas kedua muncul sebagai gelembung di kanan pulau.
-- Kartu notifikasi untuk alarm, timer habis, dan pengingat todo, dengan suara dan toast Windows.
+- Kartu notifikasi untuk alarm, timer habis, dan pengingat todo, dengan suara dan toast Windows, serta kartu `Claude is done` saat Claude selesai di belakang jendela lain.
 - Halaman yang dibuka dari menu tab ikon: Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Shelf, Claude, System (grafik CPU/RAM/GPU 60 detik dan sisa disk).
 - Pulau kontrol untuk Wi‑Fi, Bluetooth, volume, brightness, dan power, masing-masing dibuka dari ikonnya di kanan bar.
 - Titik kamera dan mikrofon di samping pulau saat ada aplikasi yang memakainya.
 
-**Kanan:** cuaca, kecepatan jaringan, CPU, RAM, GPU, disk, Wi‑Fi, Bluetooth, volume, brightness, tombol Tray (ikon tersembunyi Windows), jam dan tanggal, Settings, dan Power. Setiap modul bisa dimatikan, dan modul sistem bisa diurutkan ulang. GPU dan disk mati secara default.
+**Kanan:** cuaca, kualitas udara (US AQI, indeks yang sama dengan IQAir), kecepatan jaringan, CPU, RAM, GPU, disk, Wi‑Fi, Bluetooth, volume, brightness, tombol Tray (ikon tersembunyi Windows), jam dan tanggal, Settings, dan Power. Setiap modul bisa dimatikan, dan modul sistem bisa diurutkan ulang. GPU dan disk mati secara default.
 
 **Lainnya:**
 - Jendela Tools untuk mengelola timer, pomodoro, stopwatch, alarm, dan todo.
@@ -231,7 +231,7 @@ Aturan penggabungnya:
 
 Nama sesi diambil dari judul sesi di Claude Desktop, atau nama foldernya kalau belum berjudul. Ikon Claude di kiri bar ikut menandai status: titik kuning saat ada sesi yang butuh jawaban, dan berdenyut saat ada sesi yang bekerja. Menekan Esc di Claude mengembalikan sesi ke diam tanpa tanda Done.
 
-Saat Claude butuh jawaban, kartu `Claude needs your input` terbuka dengan bunyi Ping lalu mengecil ke slot kuning setelah 8 detik. Sesi yang selesai saat jendelanya tidak aktif meninggalkan gelembung hijau sampai kamu melihatnya. Halaman Claude di pulau mendaftar semua sesi yang hidup, dan klik barisnya membuka jendela Claude Desktop.
+Saat Claude butuh jawaban, kartu `Claude needs your input` terbuka dengan bunyi Ping lalu mengecil ke slot kuning setelah 8 detik. Sesi yang selesai saat jendelanya tidak aktif membuka kartu `Claude is done` dengan bunyi Ping, seperti timer yang habis; kartunya tetap terbuka sampai kamu menekan **Close** atau **Open Claude**, atau membuka Claude Desktop sendiri. Kalau kartunya terlewat (aplikasi fullscreen, atau digantikan pertanyaan Claude), gelembung hijau menunggu sampai kamu melihatnya. Halaman Claude di pulau mendaftar semua sesi yang hidup, dan klik barisnya membuka jendela Claude Desktop.
 
 ### Jendela 5 jam dan limit mingguan
 
@@ -303,7 +303,7 @@ Salinan `gili.db` dan `settings.json` juga ditulis ke `%USERPROFILE%\.gili\backu
 Privasi:
 - Tanpa telemetri, tanpa akun, tanpa sinkronisasi cloud.
 - Data sesi Claude dan cuplikan copy/cut beserta thumbnail-nya hanya di memori, tidak pernah ditulis ke disk atau log. Gili tidak menyimpan riwayat clipboard.
-- Akses internet hanya untuk cuaca dan pencarian kota (Open-Meteo), lirik kalau **Show lyrics** dinyalakan (LRCLIB), dan cek versi baru di versi GitHub. Rinciannya di [kebijakan privasi](docs/release/privacy-policy.md).
+- Akses internet hanya untuk cuaca, kualitas udara, dan pencarian kota (Open-Meteo), lirik kalau **Show lyrics** dinyalakan (LRCLIB), dan cek versi baru di versi GitHub. Rinciannya di [kebijakan privasi](docs/release/privacy-policy.md).
 
 ## Menutup dan melepas Gili
 

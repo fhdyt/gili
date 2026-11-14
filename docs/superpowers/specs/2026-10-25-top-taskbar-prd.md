@@ -15,7 +15,7 @@ Catatan: dokumen ini berbahasa Indonesia, tetapi semua teks yang tampil di aplik
 
 ## 1. Ringkasan
 
-Gili adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, cuplikan copy/cut clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, jaringan, CPU, RAM, Wi‑Fi), ikon Bluetooth, volume, dan brightness (masing-masing membuka pulau kontrolnya sendiri), ikon tray, jam dan tanggal, Settings, dan power.
+Gili adalah bar kaca di tepi atas layar (bisa dipindah ke bawah), mirip panel desktop Linux, dengan "pulau" hitam pekat di tengah yang meniru Dynamic Island iPhone. Bar dibagi tiga: kiri untuk konteks kerja (tombol Start, launcher, dan aplikasi aktif), tengah untuk maskot **Gili** dan aktivitas yang sedang berjalan (media, timer, cuplikan copy/cut clipboard, progres file, status sesi Claude, batas pemakaian Claude 5 jam, ngecas), kanan untuk status sistem (cuaca, kualitas udara, jaringan, CPU, RAM, Wi‑Fi), ikon Bluetooth, volume, dan brightness (masing-masing membuka pulau kontrolnya sendiri), ikon tray, jam dan tanggal, Settings, dan power.
 
 Saat tidak ada aktivitas, pulau berisi sepasang mata Gili yang mengikuti kursor dan berkedip. Saat ada aktivitas, Gili berpindah ke kiri pulau sebagai lingkaran kecil, dan pulau menampilkan aktivitasnya.
 
@@ -68,7 +68,7 @@ Gili dirilis gratis untuk umum lewat Microsoft Store dan installer di GitHub Rel
 6. **Fokus**: pomodoro 25 menit dimulai, pulau menghitung mundur, lalu kartu "Focus session done" muncul saat habis.
 7. **Ide mendadak**: Ctrl+Alt+N membuka halaman Notes dengan note baru kosong dan kursor siap mengetik. Tulisan tersimpan otomatis; Esc menutup pulau.
 8. **Alarm**: jam 14:30 pulau terbuka dengan kartu alarm (Snooze 5m / Stop), suara berbunyi, toast masuk Notification Center.
-9. **Bekerja dengan Claude**: pengguna memberi tugas di Claude Desktop lalu pindah ke browser. Pulau menampilkan nama sesi dan waktu berjalan. Saat Claude bertanya, kartu `Claude needs your input` muncul dengan cuplikan pertanyaan dan bunyi Ping; **Open Claude** membawa Claude Desktop ke depan. Saat selesai, pulau menampilkan `Done · 4m 12s`, lalu gelembung hijau menunggu sampai Claude Desktop dibuka.
+9. **Bekerja dengan Claude**: pengguna memberi tugas di Claude Desktop lalu pindah ke browser. Pulau menampilkan nama sesi dan waktu berjalan. Saat Claude bertanya, kartu `Claude needs your input` muncul dengan cuplikan pertanyaan dan bunyi Ping; **Open Claude** membawa Claude Desktop ke depan. Saat selesai, pulau terbuka ke kartu `Claude is done` (nama sesi, `Finished in 4m 12s`) dengan Ping sekali, seperti saat timer berakhir, dan tetap terbuka sampai ditanggapi: **Open Claude** membawa Claude Desktop ke depan, dan membuka Claude Desktop sendiri juga menutup kartunya.
 10. **Batas pemakaian Claude**: prompt pertama pagi itu memulai jendela 5 jam. Pulau menghitung mundur `Resets in 3:12:40`; saat batas tercapai, slot berubah kuning `Limit reached`. Saat jendela berakhir, kartu `Claude usage reset` muncul dengan bunyi seperti timer.
 11. **Meja kosong**: tidak ada yang berjalan. Pulau hanya berisi dua mata Gili yang melirik ke arah kursor dan sesekali berkedip. Begitu musik diputar, Gili meluncur ke kiri menjadi lingkaran kecil dan pulau menampilkan judul lagu.
 12. **Copy dan cut**: pengguna mencopy alamat dari email. Selama 3 detik slot pulau menampilkan ikon copy dan baris pertama teksnya, lalu kembali ke aktivitas sebelumnya. Cut file di Explorer tampil dengan ikon gunting biru. Gili tidak menyimpan riwayat copy (revisi 21); untuk itu ada `Win+V` Windows.
@@ -382,10 +382,14 @@ Saat sebuah sesi mulai menunggu, pulau membuka kartu (prioritas 2, seperti pengi
 
 **Setelah selesai**
 - Kalau jendela sesi itu sedang aktif saat Claude selesai, cukup tampilan `Done` 4 detik.
-- Kalau tidak, setelah 4 detik muncul **gelembung hijau** berikon Claude di kanan pulau, paling kanan dari semua gelembung (kecuali aktivitas Claude sedang tampil; lihat titik hijau di atas). Gelembung ini bukan aktivitas, jadi Gili tetap di dalam pulau.
+- Kalau tidak, pulau langsung terbuka ke **kartu `Claude is done`** (revisi 25, issue 42; F-CLD-09), seukuran kartu timer habis: glyph Claude hijau `#30D158` tanpa denyut, judul `Claude is done`, baris kedua nama sesi, baris ketiga `Finished in 4m 12s` (format sama dengan `Done · …`), tombol **Close** dan **Open Claude**. Ping berbunyi sekali.
+  - Seperti kartu timer habis, kartu ini tidak menutup sendiri. Kartu hilang saat Close (selesainya dihitung sudah dilihat, jadi gelembung hijaunya juga tidak muncul), Open Claude (membawa jendela sesi ke depan), atau saat selesainya terlihat dengan cara lain: jendela sesi itu menjadi aktif, gelembungnya diklik, prompt baru dikirim di sesi itu, atau sesinya hilang.
+  - Selesai berikutnya dari sesi lain saat kartu masih terbuka mengganti isi kartu; tiap selesai membuka kartu sekali saja.
+  - Prioritasnya 2 seperti kartu Needs input: ditahan selama fase fokus pomodoro (muncul saat istirahat kalau masih belum dilihat), dilewati saat aplikasi fullscreen aktif (tanpa toast; gelembung hijau tetap muncul), dan memberi jalan kepada kartu Needs input baru, yang lebih mendesak (selesainya tetap ditandai gelembung hijau).
+- Selama selesainya belum dilihat (kartu dilewati karena fullscreen, atau digantikan kartu Needs input), setelah `Done` 4 detik muncul **gelembung hijau** berikon Claude di kanan pulau, paling kanan dari semua gelembung (kecuali aktivitas Claude sedang tampil; lihat titik hijau di atas). Gelembung ini bukan aktivitas, jadi Gili tetap di dalam pulau.
 - Gelembung hilang saat jendela sesi itu menjadi aktif, saat gelembung diklik (membawa jendela itu ke depan), atau saat prompt baru dikirim di sesi itu. Kalau lebih dari satu sesi selesai dan belum dilihat, gelembung diberi angka (`2`) dan klik membuka halaman Claude.
 - Untuk sesi Claude Desktop, "jendela aktif" berarti jendela Claude Desktop di depan, karena Gili tidak tahu percakapan mana yang sedang dilihat di dalamnya.
-- Selesai tidak berbunyi.
+- Selesai hanya berbunyi lewat Ping kartu `Claude is done`; `Done` di slot dan gelembung hijau tanpa suara.
 
 #### Batas pemakaian Claude (jendela 5 jam)
 
@@ -501,14 +505,14 @@ Notifikasi baru dari aplikasi lain (pesan WhatsApp, email Outlook, chat Teams at
 Kalau beberapa kejadian bersamaan, `IslandCoordinator` menampilkan yang paling tinggi dan menahan sisanya di antrean:
 
 1. Alarm berbunyi / timer habis / fase pomodoro selesai / jendela Claude 5 jam berakhir / konflik file Explorer (kartu, tetap tampil sampai ditanggapi)
-2. Pengingat todo (kartu selama 10 detik lalu menutup; toast-nya tetap di Notification Center) dan kartu Claude "Needs input" (8 detik lalu mengecil ke slot, tanpa toast)
+2. Pengingat todo (kartu selama 10 detik lalu menutup; toast-nya tetap di Notification Center), kartu Claude "Needs input" (8 detik lalu mengecil ke slot, tanpa toast), dan kartu `Claude is done` (tetap sampai ditanggapi atau dilihat, tanpa toast; revisi 25)
 3. Drop zone saat file diseret ke atas bar
 4. Notifikasi Windows di pulau compact yang memanjang (5 detik; revisi 8)
 5. Kejadian wide
 6. Aktivitas berjalan (slot compact)
 7. Gili saja (tanpa aktivitas)
 
-Pulau yang dibuka pengguna (expanded, pulau kontrol, atau kartu notifikasi Windows yang dibuka dengan klik; revisi 14) berada di atas prioritas 4–7 dan di bawah 1–3; notifikasi Windows yang datang saat pulau terbuka menunggu sampai pulau menutup (maks. 10 detik). Alarm menggantikan halaman atau kontrol yang sedang terbuka, lalu keduanya kembali setelah alarm ditanggapi. Saat aplikasi fullscreen aktif, hanya prioritas 1 yang muncul (sebagai overlay); prioritas 2 lewat toast saja (kartu Claude dilewati karena tidak punya toast), prioritas 3–7 dilewati.
+Pulau yang dibuka pengguna (expanded, pulau kontrol, atau kartu notifikasi Windows yang dibuka dengan klik; revisi 14) berada di atas prioritas 4–7 dan di bawah 1–3; notifikasi Windows yang datang saat pulau terbuka menunggu sampai pulau menutup (maks. 10 detik). Alarm menggantikan halaman atau kontrol yang sedang terbuka, lalu keduanya kembali setelah alarm ditanggapi. Saat aplikasi fullscreen aktif, hanya prioritas 1 yang muncul (sebagai overlay); prioritas 2 lewat toast saja (kedua kartu Claude dilewati karena tidak punya toast), prioritas 3–7 dilewati.
 
 #### Halaman expanded
 
@@ -730,6 +734,7 @@ Untuk melihat project sepanjang berminggu-minggu sekaligus, karena pulau hanya m
 | File sedang dipakai | `File in use`, `budget.xlsx is open in Excel` | Skip, Try again |
 | Butuh izin admin | `Needs administrator permission`, nama folder tujuan | Open dialog |
 | Claude butuh jawaban | `Claude needs your input`, `Claude needs permission`, atau `Plan ready for review`; nama sesi; cuplikan pertanyaan | Later, Open Claude (sesi terminal: Open terminal) |
+| Claude selesai (revisi 25) | Glyph Claude hijau, `Claude is done`, nama sesi, `Finished in 4m 12s` | Close, Open Claude |
 
 Suara tiap kartu diatur di 6.6. Kalau alarm atau timer tidak ditanggapi dalam 5 menit, suara berhenti, kartu mengecil ke compact dengan tanda merah, dan toast "Missed alarm 14:30" tetap di Notification Center.
 
@@ -758,7 +763,7 @@ Suara tiap kartu diatur di 6.6. Kalau alarm atau timer tidak ditanggapi dalam 5 
 - Label: 8.5 px, semibold, huruf kapital, jarak huruf 0.06 em, warna `#9A9AA0`.
 - Nilai: 11.5 px, semibold, digit tabular, warna teks utama.
 - Jaringan memakai dua baris nilai tanpa label: upload di atas, download di bawah (9.5 px), lebar minimum 58 px supaya bar tidak bergeser saat angkanya berubah.
-- Ikon (cuaca, Wi‑Fi) berada di kiri blok dua baris; ikon power berdiri sendiri.
+- Ikon (cuaca, Wi‑Fi) dan titik warna kualitas udara berada di kiri blok dua baris; ikon power berdiri sendiri.
 - Tinggi area klik modul = tinggi bar − 6 px (minimal 24 px). Di tinggi bar terkecil (28 px) dua baris tetap muat.
 - Jarak antar-modul rapat dan rata, seperti deretan ikon toolbar: 10 px dari isi satu modul ke isi modul berikutnya (padding area klik 4 px di tiap sisi + celah 2 px; dirapatkan user 2026-10-26). Area klik modul ikon minimal 24 px lebar.
 
@@ -767,6 +772,7 @@ Urutan default dari kiri ke kanan:
 | Modul | Default | Tampilan (label / nilai) | Interaksi |
 |---|---|---|---|
 | Cuaca | Nyala | Ikon cuaca + `CLOUDY` / `29°` (label = kondisi singkat) | Hover: kondisi, tertinggi/terendah hari ini, kota |
+| Kualitas udara (revisi 25) | Nyala | Titik 8 px berwarna level + `AQI` / `57` (US AQI) | Hover: `US AQI 57 · Moderate · PM2.5 14 µg/m³ · Jakarta` |
 | Jaringan | Nyala | `↑ 0.3 MB/s` / `↓ 2.1 MB/s` (satuan B/KB/MB otomatis) | Hover: adapter, total hari ini |
 | CPU | Nyala | `CPU` / `12%` | Klik: halaman System |
 | RAM | Nyala | `RAM` / `54%` | Hover: `8.6 / 16 GB`. Klik: halaman System |
@@ -782,14 +788,21 @@ Urutan default dari kiri ke kanan:
 | Power | Nyala, paling kanan | Ikon power; titik oranye kecil di pojoknya kalau ada update Windows yang menunggu dipasang | Klik: pulau Power |
 
 - Ikon baterai tidak ditampilkan di bar; status ngecas tampil di pulau, dan sisa baterai ada di pulau Power.
-- **Tampil/sembunyi** (Settings → Right side): Cuaca, Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, dan Power (revisi 12, issue #29) masing-masing punya saklar, dan modul sistem (Cuaca, Jaringan, CPU, RAM, GPU, Disk) bisa diurutkan dengan seret lewat pegangan titik-titik di kiri barisnya, atau Alt + panah atas/bawah pada saklarnya (Fase 3c). Modul yang sedang di "…" tetap dibaca karena daftarnya menampilkan angka. Settings selalu tampil, supaya Settings tetap bisa dibuka tanpa klik kanan. Power yang dimatikan ikut membawa titik oranye update Windows-nya, dan pulau Power (dengan sisa baterai) tidak bisa dibuka dari bar; Sleep, Restart, dan Shut down tetap ada di Start menu Windows. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
-- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Jaringan, Disk, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil selama saklarnya nyala.
+- **Tampil/sembunyi** (Settings → Right side): Cuaca, Kualitas udara (revisi 25), Jaringan (bandwidth), CPU, RAM, GPU, Disk, Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, dan Power (revisi 12, issue #29) masing-masing punya saklar, dan modul sistem (Cuaca, Kualitas udara, Jaringan, CPU, RAM, GPU, Disk) bisa diurutkan dengan seret lewat pegangan titik-titik di kiri barisnya, atau Alt + panah atas/bawah pada saklarnya (Fase 3c). Modul yang sedang di "…" tetap dibaca karena daftarnya menampilkan angka. Settings selalu tampil, supaya Settings tetap bisa dibuka tanpa klik kanan. Power yang dimatikan ikut membawa titik oranye update Windows-nya, dan pulau Power (dengan sisa baterai) tidak bisa dibuka dari bar; Sleep, Restart, dan Shut down tetap ada di Start menu Windows. GPU dan disk tetap tersedia di halaman System walaupun modulnya mati. Modul yang dimatikan juga berhenti mengambil datanya (misalnya cuaca dan kualitas udara tidak lagi mengakses internet, counter CPU berhenti dibaca kalau CPU, RAM, dan halaman System semuanya tidak tampil).
+- Kalau modul tidak muat dalam aturan jarak 24 px, modul pindah ke menu "…" dengan urutan: Cuaca, Kualitas udara, Jaringan, Disk, GPU, RAM, CPU. Wi‑Fi, Bluetooth, Volume, Brightness, Tray, Jam, Settings, dan Power selalu tampil selama saklarnya nyala.
 - **Sampai Fase 3** (rencana 1e, keputusan pengguna 2026-10-27: tampilan bar lengkap dengan data asli dan fungsi dasar):
   - Cuaca memakai kota default Jakarta (−6,2088, 106,8456). Settings → Right side → Weather city mencari kota lewat geocoding Open-Meteo (Fase 4c): klik nama kota, ketik minimal dua huruf, pilih satu dari maksimal lima tempat (Enter memilih yang pertama, Esc membatalkan); cuaca kota baru langsung diambil. Nama kota tampil di tooltip.
   - Klik Wi‑Fi, Bluetooth, Volume, dan Brightness membuka Quick Settings Windows (`Win+A`) sampai Fase 3b, yang menggantinya dengan pulau kontrol; klik Tray membuka ikon tersembunyi Windows (`Win+B` lalu `Enter`). Pulau kontrolnya menyusul di Fase 3b; tombol Tray tetap memakai flyout Windows (Fase 3f).
   - Power membuka pulau Power tanpa item `Update and …`, karena deteksi update yang menunggu baru diverifikasi di Fase 3 (selesai di Fase 3e: kunci `RebootRequired` atau Windows Update Agent, keduanya cocok di laptop pengguna; tooltip ikon `Power · updates are ready to install`).
   - Tanpa izin Location, Wi‑Fi hanya menampilkan ikon dengan tooltip `Allow location access for Gili to show the Wi‑Fi name (Settings > Privacy & security > Location)`.
   - Klik CPU dan RAM membuka tab System yang berisi `Coming in Phase 3`, seperti mockup (selesai di Fase 3c: halaman System berisi grafik).
+
+**Kualitas udara** (revisi 25, issue 43; F-RIGHT-13)
+- Nilainya US AQI, indeks yang juga ditampilkan IQAir, dari Open-Meteo Air Quality API untuk kota cuaca di Settings, diperbarui tiap 30 menit. Keputusan: Open-Meteo, bukan API IQAir, karena API IQAir butuh API key per pengguna (key bersama tidak boleh masuk repo publik) dan akun, sedangkan Open-Meteo tanpa key, sudah dipakai cuaca, dan hanya menerima koordinat yang sama.
+- Titik 8 px di kiri mengikuti level EPA: 0–50 `Good` hijau `#30D158`, 51–100 `Moderate` kuning `#FFD60A`, 101–150 `Unhealthy for sensitive groups` oranye `#FF9F0A`, 151–200 `Unhealthy` merah `#FF453A`, 201–300 `Very unhealthy` ungu `#BF5AF2`, 301 ke atas `Hazardous` merah tua `#A8324E`. Labelnya tetap `AQI` supaya lebar modul tidak melonjak; nama level ada di tooltip.
+- Tooltip: `US AQI 57 · Moderate · PM2.5 14 µg/m³ · Jakarta` (PM2.5 dihilangkan bila tidak tersedia). Di menu "…": `Air quality · AQI 57`. Tanpa interaksi klik.
+- Gagal diambil: nilai terakhir berwarna abu-abu (opacity 50%) seperti cuaca, dicoba lagi menurut PRD 11; sebelum ada nilai, modulnya tidak tampil. Mengganti kota mengosongkan nilai dan langsung mengambil yang baru.
+- Urutan lama di `settings.json` yang belum punya modul ini mendapatnya tepat setelah Cuaca.
 
 **Tombol Tray** (ikon aplikasi latar belakang; revisi Fase 3f, menggantikan panel tray Gili)
 - Klik membuka flyout ikon tersembunyi milik Windows (`Win+B` lalu `Enter`), jadi klik kiri, klik kanan, klik dua kali, dan keyboard bekerja persis seperti di taskbar Windows.
@@ -838,7 +851,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Appearance | Bar color (8 warna + Custom, default Graphite; revisi 14), Bar opacity (default 100%), Opacity while open (default 0%, `How much of the bar stays while the island is open`; revisi 14), Same on the desktop (default nyala, `The bar looks like this while the desktop is in front`; revisi 14), Glass (Off / Light / Strong), Bar height, Island height, Ambient glow, Ambient motion |
 | Left side | Saklar Start, Timer, Alarms, Todo, Projects (revisi 16), Notes, Shelf, Claude, Favorites dengan daftar favorit dan `Add app…` (revisi 14), Running apps (revisi 12). Tiap saklar selain Start dan Running apps juga menyalakan/mematikan tab halaman yang sama di pulau, dengan keterangan `Turning it off also hides the <name> page in the island`. Selama `Show Claude Code sessions` mati, ikon dan tab Claude tidak ada dan saklar Claude (Left side dan Island) nonaktif dengan keterangan `Turn on Claude Code sessions first` |
 | Island | Show Gili; Show lyrics (default mati, Fase 6); saklar tiap halaman (Media, Timer, Alarms, Calendar, Todo, Projects, Notes, Shelf, Claude, System); saklar halaman yang ikon kirinya mati nonaktif dengan keterangan `Turned off in Left side` |
-| Right side | Saklar dan urutan Weather, Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date, Power (keterangan `Sleep, restart and shut down stay in the Start menu`; revisi 12); **Weather city**; **Battery alert** (ambang peringatan rendah 5–50%, keterangan `Also at 10%`); **Unplug reminder** (50–100%, default 80%, keterangan `Only on laptops that keep charging past it. 100% turns it off`) |
+| Right side | Saklar dan urutan Weather, Air quality (keterangan `US AQI, the index IQAir shows, from Open-Meteo for the Weather city`; revisi 25), Network, CPU, RAM, GPU, Disk; saklar Wi‑Fi, Bluetooth, Volume, Brightness, Tray icons, Clock and date, Power (keterangan `Sleep, restart and shut down stay in the Start menu`; revisi 12); **Weather city**; **Battery alert** (ambang peringatan rendah 5–50%, keterangan `Also at 10%`); **Unplug reminder** (50–100%, default 80%, keterangan `Only on laptops that keep charging past it. 100% turns it off`) |
 | Notifications | Fase 6. Show Windows notifications (default mati; meminta izin Windows), Show message text (default nyala), saklar per aplikasi yang pernah mengirim notifikasi, baris status izin, dan tips mematikan banner aplikasi di Windows (revisi 8) |
 | Claude | Show Claude Code sessions (F-CLD-01), Show 5-hour usage timer, baris status integrasi |
 | Sounds | Timer sound, Alert volume, Gradually increase, contoh suara |
@@ -858,7 +871,7 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Chime | Dua nada lonceng tinggi, berulang tiap 2 detik | Timer habis |
 | Bell | Satu dentang lonceng yang dalam | Fase pomodoro selesai |
 | Soft | Tiga nada lembut yang naik | Pilihan tambahan untuk alarm/timer |
-| Ping | Satu nada pendek | Pengingat todo, Claude butuh jawaban |
+| Ping | Satu nada pendek | Pengingat todo, Claude butuh jawaban, Claude selesai |
 
 **Kapan berbunyi**
 
@@ -871,7 +884,8 @@ Jendela Settings dibuka dari tombol roda gigi di kanan bar, dari menu klik kanan
 | Fase pomodoro selesai | Bell | Sekali |
 | Pengingat todo | Ping | Sekali; dibisukan selama fase fokus pomodoro (ikut F-TOOL-04) |
 | Claude butuh jawaban | Ping | Sekali per pertanyaan; dibisukan selama fase fokus pomodoro |
-| Kejadian lain (wide, Shelf, cuplikan clipboard, charger, Claude bekerja atau selesai) | — | Tanpa suara |
+| Claude selesai (kartu `Claude is done`, revisi 25) | Ping | Sekali per kartu; tidak berbunyi selama fase fokus (kartunya ditahan sampai istirahat) |
+| Kejadian lain (wide, Shelf, cuplikan clipboard, charger, Claude bekerja, `Done` di slot) | — | Tanpa suara |
 
 **Volume**
 - Suara Gili mengikuti volume Windows. Settings punya **Alert volume** (0–100%, default 80%) yang hanya mengatur volume sesi audio Gili, bukan volume sistem.
@@ -982,6 +996,7 @@ F-LEFT-03 (ikon Clipboard dan riwayat), F-ISL-28 (halaman Clipboard dan tempel k
 | F-RIGHT-10 | Pulau kontrol | Modul Wi‑Fi dan ikon Bluetooth, Volume, Brightness, serta Power masing-masing membuka pulau berisi kontrol itu saja, tanpa menu tab, dengan ukuran mengikuti isinya; klik ikon yang sama menutup, klik ikon kontrol lain mengganti isi; ikon Volume dan Bluetooth mencerminkan keadaan sistem ≤ 1 detik; saklar Wi‑Fi, Bluetooth, dan Airplane mode mengubah radio sistem; daftar Wi‑Fi bisa menyambung ke jaringan yang tersimpan; daftar Bluetooth bisa menyambung/memutus perangkat ter-pair; slider volume dan brightness mengubah nilai sistem langsung; pilihan perangkat output; tombol Windows Quick Settings dan All settings | 3 |
 | F-RIGHT-11 | Jam dan tanggal di kanan | Gaya dua baris (tanggal di atas, jam dengan detik di bawah) di kiri tombol Settings; detik berganti tepat di pergantian detik sistem (selisih ≤ 50 ms) tanpa menggeser elemen bar lain; Show seconds mati menampilkan jam tanpa detik; format 12/24 jam dari Settings; klik membuka/menutup halaman Calendar; bisa disembunyikan | 1 |
 | F-RIGHT-12 | Sembunyikan Power | Saklar `Power` di Settings → Right side (default nyala) menyembunyikan ikon Power beserta titik update-nya dengan animasi modul; Settings bergeser ke paling kanan; pilihan tersimpan setelah restart; `Clock and date` tetap bisa disembunyikan (F-RIGHT-11) (revisi 12, issue #29) | 5 |
+| F-RIGHT-13 | Kualitas udara | US AQI dan titik warna level dari Open-Meteo Air Quality untuk kota cuaca; diperbarui tiap 30 menit; offline menampilkan nilai terakhir berwarna abu-abu; tooltip level, PM2.5, dan kota; bisa disembunyikan dan diurutkan; urutan lama mendapatnya setelah Cuaca (revisi 25, issue 43) | 6 |
 | F-RIGHT-08 | Update and shut down / Update and restart | Kedua item dan titik oranye hanya muncul saat Windows punya update yang menunggu, cocok dengan yang ditampilkan Start menu; memilihnya memasang update lalu mematikan/restart | 3 |
 
 F-RIGHT-06 (suhu CPU lewat helper sensor admin) dihapus di revisi 6: helper itu butuh hak admin dan driver kernel, sehingga tidak bisa lolos Microsoft Store dan rawan dianggap malware. Nomornya tidak dipakai ulang.
@@ -1046,6 +1061,7 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | F-CLD-02 | Status di slot | Working, Needs input, dan Done tampil sesuai "Sesi Claude" di 6.3 ≤ 1 detik setelah kejadiannya; beberapa sesi digabung jadi satu aktivitas; Esc di Claude mengembalikan sesi ke Idle tanpa Done; sesi yang prosesnya mati hilang ≤ 5 detik | 3 |
 | F-CLD-03 | Kartu Needs input | Pertanyaan, persetujuan rencana, dan permintaan izin (bila hook-nya terpicu, lihat bagian 12) membuka kartu dengan Ping sekali; kartu mengecil ke slot kuning setelah 8 detik; slot kembali ke Working ≤ 1 detik setelah dijawab; kartu dan Ping ditahan selama fase fokus; tanpa toast | 3 |
 | F-CLD-04 | Selesai dan belum dilihat | Done tampil 4 detik; gelembung hijau muncul hanya bila jendela sesi tidak aktif saat selesai, dan hilang saat jendela itu aktif, gelembung diklik, atau prompt baru dikirim di sesi itu | 3 |
+| F-CLD-09 | Kartu Claude is done | Selesai saat jendela sesi tidak aktif membuka kartu `Claude is done` ≤ 1 detik dengan Ping sekali, seperti kartu timer habis; kartu tetap tampil sampai Close, Open Claude, atau selesainya dilihat (jendela aktif, gelembung diklik, prompt baru, sesi hilang); Close menghitung selesai sudah dilihat; selesai baru mengganti isi; ditahan selama fase fokus, dilewati saat fullscreen, memberi jalan kepada kartu Needs input baru; tiap selesai membuka kartu sekali (revisi 25, issue 42) | 6 |
 | F-CLD-05 | Halaman Claude | Halaman 9 mendaftar semua sesi yang hidup dengan urutan dan isi sesuai 6.3; klik baris membawa jendela sesi ke depan | 3 |
 | F-CLD-06 | Membawa jendela sesi ke depan | Sesi Claude Desktop membuka jendela Claude Desktop; jendela yang diminimize dipulihkan. Sesi CLI tidak tampil sejak revisi 17, jadi jalur ke jendela terminal (wmux, Windows Terminal) tidak terpakai | 3 |
 | F-CLD-08 | Timer jendela 5 jam | Jendela dimulai dari pemakaian pertama (prompt, pemakaian tool, atau akhir giliran) dan dihitung mundur di slot sesuai "Batas pemakaian Claude" di 6.3; batas tercapai mengubah slot ke kuning; saat jendela berakhir kartu `Claude usage reset` muncul dengan suara timer dan toast; waktu reset tetap benar setelah Gili atau laptop restart; tooltip menandai `Estimated` bila waktu resmi tidak tersedia | 3 |
@@ -1089,6 +1105,8 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 | Pulau kontrol | Daftar Wi‑Fi, Bluetooth, dan perangkat audio hanya dibaca saat pulaunya terbuka; ikon bar memakai event sistem | 0 saat tidak tampil | — |
 | Detik di jam | Satu teks kecil diperbarui sekali per detik; timer diselaraskan ke pergantian detik sistem, bukan polling cepat; tata letak bar dihitung ulang hanya saat menit atau tanggal berganti | Tidak terukur (< 0,1%) | Show seconds dimatikan |
 | Timer jendela Claude 5 jam | Satu teks diperbarui tiap detik saat tampil di slot | Tidak terukur | Saat hanya di gelembung, tidak ada pembaruan teks |
+| Modul kualitas udara (revisi 25) | Satu permintaan HTTP (±1 KB) tiap 30 menit, satu teks dan satu titik diperbarui per hasil | Tidak terukur; RAM < 0,1 MB | Dimatikan di Settings → Right side menghentikan permintaannya |
+| Kartu `Claude is done` (revisi 25) | Satu kartu saat sesi selesai di belakang; tanpa timer selama tampil | Tidak terukur | — |
 | Batas mingguan Claude (revisi 19) | Satu timer tenggat; teks sisa waktu diperbarui tiap detik hanya saat halaman Claude terbuka | Tidak terukur | Tidak pernah di slot |
 | Tinggi pulau mengikuti isi, posisi bawah, sembunyikan taskbar, tombol Start, jam di kanan | Hanya saat ada perubahan | Tidak terukur | — |
 | Ekspresi Gili | `GetLastInputInfo` sekali per detik untuk tidur; status tombol mouse dibaca di pembacaan kursor 30×/detik yang sudah ada (tanpa hook); satu kedipan 230 ms per klik; ekspresi dihitung ulang hanya saat ada perubahan; anggukan musik menggambar ulang area mata (lingkaran 24 px) hanya saat bergerak, sekitar 60% waktu selama musik diputar | CPU ≤ 0,2% selama musik diputar, 0% saat tidur dan saat ekspresi lain diam | Anggukan dimatikan (mata setengah terpejam diam) |
@@ -1121,9 +1139,9 @@ Anggaran (8.1): tidak ada polling baru. Tab Timer dan Pomodoro mengikuti tick 1 
 
 ### 8.2 Keandalan dan privasi
 - Gagalnya satu provider tidak mematikan bar (bagian 11).
-- Semua data disimpan lokal. Akses internet hanya API cuaca Open-Meteo (tanpa API key; hanya mengirim koordinat kota, dan nama kota yang diketik saat mencari kota di Settings), LRCLIB untuk lirik bila Show lyrics dinyalakan (Fase 6; hanya judul, artis, album, dan durasi lagu), dan, khusus installer GitHub yang bertanda tangan, cek versi terbaru ke GitHub Releases (`api.github.com/repos/fhdyt/gili/releases/latest`, tanpa data pengguna). Versi Store diperbarui oleh Store sendiri.
+- Semua data disimpan lokal. Akses internet hanya API cuaca dan kualitas udara Open-Meteo (tanpa API key; hanya mengirim koordinat kota, dan nama kota yang diketik saat mencari kota di Settings), LRCLIB untuk lirik bila Show lyrics dinyalakan (Fase 6; hanya judul, artis, album, dan durasi lagu), dan, khusus installer GitHub yang bertanda tangan, cek versi terbaru ke GitHub Releases (`api.github.com/repos/fhdyt/gili/releases/latest`, tanpa data pengguna). Versi Store diperbarui oleh Store sendiri.
 - Tanpa telemetri, analitik, atau pelaporan crash otomatis. Laporan crash versi Store hanya yang dikumpulkan Windows sendiri dan tampil di Partner Center.
-- Listing Store dan halaman rilis GitHub menautkan **privacy policy** yang menyebut: data tersimpan lokal, koordinat kota dikirim ke Open-Meteo, judul/artis/album/durasi lagu dikirim ke LRCLIB hanya bila lirik dinyalakan (ditambahkan ke privacy policy sebelum update Fase 6 yang membawa lirik), cek versi ke GitHub, thumbnail cuplikan clipboard di slot (Gili tidak menyimpan isi clipboard sejak revisi 21), sesi Claude, dan isi notifikasi aplikasi lain hanya di memori, tanpa telemetri. Drafnya ada di `docs/release/privacy-policy.md`, bersama halaman dukungan (`support.md`) dan isi listing Store (`store-listing.md`); ketiganya dipublikasikan pengguna (F-PUB-02, F-PUB-08).
+- Listing Store dan halaman rilis GitHub menautkan **privacy policy** yang menyebut: data tersimpan lokal, koordinat kota dikirim ke Open-Meteo (cuaca dan kualitas udara), judul/artis/album/durasi lagu dikirim ke LRCLIB hanya bila lirik dinyalakan (ditambahkan ke privacy policy sebelum update Fase 6 yang membawa lirik), cek versi ke GitHub, thumbnail cuplikan clipboard di slot (Gili tidak menyimpan isi clipboard sejak revisi 21), sesi Claude, dan isi notifikasi aplikasi lain hanya di memori, tanpa telemetri. Drafnya ada di `docs/release/privacy-policy.md`, bersama halaman dukungan (`support.md`) dan isi listing Store (`store-listing.md`); ketiganya dipublikasikan pengguna (F-PUB-02, F-PUB-08).
 - Isi notifikasi aplikasi lain (revisi 8, opt-in) hanya dibaca saat Show Windows notifications nyala dan izin Windows diberikan, hanya disimpan di memori selama tampil dan selama di antrean, dan tidak pernah ditulis ke disk, log, atau dikirim ke mana pun.
 - Isi clipboard sensitif tidak ditampilkan (6.3). Isi clipboard tidak pernah disimpan: cuplikan di slot dan thumbnail-nya hanya di memori selama 3 detik (revisi 21 menghapus riwayat Clipboard beserta gambar PNG-nya).
 - Data sesi Claude (nama sesi, folder, cuplikan pertanyaan) hanya ada di memori, tidak ditulis ke database atau log. Teks prompt pengguna tidak dikirim ke Gili. Gili hanya mengubah `~/.claude/settings.json` saat pengguna menyalakan atau mematikan integrasi.
@@ -1239,6 +1257,7 @@ Setiap provider punya interface di Core dan implementasi di Platform; mode demo 
 | Wi‑Fi | Native WLAN API (`WlanQueryInterface`) | Tiap 10 detik + event koneksi |
 | Kamera/mic | Registry `...\CapabilityAccessManager\ConsentStore\{webcam,microphone}` (`LastUsedTimeStop = 0` berarti sedang dipakai) | Tiap 2 detik |
 | Cuaca | Open-Meteo forecast + geocoding API (HTTP) | Tiap 30 menit, di-cache |
+| Kualitas udara | Open-Meteo Air Quality API (HTTP, `current=us_aqi,pm2_5`) | Tiap 30 menit, nilai terakhir disimpan di memori |
 | Shelf | OLE drag-and-drop di `BarWindow` dan `IslandWindow` (`DataFormats.FileDrop` masuk, `DoDragDrop` dengan Copy dan Move keluar); cek keberadaan file | Event + tiap 60 detik |
 | Hotkey | `RegisterHotKey` | Event |
 | Bluetooth | `DeviceWatcher` (Windows.Devices.Enumeration) untuk perangkat Bluetooth Classic dan LE dengan properti `System.Devices.Aep.IsConnected`; jenis dari `ClassOfDevice` / kategori perangkat; baterai dari properti baterai Bluetooth perangkat atau GATT Battery Service bila tersedia (best-effort) | Event |
@@ -1362,6 +1381,7 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 | `UserNotificationListener` tidak tersedia (identitas paket gagal didaftarkan di versi GitHub) | Saklarnya nonaktif dengan keterangan `Not available in this copy of Gili`; dicatat sekali di log |
 | Lirik gagal diambil (LRCLIB tidak menjawab dalam 5 detik, offline, atau error) | Halaman Media menampilkan `Lyrics unavailable offline` (offline) atau `No lyrics for this song`; slot tetap judul; dicoba lagi saat lagu berikutnya, tanpa toast |
 | Cuaca gagal diambil | Tampilkan nilai terakhir berwarna abu-abu; tooltip "Last updated 14:00" |
+| Kualitas udara gagal diambil | Sama dengan cuaca: nilai terakhir abu-abu; sebelum ada nilai, modul tidak tampil |
 | Item Shelf hilang saat diseret keluar | Seret dibatalkan, tile menampilkan "File moved or deleted" selama 2 detik lalu dihapus |
 | File dilepas dari jendela admin | Windows memblokirnya; drop zone menampilkan "Can't take files from an admin window" selama 2 detik |
 | Tidak ada perangkat audio atau suara gagal diputar | Kartu tetap tampil; toast dikirim dengan suara notifikasi Windows sebagai cadangan; dicatat di log |
@@ -1459,6 +1479,8 @@ Folder data berisi `gili.db` (SQLite, mode WAL dengan `synchronous=FULL`: setiap
 **Revisi 23 (keputusan pengguna 2026-11-10, issue 40 dan 41)**: bunyi kartu `Claude usage reset` berhenti sendiri setelah 1 menit, bukan 5 menit; kartunya tetap tampil sampai ditutup. Waktu reset mingguan cukup diisi sekali: setiap kali tiba, barisnya maju 7 hari dan tetap bisa diedit. Keputusan saat merancang: kartu `Claude weekly limit reset` ikut 1 menit karena aturannya memang "seperti jendela 5 jam" (revisi 19); alarm dan timer tetap 5 menit; maju tepat 7 x 24 jam dalam UTC; reset yang sudah selesai di versi lama ikut hidup lagi karena reset aktif kini baris terbaru, tanpa migrasi. Biaya CPU/RAM tidak berubah.
 
 **Revisi 24 (keputusan pengguna 2026-11-10)**: form reset mingguan hanya meminta nama hari dan jam, tanpa tanggal. Keputusan saat merancang: nama hari ditulis penuh (`Tuesday`) dan pemilihnya berputar karena seminggu tidak punya ujung; baris `Weekly limit` tetap menampilkan tanggal (`Resets Sun 8 Nov, 04:00`) supaya hasil hitungannya terlihat; penyimpanan tidak berubah.
+
+**Revisi 25 (keputusan pengguna 2026-11-13, issue 42 dan 43)**: saat pekerjaan Claude selesai di belakang jendela lain, pulau terbuka ke kartu `Claude is done` seperti saat timer berakhir (F-CLD-09), dan bagian kanan bar mendapat modul kualitas udara `AQI` (F-RIGHT-13). Keputusan saat merancang: kartu hanya untuk selesai yang belum terlihat (jendela sesi tidak aktif), supaya tidak muncul saat pengguna sedang menatap Claude Desktop; tetap tampil sampai ditanggapi seperti kartu timer, tetapi prioritas 2 (bukan 1) supaya ditahan selama fokus, dilewati saat fullscreen seperti kartu Claude lain, dan memberi jalan kepada kartu Needs input; Ping sekali, bukan suara timer yang berulang, karena selesai adalah kabar, bukan alarm; Close menghitung selesai sudah dilihat supaya tidak ada gelembung hijau ganda. Modul kualitas udara memakai US AQI dari Open-Meteo (indeks yang sama dengan IQAir) karena API IQAir butuh key per pengguna; label tetap `AQI` dengan titik warna level, nama level di tooltip; urutan default setelah Cuaca dan ikut pindah ke "…" tepat setelah Cuaca. Biaya: satu permintaan HTTP kecil tiap 30 menit; kartu tanpa timer.
 
 ## 15. Di luar cakupan
 

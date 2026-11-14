@@ -43,6 +43,12 @@ public class SoundRulesTests
     public void Timers_and_alarms_ring_for_5_minutes(string card) =>
         Assert.Equal(TimeSpan.FromMinutes(5), SoundRules.RingLimit(card));
 
+    [Theory]
+    [InlineData("claude")]
+    [InlineData("claude-done")]
+    public void Claude_cards_ping_once(string card) =>
+        Assert.Equal(("Ping", false, false), SoundRules.ForCard(card, "Chime"));
+
     [Fact]
     public void Todo_reminders_ping_once() =>
         Assert.Equal(("Ping", false, false), SoundRules.ForCard("todo:3", "Chime"));

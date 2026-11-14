@@ -64,6 +64,7 @@ public sealed class DemoService
         _island.DismissCard(DemoAlarm.CardId);
         _island.DismissCard(DemoReminder.CardId);
         _island.DismissClaudeCard();
+        _island.DismissClaudeDone();
         _island.DismissCard(IslandController.ClaudeResetCard);
         _island.DismissCard(IslandController.ClaudeWeeklyResetCard);
         Claude?.EndDemo();

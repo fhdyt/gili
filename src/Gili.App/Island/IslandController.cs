@@ -475,6 +475,7 @@ public sealed class IslandController : IDisposable
             _ when _reminders.TryGetValue(id, out var todo) => ReminderContent(id, todo, green),
             FileConflictCard => FileConflictContent(id),
             ClaudeCards.CardId when _claudeCard is { } claude => ClaudeContent(id, claude),
+            ClaudeDoneCards.CardId when _claudeDone is { } done => ClaudeDoneContent(id, done),
             ClaudeResetCard => ClaudeResetContent(id, "Claude usage reset", "Your 5-hour limit is available again"),
             ClaudeWeeklyResetCard => ClaudeResetContent(id, "Claude weekly limit reset", "Your weekly limit is available again"),
             _ => null,
@@ -527,6 +528,22 @@ public sealed class IslandController : IDisposable
             ],
             Quote: card.Quote, Filled: true, Pulse: false);
     }
+
+    /// <summary>
+    /// The Claude glyph in green without a pulse, Claude is done, the session, how long it took, Close and Open Claude
+    /// (mockup CARDS.claudeDone, F-CLD-09). Both buttons count the finish as seen.
+    /// </summary>
+    private CardContent ClaudeDoneContent(string id, ClaudeDoneView done) =>
+        new("Icon.Claude", Color.FromRgb(0x30, 0xD1, 0x58), done.Title, done.Name,
+            [
+                new("Close", false, Card(id, () => ClaudeDoneClosed?.Invoke(true))),
+                new("Open Claude", true, Card(id, () =>
+                {
+                    ClaudeDoneClosed?.Invoke(false);
+                    OpenClaudeSession(done.SessionId);
+                })),
+            ],
+            Quote: done.Quote, Filled: true, Pulse: false);
 
     /// <summary>"Alarm 14:30" or "Missed alarm 14:30", the label, Snooze 5m and Stop (mockup CARDS.alarm).</summary>
     private CardContent AlarmContent(string id, Alarm alarm, bool missed, Color orange)
@@ -583,6 +600,12 @@ public sealed class IslandController : IDisposable
     /// <summary>The Needs input card was closed by Later or Open (F-CLD-03).</summary>
     public event Action? ClaudeCardClosed;
 
+    /// <summary>
+    /// The Claude is done card went by its buttons or for a Needs input card (F-CLD-09); true when the finish now counts
+    /// as seen without its window coming forward (Close).
+    /// </summary>
+    public event Action<bool>? ClaudeDoneClosed;
+
     /// <summary>All sessions are one activity: waiting or just done at order 2, working at order 6 (PRD 6.3).</summary>
     public void SetClaude(ClaudeSlotView view, IReadOnlyList<ClaudeSession> sessions)
     {
@@ -603,6 +626,12 @@ public sealed class IslandController : IDisposable
     public void ShowClaudeCard(ClaudeCardView card)
     {
         _claudeCard = card;
+        // A question outranks a finish: the done card gives way, and the finish stays as the green bubble (F-CLD-09).
+        if (_coordinator.HasCard(ClaudeDoneCards.CardId))
+        {
+            _coordinator.DismissCard(ClaudeDoneCards.CardId);
+            ClaudeDoneClosed?.Invoke(false);
+        }
         _coordinator.ShowCard(new IslandCard(ClaudeCards.CardId, CardPriority.Reminder, TimeSpan.FromSeconds(8)));
     }
 
@@ -615,6 +644,23 @@ public sealed class IslandController : IDisposable
 
     /// <summary>The session was answered, stopped or went away: its card goes with it.</summary>
     public void DismissClaudeCard() => _coordinator.DismissCard(ClaudeCards.CardId);
+
+    private ClaudeDoneView? _claudeDone;
+
+    /// <summary>
+    /// A finish behind another window (F-CLD-09): the card stays like a finished timer's until answered or seen, waits
+    /// for a pomodoro break, goes in fullscreen, and pings once. A newer finish takes it over.
+    /// </summary>
+    public void ShowClaudeDone(ClaudeDoneView done)
+    {
+        var replaces = View.Card?.Id == ClaudeDoneCards.CardId;
+        _claudeDone = done;
+        _coordinator.ShowCard(new IslandCard(ClaudeDoneCards.CardId, CardPriority.Reminder, Timeout.InfiniteTimeSpan));
+        if (replaces) CardChanged?.Invoke();
+    }
+
+    /// <summary>The finish was seen another way, or its session went: the card goes with it.</summary>
+    public void DismissClaudeDone() => _coordinator.DismissCard(ClaudeDoneCards.CardId);
 
     /// <summary>
     /// The Claude slot (mockup clClick): one session involved brings its window forward and the island stays closed;

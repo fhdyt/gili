@@ -20,6 +20,7 @@ Gili does not send your data anywhere. It only makes these requests:
 | Request | What is sent | When |
 |---|---|---|
 | Weather, to [Open-Meteo](https://open-meteo.com/) | The coordinates of the city you chose | About every 30 minutes while the weather is shown |
+| Air quality, to Open-Meteo | The same city coordinates | About every 30 minutes while the air quality is shown |
 | City search, to Open-Meteo | The city name you type | Only while you search for a city in Settings |
 | Lyrics, to [LRCLIB](https://lrclib.net/) | The title, artist, album and length of the song that is playing | Once per song, only after you turn on **Show lyrics** (off by default). Lyrics are kept in memory for the last 20 songs and never written to disk |
 | Update check, to GitHub | Nothing about you; Gili asks for the latest version number | Once a day, only in the version from GitHub |

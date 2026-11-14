@@ -10,7 +10,8 @@ using Gili.Platform.Shell;
 namespace Gili.App.Bar;
 
 /// <summary>
-/// The readings behind the right of the bar (PRD 6.4): weather every 30 minutes (backing off on failure, PRD 11),
+/// The readings behind the right of the bar (PRD 6.4): weather and air quality every 30 minutes (each backing off on
+/// failure, PRD 11),
 /// Wi‑Fi on connection events and every 10 s, Bluetooth and volume from system events. Changed fires on the UI thread.
 /// </summary>
 public sealed class RightService : IDisposable
@@ -24,10 +25,13 @@ public sealed class RightService : IDisposable
     private readonly RadioControl _radios = new();
     private readonly BrightnessControl _brightness = new();
     private readonly DispatcherTimer _weatherTimer = new();
+    private readonly DispatcherTimer _airTimer = new();
     private readonly DispatcherTimer _wifiTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly CancellationTokenSource _stop = new();
     private int _weatherFailures;
     private DateTimeOffset? _weatherAt;
+    private int _airFailures;
+    private DateTimeOffset? _airAt;
     private RightModules _hidden;
     private bool _started;
     private bool _paused;
@@ -47,8 +51,11 @@ public sealed class RightService : IDisposable
             _coords = (s.WeatherLatitude, s.WeatherLongitude);
             Weather = null;
             WeatherStale = false;
+            Air = null;
+            AirStale = false;
             Changed?.Invoke();
             if (_started && !WeatherOff) _ = RefreshWeatherAsync();
+            if (_started && !AirOff) _ = RefreshAirAsync();
         };
         _bluetooth.Changed += () => _dispatcher.InvokeAsync(() =>
         {
@@ -65,6 +72,7 @@ public sealed class RightService : IDisposable
         _wifi.ConnectFinished += ok => _dispatcher.InvokeAsync(() => WifiConnectFinished?.Invoke(ok));
         _wifiTimer.Tick += (_, _) => ReadWifi();
         _weatherTimer.Tick += (_, _) => _ = RefreshWeatherAsync();
+        _airTimer.Tick += (_, _) => _ = RefreshAirAsync();
         Brightness = BrightnessReader.Read();
     }
 
@@ -88,6 +96,12 @@ public sealed class RightService : IDisposable
     public bool WeatherStale { get; private set; }
 
     private (double Latitude, double Longitude) _coords;
+
+    /// <summary>The Weather city's air now (F-RIGHT-13).</summary>
+    public AirReading? Air { get; private set; }
+
+    /// <summary>The last air reading is older than the latest attempt: shown grey, like the weather.</summary>
+    public bool AirStale { get; private set; }
 
     public WifiState? Wifi { get; private set; }
 
@@ -169,6 +183,7 @@ public sealed class RightService : IDisposable
         _ = StartRadiosAsync();
         _ = StartBluetoothAsync();
         if (!WeatherOff) _ = RefreshWeatherAsync();
+        if (!AirOff) _ = RefreshAirAsync();
     }
 
     /// <summary>The Wi‑Fi signal stops being read while the screen is off or the bar is hidden (PRD 8.1).</summary>
@@ -200,6 +215,12 @@ public sealed class RightService : IDisposable
             if (_weatherAt is not { } at || DateTimeOffset.UtcNow - at > TimeSpan.FromMinutes(30)) _ = RefreshWeatherAsync();
             else _weatherTimer.Start();
         }
+        if (AirOff) _airTimer.Stop();
+        else if (was.HasFlag(RightModules.AirQuality))
+        {
+            if (_airAt is not { } at || DateTimeOffset.UtcNow - at > TimeSpan.FromMinutes(30)) _ = RefreshAirAsync();
+            else _airTimer.Start();
+        }
         if (WifiOff) _wifiTimer.Stop();
         else if (was.HasFlag(RightModules.Wifi) && !_paused)
         {
@@ -212,6 +233,8 @@ public sealed class RightService : IDisposable
 
     private bool WifiOff => _hidden.HasFlag(RightModules.Wifi);
 
+    private bool AirOff => _hidden.HasFlag(RightModules.AirQuality);
+
     /// <summary>Brightness is read when its tooltip opens, not polled.</summary>
     public int? ReadBrightness() => Brightness = BrightnessReader.Read();
 
@@ -219,6 +242,7 @@ public sealed class RightService : IDisposable
     {
         _stop.Cancel();
         _weatherTimer.Stop();
+        _airTimer.Stop();
         _wifiTimer.Stop();
         _wifi.Dispose();
         _bluetooth.Dispose();
@@ -278,6 +302,29 @@ public sealed class RightService : IDisposable
             _weatherTimer.Interval = ProviderRetry.Delay(_weatherFailures);
         }
         if (!WeatherOff) _weatherTimer.Start();
+        Changed?.Invoke();
+    }
+
+    private async Task RefreshAirAsync()
+    {
+        _airTimer.Stop();
+        var s = _settings.Current;
+        try
+        {
+            Air = await AirQualityClient.GetAsync(s.WeatherLatitude, s.WeatherLongitude, _stop.Token);
+            AirStale = false;
+            _airAt = DateTimeOffset.UtcNow;
+            _airFailures = 0;
+            _airTimer.Interval = TimeSpan.FromMinutes(30);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            if (_stop.IsCancellationRequested) return;
+            AirStale = Air is not null;
+            _airFailures++;
+            _airTimer.Interval = ProviderRetry.Delay(_airFailures);
+        }
+        if (!AirOff) _airTimer.Start();
         Changed?.Invoke();
     }
 }
